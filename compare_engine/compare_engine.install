@@ -1,0 +1,817 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the compare engine module.
+ */
+
+
+
+
+/**
+ * Implements hook_schema()
+ */
+function compare_engine_schema() {
+
+  //Create cache table for the comparative_table computation, so parent feature_support percent and css_class are computed at each change on feature or feature_support and not at each read of the comparative table
+  $schema['cache_comparative_table'] = array(
+
+    'description' => 'Cache table for comparative table',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The nid of the feature support node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'percent' => array(
+        'description' => 'The percentage returned by the node',
+        'type' => 'float',
+        'default' => 0,
+      ),
+      'css_class' => array(
+        'description' => 'The css class returned by the node',
+        'type' => 'varchar',
+        'length' => 32,
+        'default' => '',
+      ),
+      'is_ghost' => array(
+        'description' => "Boolean indicated if this node will be used in the computation of his parent",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'to_update' => array(
+        'description' => "Boolean indicated if this node should be updated as soon as possible",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+
+    ),
+    'unique keys' => array(
+      'nid' => array('nid'),
+    ),
+    'indexes' => array(
+      'unid' => array('nid'),
+      'is_ghost' => array('is_ghost'),
+      'to_update' => array('to_update'),
+    )
+
+  );
+
+  return $schema;
+
+}
+
+
+
+/**
+ * Implements hook_install().
+ */
+function compare_engine_install() {
+
+  $t = get_t();
+
+  // Ensure that new node type is available.
+  node_types_rebuild();
+  
+  //Assign body field to the new node types
+  $types = node_type_get_types();
+  node_add_body_field( $types[ 'feature' ] , $t('Description'));
+  node_add_body_field( $types[ 'compared' ] , $t('Description'));
+  node_add_body_field( $types[ 'feature_support' ] , $t('Description'));
+
+
+  /*
+  * Feature type related
+  */
+  
+  //Set Feature variables
+  variable_set('node_options_feature', array('status','revision','revision_moderation'));
+  variable_set('node_submitted_feature', '0');
+  
+  
+  
+    //Create parent feature field
+
+    $field = array(
+      'field_name' => 'feature_parent_feature',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('feature')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_parent_feature',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Parent Feature',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('feature')),
+      ),
+    );
+    field_create_instance($instance);
+	
+	
+    //Create type field
+
+    $field = array(
+      'field_name' => 'feature_type',
+      'type' => 'list_text',
+      'cardinality' => 1,
+      'settings' => array(
+        'allowed_values' => array(
+          'not-parent-feature' => 'Not a parent feature',
+          'parent-weighted-average' => 'Parent Feature - Weighted Average',
+          'parent-hightest-percentage' => 'Parent Feature - Hightest Percentage',
+          'Link' => 'Link',
+        ),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_type',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Type',
+      'description' => 'TODO : Type de validation
+
+Not a parent feature : Une feature qui n\'a pas d\'enfant. Retourne soit 0% soit 100%.
+Affichage : 
+Valeur du champ "texte à afficher dans cellule"
+Pourcentage retourné
+
+Parent Feature - Moyenne Pondérée : Parent le plus classique, retourne la moyenne des pourcentage enfant pondéré par le champ weight. 
+Affichage : 
+Valeur du champ "texte à afficher dans cellule"
+Pourcentage retourné
+Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants). Bon la formule est mauvaise, faut que je retrouve la vraie formule pour la moyenne pondérée.
+
+Parent Feature - Pourcentage le plus haut : Ce parent retourne le pourcentage le plus haut parmis les pourcentage retourné par ses enfants. Ce type de champ sert à indiquer qu\'on a fait un choix, et les enfants indiquent les différents choix possible qui peuvent servir à valider cette feature parent.
+Par contre tous les choix ne se valent pas forcément, du coup le champ weight pour ses direct child feature va prendre une autre signification : Il va indiquer la valeur du choix, sous forme de pourcentage.
+Pourcentage retourné sera alors : % du child feature * (weight / 100). On fait le calcul pour chaque enfant et on retourne la valeur la plus haute.
+Affichage : 
+Valeur du champ "texte à afficher dans cellule"
+Pourcentage retourné
+
+
+Link : Cette feature sert à établir un lien avec un autre software. Dans ce cas, les features enfants finale vont avoir une liste d\'entity reference pointant vers software au lieu de la liste "supporté - non supportée".
+Les feature parent  mais child de cette feature vont afficher le pourcentage pour chacun des software cité par un enfant. Cette feature se calculera forcément par moyenne pondérée, mais les parent child de cette feature peuvent être en highest percentage.
+Si pour un des logiciels, le pourcentage calculé pour tous les enfants est égal à 100%, alors le lien entre le software et le software lié est établie. 
+Dans ce cas, toutes les features du logiciel lié deviennent supportés par le software mais via un code couleur spécifique. (ex : violet).
+Affichage : 
+Lien fort : Nom des logiciels dont le lien est effectif
+Lien faible : Nom des logigiels cité dans les enfants mais dont le lien n\'est pas effectif, avec le pourcentage calculé
+Pourcentage retourné : Pourcentage du plus fort logiciel lié (Donc 100% si on a un lien effectif).
+
+
+
+Deprecated :
+Possibilities List : En fonction du choix de la retourne, retourne le pourcentage correspondant.
+Affichage : 
+Choix de la liste.
+Pourcentage retourné
+Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants) * (pourcentage du choix)',
+      'required' => 1,
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+
+
+    //Create validation guidelines field
+
+    $field = array(
+      'field_name' => 'feature_validation_guidelines',
+      'type' => 'text_long',
+      'cardinality' => 1
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_validation_guidelines',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Validation Guidelines',
+      'description' => 'TODO : Le texte decrivant  precisement dans quelles conditions on peut on non valider le support de la feature dans le logiciel.
+Ce texte doit s\'afficher dans le formulaire de la cellule quand on renseigne le support de la feature',
+      'required' => 1,
+      'widget' => array(
+        'type' => 'text_textarea',
+      ),
+    );
+    field_create_instance($instance);
+
+
+    //Create weight field
+
+    $field = array(
+      'field_name' => 'feature_weight',
+      'type' => 'number_integer',
+      'cardinality' => 1
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_weight',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Weight',
+      'description' => 'TODO : Poids indiquant l\'importance de la fonctionnalite. J\'ai envisage un moment de faire un poids par fonctionnalite au niveau du secteur d\'activite mais c\'etait pas jouable. La contrepartie, c\'est que tout le monde, tous les secteurs, de tous les pays, devront s\'organiser suffisamment.
+Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf description de l\'autre champ',
+      'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 100,
+        ),
+      ),
+      'widget' => array(
+        'type' => 'number',
+      ),
+    );
+    field_create_instance($instance);
+
+    //Create state field
+
+    $field = array(
+      'field_name' => 'feature_state',
+      'type' => 'list_text',
+      'cardinality' => 1,
+      'settings' => array(
+        'allowed_values' => array(
+          'New' => 'New',
+          'Incomplete' => 'Incomplete',
+          'Published' => 'Published',
+          'Disactivated' => 'Disactivated',
+        ),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_state',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'State',
+      'description' => 'TODO : State of the feature',
+      'required' => 1,
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+	
+	
+	
+	
+	
+	
+	
+	
+  
+  
+  
+  
+  
+  
+  
+  
+  /*
+  * Compared type related
+  */
+  
+
+  //Set Compared variables
+  variable_set('node_options_compared', array('status','revision','revision_moderation'));
+  variable_set('node_submitted_compared', '0');
+  
+  
+  
+    //Create parent compared field
+
+    $field = array(
+      'field_name' => 'compared_parent_compared',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'compared_parent_compared',
+      'entity_type' => 'node',
+      'bundle' => 'compared',
+      'label' => 'Parent Compared',
+  	  'description' => 'TODO : Ce software inclu sans condition toutes les features du logiciel parent.',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_instance($instance);
+	
+
+    //Create inherited compared field
+
+    $field = array(
+      'field_name' => 'compared_inherited_compared',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'compared_inherited_compared',
+      'entity_type' => 'node',
+      'bundle' => 'compared',
+      'label' => 'Inherited Compared',
+	  'description' => 'TODO : Si ce champ est rempli, alors toutes les features deja present dans le logiciel herite seront egalement present dans celui-ci. Neanmoins via un code couleur legerement different, plus leger pour marquer la difference.',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_instance($instance);
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+  /*
+  * Feature Support type related
+  */
+
+  //Set Feature Support variables
+  variable_set('node_options_feature_support', array('status','revision','revision_moderation'));
+  variable_set('node_submitted_feature_support', '0');
+  
+  
+  
+	//Create feature field
+
+    $field = array(
+      'field_name' => 'feature_support_feature',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('feature')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_support_feature',
+      'entity_type' => 'node',
+      'bundle' => 'feature_support',
+      'label' => 'Feature',
+	  'description' => 'TODO : La fonctionnalite supporte, je pense que ce sera la peine de laisser une description. Ce champ sera grise pour tous.',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+	  'required' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('feature')),
+      ),
+    );
+    field_create_instance($instance);
+
+
+	//Create compared field
+
+    $field = array(
+      'field_name' => 'feature_support_compared',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_support_compared',
+      'entity_type' => 'node',
+      'bundle' => 'feature_support',
+      'label' => 'Compared',
+	  'description' => 'TODO : Le software qui supporte la fonctionnalite. Pas la peine de laisser une description, le champ sera grise pour tous.',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'required' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_instance($instance);
+	
+
+	//Create body field
+
+/*    $field = array(
+      'field_name' => 'feature_support_body',
+      'type' => 'text_long',
+      'cardinality' => 1
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'body',
+      'entity_type' => 'node',
+      'bundle' => 'feature_support',
+      'label' => 'Description',
+      'description' => 'TODO :',
+      'required' => 1,
+      'widget' => array(
+        'type' => 'text_textarea',
+      ),
+    );
+    field_create_instance($instance);*/
+
+	//Create Label Cell field
+
+    $field = array(
+      'field_name' => 'feature_support_label_cell',
+      'type' => 'text',
+      'cardinality' => 1
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_support_label_cell',
+      'entity_type' => 'node',
+      'bundle' => 'feature_support',
+      'label' => 'Label Cell',
+      'description' => 'Texte qui s\'affichera dans la cellule du tableau. Utile notamment dans un parent pour indiquer un choix fait par le software (ex : Parent "Langage de programmation"  Label : "Python")',
+      'widget' => array(
+        'type' => 'text_textfield',
+      ),
+    );
+    field_create_instance($instance);
+
+
+    //Create support field
+
+    $field = array(
+      'field_name' => 'feature_support_support',
+      'type' => 'list_text',
+      'cardinality' => 1,
+      'settings' => array(
+        'allowed_values' => array(
+          'Unsupported' => 'Unsupported',
+          'Supported' => 'Supported',
+        ),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_support_support',
+      'entity_type' => 'node',
+      'bundle' => 'feature_support',
+      'label' => 'Support',
+      'description' => 'TODO : Ce champ n\'est visible que si la feature n\'est pas un parent feature',
+      'default_value' => array(
+        0 => array(
+          'value' => 'Unsupported',
+        ),
+      ),
+      'required' => 1,
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+	
+
+	//Create Proofs field
+
+    $field = array(
+      'field_name' => 'feature_support_proofs',
+      'type' => 'text',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'settings' => array(
+        'max_length' => '255',
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'feature_support_proofs',
+      'entity_type' => 'node',
+      'bundle' => 'feature_support',
+      'label' => 'Proofs',
+      'description' => 'TODO : chaque texte sera une url qui pointera vers une video/screenshot prouvant le support de la fonctionnalité. Si le champ est vide, le code couleur sur la page sera différent et allégé. Les modérateurs seront encouragé dans cette description à supprimer les preuves non valables.',
+      'widget' => array(
+		'settings' => array(
+          'size' => '255',
+        ),
+        'type' => 'text_textfield',
+      ),
+    );
+    field_create_instance($instance);
+
+
+
+
+
+
+  /*
+   * Code to generate demo data. Uncomment this part to generate thousand of records.
+   */
+
+
+  $feature_min_depth = 6; //2-6
+  $feature_max_depth = 6;  //2-6
+  $feature_child_min_per_level = 2; //1-2
+  $feature_child_max_per_level = 3; //1-3
+  $feature_min_weight = 1;
+  $feature_max_weight = 1;
+  $feature_highest_chance = 5;
+
+  $compared_min_depth = 2;
+  $compared_max_depth = 3;
+  $compared_child_min_per_level = 1;
+  $compared_child_max_per_level = 2;
+
+  $feature_support_support_chance = 3;
+
+
+  $parent_id = 0;
+  $depth = 0;
+  create_feature_children($feature_min_depth, $feature_max_depth, 'Feature ', $feature_child_min_per_level, $feature_child_max_per_level, $feature_min_weight, $feature_max_weight, $feature_highest_chance, $depth, $parent_id, False);
+
+  create_compared_children($compared_min_depth, $compared_max_depth, 'Compared ', $compared_child_min_per_level, $compared_child_max_per_level, $depth, $parent_id);
+
+
+  $feature_supports = db_query("SELECT nid FROM node WHERE type = 'feature_support'");
+
+  $to_update = array();
+  foreach($feature_supports as $item) {
+
+    $node = node_load($item->nid);
+
+    if (rand(1, $feature_support_support_chance) != $feature_support_support_chance) {
+      $node->feature_support_support[$node->language][0]['value'] = 'Supported';
+    } else {
+      $node->feature_support_support[$node->language][0]['value'] = 'Unsupported';
+    }
+
+    node_save($node);
+
+    $to_update[$node->nid] = $node->nid;
+  }
+
+
+  if (!empty($to_update)) {
+    update_compare_tree($to_update, 'update');
+  }
+
+
+}
+
+function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $parent_id, $parent_type) {
+
+  $depth++;
+  $nb_child = rand($child_min_per_level, $child_max_per_level);
+  
+  $i = 1;
+  while ($i <= $nb_child) {
+    $node = new stdClass();
+    $node->type = 'feature';
+    if ($parent_id != 0) {
+    $title = $prefix . '.' . $i;
+    } else {
+    $title = $prefix . $i;
+    }
+    $node->language = LANGUAGE_NONE;
+    $node->title = $title;
+    $node->feature_state[$node->language][0]['value'] = 'Published';
+    if ($parent_id != 0) {
+      $node->feature_parent_feature[$node->language][0]['target_id'] = $parent_id;
+      $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
+    }
+
+    if ($parent_type == 'parent-weighted-average') {
+      $node->feature_weight[$node->language][0]['value'] = 100*rand($min_weight, $max_weight);
+    } elseif ($parent_type == 'parent-hightest-percentage') {
+      $node->feature_weight[$node->language][0]['value'] = 100/rand($min_weight, $max_weight);
+    }
+
+
+    if (rand(1, $feature_highest_chance) != $feature_highest_chance) {
+      $node->feature_type[$node->language][0]['value'] = 'parent-weighted-average';
+      $parent_type = 'parent-weighted-average';
+    } else {
+      $node->feature_type[$node->language][0]['value'] = 'parent-hightest-percentage';
+      $parent_type = 'parent-hightest-percentage';
+    }
+
+
+    $node->feature_weight[$node->language][0]['value'] = rand($min_weight, $max_weight);
+
+    if ((($depth <= $min_depth or (rand($min_depth, $max_depth) != $min_depth)) and ($depth <= $max_depth))) {
+      node_save($node);
+      create_feature_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $node->nid, $parent_type);
+    } else {
+      $node->feature_type[$node->language][0]['value'] = 'not-parent-feature';
+      node_save($node);
+    }
+
+    $i++;
+
+
+  }
+
+}
+
+function create_compared_children($min_depth, $max_depth, $prefix, $child_min_per_level, $child_max_per_level, $depth, $parent_id) {
+
+  $depth++;
+  $nb_child = rand($child_min_per_level, $child_max_per_level);
+
+  $i = 1;
+  while ($i <= $nb_child) {
+    $node = new stdClass();
+    $node->type = 'compared';
+    if ($parent_id != 0) {
+    $title = $prefix . '.' . $i;
+    } else {
+    $title = $prefix . $i;
+    }
+    $node->title = $title;
+    if ($parent_id != 0) {
+      $node->language = LANGUAGE_NONE;
+      $node->compared_parent_compared[$node->language][0]['target_id'] = $parent_id;
+      $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+    }
+
+    node_save($node);
+
+    if ((($depth <= $min_depth or (rand($min_depth, $max_depth) != $min_depth)) and ($depth <= $max_depth))) {
+      create_compared_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $depth, $node->nid);
+    }
+
+    $i++;
+
+
+  }
+
+}
+
+
+function compare_engine_uninstall() {
+
+
+  //Delete all nodes of feature type.
+
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'feature'));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  node_delete_multiple($nids);
+
+  //Delete all fields of feature type.
+
+  //foreach (array_keys(_feature_installed_fields()) as $field) {
+  //  field_delete_field($field);
+  //}
+
+  //Delete all variable of feature type.
+
+  variable_del('node_options_feature');
+  variable_del('node_submitted_feature');
+
+  //Delete feature content type.
+
+  field_delete_field('feature_parent_feature');
+  field_delete_field('feature_type');
+  field_delete_field('feature_validation_guidelines');
+  field_delete_field('feature_weight');
+  field_delete_field('feature_state');
+
+  
+  node_type_delete('feature');
+
+  
+  //Delete all nodes of compared type.
+
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'compared'));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  node_delete_multiple($nids);
+
+  //Delete all fields of compared type.
+
+  //foreach (array_keys(_feature_installed_fields()) as $field) {
+  //  field_delete_field($field);
+  //}
+
+  //Delete all variable of compared type.
+
+  variable_del('node_options_compared');
+  variable_del('node_submitted_compared');
+
+  //Delete compared content type.
+
+  field_delete_field('compared_parent_compared');
+  field_delete_field('compared_inherited_compared');
+
+  node_type_delete('compared');
+
+
+
+  //Delete all nodes of feature support type.
+
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'feature_support'));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  node_delete_multiple($nids);
+
+  //Delete all fields of feature support type.
+
+  //foreach (array_keys(_feature_installed_fields()) as $field) {
+  //  field_delete_field($field);
+  //}
+
+  //Delete all variable of compared type.
+
+  variable_del('node_options_feature_support');
+  variable_del('node_submitted_feature_support');
+
+  //Delete compared content type.
+
+  field_delete_field('feature_support_feature');
+  field_delete_field('feature_support_compared'); 
+  field_delete_field('feature_support_label_cell');
+  field_delete_field('feature_support_support');
+  field_delete_field('feature_support_proofs');
+
+/* Don't know why, but this line trigger an error
+  node_type_delete('feature_support');
+*/
+
+  // Purge all field information
+  // api.drupal.org/api/function/field_purge_batch/7
+
+  field_purge_batch(1000);
+
+}
+
+?>

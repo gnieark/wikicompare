@@ -1,0 +1,17 @@
+name = Compare Engine
+description = Implement powerfull comparison features in Drupal.
+dependencies[] = entityreference
+dependencies[] = help
+dependencies[] = number
+dependencies[] = list
+dependencies[] = revisioning
+
+dependencies[] = devel
+dependencies[] = field_ui
+dependencies[] = admin_menu
+dependencies[] = admin_menu_toolbar
+
+
+package = Comparison
+version = VERSION
+core = 7.x
