@@ -565,9 +565,9 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
    * Code to generate demo data. Uncomment this part to generate thousand of records.
    */
 
-/*
+
   $feature_min_depth = 6; //2-6
-  $feature_max_depth = 6;  //2-6
+  $feature_max_depth = 8;  //2-6
   $feature_child_min_per_level = 2; //1-2
   $feature_child_max_per_level = 3; //1-3
   $feature_min_weight = 1;
@@ -576,8 +576,8 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
   $compared_min_depth = 2;
   $compared_max_depth = 3;
-  $compared_child_min_per_level = 1;
-  $compared_child_max_per_level = 2;
+  $compared_child_min_per_level = 2;
+  $compared_child_max_per_level = 3;
 
   $feature_support_support_chance = 3;
 
@@ -611,7 +611,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   if (!empty($to_update)) {
     update_compare_tree($to_update, 'update');
   }
-*/
+
 
 }
 

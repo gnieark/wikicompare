@@ -979,6 +979,7 @@ function update_compare_tree($nids, $update_parent) {
    * Now we'll compute the percent and css_class of each nids in function argument
    */
   $to_update = array();
+  $cache_to_update = array();
   $res = array();
   foreach($nodes as $node) {
 
@@ -1056,13 +1057,8 @@ function update_compare_tree($nids, $update_parent) {
     //Update the value computed in database, only if the value changed
     if (!(($node->percent == $node->cache_percent) && ($node->css_class == $node->cache_css_class))) {
       if ($node->cache_nid) {
-        db_update('cache_comparative_table')
-          ->fields(array(
-            'percent' => $node->percent,
-            'css_class' => $node->css_class,
-          ))
-          ->condition('nid', $node->nid, '=')
-          ->execute();
+        //We regroup all the same percent in a table to update them all at the same time
+        $cache_to_update[$node->css_class][$node->percent][] = $node->nid;
       } else {
         db_insert('cache_comparative_table')
           ->fields(array(
@@ -1093,6 +1089,19 @@ function update_compare_tree($nids, $update_parent) {
     $res[$node->nid]['percent'] = $node->percent;
     $res[$node->nid]['css_class'] = $node->css_class;
 
+  }
+
+  //Update the cache
+  foreach($cache_to_update as $key_css_class => $css_class) {
+    foreach($cache_to_update[$key_css_class] as $key_percent => $percent) {
+        db_update('cache_comparative_table')
+          ->fields(array(
+            'percent' => $key_percent,
+            'css_class' => $key_css_class,
+          ))
+          ->condition('nid', $cache_to_update[$key_css_class][$key_percent], 'IN')
+          ->execute();
+    }
   }
 
   //Update the parent marked
