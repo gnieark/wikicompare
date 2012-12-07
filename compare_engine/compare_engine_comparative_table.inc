@@ -15,7 +15,7 @@ function compare_engine_comparative_table($form_state) {
   // prevent Form API from flattening the array when submitted.
   $form['compared_items']['#tree'] = TRUE;
 
-  $compared_ids = array(1139);
+  $compared_ids = array(4,8,12);
 
   //Inform them of the compared item which should be displayed in the table
   $form['#compared_ids'] = $compared_ids;
@@ -213,7 +213,7 @@ function theme_compare_engine_comparative_table($variables) {
   $output .= theme('table', array('header' => $header, 'rows' => $table_rows));
 
 dpm('test before');
-  $res = update_compare_tree(array(6821), 'update');
+  $res = update_compare_tree(array(5), 'update');
 dpm('test after');
 
   return $output;
