@@ -53,13 +53,199 @@ function compare_engine_schema() {
       'nid' => array('nid'),
     ),
     'indexes' => array(
-      'unid' => array('nid'),
       'is_ghost' => array('is_ghost'),
       'to_update' => array('to_update'),
-    )
+    ),
+	'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+	)
 
   );
 
+  /*
+   * Create cache tables for feature, compared and feature support records.
+   * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
+   * This will allow us to make far less join in sql query on comparative table computation.
+   */
+  $schema['cache_feature'] = array(
+
+    'description' => 'Cache table for feature. Used so the percentage of comparative table are computed faster.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The nid of the feature node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'vid' => array(
+        'description' => 'The active vid of the feature node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'parent_feature_id' => array(
+        'description' => 'The parent id of the feature node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type of the feature node',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'weight' => array(
+        'description' => 'The weight of the feature node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'state' => array(
+        'description' => 'The state of the feature node',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      )
+
+    ),
+    'unique keys' => array(
+      'nid' => array('nid'),
+    ),
+    'indexes' => array(
+      'parent_feature_id' => array('parent_feature_id'),
+      'type' => array('type'),
+      'state' => array('state'),
+    ),
+	'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'node_revision' => array(
+        'table' => 'node_revision',
+        'columns' => array('vid' => 'vid'),
+      ),
+      'node_parent' => array(
+        'table' => 'node',
+        'columns' => array('parent_feature_id' => 'nid'),
+      ),	  
+	)
+
+  ); 
+  
+  $schema['cache_compared'] = array(
+
+    'description' => 'Cache table for compared. Used so the percentage of comparative table are computed faster.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The nid of the compared node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'vid' => array(
+        'description' => 'The active vid of the compared node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'parent_compared_id' => array(
+        'description' => 'The parent id of the compared node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      )
+    ),
+    'unique keys' => array(
+      'nid' => array('nid'),
+    ),
+    'indexes' => array(
+      'parent_compared_id' => array('parent_compared_id'),
+    ),
+	'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'node_revision' => array(
+        'table' => 'node_revision',
+        'columns' => array('vid' => 'vid'),
+      ),
+      'node_parent' => array(
+        'table' => 'node',
+        'columns' => array('parent_compared_id' => 'nid'),
+      ),	  
+	)
+
+  ); 
+  
+  
+  $schema['cache_feature_support'] = array(
+
+    'description' => 'Cache table for feature support. Used so the percentage of comparative table are computed faster.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The nid of the feature support node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'vid' => array(
+        'description' => 'The active vid of the feature support node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'feature_id' => array(
+        'description' => 'The feature id of the feature support node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'compared_id' => array(
+        'description' => 'The compared id of the feature support node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'support' => array(
+        'description' => "Boolean indicated if this feature support is supported or not",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'unique keys' => array(
+      'nid' => array('nid'),
+    ),
+    'indexes' => array(
+      'feature_id' => array('feature_id'),
+      'compared_id' => array('compared_id'),
+      'support' => array('support'),  
+    ),
+	'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'node_revision' => array(
+        'table' => 'node_revision',
+        'columns' => array('vid' => 'vid'),
+      ),
+      'node_feature' => array(
+        'table' => 'node',
+        'columns' => array('feature_id' => 'nid'),
+      ),	  
+      'node_compared' => array(
+        'table' => 'node',
+        'columns' => array('compared_id' => 'nid'),
+      ),
+	)
+
+  ); 
+  
   return $schema;
 
 }
@@ -566,15 +752,15 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
    */
 
 
-  $feature_min_depth = 6; //2-6
-  $feature_max_depth = 8;  //2-6
-  $feature_child_min_per_level = 2; //1-2
-  $feature_child_max_per_level = 3; //1-3
+  $feature_min_depth = 2; //2-6
+  $feature_max_depth = 2;  //2-8
+  $feature_child_min_per_level = 1; //1-2
+  $feature_child_max_per_level = 1; //1-3
   $feature_min_weight = 1;
   $feature_max_weight = 1;
   $feature_highest_chance = 5;
 
-  $compared_min_depth = 2;
+  $compared_min_depth = 2; 
   $compared_max_depth = 3;
   $compared_child_min_per_level = 2;
   $compared_child_max_per_level = 3;

@@ -103,7 +103,24 @@ function feature_insert($node) {
   /*
    * Create a new feature support for all compared node
    */
+dpm($node);
 
+  //Create the new feature in the cache table
+  $feature_parent_feature = 0;
+  if (isset($node->feature_parent_feature['und'][0])) {
+    $feature_parent_feature = $node->feature_parent_feature['und'][0]['target_id'];
+  }
+  db_insert('cache_feature')
+    ->fields(array(
+      'nid' => $node->nid,
+      'vid' => $node->vid,
+      'parent_feature_id' => $feature_parent_feature,
+	  'type' => $node->feature_type['und'][0]['value'],
+	  'weight' => $node->feature_weight['und'][0]['value'],
+	  'state' => $node->feature_state['und'][0]['value'],
+    ))
+    ->execute();
+   
   // Find all compared node
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
@@ -171,7 +188,7 @@ function feature_insert($node) {
     ->execute();
 
 
-
+  $fs_to_insert = array();
   $to_update = array();
   //Create a new feature support node for each compared node
   foreach ($nids as $compared){
@@ -188,6 +205,15 @@ function feature_insert($node) {
 
     node_save($node_fs);
 
+	//Prepare to add the feature support in cache table
+    $fs_to_insert[] = array(
+	  'nid' => $node_fs->nid,
+	  'vid' => $node_fs->vid,
+	  'feature_id' => $node_fs->feature_support_feature['und'][0]['target_id'],
+	  'compared_id' => $node_fs->feature_support_compared['und'][0]['target_id'],
+	  'support' => 0,
+	);
+
     //Find the ids needed to update the compare tree
     //We only update the feature support at the top of the tree on compared axis, it will update all their children because there is no cache yet
     if (!($compared->parent_id)) {
@@ -195,6 +221,13 @@ function feature_insert($node) {
     }
 
   }
+
+  //Update the cache_feature_support table before the compare tree computation
+  $query = db_insert('cache_feature_support')->fields(array('nid', 'vid', 'feature_id', 'compared_id', 'support'));
+  foreach ($fs_to_insert as $record) {
+    $query->values($record);
+  }
+  $query->execute();
 
   //Update the compare tree with the new data  
   if (!empty($to_update)) {
@@ -236,6 +269,19 @@ function compared_insert($node) {
    * Create a new feature support for all feature node
    */
 
+  //Create the new compared in the cache table
+  $compared_parent_compared = 0;
+  if (isset($node->compared_parent_compared['und'][0])) {
+    $compared_parent_compared = $node->compared_parent_compared['und'][0]['target_id'];
+  }
+  db_insert('cache_compared')
+    ->fields(array(
+      'nid' => $node->nid,
+      'vid' => $node->vid,
+      'parent_compared_id' => $compared_parent_compared,
+    ))
+    ->execute();
+
   // Find all feature node
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
@@ -250,6 +296,7 @@ function compared_insert($node) {
   }
 
   //At this state, the parent_compared field isn't updated in db yet, we need to temporary insert it so the update_compare_tree work correctly
+  //TODO With the refactoring of upcate_compare_tree we probably don't need it anymore
   if (isset($node->compared_parent_compared['und'][0])) {
     db_insert('field_revision_compared_parent_compared')
       ->fields(array(
@@ -264,6 +311,7 @@ function compared_insert($node) {
       ->execute();
   }
 
+  $fs_to_insert = array();
   $to_update = array();
   //Create a new feature support node for each feature node
   foreach ($nids as $feature){
@@ -273,13 +321,23 @@ function compared_insert($node) {
     node_object_prepare($node_fs);
     $node_fs->language = LANGUAGE_NONE;
     //Filling entity reference field
-    $node_fs->feature_support_feature[$node_fs->language][]['target_id'] = $feature->nid;
-    $node_fs->feature_support_feature[$node_fs->language][]['target_type'] = "node";
-    $node_fs->feature_support_compared[$node_fs->language][]['target_id'] = $node->nid;;
-    $node_fs->feature_support_compared[$node_fs->language][]['target_type'] = "node";
+    $node_fs->feature_support_feature[$node_fs->language][0]['target_id'] = $feature->nid;
+    $node_fs->feature_support_feature[$node_fs->language][0]['target_type'] = "node";
+    $node_fs->feature_support_compared[$node_fs->language][0]['target_id'] = $node->nid;
+    $node_fs->feature_support_compared[$node_fs->language][0]['target_type'] = "node";
 
+	//Save the feature support node in database
     node_save($node_fs);
-
+	
+	//Prepare to add the feature support in cache table
+    $fs_to_insert[] = array(
+	  'nid' => $node_fs->nid,
+	  'vid' => $node_fs->vid,
+	  'feature_id' => $node_fs->feature_support_feature['und'][0]['target_id'],
+	  'compared_id' => $node_fs->feature_support_compared['und'][0]['target_id'],
+	  'support' => 0,
+	);
+	
     //Find the ids needed to update the compare tree
     //We only update the feature support at the top of the tree on feature axis, it will update all their children because there is no cache yet
     if (!($feature->parent_id)) {
@@ -287,6 +345,13 @@ function compared_insert($node) {
     }
   }
 
+  //Update the cache_feature_support table before the compare tree computation
+  $query = db_insert('cache_feature_support')->fields(array('nid', 'vid', 'feature_id', 'compared_id', 'support'));
+  foreach ($fs_to_insert as $record) {
+    $query->values($record);
+  }
+  $query->execute();
+  
   //Update the compare tree with the new data
   if (!empty($to_update)) {
     update_compare_tree($to_update, 'update');
@@ -325,6 +390,24 @@ function feature_delete($node) {
 
   // Delete all feature support found   
   node_delete_multiple($nids);
+  
+  //Delete them in the feature support cache
+  db_delete('cache_feature_support')
+    ->condition('nid', $nids, 'in')
+    ->execute();
+	
+  //Delete the feature in the feature cache
+  db_delete('cache_feature')
+    ->condition('nid', $node->nid)
+    ->execute();
+	
+  //Update cache so all children feature are now without parent
+  db_update('cache_feature')
+    ->fields(array(
+      'parent_feature_id' => 0,
+    ))
+    ->condition('parent_feature_id', $node->nid)
+    ->execute();
 
   $to_update = array();
   if (isset($node->feature_parent_feature['und'][0])) {
@@ -389,6 +472,24 @@ function compared_delete($node) {
   // Delete all feature support found
   node_delete_multiple($nids);
 
+  //Delete them in the feature support cache
+  db_delete('cache_feature_support')
+    ->condition('nid', $nids, 'in')
+    ->execute();
+	
+  //Delete the compared in the compared cache
+  db_delete('cache_compared')
+    ->condition('nid', $node->nid)
+    ->execute();
+	
+  //Update cache so all children feature are now without parent
+  db_update('cache_compared')
+    ->fields(array(
+      'parent_compared_id' => 0,
+    ))
+    ->condition('parent_compared_id', $node->nid)
+    ->execute();
+  
   $to_update = array();
   if (isset($node->compared_parent_compared['und'][0])) {
     //Find all parent feature support on compared axis
@@ -698,6 +799,53 @@ function compare_engine_revisionapi($op, $node_revision) {
    * Action to do after a node is published
    */
   if ($op == 'post publish') {
+  
+    //Update the cache tables with the new values
+    if ($node_revision->type == 'feature') {
+	    $feature_parent_feature = 0;
+        if (isset($node_revision->feature_parent_feature['und'][0])) {
+          $feature_parent_feature = $node_revision->feature_parent_feature['und'][0]['target_id'];
+        }
+        db_update('cache_feature')
+            ->fields(array(
+              'vid' => $node_revision->vid,
+			  'parent_feature_id' => $feature_parent_feature,
+	          'type' => $node_revision->feature_type['und'][0]['value'],
+	          'weight' => $node_revision->feature_weight['und'][0]['value'],
+	          'state' => $node_revision->feature_state['und'][0]['value'],
+            ))
+            ->condition('nid', $node_revision->nid)
+            ->execute();
+	}
+	
+    if ($node_revision->type == 'compared') {
+	    $compared_parent_compared = 0;
+        if (isset($node_revision->compared_parent_compared['und'][0])) {
+          $compared_parent_compared = $node_revision->compared_parent_compared['und'][0]['target_id'];
+        }
+        db_update('cache_compared')
+            ->fields(array(
+              'vid' => $node_revision->vid,
+			  'parent_compared_id' => $compared_parent_compared
+            ))
+            ->condition('nid', $node_revision->nid)
+            ->execute();
+	}
+	
+	if ($node_revision->type == 'feature_support') {
+	    $support = 0;
+	    if ($node_revision->feature_support_support['und'][0]['value'] == 'Supported') {
+		  dpm('True');
+		  $support = 1;
+		}
+        db_update('cache_feature_support')
+            ->fields(array(
+              'vid' => $node_revision->vid,
+			  'support' => $support
+            ))
+            ->condition('nid', $node_revision->nid)
+            ->execute();
+	}
 
     //Remove all the ghost marks 
     $query = db_select('node', 'n');
@@ -1060,6 +1208,7 @@ function update_compare_tree($nids, $update_parent) {
         //We regroup all the same percent in a table to update them all at the same time
         $cache_to_update[$node->css_class][$node->percent][] = $node->nid;
       } else {
+	    //TODO There is a way to insert them all at once
         db_insert('cache_comparative_table')
           ->fields(array(
             'nid' => $node->nid,
