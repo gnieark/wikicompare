@@ -784,24 +784,22 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
     if (rand(1, $feature_support_support_chance) != $feature_support_support_chance) {
       $node->feature_support_support[$node->language][0]['value'] = 'Supported';
-	  $support = 1;
+	  $cache_to_update_support[] = $node->nid;
     } else {
       $node->feature_support_support[$node->language][0]['value'] = 'Unsupported';
-	  $support = 0;
     }
 
     node_save($node);
-
-    db_update('cache_feature_support')
-      ->fields(array(
-        'support' => $support,
-      ))
-      ->condition('nid', $node->nid)
-      ->execute();
 	  
     $to_update[$node->nid] = $node->nid;
   }
 
+  db_update('cache_feature_support')
+    ->fields(array(
+      'support' => 1,
+    ))
+    ->condition('nid', $cache_to_update_support, 'in')
+    ->execute();
 
   if (!empty($to_update)) {
     update_compare_tree($to_update, 'update');
