@@ -790,13 +790,12 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     if (rand(1, $feature_support_support_chance) != $feature_support_support_chance) {
       $node->feature_support_support[$node->language][0]['value'] = 'Supported';
 	  $cache_to_update_support[] = $node->nid;
-    } else {
-      $node->feature_support_support[$node->language][0]['value'] = 'Unsupported';
+	  
+      node_save($node);
+	  
+      $to_update[$node->nid] = $node->nid;
     }
 
-    node_save($node);
-	  
-    $to_update[$node->nid] = $node->nid;
   }
 
   db_update('cache_feature_support')
