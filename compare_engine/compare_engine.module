@@ -477,8 +477,7 @@ function compare_engine_revisionapi($op, $node_revision) {
           $features_support_all[$item->feature_support_id] = $item->feature_support_id;
           if (!($item->parent_feature_support_compared_children)) {
             $features_support_without_children[$item->feature_support_id] = $item->feature_support_id;
-            if (!($item->cache_nid)) {
-			  //TODO remplacer partout par des []
+            if (!($item->cache_nid)) 
               $features_support_without_children_without_cache[$item->feature_support_id] = $item->feature_support_id;
             }
           }
@@ -502,16 +501,13 @@ function compare_engine_revisionapi($op, $node_revision) {
             update_compare_tree($features_support_without_children_without_cache, 'update');
           }
 
-          //We mark all feature support as ghost, so they'll not be taken account by their parent computation
-		  //TODO Maybe we don't need the ghost anymore, we can simply update the cache_feature table now
-          if (!empty($features_support_all)) {
-            db_update('cache_comparative_table')
-              ->fields(array(
-                'is_ghost' => 1,
-              ))
-              ->condition('nid', $features_support_all, 'IN')
-              ->execute();
-          }
+          //We update the feature cache now so the comparative table is updated with the most recent value
+		  db_update('cache_feature')
+            ->fields(array(
+			  'parent_feature_id' => $node_revision_parent,
+            ))
+            ->condition('nid', $node_revision->nid)
+            ->execute();
         }
 
         //We get the feature support of the parent feature, and then the children of these feature support on the compared axis to make the most efficiency update. We can use the cache table here because the only consequence is an update of cache_comparative_table.
@@ -530,7 +526,7 @@ function compare_engine_revisionapi($op, $node_revision) {
         $to_update = array();
         foreach($result as $record) {
           if (!($record->parent_feature_support_compared_children)) {
-            //We mark for update the parent feature support on feature axis which has no children on compared axis. After this update, the previous parent feature support are correctly updated with the new data thanks to the ghosted feature support, so we'll be able to publish the data without letting any wrong data behind.
+            //We mark for update the parent feature support on feature axis which has no children on compared axis. After this update, the previous parent feature support are correctly updated with the new data thanks to the we updated the parent field of the feature node, so we'll be able to publish the data without letting any wrong data behind.
             $to_update[$record->parent_feature_support] = $record->parent_feature_support;
           }
         }
@@ -539,8 +535,6 @@ function compare_engine_revisionapi($op, $node_revision) {
         if (!empty($to_update)) {
           update_compare_tree($to_update, 'update');
         }
-
-      }
 
     }
 
@@ -601,15 +595,13 @@ function compare_engine_revisionapi($op, $node_revision) {
           update_compare_tree($features_support_without_children_without_cache, 'update');
         }
 
-        //We mark all feature support as ghost, so they'll not be taken account by their parent computation
-        if (!empty($features_support_all)) {
-          db_update('cache_comparative_table')
-            ->fields(array(
-              'is_ghost' => 1,
-            ))
-            ->condition('nid', $features_support_all, 'IN')
-            ->execute();
-        }
+        //We update the feature cache now so the comparative table is updated with the most recent value
+		db_update('cache_compared')
+          ->fields(array(
+		    'parent_compared_id' => $node_revision_parent,
+          ))
+          ->condition('nid', $node_revision->nid)
+          ->execute();
 
         //We mark all feature support without children on the feature axis to update. They will be updated after the publication of feature
         if (!empty($features_support_without_children)) {
@@ -636,7 +628,7 @@ function compare_engine_revisionapi($op, $node_revision) {
         $to_update = array();
         foreach($result as $record) {
           if (!($record->parent_feature_support_feature_children)) {
-            //We mark for update the parent feature support on compared axis which has no children on feature axis. After this update, the previous parent feature support are correctly updated with the new data thanks to the ghosted feature support, so we'll be able to publish the data without letting any wrong data behind.
+            //We mark for update the parent feature support on compared axis which has no children on feature axis. After this update, the previous parent feature support are correctly updated with the new data thanks to the fact we updated the parent field of the compared node, so we'll be able to publish the data without letting any wrong data behind.
             $to_update[$record->parent_feature_support] = $record->parent_feature_support;
           }
         }
@@ -726,26 +718,6 @@ function compare_engine_revisionapi($op, $node_revision) {
             ->execute();
 	}
 
-    //Remove all the ghost marks
-    $query = db_select('node', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->join('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
-    $query->condition('ctc.is_ghost', 1, '=');
-    $result = $query->execute();
-
-    $nids = array();
-    foreach($result as $item) {
-      $nids[] = $item->nid;
-    }
-
-    if (!empty($nids)) {
-      db_update('cache_comparative_table')
-        ->fields(array(
-          'is_ghost' => 0,
-        ))
-        ->condition('nid', $nids, 'IN')
-        ->execute();
-    }
 
     //Get all the feature_support to update
     $query = db_select('node', 'n');
@@ -772,7 +744,6 @@ function compare_engine_revisionapi($op, $node_revision) {
         ->execute();
 
     }
-
 
   }
 }
@@ -854,8 +825,6 @@ function update_compare_tree($nids, $update_parent) {
 	
 	  //We keep only the feature support of the child feature node which has the same compared than the feature support. Which mean it's the children feature support on the feature axis.
       $query->where('(nf.parent_feature_id, fs.compared_id) IN (' . $res_search_feature_children . ')');
-      //The children feature support marked as ghost should not be taken account in the computation of their parent
-      $query->where('ctc.is_ghost = 0 OR ctc.is_ghost IS NULL');
       //Only published feature are used in their parent computation
       $query->condition('nf.state', 'Published', '=');
       $result = $query->execute();
@@ -891,8 +860,6 @@ function update_compare_tree($nids, $update_parent) {
 
       //We keep only the feature support of the child compared node which has the same feature than the feature support. Which mean it's the children feature support on the compared axis.
       $query->where('(nc.parent_compared_id, fs.feature_id) IN (' . $res_search_compared_children . ')');
-      //The children feature support marked as ghost should not be taken account in the computation of their parent
-      $query->where('ctc.is_ghost = 0 OR ctc.is_ghost IS NULL');
       $result = $query->execute();
 	
       $through_compared_childs = array();
