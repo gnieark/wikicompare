@@ -107,6 +107,7 @@ function feature_insert($node) {
     ->fields(array(
       'nid' => $node->nid,
       'vid' => $node->vid,
+	  'title' => $node->title,
       'parent_feature_id' => $feature_parent_feature,
 	  'type' => $node->feature_type['und'][0]['value'],
 	  'weight' => $node->feature_weight['und'][0]['value'],
@@ -199,6 +200,7 @@ function compared_insert($node) {
     ->fields(array(
       'nid' => $node->nid,
       'vid' => $node->vid,
+      'title' => $node->title,
       'parent_compared_id' => $compared_parent_compared,
     ))
     ->execute();
@@ -680,6 +682,7 @@ function compare_engine_revisionapi($op, $node_revision) {
         db_update('cache_feature')
             ->fields(array(
               'vid' => $node_revision->vid,
+		  	  'title' => $node_revision->title,
 			  'parent_feature_id' => $feature_parent_feature,
 	          'type' => $node_revision->feature_type['und'][0]['value'],
 	          'weight' => $node_revision->feature_weight['und'][0]['value'],
@@ -697,6 +700,7 @@ function compare_engine_revisionapi($op, $node_revision) {
         db_update('cache_compared')
             ->fields(array(
               'vid' => $node_revision->vid,
+		  	  'title' => $node_revision->title,
 			  'parent_compared_id' => $compared_parent_compared
             ))
             ->condition('nid', $node_revision->nid)

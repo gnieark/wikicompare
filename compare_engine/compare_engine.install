@@ -35,12 +35,6 @@ function compare_engine_schema() {
         'length' => 32,
         'default' => '',
       ),
-      'is_ghost' => array(
-        'description' => "Boolean indicated if this node will be used in the computation of his parent",
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
       'to_update' => array(
         'description' => "Boolean indicated if this node should be updated as soon as possible",
         'type' => 'int',
@@ -53,7 +47,6 @@ function compare_engine_schema() {
       'nid' => array('nid'),
     ),
     'indexes' => array(
-      'is_ghost' => array('is_ghost'),
       'to_update' => array('to_update'),
     ),
 	'foreign keys' => array(
@@ -84,6 +77,12 @@ function compare_engine_schema() {
         'description' => 'The active vid of the feature node',
         'type' => 'int',
         'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'The title of the feature node',
+        'type' => 'varchar',
+        'length' => 64,
         'not null' => TRUE,
       ),
       'parent_feature_id' => array(
@@ -150,6 +149,12 @@ function compare_engine_schema() {
         'description' => 'The active vid of the compared node',
         'type' => 'int',
         'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'The title of the feature node',
+        'type' => 'varchar',
+        'length' => 64,
         'not null' => TRUE,
       ),
       'parent_compared_id' => array(

@@ -21,29 +21,22 @@ function compare_engine_comparative_table($form_state) {
   $form['#compared_ids'] = $compared_ids;
 
   //Find all the compared item and the data required to rebuild the tree in the theme
-  $query = db_select('node', 's');
+  $query = db_select('cache_compared', 's');
   $query->addField('s', 'nid', 'nid');
   $query->addField('s', 'title', 'title');
-  $query->addField('f', 'compared_parent_compared_target_id', 'pid');
-  $query->leftjoin('field_revision_compared_parent_compared', 'f', 's.vid = f.revision_id');
-  $query->condition('s.type', 'compared', '=');
+  $query->addField('s', 'parent_compared_id', 'pid');
   $compared = $query->execute();
 
 
 
   //Find all the features which should be displayed in the table
-  $query = db_select('node', 'f');
+  $query = db_select('cache_feature', 'f');
   $query->addField('f', 'nid', 'nid');
   $query->addField('f', 'title', 'title');
-  $query->addField('t', 'feature_type_value', 'type');
-  $query->addField('p', 'feature_parent_feature_target_id', 'pid');
-  $query->addField('w', 'feature_weight_value', 'weight');
-  $query->leftjoin('field_revision_feature_parent_feature', 'p', 'f.vid = p.revision_id');
-  $query->join('field_revision_feature_state', 's', 'f.vid = s.revision_id');
-  $query->join('field_revision_feature_type', 't', 'f.vid = t.revision_id');
-  $query->join('field_revision_feature_weight', 'w', 'f.vid = w.revision_id');
-  $query->condition('f.type', 'feature', '=');
-  $query->condition('s.feature_state_value', 'Published', '=');
+  $query->addField('f', 'type', 'type');
+  $query->addField('f', 'parent_feature_id', 'pid');
+  $query->addField('f', 'weight', 'weight');
+  $query->condition('f.state', 'Published', '=');
   $features = $query->execute();
 
 
@@ -103,20 +96,17 @@ function compare_engine_comparative_table($form_state) {
   }
 
   //We get all feature support which have the feature and compared item above  
-  $query = db_select('node', 'fs');
+  $query = db_select('cache_feature_support', 'fs');
   $query->addField('fs', 'nid', 'nid');
-  $query->addField('c', 'feature_support_compared_target_id', 'cid');
-  $query->addField('f', 'feature_support_feature_target_id', 'fid');
-  $query->addField('s', 'feature_support_support_value', 'support');
+  $query->addField('fs', 'compared_id', 'cid');
+  $query->addField('fs', 'feature_id', 'fid');
+  $query->addField('fs', 'support', 'support');
   $query->addField('ctc', 'nid', 'cache_nid');
   $query->addField('ctc', 'percent', 'percent');
   $query->addField('ctc', 'css_class', 'css_class');
-  $query->leftjoin('field_revision_feature_support_compared', 'c', 'fs.vid = c.revision_id');
-  $query->leftjoin('field_revision_feature_support_feature', 'f', 'fs.vid = f.revision_id');
-  $query->join('field_revision_feature_support_support', 's', 'fs.vid = s.revision_id');
   $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
-  $query->where("fs.type = 'feature_support' AND c.feature_support_compared_target_id IN (" . implode(',',$compared_ids) . ")");
-  $query->where("f.feature_support_feature_target_id IN (" . implode(',',$feature_ids) . ")");
+  $query->where("fs.compared_id IN (" . implode(',',$compared_ids) . ")");
+  $query->where("fs.feature_id IN (" . implode(',',$feature_ids) . ")");
   $feature_supports = $query->execute();
 
 
@@ -212,9 +202,9 @@ function theme_compare_engine_comparative_table($variables) {
   //Insert the comparative table in the page
   $output .= theme('table', array('header' => $header, 'rows' => $table_rows));
 
-dpm('test before');
+
   $res = update_compare_tree(array(5), 'update');
-dpm('test after');
+
 
   return $output;
 }
