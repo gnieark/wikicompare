@@ -44,8 +44,8 @@ function compare_engine_menu() {
 function compare_engine_node_info() {
   return array(
     'feature' => array(
-      'name' => t('Feature'), 
-      'base' => 'feature', 
+      'name' => t('Feature'),
+      'base' => 'feature',
       'description' => t('TODO : Feature description'),
       'help' => t('TODO : Features submission guidelines'),
       'title_label' => t('Title'),
@@ -113,7 +113,7 @@ function feature_insert($node) {
 	  'state' => $node->feature_state['und'][0]['value'],
     ))
     ->execute();
-   
+
   // Find all compared node. We don't use cache table because node is more reliable for such important task and there is no performance problem here.
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
@@ -126,60 +126,6 @@ function feature_insert($node) {
   foreach ($result as $record) {
     $nids[] = $record;
   }
-
-
-/*
-  //At this state, the feature fields aren't updated in db yet, we need to temporary insert them so the update_compare_tree function work correctly
-  if (isset($node->feature_parent_feature['und'][0])) {
-    db_insert('field_revision_feature_parent_feature')
-      ->fields(array(
-        'entity_type' => 'node',
-        'entity_id' => $node->nid,
-        'revision_id' => $node->vid,
-        'bundle' => 'feature',
-        'delta' => '0',
-        'language' => 'und',
-        'feature_parent_feature_target_id' => $node->feature_parent_feature['und'][0]['target_id'],
-      ))
-      ->execute();
-   }
-
-  db_insert('field_revision_feature_type')
-    ->fields(array(
-      'entity_type' => 'node',
-      'entity_id' => $node->nid,
-      'revision_id' => $node->vid,
-      'bundle' => 'feature',
-      'delta' => '0',
-      'language' => 'und',
-      'feature_type_value' => $node->feature_type['und'][0]['value'],
-    ))
-    ->execute();
-
-  db_insert('field_revision_feature_weight')
-    ->fields(array(
-      'entity_type' => 'node',
-      'entity_id' => $node->nid,
-      'revision_id' => $node->vid,
-      'bundle' => 'feature',
-      'delta' => '0',
-      'language' => 'und',
-      'feature_weight_value' => $node->feature_weight['und'][0]['value'],
-    ))
-    ->execute();
-
-  db_insert('field_revision_feature_state')
-    ->fields(array(
-      'entity_type' => 'node',
-      'entity_id' => $node->nid,
-      'revision_id' => $node->vid,
-      'bundle' => 'feature',
-      'delta' => '0',
-      'language' => 'und',
-      'feature_state_value' => $node->feature_state['und'][0]['value'],
-    ))
-    ->execute();
-*/
 
   $fs_to_insert = array();
   $to_update = array();
@@ -224,31 +170,11 @@ function feature_insert($node) {
     $query->execute();
   }
 
-  //Update the compare tree with the new data  
+  //Update the compare tree with the new data
   if (!empty($to_update)) {
     update_compare_tree($to_update, 'update');
   }
 
-/*
-  //We remove the temp record before Drupal insert the true one
-  if (isset($node->feature_parent_feature['und'])) {
-    db_delete('field_revision_feature_parent_feature')
-      ->condition('entity_id', $node->nid)
-      ->execute();
-  }
-
-  db_delete('field_revision_feature_type')
-    ->condition('entity_id', $node->nid)
-    ->execute();
-
-  db_delete('field_revision_feature_weight')
-    ->condition('entity_id', $node->nid)
-    ->execute();
-
-  db_delete('field_revision_feature_state')
-    ->condition('entity_id', $node->nid)
-    ->execute();
-*/
 }
 
 
@@ -290,23 +216,6 @@ function compared_insert($node) {
     $nids[] = $record;
   }
 
-  /*
-  //At this state, the parent_compared field isn't updated in db yet, we need to temporary insert it so the update_compare_tree work correctly
-  //TODO With the refactoring of upcate_compare_tree we probably don't need it anymore
-  if (isset($node->compared_parent_compared['und'][0])) {
-    db_insert('field_revision_compared_parent_compared')
-      ->fields(array(
-        'entity_type' => 'node',
-        'entity_id' => $node->nid,
-        'revision_id' => $node->vid,
-        'bundle' => 'compared',
-        'delta' => '0',
-        'language' => 'und',
-        'compared_parent_compared_target_id' => $node->compared_parent_compared['und'][0]['target_id'],
-      ))
-      ->execute();
-  }
-  */
 
   $fs_to_insert = array();
   $to_update = array();
@@ -350,20 +259,12 @@ function compared_insert($node) {
     }
     $query->execute();
   }
-  
+
   //Update the compare tree with the new data
   if (!empty($to_update)) {
     update_compare_tree($to_update, 'update');
   }
 
-  /*
-  //We remove the temp record before Drupal insert the true one
-  if (isset($node->compared_parent_compared['und'])) {
-    db_delete('field_revision_compared_parent_compared')
-      ->condition('entity_id', $node->nid)
-      ->execute();
-  }
-  */
 }
 
 /**
@@ -389,9 +290,9 @@ function feature_delete($node) {
     $nids[] = $record->entity_id;
   }
 
-  // Delete all feature support found   
+  // Delete all feature support found
   node_delete_multiple($nids);
-  
+
   //Delete them in the feature support cache
   db_delete('cache_feature_support')
     ->condition('nid', $nids, 'in')
@@ -425,25 +326,7 @@ function feature_delete($node) {
     $query->condition('fs.feature_id', $node->feature_parent_feature['und'][0]['target_id'], '=');
     $result = $query->execute();
 	
-	/*
-    $query = db_select('node', 'f');
-    $query->addField('f', 'nid', 'nid');
-    $query->addField('fs', 'entity_id', 'parent_feature_support');
-    $query->addField('ncpnc', 'entity_id', 'parent_feature_support_compared_children');
-    //Get all feature support of the parent feature
-    $query->join('field_revision_feature_support_feature', 'fs', 'f.nid = fs.feature_support_feature_target_id');
-    //Recover children of feature support on compared axe, because we will only update feature support which has no children on compared axis
-    $query->join('field_revision_feature_support_compared', 'fc', 'fs.revision_id = fc.revision_id'); //Get compared value 
-    $query->leftjoin('field_revision_compared_parent_compared', 'ncp', 'fc.feature_support_compared_target_id = ncp.compared_parent_compared_target_id'); //Get compared node children
-    $query->leftjoin('node', 'ncpn', 'ncp.revision_id = ncpn.vid'); ////Get compared node children
-    $query->leftjoin('field_revision_feature_support_compared', 'ncpnc', 'ncpn.nid = ncpnc.feature_support_compared_target_id'); //Get feature support of the compared node children
-    $query->leftjoin('field_revision_feature_support_feature', 'ncpncnf', 'ncpnc.revision_id =  ncpncnf.revision_id'); //Get feature value of the feature support of the compared node children
-    $query->where('ncpncnf.feature_support_feature_target_id = f.nid OR ncp.compared_parent_compared_target_id IS NULL'); //We keep only the feature support of the compared node children which has the same feature than the first feature support. Which mean it's the feature support children on the compared axis
-
-    $query->condition('f.nid', $node->feature_parent_feature['und'][0]['target_id'], '=');
-    $result = $query->execute();
-*/
-
+	
     $to_update = array();
     foreach($result as $record) {
       if (!($record->parent_feature_support_compared_children)) {
@@ -457,7 +340,7 @@ function feature_delete($node) {
   if (!empty($to_update)) {
     update_compare_tree($to_update, 'update');
   }
-  
+
 }
 
 /**
@@ -503,7 +386,7 @@ function compared_delete($node) {
     ))
     ->condition('parent_compared_id', $node->nid)
     ->execute();
-  
+
   $to_update = array();
   if (isset($node->compared_parent_compared['und'][0])) {
     //Find all parent feature support on compared axis. We can use the cache table here because the only consequence is an update of cache_comparative_table.
@@ -518,25 +401,6 @@ function compared_delete($node) {
     $query->where('nfpnf.compared_id = fs.compared_id OR nfp.parent_feature_id IS NULL'); //We keep only the feature support of the feature node children which has the same compared than the first feature support. Which mean it's the feature support children on the feature axis
     $query->condition('fs.compared_id', $node->compared_parent_compared['und'][0]['target_id'], '=');
     $result = $query->execute();
-	
-	/*
-    $query = db_select('node', 'c');
-    $query->addField('c', 'nid', 'nid');
-    $query->addField('fs', 'entity_id', 'parent_feature_support');
-    $query->addField('nfpnf', 'entity_id', 'parent_feature_support_feature_children');
-    //Get all feature support of the parent compared
-    $query->join('field_revision_feature_support_compared', 'fs', 'c.nid = fs.feature_support_compared_target_id');
-    //Recover children of feature support on feature axis, because we will only update feature support which has no children on feature axis
-    $query->join('field_revision_feature_support_feature', 'ff', 'fs.revision_id = ff.revision_id'); //Get feature value
-    $query->leftjoin('field_revision_feature_parent_feature', 'nfp', 'ff.feature_support_feature_target_id = nfp.feature_parent_feature_target_id'); //Get feature node children
-    $query->leftjoin('node', 'nfpn', 'nfp.revision_id = nfpn.vid'); //Get feature node children
-    $query->leftjoin('field_revision_feature_support_feature', 'nfpnf', 'nfpn.nid = nfpnf.feature_support_feature_target_id'); //Get feature support of the feature node children
-    $query->leftjoin('field_revision_feature_support_compared', 'nfpnfnc', 'nfpnf.revision_id =  nfpnfnc.revision_id'); //Get compared value of the feature support of the feature node children
-    $query->where('nfpnfnc.feature_support_compared_target_id = c.nid OR nfp.feature_parent_feature_target_id IS NULL'); //We keep only the feature support of the feature node children which has the same compared than the first feature support. Which mean it's the feature support children on the feature axis
-
-    $query->condition('c.nid', $node->compared_parent_compared['und'][0]['target_id'], '=');
-    $result = $query->execute();
-	*/
 
     foreach($result as $record) {
       if (!($record->parent_feature_support_feature_children)) {
@@ -579,7 +443,7 @@ function compare_engine_revisionapi($op, $node_revision) {
       } else {
         $node_revision_parent = NULL;
       }
- 
+
       if ($current_node->feature_parent_feature) {
         $current_node_parent = $current_node->feature_parent_feature['und'][0]['target_id'];
       } else {
@@ -605,25 +469,6 @@ function compare_engine_revisionapi($op, $node_revision) {
         $query->condition('fs.feature_id', $node_revision->nid, '=');
         $result = $query->execute();		
 		
-		/*
-        $query = db_select('node', 'n');
-        $query->addField('n', 'nid', 'nid');
-        $query->addField('fs', 'entity_id', 'feature_support_id');
-        $query->addField('ncpnc', 'entity_id', 'parent_feature_support_compared_children');
-        $query->addField('ctc', 'nid', 'cache_nid');
-        //Get feature_support of the feature
-        $query->join('field_revision_feature_support_feature', 'fs', 'n.nid = fs.feature_support_feature_target_id');
-        $query->join('cache_comparative_table', 'ctc', 'fs.entity_id = ctc.nid');
-        //Recover children of feature support on compared axe, because we will only update feature support which has no children on compared axis
-        $query->join('field_revision_feature_support_compared', 'fc', 'fs.revision_id = fc.revision_id'); //Get compared value
-        $query->leftjoin('field_revision_compared_parent_compared', 'ncp', 'fc.feature_support_compared_target_id = ncp.compared_parent_compared_target_id'); //Get compared node children
-        $query->leftjoin('node', 'ncpn', 'ncp.revision_id = ncpn.vid'); //Get compared node children
-        $query->leftjoin('field_revision_feature_support_compared', 'ncpnc', 'ncpn.nid = ncpnc.feature_support_compared_target_id'); //Get feature support of the compared node children
-        $query->leftjoin('field_revision_feature_support_feature', 'ncpncnf', 'ncpnc.revision_id =  ncpncnf.revision_id'); //Get feature value of the feature support of the compared node children
-        $query->where('ncpncnf.feature_support_feature_target_id = n.nid OR ncp.compared_parent_compared_target_id IS NULL'); //We keep only the feature support of the compared node children which has the same feature than the first feature support. Which mean it's the feature support children on the compared axis
-        $query->condition('n.nid', $node_revision->nid, '=');
-        $result = $query->execute();
-		*/
 
         $features_support_all = array();
         $features_support_without_children = array();
@@ -681,23 +526,6 @@ function compare_engine_revisionapi($op, $node_revision) {
         $query->condition('fs.feature_id', $current_node_parent, '=');
         $result = $query->execute();		
 		
-		/*
-        $query = db_select('node', 'f');
-        $query->addField('f', 'nid', 'nid');
-        $query->addField('fs', 'entity_id', 'parent_feature_support');
-        $query->addField('ncpnc', 'entity_id', 'parent_feature_support_compared_children');
-        //Get feature_support of the feature
-        $query->join('field_revision_feature_support_feature', 'fs', 'f.nid = fs.feature_support_feature_target_id');
-        //Recover children of feature support on compared axe, because we will only update feature support which has no children on compared axis
-        $query->join('field_revision_feature_support_compared', 'fc', 'fs.revision_id = fc.revision_id'); //Get compared value
-        $query->leftjoin('field_data_compared_parent_compared', 'ncp', 'fc.feature_support_compared_target_id = ncp.compared_parent_compared_target_id'); //Get compared node children
-        $query->leftjoin('node', 'ncpn', 'ncp.revision_id = ncpn.vid'); //Get compared node children
-        $query->leftjoin('field_revision_feature_support_compared', 'ncpnc', 'ncpn.nid = ncpnc.feature_support_compared_target_id'); //Get feature support of the compared node children
-        $query->leftjoin('field_revision_feature_support_feature', 'ncpncnf', 'ncpnc.revision_id =  ncpncnf.revision_id'); //Get feature value of the feature support of the compared node children
-        $query->where('ncpncnf.feature_support_feature_target_id = f.nid OR ncp.compared_parent_compared_target_id IS NULL'); //We keep only the feature support of the compared node children which has the same feature than the first feature support. Which mean it's the feature support children on the compared axis
-        $query->condition('f.nid', $current_node_parent, '=');
-        $result = $query->execute();
-		*/
 
         $to_update = array();
         foreach($result as $record) {
@@ -729,7 +557,7 @@ function compare_engine_revisionapi($op, $node_revision) {
       } else {
         $node_revision_parent = NULL;
       }
- 
+
       if ($current_node->compared_parent_compared) {
         $current_node_parent = $current_node->compared_parent_compared['und'][0]['target_id'];
       } else {
@@ -754,25 +582,6 @@ function compare_engine_revisionapi($op, $node_revision) {
         $query->condition('fs.compared_id', $node_revision->nid, '=');
         $result = $query->execute();
 		
-		/*
-        $query = db_select('node', 'n');
-        $query->addField('n', 'nid', 'nid');
-        $query->addField('fs', 'entity_id', 'feature_support_id');
-        $query->addField('nfpnf', 'entity_id', 'parent_feature_support_feature_children');
-        $query->addField('ctc', 'nid', 'cache_nid');
-        //Get feature_support of the compared
-        $query->join('field_revision_feature_support_compared', 'fs', 'n.nid = fs.feature_support_compared_target_id');
-        $query->join('cache_comparative_table', 'ctc', 'fs.entity_id = ctc.nid');
-        //Recover children of feature support on feature axis, because we will only update feature support which has no children on feature axis
-        $query->join('field_revision_feature_support_feature', 'ff', 'fs.revision_id = ff.revision_id'); //Get feature value
-        $query->leftjoin('field_revision_feature_parent_feature', 'nfp', 'ff.feature_support_feature_target_id = nfp.feature_parent_feature_target_id'); //Get feature node children
-        $query->leftjoin('node', 'nfpn', 'nfp.revision_id = nfpn.vid'); //Get feature node children
-        $query->leftjoin('field_revision_feature_support_feature', 'nfpnf', 'nfpn.nid = nfpnf.feature_support_feature_target_id'); //Get feature support of the feature node children
-        $query->leftjoin('field_revision_feature_support_compared', 'nfpnfnc', 'nfpnf.revision_id =  nfpnfnc.revision_id'); //Get feature value of the feature support of the feature node children
-        $query->where('nfpnfnc.feature_support_compared_target_id = n.nid OR nfp.feature_parent_feature_target_id IS NULL'); //We keep only the feature support of the feature node children which has the same compared than the first feature support. Which mean it's the feature support children on the feature axis
-        $query->condition('n.nid', $node_revision->nid, '=');
-        $result = $query->execute();
-		*/
 
         $features_support_all = array();
         $features_support_without_children = array();
@@ -823,24 +632,6 @@ function compare_engine_revisionapi($op, $node_revision) {
         $query->where('nfpnf.compared_id = fs.compared_id OR nfp.parent_feature_id IS NULL'); //We keep only the feature support of the feature node children which has the same compared than the first feature support. Which mean it's the feature support children on the feature axis
         $query->condition('fs.compared_id', $current_node_parent, '=');
         $result = $query->execute();		
-		
-		/*
-        $query = db_select('node', 'c');
-        $query->addField('c', 'nid', 'nid');
-        $query->addField('fs', 'entity_id', 'parent_feature_support');
-        $query->addField('nfpnf', 'entity_id', 'parent_feature_support_feature_children');
-        //Get feature_support of the compared
-        $query->join('field_revision_feature_support_compared', 'fs', 'c.nid = fs.feature_support_compared_target_id');
-        //Recover children of feature support on feature axis, because we will only update feature support which has no children on feature axis
-        $query->join('field_revision_feature_support_feature', 'ff', 'fs.revision_id = ff.revision_id'); //Get feature value
-        $query->leftjoin('field_revision_feature_parent_feature', 'nfp', 'ff.feature_support_feature_target_id = nfp.feature_parent_feature_target_id'); //Get feature node children
-        $query->leftjoin('node', 'nfpn', 'nfp.revision_id = nfpn.vid'); //Get feature node children
-        $query->leftjoin('field_revision_feature_support_feature', 'nfpnf', 'nfpn.nid = nfpnf.feature_support_feature_target_id'); //Get feature support of the feature node children
-        $query->leftjoin('field_revision_feature_support_compared', 'nfpnfnc', 'nfpnf.revision_id =  nfpnfnc.revision_id'); //Get feature value of the feature support of the feature node children
-        $query->where('nfpnfnc.feature_support_compared_target_id = c.nid OR nfp.feature_parent_feature_target_id IS NULL'); //We keep only the feature support of the feature node children which has the same compared than the first feature support. Which mean it's the feature support children on the feature axis
-        $query->condition('c.nid', $current_node_parent, '=');
-        $result = $query->execute();
-		*/
 
         $to_update = array();
         foreach($result as $record) {
@@ -887,7 +678,7 @@ function compare_engine_revisionapi($op, $node_revision) {
    * Action to do after a node is published
    */
   if ($op == 'post publish') {
-  
+
     //Update the cache tables with the new values
     if ($node_revision->type == 'feature') {
 	    $feature_parent_feature = 0;
@@ -935,7 +726,7 @@ function compare_engine_revisionapi($op, $node_revision) {
             ->execute();
 	}
 
-    //Remove all the ghost marks 
+    //Remove all the ghost marks
     $query = db_select('node', 'n');
     $query->addField('n', 'nid', 'nid');
     $query->join('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
@@ -981,7 +772,7 @@ function compare_engine_revisionapi($op, $node_revision) {
         ->execute();
 
     }
-    
+
 
   }
 }
@@ -989,7 +780,7 @@ function compare_engine_revisionapi($op, $node_revision) {
  /*
   * The main function to update the percent and css_class for each feature_support
   * It'll find all children on compared and feature axis for the ids passed in argument, compute the percent thanks to this informations and feature type, and finally if the percent changed it'll update the parents on feature and compared axis.
-  * This is a recursive function, which will call itself on children side if a cache percent is missing and parent side if the percent computed change, and in both the feature and compared axis. 
+  * This is a recursive function, which will call itself on children side if a cache percent is missing and parent side if the percent computed change, and in both the feature and compared axis.
   */
 function update_compare_tree($nids, $update_parent) {
 
@@ -1004,7 +795,7 @@ function update_compare_tree($nids, $update_parent) {
     $query->addField('fs', 'support', 'support');
     $query->addField('nf', 'type', 'type');
     $query->addField('nfpnf', 'nid', 'parent_fs_through_feature_nid');
-    $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid'); 
+    $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid');
 
     //Get parent feature support through feature axis
     $query->join('cache_feature', 'nf', 'fs.feature_id = nf.nid'); //Get feature node
@@ -1019,39 +810,6 @@ function update_compare_tree($nids, $update_parent) {
     $query->where('ncpnc.feature_id = nf.nid OR nc.parent_compared_id = 0'); //We keep only the feature support of the parent compared node which has the same feature than the feature support. Which mean it's the parent feature support on the compared axis.
     $result = $query->execute();
 	
-/*
-    $query = db_select('node', 'fs');
-    $query->addField('fs', 'nid', 'nid');
-    $query->addField('ff', 'feature_support_feature_target_id', 'fid');
-    $query->addField('fc', 'feature_support_compared_target_id', 'cid');
-    $query->addField('fss', 'feature_support_support_value', 'support');
-    $query->addField('nft', 'feature_type_value', 'type');
-    $query->addField('nfpnf', 'entity_id', 'parent_fs_through_feature_nid');
-    $query->addField('ncpnc', 'entity_id', 'parent_fs_through_compared_nid');
-
-    //Get parent feature support through feature axis
-    $query->join('field_revision_feature_support_feature', 'ff', 'fs.vid = ff.revision_id'); //Get feature node
-    $query->join('node', 'nf', 'ff.feature_support_feature_target_id = nf.nid'); //Get feature node
-    $query->leftjoin('field_revision_feature_parent_feature', 'nfp', 'nf.vid = nfp.revision_id'); //Get parent feature node
-    $query->leftjoin('field_revision_feature_support_feature', 'nfpnf', 'nfp.feature_parent_feature_target_id = nfpnf.feature_support_feature_target_id'); //Get feature support of the parent feature node
-    $query->leftjoin('field_revision_feature_support_compared', 'nfpnfnc', 'nfpnf.revision_id = nfpnfnc.revision_id'); //Get compared value of feature support of the parent feature node
-
-    //Get parent feature support through feature axis
-    $query->join('field_revision_feature_support_compared', 'fc', 'fs.vid = fc.revision_id'); //Get compared node
-    $query->join('node', 'nc', 'fc.feature_support_compared_target_id = nc.nid'); //Get compared node
-    $query->leftjoin('field_revision_compared_parent_compared', 'ncp', 'nc.vid = ncp.revision_id'); //Get parent compared node
-    $query->leftjoin('field_revision_feature_support_compared', 'ncpnc', 'ncp.compared_parent_compared_target_id = ncpnc.feature_support_compared_target_id'); //Get feature support of the parent compared node
-    $query->leftjoin('field_revision_feature_support_feature', 'ncpncnf', 'ncpnc.revision_id =  ncpncnf.revision_id'); //Get compared value of feature support of the parent compared node
-
-    //Get some other needed value for the computation
-    $query->join('field_revision_feature_support_support', 'fss', 'fs.vid = fss.revision_id');
-    $query->join('field_revision_feature_type', 'nft', 'nf.vid = nft.revision_id');
-
-    $query->condition('fs.nid', $nids, 'IN');
-    $query->where('nfpnfnc.feature_support_compared_target_id = fc.feature_support_compared_target_id OR nfp.feature_parent_feature_target_id IS NULL'); //We keep only the feature support of the parent feature node which has the same compared than the feature support. Which mean it's the parent feature support on the feature axis.
-    $query->where('ncpncnf.feature_support_feature_target_id = ff.feature_support_feature_target_id OR ncp.compared_parent_compared_target_id IS NULL'); //We keep only the feature support of the parent compared node which has the same feature than the feature support. Which mean it's the parent feature support on the compared axis.
-    $result = $query->execute();
-*/
 
     $nodes = array();
     $res_search_feature_children = '';
@@ -1089,11 +847,11 @@ function update_compare_tree($nids, $update_parent) {
       $query->addField('nf', 'weight', 'weight');
 
       //Get parent feature
-      $query->leftjoin('cache_feature', 'nf', 'fs.feature_id = nf.nid');	  
+      $query->leftjoin('cache_feature', 'nf', 'fs.feature_id = nf.nid');	
 
-      //Get the percent computed of the children, if already computed     
-      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');	  
-	  
+      //Get the percent computed of the children, if already computed
+      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');	
+	
 	  //We keep only the feature support of the child feature node which has the same compared than the feature support. Which mean it's the children feature support on the feature axis.
       $query->where('(nf.parent_feature_id, fs.compared_id) IN (' . $res_search_feature_children . ')');
       //The children feature support marked as ghost should not be taken account in the computation of their parent
@@ -1102,37 +860,6 @@ function update_compare_tree($nids, $update_parent) {
       $query->condition('nf.state', 'Published', '=');
       $result = $query->execute();
 	
-	/*
-      //Get children feature support through feature axis
-      $query = db_select('node', 'fs');
-      $query->addField('fs', 'nid', 'nid');
-      $query->addField('ff', 'feature_support_feature_target_id', 'fid');
-      $query->addField('fc', 'feature_support_compared_target_id', 'cid');
-      $query->addField('nff','feature_parent_feature_target_id', 'parent_fid');
-      $query->addField('ctc', 'nid', 'cache_nid');
-      $query->addField('ctc', 'percent', 'percent');
-      $query->addField('nfw', 'feature_weight_value', 'weight');
-
-      $query->join('field_revision_feature_support_compared', 'fc', 'fs.vid = fc.revision_id');
-      $query->join('field_revision_feature_support_feature', 'ff', 'fs.vid = ff.revision_id');
-      //Get parent feature
-      $query->leftjoin('node', 'nf', 'ff.feature_support_feature_target_id = nf.nid');
-      $query->leftjoin('field_revision_feature_parent_feature', 'nff', 'nf.vid = nff.revision_id');
-
-      //Get the percent computed of the children, if already computed     
-      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
-      //Get some needed value for computation 
-      $query->join('field_revision_feature_weight', 'nfw', 'nf.vid = nfw.revision_id');
-      $query->join('field_revision_feature_state', 'nfs', 'nf.vid = nfs.revision_id');
-
-      //We keep only the feature support of the child feature node which has the same compared than the feature support. Which mean it's the children feature support on the feature axis.
-      $query->where('(nff.feature_parent_feature_target_id, fc.feature_support_compared_target_id) IN (' . $res_search_feature_children . ')');
-      //The children feature support marked as ghost should not be taken account in the computation of their parent
-      $query->where('ctc.is_ghost = 0 OR ctc.is_ghost IS NULL');
-      //Only published feature are used in their parent computation
-      $query->condition('nfs.feature_state_value', 'Published', '=');
-      $result = $query->execute();
-*/
       $through_feature_childs = array();
       foreach($result as $record) {
         //We assign the children feature support in a array with fid and cid as key so their parents can recover them with fid and cid key
@@ -1140,7 +867,7 @@ function update_compare_tree($nids, $update_parent) {
       }
 
     }
-  
+
 
     $through_compared_childs = array();
 
@@ -1159,7 +886,7 @@ function update_compare_tree($nids, $update_parent) {
       //Get parent compared
       $query->leftjoin('cache_compared', 'nc', 'fs.compared_id = nc.nid');
 
-      //Get the percent computed of the children, if already computed 
+      //Get the percent computed of the children, if already computed
       $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
 
       //We keep only the feature support of the child compared node which has the same feature than the feature support. Which mean it's the children feature support on the compared axis.
@@ -1167,33 +894,7 @@ function update_compare_tree($nids, $update_parent) {
       //The children feature support marked as ghost should not be taken account in the computation of their parent
       $query->where('ctc.is_ghost = 0 OR ctc.is_ghost IS NULL');
       $result = $query->execute();
-	  
-	/*
-      //Get children feature support through feature axis
-      $query = db_select('node', 'fs');
-      $query->addField('fs', 'nid', 'nid');
-      $query->addField('ff', 'feature_support_feature_target_id', 'fid');
-      $query->addField('fc', 'feature_support_compared_target_id', 'cid');
-      $query->addField('ncp','compared_parent_compared_target_id', 'parent_cid');
-      $query->addField('ctc', 'nid', 'cache_nid');
-      $query->addField('ctc', 'percent', 'percent');
-      $query->addField('ctc', 'css_class', 'css_class');
-
-      $query->join('field_revision_feature_support_feature', 'ff', 'fs.vid = ff.revision_id');
-      $query->join('field_revision_feature_support_compared', 'fc', 'fs.vid = fc.revision_id');
-      //Get parent compared
-      $query->leftjoin('node', 'nc', 'fc.feature_support_compared_target_id = nc.nid');
-      $query->leftjoin('field_revision_compared_parent_compared', 'ncp', 'nc.vid = ncp.revision_id');
-
-      //Get the percent computed of the children, if already computed 
-      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
-
-      //We keep only the feature support of the child compared node which has the same feature than the feature support. Which mean it's the children feature support on the compared axis.
-      $query->where('(ncp.compared_parent_compared_target_id, ff.feature_support_feature_target_id) IN (' . $res_search_compared_children . ')');
-      //The children feature support marked as ghost should not be taken account in the computation of their parent
-      $query->where('ctc.is_ghost = 0 OR ctc.is_ghost IS NULL');
-      $result = $query->execute();
-*/
+	
       $through_compared_childs = array();
       foreach($result as $record) {
         //We assign the children feature support in a array with fid and cid as key so they parent can recover them with fid and cid key
@@ -1246,7 +947,7 @@ function update_compare_tree($nids, $update_parent) {
         }
       }
     }
-  
+
 
     if (!empty($to_update_compared_childs)) {
       //Update the children on compared axis with the flag no-update-compared. This flag ensure it'll not try to update parent on the same axis than the one we use here
@@ -1331,7 +1032,7 @@ function update_compare_tree($nids, $update_parent) {
     } elseif ($node->type == 'parent-hightest-percentage') {
 
       $node->percent = 0;
-      $node->css_class = 'cell-support-no'; 
+      $node->css_class = 'cell-support-no';
       foreach($node->through_feature_childs as $child) {
 
           //Security if weight field is misconfigured
@@ -1360,8 +1061,8 @@ function update_compare_tree($nids, $update_parent) {
       }
 
     }
-    
-  
+
+
     //Update the value computed in database, only if the value changed
     if (!(($node->percent == $node->cache_percent) && ($node->css_class == $node->cache_css_class))) {
       if ($node->cache_nid) {
