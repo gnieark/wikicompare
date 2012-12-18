@@ -85,18 +85,18 @@ function compare_engine_comparative_table($form_state) {
     $form['feature_items'][$item->nid]['#id'] = $item->nid;
     //We set the type so we can adapt the line to the type later
     $form['feature_items'][$item->nid]['#type'] = $item->type;
-    //We create the array now in case there is no feature supports
-    $form['feature_items'][$item->nid]['#feature_supports'] = array();
+    //We create the array now in case there is no implementations
+    $form['feature_items'][$item->nid]['#implementations'] = array();
 
 
-    //We set the feature ids in this array so we can build the feature support database query later
+    //We set the feature ids in this array so we can build the implementation database query later
     $feature_ids[] = (int) $item->nid;
 
 
   }
 
-  //We get all feature support which have the feature and compared item above  
-  $query = db_select('cache_feature_support', 'fs');
+  //We get all implementation which have the feature and compared item above  
+  $query = db_select('cache_implementation', 'fs');
   $query->addField('fs', 'nid', 'nid');
   $query->addField('fs', 'compared_id', 'cid');
   $query->addField('fs', 'feature_id', 'fid');
@@ -107,21 +107,21 @@ function compare_engine_comparative_table($form_state) {
   $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
   $query->where("fs.compared_id IN (" . implode(',',$compared_ids) . ")");
   $query->where("fs.feature_id IN (" . implode(',',$feature_ids) . ")");
-  $feature_supports = $query->execute();
+  $implementations = $query->execute();
 
 
 
-  //Then we set the feature support in the corresponding feature array, with the compared nid as key
-  foreach ($feature_supports as $item) {
+  //Then we set the implementation in the corresponding feature array, with the compared nid as key
+  foreach ($implementations as $item) {
 
-    //If there is no cache for the feature_support, we call the function to create it and then recover the value.
+    //If there is no cache for the implementation, we call the function to create it and then recover the value.
     if(!$item->cache_nid) {
       $res = update_compare_tree(array($item->nid), 'update');
       $item->percent = $res[$item->nid]['percent'];
       $item->css_class = $res[$item->nid]['css_class'];
     }
 
-    $form['feature_items'][$item->fid]['#feature_supports'][$item->cid] = array(
+    $form['feature_items'][$item->fid]['#implementations'][$item->cid] = array(
 
       'title' => array(
         '#markup' => check_plain($item->nid),
@@ -241,8 +241,8 @@ function build_rows_feature($support_array, &$list, $parent, $depth){
         //In the first column, add the feature name with indentation corresponding of the depth
         $array['data'][] = theme('indentation', array('size' => $depth)) . drupal_render($child['title']) . '<br/> Weight : ' .  drupal_render($child['weight']) . '<br/> Type : ' . $child['#type'];
         //Then add as many columns as the number of compared item in the table.
-        foreach($child['#feature_supports'] as $feature_support){
-          $array['data'][] = drupal_render($feature_support['title']) . '<br/>' . drupal_render($feature_support['percent']) . '%<br/> CSS : ' . drupal_render($feature_support['css_class']) . '<br/> Support :  ' . drupal_render($feature_support['support']);
+        foreach($child['#implementations'] as $implementation){
+          $array['data'][] = drupal_render($implementation['title']) . '<br/>' . drupal_render($implementation['percent']) . '%<br/> CSS : ' . drupal_render($implementation['css_class']) . '<br/> Support :  ' . drupal_render($implementation['support']);
         }
         //Add the parent row in the returned array
         $rows[] = $array;

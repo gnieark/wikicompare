@@ -13,13 +13,13 @@
  */
 function compare_engine_schema() {
 
-  //Create cache table for the comparative_table computation, so parent feature_support percent and css_class are computed at each change on feature or feature_support and not at each read of the comparative table
+  //Create cache table for the comparative_table computation, so parent implementation percent and css_class are computed at each change on feature or implementation and not at each read of the comparative table
   $schema['cache_comparative_table'] = array(
 
     'description' => 'Cache table for comparative table',
     'fields' => array(
       'nid' => array(
-        'description' => 'The nid of the feature support node',
+        'description' => 'The nid of the implementation node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -50,7 +50,7 @@ function compare_engine_schema() {
   );
 
   /*
-   * Create cache tables for feature, compared and feature support records.
+   * Create cache tables for feature, compared and implementation records.
    * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
    * This will allow us to make far less join in sql query on comparative table computation.
    */
@@ -191,36 +191,36 @@ function compare_engine_schema() {
   ); 
   
   
-  $schema['cache_feature_support'] = array(
+  $schema['cache_implementation'] = array(
 
-    'description' => 'Cache table for feature support. Used so the percentage of comparative table are computed faster.',
+    'description' => 'Cache table for implementation. Used so the percentage of comparative table are computed faster.',
     'fields' => array(
       'nid' => array(
-        'description' => 'The nid of the feature support node',
+        'description' => 'The nid of the implementation node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'vid' => array(
-        'description' => 'The active vid of the feature support node',
+        'description' => 'The active vid of the implementation node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'feature_id' => array(
-        'description' => 'The feature id of the feature support node',
+        'description' => 'The feature id of the implementation node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'compared_id' => array(
-        'description' => 'The compared id of the feature support node',
+        'description' => 'The compared id of the implementation node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'support' => array(
-        'description' => "Boolean indicated if this feature support is supported or not",
+        'description' => "Boolean indicated if this implementation is supported or not",
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
@@ -282,7 +282,7 @@ function compare_engine_install() {
   $types = node_type_get_types();
   node_add_body_field( $types[ 'feature' ] , $t('Description'));
   node_add_body_field( $types[ 'compared' ] , $t('Description'));
-  node_add_body_field( $types[ 'feature_support' ] , $t('Description'));
+  node_add_body_field( $types[ 'implementation' ] , $t('Description'));
 
 
   /*
@@ -582,19 +582,19 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 	
 	
   /*
-  * Feature Support type related
+  * Implementation type related
   */
 
-  //Set Feature Support variables
-  variable_set('node_options_feature_support', array('status','revision','revision_moderation'));
-  variable_set('node_submitted_feature_support', '0');
+  //Set Implementation variables
+  variable_set('node_options_implementation', array('status','revision','revision_moderation'));
+  variable_set('node_submitted_implementation', '0');
   
   
   
 	//Create feature field
 
     $field = array(
-      'field_name' => 'feature_support_feature',
+      'field_name' => 'implementation_feature',
       'type' => 'entityreference',
       'cardinality' => 1,
       'settings' => array(
@@ -605,9 +605,9 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     field_create_field($field);
 
     $instance = array(
-      'field_name' => 'feature_support_feature',
+      'field_name' => 'implementation_feature',
       'entity_type' => 'node',
-      'bundle' => 'feature_support',
+      'bundle' => 'implementation',
       'label' => 'Feature',
 	  'description' => 'TODO : La fonctionnalite supporte, je pense que ce sera la peine de laisser une description. Ce champ sera grise pour tous.',
       'widget' => array(
@@ -625,7 +625,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 	//Create compared field
 
     $field = array(
-      'field_name' => 'feature_support_compared',
+      'field_name' => 'implementation_compared',
       'type' => 'entityreference',
       'cardinality' => 1,
       'settings' => array(
@@ -636,9 +636,9 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     field_create_field($field);
 
     $instance = array(
-      'field_name' => 'feature_support_compared',
+      'field_name' => 'implementation_compared',
       'entity_type' => 'node',
-      'bundle' => 'feature_support',
+      'bundle' => 'implementation',
       'label' => 'Compared',
 	  'description' => 'TODO : Le software qui supporte la fonctionnalite. Pas la peine de laisser une description, le champ sera grise pour tous.',
       'widget' => array(
@@ -656,7 +656,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 	//Create body field
 
 /*    $field = array(
-      'field_name' => 'feature_support_body',
+      'field_name' => 'implementation_body',
       'type' => 'text_long',
       'cardinality' => 1
     );
@@ -665,7 +665,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     $instance = array(
       'field_name' => 'body',
       'entity_type' => 'node',
-      'bundle' => 'feature_support',
+      'bundle' => 'implementation',
       'label' => 'Description',
       'description' => 'TODO :',
       'required' => 1,
@@ -678,16 +678,16 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 	//Create Label Cell field
 
     $field = array(
-      'field_name' => 'feature_support_label_cell',
+      'field_name' => 'implementation_label_cell',
       'type' => 'text',
       'cardinality' => 1
     );
     field_create_field($field);
 
     $instance = array(
-      'field_name' => 'feature_support_label_cell',
+      'field_name' => 'implementation_label_cell',
       'entity_type' => 'node',
-      'bundle' => 'feature_support',
+      'bundle' => 'implementation',
       'label' => 'Label Cell',
       'description' => 'Texte qui s\'affichera dans la cellule du tableau. Utile notamment dans un parent pour indiquer un choix fait par le software (ex : Parent "Langage de programmation"  Label : "Python")',
       'widget' => array(
@@ -700,7 +700,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     //Create support field
 
     $field = array(
-      'field_name' => 'feature_support_support',
+      'field_name' => 'implementation_support',
       'type' => 'list_text',
       'cardinality' => 1,
       'settings' => array(
@@ -713,9 +713,9 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     field_create_field($field);
 
     $instance = array(
-      'field_name' => 'feature_support_support',
+      'field_name' => 'implementation_support',
       'entity_type' => 'node',
-      'bundle' => 'feature_support',
+      'bundle' => 'implementation',
       'label' => 'Support',
       'description' => 'TODO : Ce champ n\'est visible que si la feature n\'est pas un parent feature',
       'default_value' => array(
@@ -734,7 +734,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 	//Create Proofs field
 
     $field = array(
-      'field_name' => 'feature_support_proofs',
+      'field_name' => 'implementation_proofs',
       'type' => 'text',
       'cardinality' => FIELD_CARDINALITY_UNLIMITED,
       'settings' => array(
@@ -744,9 +744,9 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     field_create_field($field);
 
     $instance = array(
-      'field_name' => 'feature_support_proofs',
+      'field_name' => 'implementation_proofs',
       'entity_type' => 'node',
-      'bundle' => 'feature_support',
+      'bundle' => 'implementation',
       'label' => 'Proofs',
       'description' => 'TODO : chaque texte sera une url qui pointera vers une video/screenshot prouvant le support de la fonctionnalité. Si le champ est vide, le code couleur sur la page sera différent et allégé. Les modérateurs seront encouragé dans cette description à supprimer les preuves non valables.',
       'widget' => array(
@@ -781,7 +781,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   $compared_child_min_per_level = 2;
   $compared_child_max_per_level = 3;
 
-  $feature_support_support_chance = 3;
+  $implementation_support_chance = 3;
 
 
   $parent_id = 0;
@@ -791,15 +791,15 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   create_compared_children($compared_min_depth, $compared_max_depth, 'Compared ', $compared_child_min_per_level, $compared_child_max_per_level, $depth, $parent_id);
 
 
-  $feature_supports = db_query("SELECT nid FROM node WHERE type = 'feature_support'");
+  $implementations = db_query("SELECT nid FROM node WHERE type = 'implementation'");
 
   $to_update = array();
-  foreach($feature_supports as $item) {
+  foreach($implementations as $item) {
 
     $node = node_load($item->nid);
 
-    if (rand(1, $feature_support_support_chance) != $feature_support_support_chance) {
-      $node->feature_support_support[$node->language][0]['value'] = 'Supported';
+    if (rand(1, $implementation_support_chance) != $implementation_support_chance) {
+      $node->implementation_support[$node->language][0]['value'] = 'Supported';
 	  $cache_to_update_support[] = $node->nid;
 	  
       node_save($node);
@@ -809,7 +809,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
   }
 
-  db_update('cache_feature_support')
+  db_update('cache_implementation')
     ->fields(array(
       'support' => 1,
     ))
@@ -981,10 +981,10 @@ function compare_engine_uninstall() {
 
 
 
-  //Delete all nodes of feature support type.
+  //Delete all nodes of implementation type.
 
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
-  $result = db_query($sql, array(':type' => 'feature_support'));
+  $result = db_query($sql, array(':type' => 'implementation'));
   $nids = array();
   foreach ($result as $row) {
     $nids[] = $row->nid;
@@ -992,7 +992,7 @@ function compare_engine_uninstall() {
 
   node_delete_multiple($nids);
 
-  //Delete all fields of feature support type.
+  //Delete all fields of implementation type.
 
   //foreach (array_keys(_feature_installed_fields()) as $field) {
   //  field_delete_field($field);
@@ -1000,19 +1000,19 @@ function compare_engine_uninstall() {
 
   //Delete all variable of compared type.
 
-  variable_del('node_options_feature_support');
-  variable_del('node_submitted_feature_support');
+  variable_del('node_options_implementation');
+  variable_del('node_submitted_implementation');
 
   //Delete compared content type.
 
-  field_delete_field('feature_support_feature');
-  field_delete_field('feature_support_compared'); 
-  field_delete_field('feature_support_label_cell');
-  field_delete_field('feature_support_support');
-  field_delete_field('feature_support_proofs');
+  field_delete_field('implementation_feature');
+  field_delete_field('implementation_compared'); 
+  field_delete_field('implementation_label_cell');
+  field_delete_field('implementation_support');
+  field_delete_field('implementation_proofs');
 
 /* Don't know why, but this line trigger an error
-  node_type_delete('feature_support');
+  node_type_delete('implementation');
 */
 
   // Purge all field information
