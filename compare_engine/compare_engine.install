@@ -35,26 +35,17 @@ function compare_engine_schema() {
         'length' => 32,
         'default' => '',
       ),
-      'to_update' => array(
-        'description' => "Boolean indicated if this node should be updated as soon as possible",
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
 
     ),
     'unique keys' => array(
       'nid' => array('nid'),
     ),
-    'indexes' => array(
-      'to_update' => array('to_update'),
-    ),
-	'foreign keys' => array(
+    'foreign keys' => array(
       'node' => array(
         'table' => 'node',
         'columns' => array('nid' => 'nid'),
       ),
-	)
+    )
 
   );
 
@@ -107,8 +98,13 @@ function compare_engine_schema() {
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
+      ),
+      'to_update' => array(
+        'description' => "Boolean indicated if this node should be updated as soon as possible",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       )
-
     ),
     'unique keys' => array(
       'nid' => array('nid'),
@@ -117,6 +113,7 @@ function compare_engine_schema() {
       'parent_feature_id' => array('parent_feature_id'),
       'type' => array('type'),
       'state' => array('state'),
+      'to_update' => array('to_update'),
     ),
 	'foreign keys' => array(
       'node' => array(
@@ -161,6 +158,12 @@ function compare_engine_schema() {
         'description' => 'The parent id of the compared node',
         'type' => 'int',
         'unsigned' => TRUE,
+      ),
+      'to_update' => array(
+        'description' => "Boolean indicated if this node should be updated as soon as possible",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       )
     ),
     'unique keys' => array(
@@ -168,6 +171,7 @@ function compare_engine_schema() {
     ),
     'indexes' => array(
       'parent_compared_id' => array('parent_compared_id'),
+      'to_update' => array('to_update'),
     ),
 	'foreign keys' => array(
       'node' => array(
@@ -221,6 +225,12 @@ function compare_engine_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'to_update' => array(
+        'description' => "Boolean indicated if this node should be updated as soon as possible",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      )
     ),
     'unique keys' => array(
       'nid' => array('nid'),
@@ -229,6 +239,7 @@ function compare_engine_schema() {
       'feature_id' => array('feature_id'),
       'compared_id' => array('compared_id'),
       'support' => array('support'),  
+      'to_update' => array('to_update'),
     ),
 	'foreign keys' => array(
       'node' => array(
@@ -806,7 +817,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     ->execute();
 
   if (!empty($to_update)) {
-    update_compare_tree($to_update, 'update');
+    update_compare_tree('implementation', $to_update, 'update');
   }
 
 
