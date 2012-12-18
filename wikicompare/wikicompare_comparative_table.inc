@@ -10,7 +10,7 @@
  * @return
  *   A form array set for theming
  */
-function compare_engine_comparative_table($form_state) {
+function wikicompare_comparative_table($form_state) {
   // Identify that the elements in 'example_items' are a collection, to
   // prevent Form API from flattening the array when submitted.
   $form['compared_items']['#tree'] = TRUE;
@@ -146,7 +146,7 @@ function compare_engine_comparative_table($form_state) {
 
 
 /**
- * Theme callback for the compare_engine_comparative_table form
+ * Theme callback for the wikicompare_comparative_table form
  *
  * The theme callback will format the $form data structure into a table and
  * add our tabledrag functionality.  (Note that drupal_add_tabledrag should be
@@ -159,7 +159,7 @@ function compare_engine_comparative_table($form_state) {
  */
 
 
-function theme_compare_engine_comparative_table($variables) {
+function theme_wikicompare_comparative_table($variables) {
   $form = $variables['form'];
 
   //Set each item in the array of his parent. This is a preparation of the rebuild of the tree

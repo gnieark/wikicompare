@@ -10,10 +10,10 @@
 
 
 //The help page of the module
-function compare_engine_help($path, $arg) {
+function wikicompare_help($path, $arg) {
 
   switch ($path) {
-    case "admin/help#compare_engine":
+    case "admin/help#wikicompare":
       return '<p>' . t("TODO") . '</p>';
       break;
   }
@@ -24,15 +24,15 @@ function compare_engine_help($path, $arg) {
 /**
  * Implements hook_menu().
  */
-function compare_engine_menu() {
+function wikicompare_menu() {
   //Enable compare table URL
   $items['compare'] = array(
     'title' => 'Comparative Table',
     'description' => 'Comparative Table',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('compare_engine_comparative_table'),
+    'page arguments' => array('wikicompare_comparative_table'),
     'access callback' => TRUE,
-    'file' => 'compare_engine_comparative_table.inc',
+    'file' => 'wikicompare_comparative_table.inc',
   );
   return $items;
 }
@@ -41,7 +41,7 @@ function compare_engine_menu() {
 
 
 // Create the node type we need in the module
-function compare_engine_node_info() {
+function wikicompare_node_info() {
   return array(
     'feature' => array(
       'name' => t('Feature'),
@@ -362,7 +362,7 @@ function compared_delete($node) {
  * Executed two time a node is published, before and after the publishing
  * We'll use this hook to update the compare tree when some value is changed in feature, compared of implementation note
  */
-function compare_engine_revisionapi($op, $node_revision) {
+function wikicompare_revisionapi($op, $node_revision) {
 
   /*
    * Action to do before a node is published
@@ -1065,12 +1065,12 @@ function find_css_class($percent) {
 /**
  * Implements hook_theme().
  */
-function compare_engine_theme() {
+function wikicompare_theme() {
   return array(
     // Theme function for the compare table
-    'compare_engine_comparative_table' => array(
+    'wikicompare_comparative_table' => array(
       'render element' => 'form',
-      'file' => 'compare_engine_comparative_table.inc',
+      'file' => 'wikicompare_comparative_table.inc',
     ),
   );
 }

@@ -11,7 +11,7 @@
 /**
  * Implements hook_schema()
  */
-function compare_engine_schema() {
+function wikicompare_schema() {
 
   //Create cache table for the comparative_table computation, so parent implementation percent and css_class are computed at each change on feature or implementation and not at each read of the comparative table
   $schema['cache_comparative_table'] = array(
@@ -271,7 +271,7 @@ function compare_engine_schema() {
 /**
  * Implements hook_install().
  */
-function compare_engine_install() {
+function wikicompare_install() {
 
   $t = get_t();
 
@@ -913,7 +913,7 @@ function create_compared_children($min_depth, $max_depth, $prefix, $child_min_pe
 }
 
 
-function compare_engine_uninstall() {
+function wikicompare_uninstall() {
 
 
   //Delete all nodes of feature type.

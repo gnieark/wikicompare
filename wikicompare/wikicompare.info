@@ -1,4 +1,4 @@
-name = Compare Engine
+name = Wikicompare
 description = Implement powerfull comparison features in Drupal.
 dependencies[] = entityreference
 dependencies[] = help
@@ -12,6 +12,6 @@ dependencies[] = admin_menu
 dependencies[] = admin_menu_toolbar
 
 
-package = Comparison
+package = Wikicompare
 version = VERSION
 core = 7.x
