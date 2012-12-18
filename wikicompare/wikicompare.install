@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install, update, and uninstall functions for the compare engine module.
+ * Install, update, and uninstall functions for the wikicompare module.
  */
 
 
@@ -10,10 +10,11 @@
 
 /**
  * Implements hook_schema()
+ * This hook allow us to create some table in database
  */
 function wikicompare_schema() {
 
-  //Create cache table for the comparative_table computation, so parent implementation percent and css_class are computed at each change on feature or implementation and not at each read of the comparative table
+  //Create cache table for the comparative_table computation, so percent and css_class are computed at each change on feature/compared/implementation and not at each read of the comparative table
   $schema['cache_comparative_table'] = array(
 
     'description' => 'Cache table for comparative table',
@@ -35,7 +36,6 @@ function wikicompare_schema() {
         'length' => 32,
         'default' => '',
       ),
-
     ),
     'unique keys' => array(
       'nid' => array('nid'),
@@ -115,7 +115,7 @@ function wikicompare_schema() {
       'state' => array('state'),
       'to_update' => array('to_update'),
     ),
-	'foreign keys' => array(
+    'foreign keys' => array(
       'node' => array(
         'table' => 'node',
         'columns' => array('nid' => 'nid'),
@@ -127,8 +127,8 @@ function wikicompare_schema() {
       'node_parent' => array(
         'table' => 'node',
         'columns' => array('parent_feature_id' => 'nid'),
-      ),	  
-	)
+      ),
+    )
 
   ); 
   
@@ -173,7 +173,7 @@ function wikicompare_schema() {
       'parent_compared_id' => array('parent_compared_id'),
       'to_update' => array('to_update'),
     ),
-	'foreign keys' => array(
+    'foreign keys' => array(
       'node' => array(
         'table' => 'node',
         'columns' => array('nid' => 'nid'),
@@ -185,8 +185,8 @@ function wikicompare_schema() {
       'node_parent' => array(
         'table' => 'node',
         'columns' => array('parent_compared_id' => 'nid'),
-      ),	  
-	)
+      ),
+    )
 
   ); 
   
@@ -241,7 +241,7 @@ function wikicompare_schema() {
       'support' => array('support'),  
       'to_update' => array('to_update'),
     ),
-	'foreign keys' => array(
+    'foreign keys' => array(
       'node' => array(
         'table' => 'node',
         'columns' => array('nid' => 'nid'),
@@ -253,12 +253,12 @@ function wikicompare_schema() {
       'node_feature' => array(
         'table' => 'node',
         'columns' => array('feature_id' => 'nid'),
-      ),	  
+      ),
       'node_compared' => array(
         'table' => 'node',
         'columns' => array('compared_id' => 'nid'),
       ),
-	)
+    )
 
   ); 
   
@@ -270,6 +270,7 @@ function wikicompare_schema() {
 
 /**
  * Implements hook_install().
+ * This function is called only once at the module installation
  */
 function wikicompare_install() {
 
@@ -322,8 +323,8 @@ function wikicompare_install() {
       ),
     );
     field_create_instance($instance);
-	
-	
+
+
     //Create type field
 
     $field = array(
@@ -473,22 +474,22 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       ),
     );
     field_create_instance($instance);
-	
-	
-	
-	
-	
-	
-	
-	
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /*
   * Compared type related
   */
@@ -518,7 +519,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'entity_type' => 'node',
       'bundle' => 'compared',
       'label' => 'Parent Compared',
-  	  'description' => 'TODO : Ce software inclu sans condition toutes les features du logiciel parent.',
+      'description' => 'TODO : Ce software inclu sans condition toutes les features du logiciel parent.',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
       ),
@@ -528,7 +529,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       ),
     );
     field_create_instance($instance);
-	
+
 
     //Create inherited compared field
 
@@ -548,7 +549,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'entity_type' => 'node',
       'bundle' => 'compared',
       'label' => 'Inherited Compared',
-	  'description' => 'TODO : Si ce champ est rempli, alors toutes les features deja present dans le logiciel herite seront egalement present dans celui-ci. Neanmoins via un code couleur legerement different, plus leger pour marquer la difference.',
+      'description' => 'TODO : Si ce champ est rempli, alors toutes les features deja present dans le logiciel herite seront egalement present dans celui-ci. Neanmoins via un code couleur legerement different, plus leger pour marquer la difference.',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
       ),
@@ -559,28 +560,28 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     );
     field_create_instance($instance);
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /*
   * Implementation type related
   */
@@ -591,7 +592,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   
   
   
-	//Create feature field
+    //Create feature field
 
     $field = array(
       'field_name' => 'implementation_feature',
@@ -609,11 +610,11 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'entity_type' => 'node',
       'bundle' => 'implementation',
       'label' => 'Feature',
-	  'description' => 'TODO : La fonctionnalite supporte, je pense que ce sera la peine de laisser une description. Ce champ sera grise pour tous.',
+      'description' => 'TODO : La fonctionnalite supporte, je pense que ce sera la peine de laisser une description. Ce champ sera grise pour tous.',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
       ),
-	  'required' => 1,
+      'required' => 1,
       'settings' => array(
         'target_type' => 'node',
         'handler_settings' => array('target_bundles' => array('feature')),
@@ -622,7 +623,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     field_create_instance($instance);
 
 
-	//Create compared field
+    //Create compared field
 
     $field = array(
       'field_name' => 'implementation_compared',
@@ -640,7 +641,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'entity_type' => 'node',
       'bundle' => 'implementation',
       'label' => 'Compared',
-	  'description' => 'TODO : Le software qui supporte la fonctionnalite. Pas la peine de laisser une description, le champ sera grise pour tous.',
+      'description' => 'TODO : Le software qui supporte la fonctionnalite. Pas la peine de laisser une description, le champ sera grise pour tous.',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
       ),
@@ -651,31 +652,10 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       ),
     );
     field_create_instance($instance);
-	
 
-	//Create body field
 
-/*    $field = array(
-      'field_name' => 'implementation_body',
-      'type' => 'text_long',
-      'cardinality' => 1
-    );
-    field_create_field($field);
 
-    $instance = array(
-      'field_name' => 'body',
-      'entity_type' => 'node',
-      'bundle' => 'implementation',
-      'label' => 'Description',
-      'description' => 'TODO :',
-      'required' => 1,
-      'widget' => array(
-        'type' => 'text_textarea',
-      ),
-    );
-    field_create_instance($instance);*/
-
-	//Create Label Cell field
+    //Create Label Cell field
 
     $field = array(
       'field_name' => 'implementation_label_cell',
@@ -729,9 +709,9 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       ),
     );
     field_create_instance($instance);
-	
 
-	//Create Proofs field
+
+    //Create Proofs field
 
     $field = array(
       'field_name' => 'implementation_proofs',
@@ -750,7 +730,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'label' => 'Proofs',
       'description' => 'TODO : chaque texte sera une url qui pointera vers une video/screenshot prouvant le support de la fonctionnalité. Si le champ est vide, le code couleur sur la page sera différent et allégé. Les modérateurs seront encouragé dans cette description à supprimer les preuves non valables.',
       'widget' => array(
-		'settings' => array(
+        'settings' => array(
           'size' => '255',
         ),
         'type' => 'text_textfield',
@@ -800,10 +780,10 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
     if (rand(1, $implementation_support_chance) != $implementation_support_chance) {
       $node->implementation_support[$node->language][0]['value'] = 'Supported';
-	  $cache_to_update_support[] = $node->nid;
-	  
+      $cache_to_update_support[] = $node->nid;
+
       node_save($node);
-	  
+
       $to_update[$node->nid] = $node->nid;
     }
 
@@ -912,7 +892,10 @@ function create_compared_children($min_depth, $max_depth, $prefix, $child_min_pe
 
 }
 
-
+/**
+ * Implements hook_uninstall().
+ * This function is called at the module uninstallation
+ */
 function wikicompare_uninstall() {
 
 

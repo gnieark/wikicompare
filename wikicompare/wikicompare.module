@@ -23,6 +23,7 @@ function wikicompare_help($path, $arg) {
 
 /**
  * Implements hook_menu().
+ * This function create new menu in Drupal
  */
 function wikicompare_menu() {
   //Enable compare table URL
@@ -39,8 +40,10 @@ function wikicompare_menu() {
 
 
 
-
-// Create the node type we need in the module
+/**
+ * Implements hook_node_info().
+ * This function create the new node type we need for the module
+ */
 function wikicompare_node_info() {
   return array(
     'feature' => array(
@@ -107,11 +110,11 @@ function feature_insert($node) {
     ->fields(array(
       'nid' => $node->nid,
       'vid' => $node->vid,
-	  'title' => $node->title,
-          'parent_feature_id' => $feature_parent_feature,
-	  'type' => $node->feature_type['und'][0]['value'],
-	  'weight' => $node->feature_weight['und'][0]['value'],
-	  'state' => $node->feature_state['und'][0]['value'],
+      'title' => $node->title,
+      'parent_feature_id' => $feature_parent_feature,
+      'type' => $node->feature_type['und'][0]['value'],
+      'weight' => $node->feature_weight['und'][0]['value'],
+      'state' => $node->feature_state['und'][0]['value'],
     ))
     ->execute();
 
@@ -145,14 +148,14 @@ function feature_insert($node) {
 
     node_save($node_fs);
 
-	//Prepare to add the implementation in cache table
+    //Prepare to add the implementation in cache table
     $fs_to_insert[] = array(
-	  'nid' => $node_fs->nid,
-	  'vid' => $node_fs->vid,
-	  'feature_id' => $node_fs->implementation_feature['und'][0]['target_id'],
-	  'compared_id' => $node_fs->implementation_compared['und'][0]['target_id'],
-	  'support' => 0,
-	);
+      'nid' => $node_fs->nid,
+      'vid' => $node_fs->vid,
+      'feature_id' => $node_fs->implementation_feature['und'][0]['target_id'],
+      'compared_id' => $node_fs->implementation_compared['und'][0]['target_id'],
+      'support' => 0,
+    );
 
   }
 
@@ -226,17 +229,17 @@ function compared_insert($node) {
     $node_fs->implementation_compared[$node_fs->language][0]['target_id'] = $node->nid;
     $node_fs->implementation_compared[$node_fs->language][0]['target_type'] = "node";
 
-	//Save the implementation node in database
+    //Save the implementation node in database
     node_save($node_fs);
-	
-	//Prepare to add the implementation in cache table
+
+    //Prepare to add the implementation in cache table
     $fs_to_insert[] = array(
-	  'nid' => $node_fs->nid,
-	  'vid' => $node_fs->vid,
-	  'feature_id' => $node_fs->implementation_feature['und'][0]['target_id'],
-	  'compared_id' => $node_fs->implementation_compared['und'][0]['target_id'],
-	  'support' => 0,
-	);
+      'nid' => $node_fs->nid,
+      'vid' => $node_fs->vid,
+      'feature_id' => $node_fs->implementation_feature['und'][0]['target_id'],
+      'compared_id' => $node_fs->implementation_compared['und'][0]['target_id'],
+      'support' => 0,
+    );
   }
 
   //Update the cache_implementation table before the compare tree computation
@@ -256,7 +259,7 @@ function compared_insert($node) {
 /**
  * Implements hook_delete().
  * Executed each time a node is deleted.
- * We'll use this hook to delete all the implementation linked to the feature, and force an update on implementation parent on feature axix
+ * We'll use this hook to delete all the implementation linked to the feature, and force an update on implementation parent on feature axis
  */
 function feature_delete($node) {
 
@@ -283,12 +286,12 @@ function feature_delete($node) {
   db_delete('cache_implementation')
     ->condition('nid', $nids, 'in')
     ->execute();
-	
+
   //Delete the feature in the feature cache
   db_delete('cache_feature')
     ->condition('nid', $node->nid)
     ->execute();
-	
+
   //Update cache so all children feature are now without parent
   db_update('cache_feature')
     ->fields(array(
@@ -297,7 +300,6 @@ function feature_delete($node) {
     ->condition('parent_feature_id', $node->nid)
     ->execute();
 
-  $to_update = array();
   if (isset($node->feature_parent_feature['und'][0])) {
     //Update the compare tree
     update_compare_tree('feature', array($node->feature_parent_feature['und'][0]['target_id']), 'update');
@@ -335,12 +337,12 @@ function compared_delete($node) {
   db_delete('cache_implementation')
     ->condition('nid', $nids, 'in')
     ->execute();
-	
+
   //Delete the compared in the compared cache
   db_delete('cache_compared')
     ->condition('nid', $node->nid)
     ->execute();
-	
+
   //Update cache so all children feature are now without parent
   db_update('cache_compared')
     ->fields(array(
@@ -349,7 +351,6 @@ function compared_delete($node) {
     ->condition('parent_compared_id', $node->nid)
     ->execute();
 
-  $to_update = array();
   if (isset($node->compared_parent_compared['und'][0])) {
     //Update the compare tree
     update_compare_tree('compared', array($node->compared_parent_compared['und'][0]['target_id']), 'update');
@@ -359,7 +360,7 @@ function compared_delete($node) {
 
 /**
  * Implements hook_revisionapi() provided by revisionning module
- * Executed two time a node is published, before and after the publishing
+ * Executed two time when a node is published, before and after the publishing
  * We'll use this hook to update the compare tree when some value is changed in feature, compared of implementation note
  */
 function wikicompare_revisionapi($op, $node_revision) {
@@ -370,7 +371,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   if ($op == 'pre publish') {
 
     /*
-     *If the node changed is a feature node
+     * If the node changed is a feature node
      */
     if ($node_revision->type == 'feature') {
 
@@ -393,7 +394,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       //If any of the critical field is changed
       if (($node_revision->feature_type['und'][0]['value'] != $current_node->feature_type['und'][0]['value']) || ($node_revision->feature_weight['und'][0]['value'] != $current_node->feature_weight['und'][0]['value']) || ($node_revision->feature_state['und'][0]['value'] != $current_node->feature_state['und'][0]['value']) || ($node_revision_parent != $current_node_parent)) {
 
-        //We mark all implementation without children on the compared axis to update. They will be updated after the publication of feature
+        //We mark the feature for update
         db_update('cache_feature')
           ->fields(array(
             'to_update' => 1,
@@ -401,19 +402,16 @@ function wikicompare_revisionapi($op, $node_revision) {
           ->condition('nid', $node_revision->nid, '=')
           ->execute();
 
-        //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis without taking account of the current implementation.
+        //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis after the leave of the feature child
         if ($node_revision_parent != $current_node_parent) {
-          //We update the feature cache now so the comparative table is updated with the most recent value
-            db_update('cache_feature')
-            ->fields(array(
-              'parent_feature_id' => $node_revision_parent,
-            ))
-            ->condition('nid', $node_revision->nid)
-            ->execute();
-        
 
-          //Update the compare tree
-          update_compare_tree('feature', array($current_node_parent), 'update');
+          //We mark the old parent and the new parent of the feature for update
+          db_update('cache_feature')
+            ->fields(array(
+              'to_update' => 1,
+            ))
+            ->condition('nid', array($node_revision_parent, $current_node_parent), 'IN')
+            ->execute();
 
         }
       }
@@ -439,28 +437,19 @@ function wikicompare_revisionapi($op, $node_revision) {
         $current_node_parent = NULL;
       }
 
-      //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis without taking account of the current implementation.
+      //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis after the leave of the compared child
       if ($node_revision_parent != $current_node_parent) {
-        //We update the feature cache now so the comparative table is updated with the most recent value
-	db_update('cache_compared')
-          ->fields(array(
-		    'parent_compared_id' => $node_revision_parent,
-          ))
-          ->condition('nid', $node_revision->nid)
-          ->execute();
 
-        //We mark all implementation without children on the feature axis to update. They will be updated after the publication of feature
+        //We mark the updated compared, his old parent and his new parent for update
         db_update('cache_compared')
           ->fields(array(
             'to_update' => 1,
           ))
-          ->condition('nid', $node_revision->nid, '=')
+          ->condition('nid', array($node_revision->nid, $node_revision_parent, $current_node_parent) , 'IN')
           ->execute();
 
-          //Update the compare tree
-          update_compare_tree('compared', array($current_node_parent), 'update');
 
-        }
+      }
 
     }
 
@@ -495,38 +484,38 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Update the cache tables with the new values
     if ($node_revision->type == 'feature') {
-	    $feature_parent_feature = 0;
+        $feature_parent_feature = 0;
         if (isset($node_revision->feature_parent_feature['und'][0])) {
           $feature_parent_feature = $node_revision->feature_parent_feature['und'][0]['target_id'];
         }
         db_update('cache_feature')
             ->fields(array(
               'vid' => $node_revision->vid,
-		  	  'title' => $node_revision->title,
-			  'parent_feature_id' => $feature_parent_feature,
-	          'type' => $node_revision->feature_type['und'][0]['value'],
-	          'weight' => $node_revision->feature_weight['und'][0]['value'],
-	          'state' => $node_revision->feature_state['und'][0]['value'],
+              'title' => $node_revision->title,
+              'parent_feature_id' => $feature_parent_feature,
+              'type' => $node_revision->feature_type['und'][0]['value'],
+              'weight' => $node_revision->feature_weight['und'][0]['value'],
+              'state' => $node_revision->feature_state['und'][0]['value'],
             ))
             ->condition('nid', $node_revision->nid)
             ->execute();
-	}
-	
+    }
+
     if ($node_revision->type == 'compared') {
-	    $compared_parent_compared = 0;
+        $compared_parent_compared = 0;
         if (isset($node_revision->compared_parent_compared['und'][0])) {
           $compared_parent_compared = $node_revision->compared_parent_compared['und'][0]['target_id'];
         }
         db_update('cache_compared')
             ->fields(array(
               'vid' => $node_revision->vid,
-		  	  'title' => $node_revision->title,
-			  'parent_compared_id' => $compared_parent_compared
+              'title' => $node_revision->title,
+              'parent_compared_id' => $compared_parent_compared
             ))
             ->condition('nid', $node_revision->nid)
             ->execute();
-	}
-	
+    }
+
       if ($node_revision->type == 'implementation') {
         $support = 0;
         if ($node_revision->implementation_support['und'][0]['value'] == 'Supported') {
@@ -535,7 +524,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         db_update('cache_implementation')
             ->fields(array(
               'vid' => $node_revision->vid,
-			  'support' => $support
+              'support' => $support
             ))
             ->condition('nid', $node_revision->nid)
             ->execute();
@@ -553,7 +542,7 @@ function wikicompare_revisionapi($op, $node_revision) {
     }
     //Update all the feature marked. We force the update of the parent because in case of an update thanks to a parent feature change, the implementation percent may not have change but we still need to update their parent.
     if ($feature_nids) {
-      update_compare_tree('feature', $feature_nids, 'force-update');
+      update_compare_tree('feature', $feature_nids, 'update');
     }
 
     //Get all the compared to update
@@ -568,7 +557,7 @@ function wikicompare_revisionapi($op, $node_revision) {
     }
     //Update all the compared marked. We force the update of the parent because in case of an update thanks to a parent compared change, the implementation percent may not have change but we still need to update their parent.
     if ($compared_nids) {
-      update_compare_tree('compared', $compared_nids, 'force-update');
+      update_compare_tree('compared', $compared_nids, 'update');
     }
 
     //Get all the implementation to update
@@ -584,7 +573,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Update all the implementation marked. We force the update of the parent because in case of an update thanks to a parent feature or compared change, the implementation percent may not have change but we still need to update their parent.
     if ($implementation_nids) {
-      update_compare_tree('implementation', $implementation_nids, 'force-update');
+      update_compare_tree('implementation', $implementation_nids, 'update');
     }
 
     //Remove all update marks
@@ -624,11 +613,12 @@ function wikicompare_revisionapi($op, $node_revision) {
 
  /*
   * The main function to update the percent and css_class for each implementation
-  * It'll find all children on compared and feature axis for the ids passed in argument, compute the percent thanks to this informations and feature type, and finally if the percent changed it'll update the parents on feature and compared axis.
+  * It'll find all children on compared and feature axis for the ids passed in argument, compute the percent thanks to theses informations and feature type, and finally if the percent changed it'll update the parents on feature and compared axis.
   * This is a recursive function, which will call itself on children side if a cache percent is missing and parent side if the percent computed change, and in both the feature and compared axis.
   */
 function update_compare_tree($type, $nids, $update_parent) {
-
+dpm($type);
+dpm($nids);
   $nodes = array();
   if (!empty($nids)) {
 
@@ -646,7 +636,7 @@ function update_compare_tree($type, $nids, $update_parent) {
     //Get parent implementation through feature axis
     $query->join('cache_feature', 'nf', 'fs.feature_id = nf.nid'); //Get feature node
     $query->leftjoin('cache_implementation', 'nfpnf', 'nf.parent_feature_id = nfpnf.feature_id'); //Get implementation of the parent feature node
-	
+
     //Get parent implementation through feature axis
     $query->join('cache_compared', 'nc', 'fs.compared_id = nc.nid'); //Get compared node
     $query->leftjoin('cache_implementation', 'ncpnc', 'nc.parent_compared_id = ncpnc.compared_id'); //Get implementation of the parent compared node
@@ -673,7 +663,7 @@ function update_compare_tree($type, $nids, $update_parent) {
     $query->where('nfpnf.compared_id = nc.nid OR nf.parent_feature_id = 0'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
     $query->where('ncpnc.feature_id = nf.nid OR nc.parent_compared_id = 0'); //We keep only the implementation of the parent compared node which has the same feature than the implementation. Which mean it's the parent implementation on the compared axis.
     $result = $query->execute();
-	
+
 
     $implementation_ids = array();
     $res_search_feature_children = '';
@@ -723,11 +713,11 @@ function update_compare_tree($type, $nids, $update_parent) {
           $query->condition('nf.parent_feature_id', $nids, 'IN');
           break;
       }
-	
+
       //Only published feature are used in their parent computation
       $query->condition('nf.state', 'Published', '=');
       $result = $query->execute();
-	
+
       $through_feature_childs = array();
       foreach($result as $record) {
         //We assign the children implementation in a array with fid and cid as key so their parents can recover them with fid and cid key
@@ -769,7 +759,7 @@ function update_compare_tree($type, $nids, $update_parent) {
       }
 
       $result = $query->execute();
-	
+
       $through_compared_childs = array();
       foreach($result as $record) {
         //We assign the children implementation in a array with fid and cid as key so they parent can recover them with fid and cid key
@@ -863,9 +853,7 @@ function update_compare_tree($type, $nids, $update_parent) {
   /*
    * Now we'll compute the percent and css_class of each nids in function argument
    */
-  $to_update_feature = array();
-  $to_update_compared = array();
-  $to_update_implementation = array();
+  $to_update = array();
   $cache_to_update = array();
   $cache_to_insert = array();
   $res = array();
@@ -949,31 +937,21 @@ function update_compare_tree($type, $nids, $update_parent) {
         $cache_to_update[$node->css_class][$node->percent][] = $node->nid;
       } else {
         //We regroup all the same percent in a table to insert them all at the same time
-	    $cache_to_insert[$node->css_class][$node->percent][] = $node->nid;
+        $cache_to_insert[$node->css_class][$node->percent][] = $node->nid;
       }
     }
 
     //Update the parent though feature and compared axis if the value changed, or if we have the flag force-update. Above, we rounded the percent computed to 4 because it'll be the same rounding than the one in database. This ensure this comparison work correctly and don't update parent if unnecessary
-    if (!(($node->percent == $node->cache_percent) && ($node->css_class == $node->cache_css_class)) || ($update_parent == 'force-update')) {
+    if (!(($node->percent == $node->cache_percent) && ($node->css_class == $node->cache_css_class))) {
 
       //We mark the parent id through feature axis to update if exist, unless we have the flag no-update-feature. This flag deny the parent update through feature axis if update_compare_tree was launched for a children computation
       if (($node->parent_fs_through_feature_nid) && ($update_parent != 'no-update-feature')) {
-        if (($type == 'feature') && ($update_parent == 'force-update')) {
-          //In this case we have to update the whole parent feature, so we use feature as argument instead of implementation
-          $to_update_feature[$node->parent_feature_id] = $node->parent_feature_id;
-        } else {
-          $to_update_implementation[$node->parent_fs_through_feature_nid] = $node->parent_fs_through_feature_nid;
-        }
+        $to_update[$node->parent_fs_through_feature_nid] = $node->parent_fs_through_feature_nid;
       }
 
       //We mark the parent id through compared axis to update if exist, unless we have the flag no-update-compared. This flag deny the parent update through compared axis if update_compare_tree was launched for a children computation
       if (($node->parent_fs_through_compared_nid) && ($update_parent != 'no-update-compared')) {
-        if (($type == 'compared') && ($update_parent == 'force-update')) {
-          //In this case we have to update the whole parent compared, so we use feature as argument instead of implementation
-          $to_update_compared[$node->parent_compared_id] = $node->parent_compared_id;
-        } else {
-          $to_update_implementation[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
-        }
+        $to_update[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
       }
 
     }
@@ -984,21 +962,21 @@ function update_compare_tree($type, $nids, $update_parent) {
 
   }
 
-  //Insert the new records in database
+  //Insert the new records in database. Data are regrouped by css and percent to try to make as few query as possible.
   foreach($cache_to_insert as $key_css_class => $css_class) {
     foreach($cache_to_insert[$key_css_class] as $key_percent => $percent) {
       $query = db_insert('cache_comparative_table')->fields(array('nid', 'percent', 'css_class'));
       foreach ($cache_to_insert[$key_css_class][$key_percent] as $nid) {
         $query->values(array(
-		  'nid' => $nid,
-		  'percent' => $key_percent,
-                  'css_class' => $key_css_class,
-		));
+          'nid' => $nid,
+          'percent' => $key_percent,
+          'css_class' => $key_css_class,
+        ));
       }
       $query->execute();
     }
   }
-  //Update the old records
+  //Update the old records. Data are regrouped by css and percent to try to make as few query as possible.
   foreach($cache_to_update as $key_css_class => $css_class) {
     foreach($cache_to_update[$key_css_class] as $key_percent => $percent) {
         db_update('cache_comparative_table')
@@ -1012,14 +990,8 @@ function update_compare_tree($type, $nids, $update_parent) {
   }
 
   //Update the parent marked
-  if (!empty($to_update_feature)) {
-    update_compare_tree('feature', $to_update_feature, 'update');
-  }
-  if (!empty($to_update_compared)) {
-    update_compare_tree('compared', $to_update_compared, 'update');
-  }
-  if (!empty($to_update_implementation)) {
-    update_compare_tree('implementation', $to_update_implementation, 'update');
+  if (!empty($to_update)) {
+    update_compare_tree('implementation', $to_update, 'update');
   }
 
   return $res;

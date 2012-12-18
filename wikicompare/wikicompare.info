@@ -1,5 +1,5 @@
 name = Wikicompare
-description = Implement powerfull comparison features in Drupal.
+description = Make Drupal a powerfull social comparison tool.
 dependencies[] = entityreference
 dependencies[] = help
 dependencies[] = number
