@@ -1,5 +1,8 @@
 name = Wikicompare
 description = Make Drupal a powerfull social comparison tool.
+
+configure = admin/config/wikicompare
+
 dependencies[] = entityreference
 dependencies[] = help
 dependencies[] = number

@@ -21,12 +21,61 @@ function wikicompare_help($path, $arg) {
 }
 
 
+//The configuration page of the module
+function wikicompare_admin() {
+
+  $form = array();
+
+  $form['wikicompare_update_compared'] = array(
+    '#type' => 'select',
+    '#title' => t('Manage parent compared?'),
+    '#options' => array(
+      'no-update' => t("No update"),
+      'update' => t("Update"),
+    ),
+    '#default_value' => variable_get('wikicompare_update_compared', 'no-update'),
+    '#description' => t("Define if the parent compared can also have their own percentage support.<br/> 
+In this case, the parent compared will support all the implementation of his children compared, and we will be able to select the parent compared in the comparative table.<br/>
+<br/>
+Activate this feature can take some time, because the cache table need to be recomputed."),
+    '#required' => TRUE,
+  );
+
+  $form['#submit'][] = 'submit_settings';
+
+  return system_settings_form($form);
+
+}
+
+//This function handels the submit of the settings form.
+function submit_settings($form, $form_state) {
+    if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
+
+      dpm('Launch cache refresh'); //TODO
+
+    }
+}
+
+
 /**
  * Implements hook_menu().
  * This function create new menu in Drupal
  */
 function wikicompare_menu() {
-  //Enable compare table URL
+
+  $items = array();
+
+  //Enable module settings page
+  $items['admin/config/wikicompare'] = array(
+    'title' => 'Wikicompare module settings',
+    'description' => 'Wikicompare module settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wikicompare_admin'),
+    'access arguments' => array('administer wikicompare settings'),
+    'type' => MENU_NORMAL_ITEM,
+   );
+
+  //Enable comparative table URL
   $items['compare'] = array(
     'title' => 'Comparative Table',
     'description' => 'Comparative Table',
