@@ -15,6 +15,9 @@ function wikicompare_comparative_table($form_state) {
   // prevent Form API from flattening the array when submitted.
   $form['compared_items']['#tree'] = TRUE;
 
+wikicompare_flush_cache();
+
+
   $compared_ids = array(4,8,12);
 
   //Inform them of the compared item which should be displayed in the table
@@ -203,8 +206,8 @@ function theme_wikicompare_comparative_table($variables) {
   $output .= theme('table', array('header' => $header, 'rows' => $table_rows));
 
 
-  $res = update_compare_tree(array(5), 'update');
-
+//  $res = update_compare_tree(array(5), 'update');
+//  wikicompare_flush_cache();
 
   return $output;
 }

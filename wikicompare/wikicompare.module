@@ -1108,5 +1108,134 @@ function wikicompare_theme() {
   );
 }
 
+function wikicompare_flush_cache() {
+
+  //Delete all data in cache
+  db_delete('cache_comparative_table')
+    ->execute();
+
+  db_delete('cache_implementation')
+    ->execute();
+
+  db_delete('cache_feature')
+    ->execute();
+
+  db_delete('cache_compared')
+    ->execute();
+
+
+  //Get all feature data and insert in feature cache table
+  $query = db_select('node', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'vid', 'vid');
+  $query->addField('n', 'title', 'title');
+  $query->addField('npf', 'feature_parent_feature_target_id', 'parent_feature_id');
+  $query->addField('nt', 'feature_type_value', 'type');
+  $query->addField('nw', 'feature_weight_value', 'weight');
+  $query->addField('ns', 'feature_state_value', 'state');
+  $query->leftjoin('field_revision_feature_parent_feature', 'npf', 'n.vid = npf.revision_id');
+  $query->leftjoin('field_revision_feature_type', 'nt', 'n.vid = nt.revision_id');
+  $query->leftjoin('field_revision_feature_weight', 'nw', 'n.vid = nw.revision_id');
+  $query->leftjoin('field_revision_feature_state', 'ns', 'n.vid = ns.revision_id');
+  $query->condition('n.type', 'feature');
+  $result = $query->execute();
+
+  $feature_to_insert = array();
+  foreach($result as $record) {
+    $feature_to_insert[$record->nid] = array(
+      'nid' => $record->nid,
+      'vid' => $record->vid,
+      'title' => $record->title,
+      'parent_feature_id' => $record->parent_feature_id,
+      'type' => $record->type,
+      'weight' => $record->weight,
+      'state' => $record->state,
+    );
+
+    $feature_without_parent = array();
+    if ($record->parent_feature_id) {
+      $feature_without_parent[$record->nid] = $record->nid;
+    }
+
+  }
+
+  $query = db_insert('cache_feature')->fields(array('nid', 'vid', 'title', 'parent_feature_id', 'type', 'weight', 'state'));
+  foreach ($feature_to_insert as $feature) {
+    $query->values($feature);
+  }
+  $query->execute();
+
+
+  //Get all compared data and insert in compared cache table
+  $query = db_select('node', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'vid', 'vid');
+  $query->addField('n', 'title', 'title');
+  $query->addField('npc', 'compared_parent_compared_target_id', 'parent_compared_id');
+  $query->leftjoin('field_revision_compared_parent_compared', 'npc', 'n.vid = npc.revision_id');
+  $query->condition('n.type', 'compared');
+  $result = $query->execute();
+
+  $compared_to_insert = array();
+  foreach($result as $record) {
+    $compared_to_insert[$record->nid] = array(
+      'nid' => $record->nid,
+      'vid' => $record->vid,
+      'title' => $record->title,
+      'parent_compared_id' => $record->parent_compared_id,
+    );
+  }
+
+  $query = db_insert('cache_compared')->fields(array('nid', 'vid', 'title', 'parent_compared_id'));
+  foreach ($compared_to_insert as $compared) {
+    $query->values($compared);
+  }
+  $query->execute();
+
+
+
+  //Get all implementation data and insert in implementation cache table
+  $query = db_select('node', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'vid', 'vid');
+  $query->addField('nf', 'implementation_feature_target_id', 'feature_id');
+  $query->addField('nc', 'implementation_compared_target_id', 'compared_id');
+  $query->addField('ns', 'implementation_support_value', 'support');
+  $query->leftjoin('field_revision_implementation_feature', 'nf', 'n.vid = nf.revision_id');
+  $query->leftjoin('field_revision_implementation_compared', 'nc', 'n.vid = nc.revision_id');
+  $query->leftjoin('field_revision_implementation_support', 'ns', 'n.vid = ns.revision_id');
+  $query->condition('n.type', 'implementation');
+  $result = $query->execute();
+
+  $implementation_to_insert = array();
+  foreach($result as $record) {
+
+    if ($record->support == "Supported") {
+      $support = 1;
+    } else {
+      $support = 0;
+    }
+
+    $implementation_to_insert[$record->nid] = array(
+      'nid' => $record->nid,
+      'vid' => $record->vid,
+      'feature_id' => $record->feature_id,
+      'compared_id' => $record->compared_id,
+      'support' => $support,
+    );
+  }
+
+  $query = db_insert('cache_implementation')->fields(array('nid', 'vid', 'feature_id', 'compared_id', 'support'));
+  foreach ($implementation_to_insert as $implementation) {
+    $query->values($implementation);
+  }
+  $query->execute();
+
+
+  //Update compatative table cache
+  update_compare_tree('feature', $feature_without_parent, 'update');
+
+
+}
 
 ?>
