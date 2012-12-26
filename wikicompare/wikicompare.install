@@ -748,10 +748,10 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
    */
 
 
-  $feature_min_depth = 2; //2-6
-  $feature_max_depth = 2;  //2-8
-  $feature_child_min_per_level = 1; //1-2
-  $feature_child_max_per_level = 1; //1-3
+  $feature_min_depth = 6; //2-6
+  $feature_max_depth = 8;  //2-8
+  $feature_child_min_per_level = 2; //1-2
+  $feature_child_max_per_level = 3; //1-3
   $feature_min_weight = 1;
   $feature_max_weight = 1;
   $feature_highest_chance = 5;

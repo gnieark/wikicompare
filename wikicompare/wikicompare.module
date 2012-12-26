@@ -617,8 +617,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   * This is a recursive function, which will call itself on children side if a cache percent is missing and parent side if the percent computed change, and in both the feature and compared axis.
   */
 function update_compare_tree($type, $nids, $update_parent) {
-dpm($type);
-dpm($nids);
+
   $nodes = array();
   if (!empty($nids)) {
 
