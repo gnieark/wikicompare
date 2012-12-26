@@ -672,22 +672,29 @@ function update_compare_tree($type, $nids, $update_parent) {
 
     $query = db_select('cache_implementation', 'fs');
     $query->addField('fs', 'nid', 'nid');
-    $query->addField('nf', 'nid', 'fid');
-    $query->addField('nc', 'nid', 'cid');
+    $query->addField('fs', 'feature_id', 'fid');
+    $query->addField('fs', 'compared_id', 'cid');
     $query->addField('fs', 'support', 'support');	
     $query->addField('nf', 'type', 'type');
     $query->addField('nf', 'parent_feature_id', 'parent_feature_id');
-    $query->addField('nc', 'parent_compared_id', 'parent_compared_id');
+//    $query->addField('nc', 'parent_compared_id', 'parent_compared_id');
     $query->addField('nfpnf', 'nid', 'parent_fs_through_feature_nid');
-    $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid');
+//    $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid');
 
     //Get parent implementation through feature axis
     $query->join('cache_feature', 'nf', 'fs.feature_id = nf.nid'); //Get feature node
     $query->leftjoin('cache_implementation', 'nfpnf', 'nf.parent_feature_id = nfpnf.feature_id'); //Get implementation of the parent feature node
 
-    //Get parent implementation through feature axis
-    $query->join('cache_compared', 'nc', 'fs.compared_id = nc.nid'); //Get compared node
-    $query->leftjoin('cache_implementation', 'ncpnc', 'nc.parent_compared_id = ncpnc.compared_id'); //Get implementation of the parent compared node
+    //Get parent implementation through compared axis, only if compared update is enabled
+    if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update') {
+      $query->addField('nc', 'parent_compared_id', 'parent_compared_id');
+      $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid');
+      $query->join('cache_compared', 'nc', 'fs.compared_id = nc.nid'); //Get compared node
+      $query->leftjoin('cache_implementation', 'ncpnc', 'nc.parent_compared_id = ncpnc.compared_id'); //Get implementation of the parent compared node
+
+      $query->where('ncpnc.feature_id = fs.feature_id OR nc.parent_compared_id = 0'); //We keep only the implementation of the parent compared node which has the same feature than the implementation. Which mean it's the parent implementation on the compared axis.
+
+    }
 
     //If possible, we search directly through feature or compared id to compute the sql request faster
     switch ($type) {
@@ -698,18 +705,18 @@ function update_compare_tree($type, $nids, $update_parent) {
         //Recover children of implementation on compared axis, because we will only update implementation which has no children on compared axis
         $query->leftjoin('cache_compared', 'ncc', 'fs.compared_id = ncc.parent_compared_id'); //Get compared node children
         $query->where('ncc.nid IS NULL'); //Only the implementation without children on compared axis need to be updated, because they will update their parent on compared axis anyway
-        $query->condition('nf.nid', $nids, 'IN');
+        $query->condition('fs.feature_id', $nids, 'IN');
         break;
       case "compared":
         //Recover children of implementation on feature axis, because we will only update implementation which has no children on feature axis
         $query->leftjoin('cache_feature', 'nfc', 'fs.feature_id = nfc.parent_feature_id'); //Get feature node children
         $query->where('nfc.nid IS NULL'); //Only the implementation without children on feature axis need to be updated, because they will update their parent on feature axis anyway
-        $query->condition('nc.nid', $nids, 'IN');
+        $query->condition('fs.compared_id', $nids, 'IN');
         break;
     }
 
-    $query->where('nfpnf.compared_id = nc.nid OR nf.parent_feature_id = 0'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
-    $query->where('ncpnc.feature_id = nf.nid OR nc.parent_compared_id = 0'); //We keep only the implementation of the parent compared node which has the same feature than the implementation. Which mean it's the parent implementation on the compared axis.
+    $query->where('nfpnf.compared_id = fs.compared_id OR nf.parent_feature_id = 0'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
+
     $result = $query->execute();
 
 
@@ -897,7 +904,6 @@ function update_compare_tree($type, $nids, $update_parent) {
   }
 
 
-
   /*
    * Now we'll compute the percent and css_class of each nids in function argument
    */
@@ -906,6 +912,11 @@ function update_compare_tree($type, $nids, $update_parent) {
   $cache_to_insert = array();
   $res = array();
   foreach($nodes as $node) {
+
+    //We update only if the update parent isn't set and there is no children on compared axis
+    if ((variable_get('wikicompare_update_compared', 'no-update') == 'no-update') && !empty($node->through_compared_childs)) {
+      continue;
+    }
 
     //If any misconfiguration (For exemple a feature of type weight-average but without feature children), it'll always return 0
     $node->percent = 0;
@@ -998,8 +1009,10 @@ function update_compare_tree($type, $nids, $update_parent) {
       }
 
       //We mark the parent id through compared axis to update if exist, unless we have the flag no-update-compared. This flag deny the parent update through compared axis if update_compare_tree was launched for a children computation
-      if (($node->parent_fs_through_compared_nid) && ($update_parent != 'no-update-compared')) {
-        $to_update[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
+      if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update') {
+        if (($node->parent_fs_through_compared_nid) && ($update_parent != 'no-update-compared')) {
+          $to_update[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
+        }
       }
 
     }
