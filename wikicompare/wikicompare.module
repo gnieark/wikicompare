@@ -26,6 +26,7 @@ function wikicompare_admin() {
 
   $form = array();
 
+  //Display the select button for managing the compared parent update
   $form['wikicompare_update_compared'] = array(
     '#type' => 'select',
     '#title' => t('Manage parent compared?'),
@@ -41,7 +42,17 @@ Activate this feature can take some time, because the cache table need to be rec
     '#required' => TRUE,
   );
 
+  //Display the button to flush the caches
+  $form['flush_caches'] = array(
+    '#type' => 'submit',
+    '#suffix' => '<br/>If you ever corrupt your data, you can use this button to recompute all the percentages.<br/>This operation may take some time.',
+    '#value' => t('Flush caches'),
+    '#button_type' => 'button',
+    '#submit' => array('wikicompare_flush_caches'),
+  );
+
   $form['#submit'][] = 'submit_settings';
+
 
   return system_settings_form($form);
 
@@ -51,11 +62,10 @@ Activate this feature can take some time, because the cache table need to be rec
 function submit_settings($form, $form_state) {
     if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
 
-      dpm('Launch cache refresh'); //TODO
+      wikicompare_flush_caches();
 
     }
 }
-
 
 /**
  * Implements hook_menu().
@@ -1108,7 +1118,16 @@ function wikicompare_theme() {
   );
 }
 
-function wikicompare_flush_cache() {
+function wikicompare_flush_caches() {
+
+  //We put the site in maintenance
+  $was_in_maintenance = FALSE;
+  if (variable_get('maintenance_mode', 0) == 1) {
+    $was_in_maintenance = TRUE;
+  } else {
+    variable_set('maintenance_mode', 1);
+  }
+
 
   //Delete all data in cache
   db_delete('cache_comparative_table')
@@ -1232,9 +1251,13 @@ function wikicompare_flush_cache() {
   $query->execute();
 
 
-  //Update compatative table cache
+  //Update compatative table cache. We begin the update at the top of the feature tree and at the base of the compared tree.
   update_compare_tree('feature', $feature_without_parent, 'update');
 
+  //We only reactive the website if it wasn't in maintenance at the beginning
+  if ($was_in_maintenance == FALSE) {
+    variable_set('maintenance_mode', 0);
+  }
 
 }
 
