@@ -660,12 +660,12 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
     $field = array(
       'field_name' => 'implementation_support',
-      'type' => 'list_text',
+      'type' => 'list_boolean',
       'cardinality' => 1,
       'settings' => array(
         'allowed_values' => array(
-          'Unsupported' => 'Unsupported',
-          'Supported' => 'Supported',
+          0 => 'Unsupported',
+          1 => 'Supported',
         ),
       ),
     );
@@ -679,7 +679,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'description' => 'TODO : Ce champ n\'est visible que si la feature n\'est pas un parent feature',
       'default_value' => array(
         0 => array(
-          'value' => 'Unsupported',
+          'value' => 0,
         ),
       ),
       'required' => 1,
@@ -758,7 +758,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     $node = node_load($item->nid);
 
     if (rand(1, $implementation_support_chance) != $implementation_support_chance) {
-      $node->implementation_support[$node->language][0]['value'] = 'Supported';
+      $node->implementation_support[$node->language][0]['value'] = 1;
       $cache_to_update_support[] = $node->nid;
 
       node_save($node);
@@ -770,7 +770,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
   db_update('cache_implementation')
     ->fields(array(
-      'support' => 1,
+      'support' => '1',
     ))
     ->condition('nid', $cache_to_update_support, 'in')
     ->execute();

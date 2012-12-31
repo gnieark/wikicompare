@@ -601,7 +601,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     if ($node_revision->type == 'implementation') {
       $support = 0;
-      if ($node_revision->implementation_support['und'][0]['value'] == 'Supported') {
+      if ($node_revision->implementation_support['und'][0]['value'] == 1) {
         $support = 1;
       }
       db_update('cache_implementation')

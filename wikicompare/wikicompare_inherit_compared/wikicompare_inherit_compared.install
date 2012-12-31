@@ -23,7 +23,17 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
   $schema['cache_compared']['foreign keys']['node_inherit'] = array(
     'table' => 'node',
     'columns' => array('inherit_compared_id' => 'nid'),
-  ); 
+  );
+
+
+  $schema['cache_implementation']['fields']['use_from_inherit'] = array(
+      'description' => "Boolean indicated if we should use the data from the inherited compared",
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => TRUE,
+      'default' => 1,
+  );
+
 
 }
 
@@ -44,9 +54,8 @@ function wikicompare_inherit_compared_install() {
 
 
   /*
-  * Compared type related
-  */
- 
+   * Create inherit compared field
+   */ 
 
 
   $schema = drupal_get_schema('cache_compared');
@@ -54,7 +63,6 @@ function wikicompare_inherit_compared_install() {
   db_add_index('cache_compared', 'inherit_compared_id', array('inherit_compared_id'));
 
 
-  //Create inherit compared field
 
   $field = array(
     'field_name' => 'compared_inherit_compared',
@@ -84,6 +92,50 @@ function wikicompare_inherit_compared_install() {
   field_create_instance($instance);
 
 
+
+
+  /*
+   * Create use_from_inherit implementation field
+   */
+
+
+  $schema = drupal_get_schema('cache_implementation');
+  db_add_field('cache_implementation', 'use_from_inherit', $schema['fields']['use_from_inherit']);
+
+
+
+  $field = array(
+    'field_name' => 'implementation_use_from_inherit',
+    'type' => 'list_boolean',
+    'cardinality' => 1,
+    'settings' => array(
+      'allowed_values' => array(
+        0 => 'Using personnal data',
+        1 => 'Using data from inherited compared',
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'implementation_use_from_inherit',
+    'entity_type' => 'node',
+    'bundle' => 'implementation',
+    'label' => 'Use data from inherit compared?',
+    'description' => 'TODO',
+    'default_value' => array(
+      1 => array(
+        'value' => 1,
+      ),
+    ),
+    'required' => 1,
+    'widget' => array(
+      'type' => 'options_onoff',
+    ),
+  );
+  field_create_instance($instance);
+
+
 }
 
 /**
@@ -96,6 +148,10 @@ function wikicompare_inherit_compared_uninstall() {
   db_drop_field('cache_compared', 'inherit_compared_id');
   db_drop_index('cache_compared', 'inherit_compared_id');
   field_delete_field('compared_inherit_compared');
+
+  db_drop_field('cache_implementation', 'use_from_inherit');
+  field_delete_field('implementation_use_from_inherit');
+
 
 
   // Purge all field information
