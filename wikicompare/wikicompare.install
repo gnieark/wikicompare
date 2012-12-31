@@ -338,10 +338,8 @@ function wikicompare_install() {
       'cardinality' => 1,
       'settings' => array(
         'allowed_values' => array(
-          'not-parent-feature' => 'Not a parent feature',
           'parent-weighted-average' => 'Parent Feature - Weighted Average',
           'parent-hightest-percentage' => 'Parent Feature - Hightest Percentage',
-          'Link' => 'Link',
         ),
       ),
     );
@@ -852,7 +850,7 @@ function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per
       node_save($node);
       create_feature_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $node->nid, $parent_type);
     } else {
-      $node->feature_type[$node->language][0]['value'] = 'not-parent-feature';
+      $node->feature_type[$node->language][0]['value'] = 'parent-weighted-average';
       node_save($node);
     }
 

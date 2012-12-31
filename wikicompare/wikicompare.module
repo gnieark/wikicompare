@@ -928,22 +928,19 @@ function update_compare_tree($type, $nids, $update_parent) {
       continue;
     }
 
-    //If any misconfiguration (For exemple a feature of type weight-average but without feature children), it'll always return 0
+    //If any misconfiguration, it'll always return 0
     $node->percent = 0;
     $node->css_class = 'cell-support-no';
 
-    //If the feature is of type not parent feature, it'll use the support field to know what value return
-    if ($node->type == 'not-parent-feature') {
+    //The support field is used only if the implementation is the deepest in the tree, on both the feature and compared axis
+    if (empty($node->through_feature_childs) && empty($node->through_compared_childs)) {
 
-      //We only update with support field if there is no compared children
-      if (empty($node->through_compared_childs)) {
-        if ($node->support == 1) {
-          $node->percent = 100;
-          $node->css_class = 'cell-support-complete';
-        } else {
-          $node->percent = 0;
-          $node->css_class = 'cell-support-no';
-        }
+      if ($node->support == 1) {
+        $node->percent = 100;
+        $node->css_class = 'cell-support-complete';
+      } else {
+        $node->percent = 0;
+        $node->css_class = 'cell-support-no';
       }
 
     //If the feature is of type weighted average, it'll use the children through feature axis to compute the percent
