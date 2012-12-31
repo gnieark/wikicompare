@@ -54,10 +54,10 @@ function wikicompare_inherit_compared_install() {
   db_add_index('cache_compared', 'inherit_compared_id', array('inherit_compared_id'));
 
 
-  //Create inherited compared field
+  //Create inherit compared field
 
   $field = array(
-    'field_name' => 'compared_inherited_compared',
+    'field_name' => 'compared_inherit_compared',
     'type' => 'entityreference',
     'cardinality' => 1,
     'settings' => array(
@@ -68,10 +68,10 @@ function wikicompare_inherit_compared_install() {
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'compared_inherited_compared',
+    'field_name' => 'compared_inherit_compared',
     'entity_type' => 'node',
     'bundle' => 'compared',
-    'label' => 'Inherited Compared',
+    'label' => 'Inherit Compared',
     'description' => 'TODO : Si ce champ est rempli, alors toutes les features deja present dans le logiciel herite seront egalement present dans celui-ci. Neanmoins via un code couleur legerement different, plus leger pour marquer la difference.',
     'widget' => array(
       'type' => 'entityreference_autocomplete',
@@ -95,7 +95,7 @@ function wikicompare_inherit_compared_uninstall() {
 
   db_drop_field('cache_compared', 'inherit_compared_id');
   db_drop_index('cache_compared', 'inherit_compared_id');
-  field_delete_field('compared_inherited_compared');
+  field_delete_field('compared_inherit_compared');
 
 
   // Purge all field information

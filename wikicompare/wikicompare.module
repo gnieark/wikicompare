@@ -250,13 +250,19 @@ function compared_insert($node) {
   if (isset($node->compared_parent_compared['und'][0])) {
     $compared_parent_compared = $node->compared_parent_compared['und'][0]['target_id'];
   }
-  db_insert('cache_compared')
-    ->fields(array(
+
+  $fields = array(
       'nid' => $node->nid,
       'vid' => $node->vid,
       'title' => $node->title,
       'parent_compared_id' => $compared_parent_compared,
-    ))
+  );
+
+  //Allow to insert other field from other modules
+  $fields = module_invoke_all('wikicompare_cache_compared_fields', $fields, $node);
+
+  db_insert('cache_compared')
+    ->fields($fields)
     ->execute();
 
   // Find all feature node. We don't use cache table because node is more reliable for such important task and there is no performance problem here.
@@ -410,6 +416,10 @@ function compared_delete($node) {
     ->condition('parent_compared_id', $node->nid)
     ->execute();
 
+  //Hook to trigger action from other modules
+  module_invoke_all('wikicompare_cache_compared_delete', $node);
+
+
   if (isset($node->compared_parent_compared['und'][0])) {
     //Update the compare tree
     update_compare_tree('compared', array($node->compared_parent_compared['und'][0]['target_id']), 'update');
@@ -496,8 +506,17 @@ function wikicompare_revisionapi($op, $node_revision) {
         $current_node_parent = NULL;
       }
 
-      //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis after the leave of the compared child
-      if ($node_revision_parent != $current_node_parent) {
+      
+      //Tests in other modules. We unfortunately can't work by reference, http://rhmttsdrupal.wordpress.com/2011/02/08/module_invoke-and-module_invoke_all-dont-do-passing-by-reference/ , maybe in Drupal 8
+      $tests = module_invoke_all('wikicompare_updated_compared_test', $node_revision, $current_node);
+      foreach($tests as $testitem) {
+        if ($testitem == True){
+          $test = True;
+        }
+      }
+
+      //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis after the leave of the compared child. We also allow the update following test in others modules.
+      if (($node_revision_parent != $current_node_parent) || ($test == True)) {
 
         //We mark the updated compared, his old parent and his new parent for update
         db_update('cache_compared')
@@ -565,29 +584,34 @@ function wikicompare_revisionapi($op, $node_revision) {
         if (isset($node_revision->compared_parent_compared['und'][0])) {
           $compared_parent_compared = $node_revision->compared_parent_compared['und'][0]['target_id'];
         }
+
+        $fields = array(
+          'vid' => $node_revision->vid,
+          'title' => $node_revision->title,
+          'parent_compared_id' => $compared_parent_compared,
+        );
+
+        $fields = module_invoke_all('wikicompare_cache_compared_fields', $fields, $node_revision);
+
         db_update('cache_compared')
-            ->fields(array(
-              'vid' => $node_revision->vid,
-              'title' => $node_revision->title,
-              'parent_compared_id' => $compared_parent_compared
-            ))
+            ->fields($fields)
             ->condition('nid', $node_revision->nid)
             ->execute();
     }
 
-      if ($node_revision->type == 'implementation') {
-        $support = 0;
-        if ($node_revision->implementation_support['und'][0]['value'] == 'Supported') {
-          $support = 1;
-        }
-        db_update('cache_implementation')
-            ->fields(array(
-              'vid' => $node_revision->vid,
-              'support' => $support
-            ))
-            ->condition('nid', $node_revision->nid)
-            ->execute();
+    if ($node_revision->type == 'implementation') {
+      $support = 0;
+      if ($node_revision->implementation_support['und'][0]['value'] == 'Supported') {
+        $support = 1;
       }
+      db_update('cache_implementation')
+          ->fields(array(
+            'vid' => $node_revision->vid,
+            'support' => $support
+          ))
+          ->condition('nid', $node_revision->nid)
+          ->execute();
+    }
 
     //Get all the feature to update
     $query = db_select('cache_feature', 'n');
@@ -1257,5 +1281,21 @@ function wikicompare_flush_caches() {
   }
 
 }
+
+
+//Dummy function for the hook_wikicompare_cache_compared_fields()
+function wikicompare_wikicompare_cache_compared_fields($fields, $node) {
+
+  return $fields;
+
+}
+
+//Dummy function for the hook_wikicompare_updated_compared_test()
+function wikicompare_wikicompare_updated_compared_test($node_revision, $current_node) {
+
+  return False;
+
+}
+
 
 ?>

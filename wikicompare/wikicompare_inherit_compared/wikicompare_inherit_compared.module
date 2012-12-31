@@ -1,0 +1,58 @@
+<?php
+
+
+//Update inherit_compared_id in cache_compared table
+function wikicompare_inherit_compared_wikicompare_cache_compared_fields($fields, $node) {
+
+  $compared_inherit_compared = 0;
+  if (isset($node->compared_inherit_compared['und'][0])) {
+    $compared_inherit_compared = $node->compared_inherit_compared['und'][0]['target_id'];
+  }
+
+  $new_fields = array(
+      'inherit_compared_id' => $compared_inherit_compared,
+  );
+
+  return $new_fields;
+
+}
+
+
+//Update cache so all inherited children are now without inherit compared when we delete a compared
+function wikicompare_inherit_compared_wikicompare_cache_compared_delete($node) {
+
+  db_update('cache_compared')
+    ->fields(array(
+      'inherit_compared_id' => 0,
+    ))
+    ->condition('inherit_compared_id', $node->nid)
+    ->execute();
+
+}
+
+//Test if the compared node was updated
+function wikicompare_inherit_compared_wikicompare_updated_compared_test($node_revision, $current_node) {
+
+      if ($node_revision->compared_inherit_compared) {
+        $node_revision_inherit = $node_revision->compared_inherit_compared['und'][0]['target_id'];
+      } else {
+        $node_revision_inherit = NULL;
+      }
+
+      if ($current_node->compared_inherit_compared) {
+        $current_node_inherit = $current_node->compared_inherit_compared['und'][0]['target_id'];
+      } else {
+        $current_node_inherit = NULL;
+      }
+
+      $test = False;
+      if ($node_revision_inherit != $current_node_inherit) {
+        $test= True;
+      }
+
+      return $test;
+
+}
+
+
+?>
