@@ -102,6 +102,7 @@ function wikicompare_schema() {
       'to_update' => array(
         'description' => "Boolean indicated if this node should be updated as soon as possible",
         'type' => 'int',
+        'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
       )
@@ -162,6 +163,7 @@ function wikicompare_schema() {
       'to_update' => array(
         'description' => "Boolean indicated if this node should be updated as soon as possible",
         'type' => 'int',
+        'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
       )
@@ -222,12 +224,14 @@ function wikicompare_schema() {
       'support' => array(
         'description' => "Boolean indicated if this implementation is supported or not",
         'type' => 'int',
+        'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
       ),
       'to_update' => array(
         'description' => "Boolean indicated if this node should be updated as soon as possible",
         'type' => 'int',
+        'size' => 'tiny',
         'not null' => TRUE,
         'default' => 0,
       )
@@ -534,34 +538,6 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     field_create_instance($instance);
 
 
-    //Create inherited compared field
-
-    $field = array(
-      'field_name' => 'compared_inherited_compared',
-      'type' => 'entityreference',
-      'cardinality' => 1,
-      'settings' => array(
-        'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('compared')),
-      ),
-    );
-    field_create_field($field);
-
-    $instance = array(
-      'field_name' => 'compared_inherited_compared',
-      'entity_type' => 'node',
-      'bundle' => 'compared',
-      'label' => 'Inherited Compared',
-      'description' => 'TODO : Si ce champ est rempli, alors toutes les features deja present dans le logiciel herite seront egalement present dans celui-ci. Neanmoins via un code couleur legerement different, plus leger pour marquer la difference.',
-      'widget' => array(
-        'type' => 'entityreference_autocomplete',
-      ),
-      'settings' => array(
-        'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('compared')),
-      ),
-    );
-    field_create_instance($instance);
 
 
 
@@ -965,7 +941,6 @@ function wikicompare_uninstall() {
   //Delete compared content type.
 
   field_delete_field('compared_parent_compared');
-  field_delete_field('compared_inherited_compared');
 
   node_type_delete('compared');
 
