@@ -749,7 +749,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
   create_compared_children($compared_min_depth, $compared_max_depth, 'Compared ', $compared_child_min_per_level, $compared_child_max_per_level, $depth, $parent_id);
 
-
+/* TODO Plante pour linstant
   $implementations = db_query("SELECT nid FROM node WHERE type = 'implementation'");
 
   $to_update = array();
@@ -759,27 +759,17 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
     if (rand(1, $implementation_support_chance) != $implementation_support_chance) {
       $node->implementation_support[$node->language][0]['value'] = 1;
-      $cache_to_update_support[] = $node->nid;
+      $node->revision = TRUE;
+      $node->revision_moderation = TRUE;
 
       node_save($node);
 
-      $to_update[$node->nid] = $node->nid;
+      _revisioning_publish_latest_revision($node);
+
     }
 
   }
-
-  db_update('cache_implementation')
-    ->fields(array(
-      'support' => '1',
-    ))
-    ->condition('nid', $cache_to_update_support, 'in')
-    ->execute();
-
-  if (!empty($to_update)) {
-    update_compare_tree('implementation', $to_update, 'update');
-  }
-
-
+*/
 }
 
 function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $parent_id, $parent_type) {
