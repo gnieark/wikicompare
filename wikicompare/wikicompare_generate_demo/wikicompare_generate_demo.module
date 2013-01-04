@@ -1,0 +1,314 @@
+<?php
+
+function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
+
+  $form['demo_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Generate Demo'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $form['demo_fieldset']['feature_min_depth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum feature depth'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => True,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['feature_max_depth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum feature depth'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['feature_child_min_per_level'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum number of child feature per level'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['feature_child_max_per_level'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of child feature per level'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['feature_min_weight'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum feature weight'),
+    '#default_value' => 1,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['feature_max_weight'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum feature weight'),
+    '#default_value' => 1,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['feature_highest_chance'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Chance that the feature is of highest type instead of weighted average'),
+    '#default_value' => 5,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['compared_min_depth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum compared depth'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['compared_max_depth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum compared depth'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['compared_child_min_per_level'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum number of child compared per level'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['compared_child_max_per_level'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of child compared per level'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['implementation_support_chance'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Chance that the created implementation go to supported state'),
+    '#default_value' => 5,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['drop_nodes'] = array(
+    '#type' => 'submit',
+    '#suffix' => '<br/>You can use this button to drop all data in the website.',
+    '#value' => t('Drop nodes'),
+    '#button_type' => 'button',
+    '#submit' => array('wikicompare_drop_nodes'),
+  );
+}
+
+function element_validate_integer_positive_or_null($element, &$form_state) {
+  $value = $element['#value'];
+  if ($value !== '' && (!is_numeric($value) || intval($value) != $value || $value < 0)) {
+    form_error($element, t('%name must be a positive integer.', array('%name' => $element['#title'])));
+  }
+}
+
+
+function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form_state) {
+
+  $parent_id = NULL;
+  $depth = 0;
+  $features_created = array();
+  $compareds_created = array();
+ 
+  if (($form_state['input']['feature_min_depth'] != 0) && ($form_state['input']['feature_max_depth'] != 0) && ($form_state['input']['feature_child_min_per_level'] != 0) && ($form_state['input']['feature_child_max_per_level'] != 0)) {
+    create_feature_children($form_state['input']['feature_min_depth'], $form_state['input']['feature_max_depth'], 'Feature ' . variable_get('wikicompare_next_demo_sequence', 1) . '.', $form_state['input']['feature_child_min_per_level'], $form_state['input']['feature_child_max_per_level'], $form_state['input']['feature_min_weight'], $form_state['input']['feature_max_weight'], $form_state['input']['feature_highest_chance'], $depth, $parent_id, $features_created, False);
+    
+  }
+
+  if (($form_state['input']['compared_min_depth'] != 0) && ($form_state['input']['compared_max_depth'] != 0) && ($form_state['input']['compared_child_min_per_level'] != 0) && ($form_state['input']['compared_child_max_per_level'] != 0)) {
+    create_compared_children($form_state['input']['compared_min_depth'], $form_state['input']['compared_max_depth'], 'Compared ' . variable_get('wikicompare_next_demo_sequence', 1) . '.', $form_state['input']['compared_child_min_per_level'], $form_state['input']['compared_child_max_per_level'], $depth, $parent_id, $compareds_created);
+  }
+
+  variable_set('wikicompare_next_demo_sequence', variable_get('wikicompare_next_demo_sequence', 1) + 1);
+
+  //This part take a lot of time, better put a high support chance
+  if ((!empty($features_created) || !empty($features_created)) && $form_state['input']['implementation_support_chance'] != 0) { 
+    $query = db_select('cache_implementation', 'i');
+    $query->addField('i', 'nid', 'nid');
+    if (!empty($feature_created)) {
+      $query->where('i.feature_id', $features_created, 'IN');
+    }
+    if (!empty($compared_created)) {
+      $query->where('i.compared_id', $compareds_created, 'IN');
+    }
+
+    $result = $query->execute();
+
+    $implementations = array();
+    foreach($result as $record) {
+      $implementations[$record->nid] = $record->nid;
+    }
+
+    foreach($implementations as $item) {
+
+      $node = node_load($item);
+      if (rand(1, $form_state['input']['implementation_support_chance']) != $form_state['input']['implementation_support_chance']) {
+        $node->implementation_support[LANGUAGE_NONE][0]['value'] = 1;
+        $node->revision = TRUE;
+        $node->revision_moderation = TRUE;
+
+        node_save($node);
+
+        _revisioning_publish_latest_revision($node);
+
+      }
+    }
+
+  }
+
+
+}
+
+
+function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $parent_id, &$features_created, $parent_type) {
+
+  $depth++;
+  $nb_child = rand($child_min_per_level, $child_max_per_level);
+  
+  $i = 1;
+  while ($i <= $nb_child) {
+    $node = new stdClass();
+    $node->type = 'feature';
+    if ($parent_id != NULL) {
+    $title = $prefix . '.' . $i;
+    } else {
+    $title = $prefix . $i;
+    }
+    $node->language = LANGUAGE_NONE;
+    $node->title = $title;
+    $node->feature_state[$node->language][0]['value'] = 'Published';
+    if ($parent_id != NULL) {
+      $node->feature_parent_feature[$node->language][0]['target_id'] = $parent_id;
+      $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
+    }
+
+    if ($parent_type == 'parent-weighted-average') {
+      $node->feature_weight[$node->language][0]['value'] = 100*rand($min_weight, $max_weight);
+    } elseif ($parent_type == 'parent-hightest-percentage') {
+      $node->feature_weight[$node->language][0]['value'] = 100/rand($min_weight, $max_weight);
+    }
+
+
+    if (rand(1, $feature_highest_chance) != $feature_highest_chance) {
+      $node->feature_type[$node->language][0]['value'] = 'parent-weighted-average';
+      $parent_type = 'parent-weighted-average';
+    } else {
+      $node->feature_type[$node->language][0]['value'] = 'parent-hightest-percentage';
+      $parent_type = 'parent-hightest-percentage';
+    }
+
+
+    $node->feature_weight[$node->language][0]['value'] = rand($min_weight, $max_weight);
+
+    if ((($depth <= $min_depth or (rand($min_depth, $max_depth) != $min_depth)) and ($depth <= $max_depth))) {
+      node_save($node);
+      create_feature_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $node->nid, $features_created, $parent_type);
+    } else {
+      $node->feature_type[$node->language][0]['value'] = 'parent-weighted-average';
+      node_save($node);
+    }
+
+    $features_created[$node->nid] = $node->nid;
+
+    $i++;
+
+
+  }
+
+}
+
+function create_compared_children($min_depth, $max_depth, $prefix, $child_min_per_level, $child_max_per_level, $depth, $parent_id, &$compareds_created) {
+
+  $depth++;
+  $nb_child = rand($child_min_per_level, $child_max_per_level);
+
+  $i = 1;
+  while ($i <= $nb_child) {
+    $node = new stdClass();
+    $node->type = 'compared';
+    if ($parent_id != NULL) {
+    $title = $prefix . '.' . $i;
+    } else {
+    $title = $prefix . $i;
+    }
+    $node->title = $title;
+    if ($parent_id != NULL) {
+      $node->language = LANGUAGE_NONE;
+      $node->compared_parent_compared[$node->language][0]['target_id'] = $parent_id;
+      $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+    }
+
+    node_save($node);
+
+    if ((($depth <= $min_depth or (rand($min_depth, $max_depth) != $min_depth)) and ($depth <= $max_depth))) {
+      create_compared_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $depth, $node->nid, $compareds_created);
+    }
+
+    $compareds_created[$node->nid] = $node->nid;
+
+    $i++;
+
+
+  }
+
+}
+
+function wikicompare_drop_nodes() {
+
+  $query = db_select('node', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $result = $query->execute();
+
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  node_delete_multiple($nids);
+
+}
+
+?>

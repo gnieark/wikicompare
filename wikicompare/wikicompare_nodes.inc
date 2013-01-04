@@ -8,7 +8,6 @@
  */
 function feature_insert($node) {
 
-dpm('feature insert ok');
 
   /*
    * Create a new implementation for all compared node
@@ -123,7 +122,6 @@ dpm('feature insert ok');
  */
 function compared_insert($node) {
 
-dpm('compared insert ok');
 
   /*
    * Create a new implementation for all feature node

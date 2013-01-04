@@ -1,0 +1,9 @@
+name = Wikicompare Generate Demo
+description = Add the possibility to generate demo data in the settings page of the module.
+
+dependencies[] = wikicompare
+
+project = "wikicompare"
+package = Wikicompare
+version = VERSION
+core = 7.x

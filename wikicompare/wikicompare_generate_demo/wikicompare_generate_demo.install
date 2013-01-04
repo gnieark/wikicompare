@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * Implements hook_install().
+ * This function is called only once at the module installation
+ */
+function wikicompare_generate_demo_install() {
+
+  variable_set('wikicompare_next_demo_sequence', 1);
+
+}
+
+
+
+/**
+ * Implements hook_uninstall().
+ * This function is called at the module uninstallation
+ */
+function wikicompare_generate_demo_uninstall() {
+
+  variable_del('wikicompare_next_demo_sequence');
+
+}
+
+?>
