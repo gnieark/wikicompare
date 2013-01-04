@@ -159,7 +159,7 @@ function feature_insert($node) {
   /*
    * Create a new implementation for all compared node
    */
-dpm($node);
+
   //Create the new feature in the cache table
   $feature_parent_feature = NULL;
   if (isset($node->feature_parent_feature['und'][0])) {
@@ -652,8 +652,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       } else {
         $current_node_parent = NULL;
       }
-dpm($node_revision);
-dpm($current_node);
+
 //TODO 
 /*      
       //Tests in other modules. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8.
@@ -851,13 +850,11 @@ dpm($current_node);
     foreach($result as $item) {
       $compared_nids[$item->nid] = $item->nid;
     }
-dpm('Before compared update');
-dpm($compared_nids);
+
     //Update all the compared marked. We force the update of the parent because in case of an update thanks to a parent compared change, the implementation percent may not have change but we still need to update their parent.
     if ($compared_nids) {
       update_compare_tree('compared', $compared_nids, 'update');
     }
-dpm('After compared update');
 
     //Get all the implementation to update
     $query = db_select('cache_implementation', 'n');
@@ -917,8 +914,6 @@ dpm('After compared update');
   */
 function update_compare_tree($type, $nids, $update_parent) {
 
-dpm($type);
-dpm($nids);
 
   $nodes = array();
   if (!empty($nids)) {
@@ -979,7 +974,6 @@ dpm($nids);
 //TODO TOTEST
     $result = $query->execute();
 
-dpm($result);
 
     $implementation_ids = array();
     $res_search_feature_children = '';
@@ -1001,7 +995,6 @@ dpm($result);
       $res_search_compared_children = $res_search_compared_children . "('" . $record->cid . "','" . $record->fid . "')";
     }
 
-dpm($nodes);
 
     $through_feature_childs = array();
     //We don't need the children through feature child in case of type = 'compared'. Also, we should not call this function if $res_search_feature_children is used and null, otherwise it'll crash.
@@ -1086,7 +1079,7 @@ dpm($nodes);
 
     }
 
-    //Assign children to each node to compute. Also, if a children is not already computed we mark it to update
+    //Assign children to each node to compute. 
     $to_update = array();
     foreach($nodes as $node) {
       $node->through_feature_childs = array();
@@ -1145,9 +1138,9 @@ dpm($nodes);
         }
       }
     }
+
   }
 
-dpm($nodes);
 //TODO
   foreach (module_implements('wikicompare_update_comparative_table_preparation') as $module) {
     $function = $module . '_wikicompare_update_comparative_table_preparation';
@@ -1172,7 +1165,7 @@ dpm($nodes);
     $nodes[$record->nid]->cache_css_class = $record->cache_css_class;
   }
 
-dpm($nodes);
+//TODO $nodes vides en cas de compared, voir pourquoi
 
   /*
    * Now we'll compute the percent and css_class of each nids in function argument
@@ -1277,7 +1270,7 @@ dpm($nodes);
 
     //Update the parent though feature and compared axis if the value changed, or if we have the flag force-update. Above, we rounded the percent computed to 4 because it'll be the same rounding than the one in database. This ensure this comparison work correctly and don't update parent if unnecessary.
     //If the flag no-update is set, no update will be made.
-    if ((($node->percent != $node->cache_percent) || ($node->css_class != $node->cache_css_class)) && ($update_parent != 'no-update')) {
+    if (($node->percent != $node->cache_percent) || ($node->css_class != $node->cache_css_class)) {
 
       //We mark the parent id through feature axis to update if exist, unless we have the flag no-update-feature. This flag deny the parent update through feature axis if update_compare_tree was launched for a children computation
       if (($node->parent_fs_through_feature_nid) && ($update_parent != 'no-update-feature')) {
@@ -1295,7 +1288,6 @@ dpm($nodes);
         $function = $module . '_wikicompare_update_comparative_table_post';
         $function($to_update, $node);
       }
-
 //TODO
 
     }
@@ -1337,7 +1329,6 @@ dpm($nodes);
   if (!empty($to_update)) {
     update_compare_tree('implementation', $to_update, 'update');
   }
-
   return $res;
 
 }
@@ -1446,19 +1437,27 @@ function wikicompare_flush_caches() {
       'has_children' => 0,
     );
 
-    $parent_array[$record->parent_feature_id] = $record->nid;
-
-    $feature_without_parent = array();
     if ($record->parent_feature_id) {
-      $feature_without_parent[$record->nid] = $record->nid;
+      $parent_array[$record->parent_feature_id][] = $record->nid;
     }
+
+    
 
   }
 
   //Set has_children flag
-  foreach ($parent_array as $parent) {
-    $feature_to_insert[$parent]['has_children'] = 1;
+  foreach ($parent_array as $key => $parent) {
+    $feature_to_insert[$key]['has_children'] = 1;
   }
+
+  //Later, we will launch the update_compare_table with only the feature without children
+  $feature_without_children = array();
+  foreach ($feature_to_insert as $feature) {
+    if ($feature['has_children'] == 0) {
+      $feature_without_children[$feature['nid']] = $feature['nid'];
+    }
+  }
+
 
   $query = db_insert('cache_feature')->fields(array('nid', 'vid', 'title', 'parent_feature_id', 'type', 'weight', 'state', 'has_children'));
   foreach ($feature_to_insert as $feature) {
@@ -1586,8 +1585,8 @@ function wikicompare_flush_caches() {
   $query->execute();
 
 
-  //Update compatative table cache. We begin the update at the top of the feature tree and at the base of the compared tree.
-  update_compare_tree('feature', $feature_without_parent, 'update');
+  //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the compared tree.
+  update_compare_tree('feature', $feature_without_children, 'update');
 
   //We only reactive the website if it wasn't in maintenance at the beginning
   if ($was_in_maintenance == FALSE) {

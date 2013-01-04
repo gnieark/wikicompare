@@ -180,7 +180,7 @@ function wikicompare_inherit_compared_wikicompare_update_main_query(&$query) {
   $query->addField('fs', 'use_from_inherit', 'use_from_inherit');
   $query->addField('nc', 'inherit_compared_id', 'inheriting_compared_id');
   $query->addField('ncinc', 'nid', 'inheriting_implementation_nid');
-  $query->addField('ncincctc', 'percent', 'inheriting_implementation_cache_nid');
+  $query->addField('ncincctc', 'nid', 'inheriting_implementation_cache_nid');
   $query->addField('ncincctc', 'percent', 'inheriting_implementation_cache_percent');
   $query->addField('ncincctc', 'css_class', 'inheriting_implementation_cache_css_class');
 
@@ -196,8 +196,7 @@ function wikicompare_inherit_compared_wikicompare_update_main_query(&$query) {
 function wikicompare_inherit_compared_wikicompare_update_comparative_table_preparation($nids, &$nodes, $type) {
 
 //TODO
-//TODO On ne devrait plus en avoir besoin une fois qu'on aura desactive l'update children
-/*    $to_update = array();
+    $to_update = array();
     foreach($nodes as $node) {
       if ($node->inheriting_compared_id) {
         if (!$node->inheriting_implementation_cache_nid) {
@@ -209,7 +208,7 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
 
 
     if (!empty($to_update)) {
-      $res = update_compare_tree('implementation', $to_update, 'update'); //TODO Le flag update est surement dangereux
+      $res = update_compare_tree('implementation', $to_update, 'update'); //TODO Le flag update est surement dangereux, mais on a pas trop le choix. Plus tard il faudra mettre en place un mecanisme qui detecte les loop
       foreach($nodes as $node) {
         if (isset($res[$node->inheriting_implementation_nid])) {
           $node->inheriting_implementation_cache_nid = $node->inheriting_implementation_nid;
@@ -219,8 +218,8 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
         
       }
     }
-*/
-    //Recover childran_through_inherit, so we can update them at the end of update_compare_tree
+
+    //Recover children_through_inherit, so we can update them at the end of update_compare_tree
     $res_search_inherit_compared_children = '';
     foreach($nodes as $node) {
       if ($res_search_inherit_compared_children) {
@@ -235,8 +234,8 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
     $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
     $query->join('cache_feature', 'nf', 'i.feature_id = nf.nid');
     $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
-    //Only the implementation which has children on both axis will be updated because it will have no effect otherwise
-    $query->condition('nf.has_children', 0);
+    //Only the implementation which has no children on both axis will be updated because it will have no effect otherwise
+    $query->condition('nf.has_children', 0); 
     $query->condition('nc.has_children', 0);
 
     switch ($type) {
