@@ -99,6 +99,13 @@ function wikicompare_schema() {
         'length' => 32,
         'not null' => TRUE,
       ),
+      'has_children' => array(
+        'description' => "Boolean indicated if this node has children. This allow us to know this feature has children without making each time a big sql query.",
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'to_update' => array(
         'description' => "Boolean indicated if this node should be updated as soon as possible",
         'type' => 'int',
@@ -159,6 +166,13 @@ function wikicompare_schema() {
         'description' => 'The parent id of the compared node',
         'type' => 'int',
         'unsigned' => TRUE,
+      ),
+      'has_children' => array(
+        'description' => "Boolean indicated if this node has children. This allow us to know this compared has children without making each time a big sql query.",
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
       ),
       'to_update' => array(
         'description' => "Boolean indicated if this node should be updated as soon as possible",
@@ -743,7 +757,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   $implementation_support_chance = 3;
 
 
-  $parent_id = 0;
+  $parent_id = NULL;
   $depth = 0;
   create_feature_children($feature_min_depth, $feature_max_depth, 'Feature ', $feature_child_min_per_level, $feature_child_max_per_level, $feature_min_weight, $feature_max_weight, $feature_highest_chance, $depth, $parent_id, False);
 
@@ -781,7 +795,7 @@ function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per
   while ($i <= $nb_child) {
     $node = new stdClass();
     $node->type = 'feature';
-    if ($parent_id != 0) {
+    if ($parent_id != NULL) {
     $title = $prefix . '.' . $i;
     } else {
     $title = $prefix . $i;
@@ -789,7 +803,7 @@ function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per
     $node->language = LANGUAGE_NONE;
     $node->title = $title;
     $node->feature_state[$node->language][0]['value'] = 'Published';
-    if ($parent_id != 0) {
+    if ($parent_id != NULL) {
       $node->feature_parent_feature[$node->language][0]['target_id'] = $parent_id;
       $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
     }
@@ -836,13 +850,13 @@ function create_compared_children($min_depth, $max_depth, $prefix, $child_min_pe
   while ($i <= $nb_child) {
     $node = new stdClass();
     $node->type = 'compared';
-    if ($parent_id != 0) {
+    if ($parent_id != NULL) {
     $title = $prefix . '.' . $i;
     } else {
     $title = $prefix . $i;
     }
     $node->title = $title;
-    if ($parent_id != 0) {
+    if ($parent_id != NULL) {
       $node->language = LANGUAGE_NONE;
       $node->compared_parent_compared[$node->language][0]['target_id'] = $parent_id;
       $node->compared_parent_compared[$node->language][0]['target_type'] = "node";

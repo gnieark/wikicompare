@@ -130,10 +130,28 @@ function wikicompare_inherit_compared_install() {
     ),
     'required' => 1,
     'widget' => array(
-      'type' => 'options_onoff',
+      'type' => 'options_select',
     ),
   );
   field_create_instance($instance);
+
+
+  //Set use_from_inherit of old implementation to 1
+  $implementations = db_query("SELECT nid FROM node WHERE type = 'implementation'");
+
+  foreach($implementations as $item) {
+    $node = node_load($item->nid);
+    $node->implementation_use_from_inherit[LANGUAGE_NONE][0]['value'] = 1;
+    node_save($node);
+  }
+
+  //Update cache
+  db_update('cache_implementation')
+    ->fields(array(
+      'use_from_inherit' => 1,
+    ))
+    ->execute();
+
 
 
 }
