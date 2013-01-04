@@ -111,7 +111,7 @@ function feature_insert($node) {
   }
 
   //Update the compare tree with the new data
-  wikicompare_update_compare_tree('feature', array($node->nid), 'update');
+  wikicompare_update_compare_tree('feature', array($node->nid));
 
 }
 
@@ -233,7 +233,7 @@ function compared_insert($node) {
   }
 
   //Update the compare tree with the new data
-  wikicompare_update_compare_tree('compared', array($node->nid), 'update');
+  wikicompare_update_compare_tree('compared', array($node->nid));
 
 }
 
@@ -304,7 +304,7 @@ function feature_delete($node) {
 
 
     //Update the compare tree
-    wikicompare_update_compare_tree('feature', array($node->feature_parent_feature['und'][0]['target_id']), 'update');
+    wikicompare_update_compare_tree('feature', array($node->feature_parent_feature['und'][0]['target_id']));
   }
 
 }
@@ -383,7 +383,7 @@ function compared_delete($node) {
 
 
     //Update the compare tree
-    wikicompare_update_compare_tree('compared', array($node->compared_parent_compared['und'][0]['target_id']), 'update');
+    wikicompare_update_compare_tree('compared', array($node->compared_parent_compared['und'][0]['target_id']));
   }
 
 }
@@ -663,7 +663,7 @@ function wikicompare_revisionapi($op, $node_revision) {
     }
     //Update all the feature marked. We force the update of the parent because in case of an update thanks to a parent feature change, the implementation percent may not have change but we still need to update their parent.
     if ($feature_nids) {
-      wikicompare_update_compare_tree('feature', $feature_nids, 'update');
+      wikicompare_update_compare_tree('feature', $feature_nids);
     }
 
     //Get all the compared to update
@@ -679,7 +679,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Update all the compared marked. We force the update of the parent because in case of an update thanks to a parent compared change, the implementation percent may not have change but we still need to update their parent.
     if ($compared_nids) {
-      wikicompare_update_compare_tree('compared', $compared_nids, 'update');
+      wikicompare_update_compare_tree('compared', $compared_nids);
     }
 
     //Get all the implementation to update
@@ -695,7 +695,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Update all the implementation marked. We force the update of the parent because in case of an update thanks to a parent feature or compared change, the implementation percent may not have change but we still need to update their parent.
     if ($implementation_nids) {
-      wikicompare_update_compare_tree('implementation', $implementation_nids, 'update');
+      wikicompare_update_compare_tree('implementation', $implementation_nids);
     }
 
     //Remove all update marks

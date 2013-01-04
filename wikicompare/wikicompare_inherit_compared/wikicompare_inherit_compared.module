@@ -63,7 +63,7 @@ function wikicompare_inherit_compared_wikicompare_cache_compared_delete($node) {
     ->execute();
 
   //If some implementation were inherting this compared, we update them
-  wikicompare_update_compare_tree('compared', $to_update, 'update');
+  wikicompare_update_compare_tree('compared', $to_update);
 
 }
 
@@ -147,7 +147,7 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
     //Recover the missing cache percent
     if (!empty($to_update)) {
       //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop.
-      $res = wikicompare_update_compare_tree('implementation', $to_update, 'update'); //TODO Retirer les flag par defaut
+      $res = wikicompare_update_compare_tree('implementation', $to_update);
       foreach($nodes as $node) {
         if (isset($res[$node->inheriting_implementation_nid])) {
           $node->inheriting_implementation_cache_nid = $node->inheriting_implementation_nid;

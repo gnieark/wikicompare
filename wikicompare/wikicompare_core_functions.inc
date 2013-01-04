@@ -7,7 +7,7 @@
   * It'll find all children on compared and feature axis for the ids passed in argument, compute the percent thanks to theses informations and feature type, and finally if the percent changed it'll update the parents on feature and compared axis.
   * This is a recursive function, which will call itself on children side if a cache percent is missing and parent side if the percent computed change, and in both the feature and compared axis.
   */
-function wikicompare_update_compare_tree($type, $nids, $update_parent) {
+function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
 
   $nodes = array();
@@ -20,9 +20,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent) {
     $query->addField('fs', 'support', 'support');	
     $query->addField('nf', 'type', 'type');
     $query->addField('nf', 'parent_feature_id', 'parent_feature_id');
-//    $query->addField('nc', 'parent_compared_id', 'parent_compared_id');
     $query->addField('nfpnf', 'nid', 'parent_fs_through_feature_nid');
-//    $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid');
 
     //Get parent implementation through feature axis
     $query->join('cache_feature', 'nf', 'fs.feature_id = nf.nid'); //Get feature node
@@ -419,7 +417,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent) {
 
   //Update the parent marked
   if (!empty($to_update)) {
-    wikicompare_update_compare_tree('implementation', $to_update, 'update');
+    wikicompare_update_compare_tree('implementation', $to_update);
   }
   return $res;
 
@@ -664,7 +662,7 @@ function wikicompare_flush_caches() {
 
 
   //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the compared tree.
-  wikicompare_update_compare_tree('feature', $feature_without_children, 'update');
+  wikicompare_update_compare_tree('feature', $feature_without_children);
 
   //We only reactive the website if it wasn't in maintenance at the beginning
   if ($was_in_maintenance == FALSE) {
