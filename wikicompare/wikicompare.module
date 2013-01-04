@@ -49,6 +49,11 @@ Activate this feature can take some time, because the cache table need to be rec
 
   $form['#submit'][] = 'submit_settings';
 
+  //Allow others modules to modify the settings page
+  foreach (module_implements('wikicompare_settings_page') as $module) {
+    $function = $module . '_wikicompare_settings_page';
+    $function($form);
+  }
 
   return system_settings_form($form);
 
@@ -56,11 +61,17 @@ Activate this feature can take some time, because the cache table need to be rec
 
 //This function handels the submit of the settings form.
 function submit_settings($form, $form_state) {
-    if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
 
-      wikicompare_flush_caches();
+  if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
+    wikicompare_flush_caches();
+  }
 
-    }
+  //Allow others modules to modify the action when we submit the settings page
+  foreach (module_implements('wikicompare_submit_settings_page') as $module) {
+    $function = $module . '_wikicompare_submit_settings_page';
+    $function($form, $form_state);
+  }
+
 }
 
 /**

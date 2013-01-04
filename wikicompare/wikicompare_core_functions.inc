@@ -232,32 +232,33 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
     }
 
-  }
+  
 
-  //Allow others modules to make some action before we start computing the node
-  foreach (module_implements('wikicompare_update_comparative_table_preparation') as $module) {
-    $function = $module . '_wikicompare_update_comparative_table_preparation';
-    $function($nids, $nodes, $type);
-  }
+    //Allow others modules to make some action before we start computing the node
+    foreach (module_implements('wikicompare_update_comparative_table_preparation') as $module) {
+      $function = $module . '_wikicompare_update_comparative_table_preparation';
+      $function($nids, $nodes, $type);
+    }
 
-  //Recover the existing cache value only now and not in the first SQL request, because their value may be updated during the children update
-  if ($implementation_ids) {
-    $query = db_select('node', 'fs');
-    $query->addField('fs', 'nid', 'nid');
-    $query->addField('ctc', 'nid', 'cache_nid');
-    $query->addField('ctc', 'percent', 'cache_percent');
-    $query->addField('ctc', 'css_class', 'cache_css_class');
-    $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
-    $query->condition('fs.nid', $implementation_ids, 'IN');
-    $result = $query->execute();
-  }
+    //Recover the existing cache value only now and not in the first SQL request, because their value may be updated during the children update
+    if ($implementation_ids) {
+      $query = db_select('node', 'fs');
+      $query->addField('fs', 'nid', 'nid');
+      $query->addField('ctc', 'nid', 'cache_nid');
+      $query->addField('ctc', 'percent', 'cache_percent');
+      $query->addField('ctc', 'css_class', 'cache_css_class');
+      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
+      $query->condition('fs.nid', $implementation_ids, 'IN');
+      $result = $query->execute();
+    }
 
-  foreach($result as $record) {
-    $nodes[$record->nid]->cache_nid = $record->cache_nid;
-    $nodes[$record->nid]->cache_percent = $record->cache_percent;
-    $nodes[$record->nid]->cache_css_class = $record->cache_css_class;
-  }
+    foreach($result as $record) {
+      $nodes[$record->nid]->cache_nid = $record->cache_nid;
+      $nodes[$record->nid]->cache_percent = $record->cache_percent;
+      $nodes[$record->nid]->cache_css_class = $record->cache_css_class;
+    }
 
+}
 
   /*
    * Now we'll compute the percent and css_class of each nids in function argument

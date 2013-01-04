@@ -8,6 +8,7 @@
  */
 function feature_insert($node) {
 
+dpm('feature insert ok');
 
   /*
    * Create a new implementation for all compared node
@@ -122,6 +123,7 @@ function feature_insert($node) {
  */
 function compared_insert($node) {
 
+dpm('compared insert ok');
 
   /*
    * Create a new implementation for all feature node
@@ -224,9 +226,9 @@ function compared_insert($node) {
   }
 
   //Update the cache_implementation table before the compare tree computation
-  if (!empty($implementation_to_insert)) {
+  if (!empty($cache_implementation)) {
     $query = db_insert('cache_implementation')->fields($header);
-    foreach ($implementation_to_insert as $record) {
+    foreach ($cache_implementations as $record) {
       $query->values($record);
     }
     $query->execute();
@@ -264,9 +266,15 @@ function feature_delete($node) {
   node_delete_multiple($nids);
 
   //Delete them in the implementation cache
-  db_delete('cache_implementation')
-    ->condition('nid', $nids, 'in')
-    ->execute();
+  if (!empty($nids)) {
+    db_delete('cache_comparative_table')
+      ->condition('nid', $nids, 'in')
+      ->execute();
+
+    db_delete('cache_implementation')
+      ->condition('nid', $nids, 'in')
+      ->execute();
+  }
 
   //Delete the feature in the feature cache
   db_delete('cache_feature')
@@ -336,9 +344,15 @@ function compared_delete($node) {
   node_delete_multiple($nids);
 
   //Delete them in the implementation cache
-  db_delete('cache_implementation')
-    ->condition('nid', $nids, 'in')
-    ->execute();
+  if (!empty($nids)) {
+    db_delete('cache_comparative_table')
+      ->condition('nid', $nids, 'in')
+      ->execute();
+
+    db_delete('cache_implementation')
+      ->condition('nid', $nids, 'in')
+      ->execute();
+  }
 
   //Delete the compared in the compared cache
   db_delete('cache_compared')
