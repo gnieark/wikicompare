@@ -257,14 +257,10 @@ function feature_insert($node) {
     $query->execute();
   }
 
-//TODO Actuellement le nid retourne dans la fonction recursive est nulle, a deboguer
   //Update the compare tree with the new data
   wikicompare_update_compare_tree('feature', array($node->nid), 'update');
 
 }
-
-//TODO A linstallation de wikicompare inherit, mettre tout les implementatione et cache implementation use_from_inherit a 1  TOTEST
-//TODO Update use_from_inherit when updating implementation  TOTEST
 
 /**
  * Implements hook_insert().
@@ -279,7 +275,6 @@ function compared_insert($node) {
    */
 
   //Create the new compared in the cache table
-//TODO remplacer les 0 par NULL TOTEST
   $compared_parent_compared = NULL;
   if (isset($node->compared_parent_compared['und'][0])) {
     $compared_parent_compared = $node->compared_parent_compared['und'][0]['target_id'];
@@ -367,8 +362,6 @@ function compared_insert($node) {
     $cache_implementations[] = $cache_implementation;
 
   }
-
-//TODO Update field header from module  TOTEST
 
   //If some fields for implementation cache are defined in other module, then we need to modify the header before the mass insert
   $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support');
@@ -632,7 +625,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         }
       }
     }
-//TODO Mark to update all implementation inherited this compare  TOTEST
+
     /*
      * If the node changed is a compared node
      */
@@ -653,15 +646,6 @@ function wikicompare_revisionapi($op, $node_revision) {
         $current_node_parent = NULL;
       }
 
-//TODO 
-/*      
-      //Tests in other modules. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8.
-      $test = False;
-      foreach (module_implements('wikicompare_updated_compared_test') as $module) {
-        $function = $module . '_wikicompare_updated_compared_test';
-        $function($test, $node_revision, $current_node);
-      }
-*/
       //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis after the leave of the compared child.
       if ($node_revision_parent != $current_node_parent) {
 
@@ -708,17 +692,14 @@ function wikicompare_revisionapi($op, $node_revision) {
 
       }
 
-      //We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. TODO
+      //Allow others modules to make check and mark to update following other fields in the compared. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. 
       foreach (module_implements('wikicompare_preupdate_compared') as $module) {
         $function = $module . '_wikicompare_preupdate_compared';
         $function($node_revision, $current_node);
       }
 
-
     }
-//TODO mark to update all implementation inheriting this implementation  TOTEST
-//TODO reflechir sur le fait que on peut heriter un parent. LE champ inherit compared ne s'affiche que si pas d'enfant
-//TODO Mettre a jour les inherited implementation a la fin de la fonction recursive  TOTEST
+
     /*
      * If the node changed is a implementation node
      */
@@ -727,14 +708,6 @@ function wikicompare_revisionapi($op, $node_revision) {
       //$node_revision contain the new value, with this load we recover the old value. This way we will be able to know which value was changed, and so know what to do. If a feature node is updated but no critical value is changed, then no update on the compare tree will be done.
       $current_node = node_load($node_revision->nid);
 
-/* TODO
-      //Tests in other modules. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8.
-      $test = False;
-      foreach (module_implements('wikicompare_updated_implementation_test') as $module) {
-        $function = $module . '_wikicompare_updated_implementation_test';
-        $function($test, $node_revision, $current_node);
-      }
-*/
       //If the only critical value of a implementation node, the support value, changed, then we will mark this implementation for update
       if ($node_revision->implementation_support['und'][0]['value'] != $current_node->implementation_support['und'][0]['value']) {
 
@@ -748,7 +721,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
       }
 
-      //We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. TODO
+      //Allow others modules to make check and mark to update following other fields in the compared. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. 
       foreach (module_implements('wikicompare_preupdate_implementation') as $module) {
         $function = $module . '_wikicompare_preupdate_implementation';
         $function($node_revision, $current_node);
@@ -805,7 +778,7 @@ function wikicompare_revisionapi($op, $node_revision) {
             ->condition('nid', $node_revision->nid)
             ->execute();
     }
-//TODO Update use_from_inherit TOTEST
+
     if ($node_revision->type == 'implementation') {
 
       $fields = array(
@@ -971,7 +944,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent) {
       $function = $module . '_wikicompare_update_main_query';
       $function($query);
     }
-//TODO TOTEST
+
     $result = $query->execute();
 
 
@@ -1141,7 +1114,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent) {
 
   }
 
-//TODO
+  //Allow others modules to make some action before we start computing the node
   foreach (module_implements('wikicompare_update_comparative_table_preparation') as $module) {
     $function = $module . '_wikicompare_update_comparative_table_preparation';
     $function($nids, $nodes, $type);
@@ -1165,7 +1138,6 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent) {
     $nodes[$record->nid]->cache_css_class = $record->cache_css_class;
   }
 
-//TODO $nodes vides en cas de compared, voir pourquoi
 
   /*
    * Now we'll compute the percent and css_class of each nids in function argument
@@ -1196,13 +1168,11 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent) {
         $node->css_class = 'cell-support-no';
       }
 
-//TODO
+      //Allow others modules to change the way support is computed at the base of the tree
       foreach (module_implements('wikicompare_from_other_support') as $module) {
         $function = $module . '_wikicompare_from_other_support';
         $function($node);
       }
-
-//TODO
 
     //If the feature is of type weighted average, it'll use the children through feature axis to compute the percent
     } elseif ($node->type == 'parent-weighted-average') {
@@ -1284,11 +1254,11 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent) {
         }
       }
 
+      //Allow others modules to update others implementations
       foreach (module_implements('wikicompare_update_comparative_table_post') as $module) {
         $function = $module . '_wikicompare_update_comparative_table_post';
         $function($to_update, $node);
       }
-//TODO
 
     }
 
@@ -1517,7 +1487,6 @@ function wikicompare_flush_caches() {
     $function($header);
   }
 
-//TODO insert field from other module  TOTEST
   $query = db_insert('cache_compared')->fields($header);
   foreach ($compareds as $compared) {
     $query->values($compared);

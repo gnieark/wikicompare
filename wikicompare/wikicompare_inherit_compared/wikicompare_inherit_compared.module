@@ -35,7 +35,7 @@ function wikicompare_inherit_compared_wikicompare_cache_implementation_fields_he
 
 }
 
-//TODO
+//Add the header for the mass compared insert in flush cache
 function wikicompare_inherit_compared_wikicompare_cache_compared_fields_header(&$header) {
 
   $header[] = 'inherit_compared_id';
@@ -62,14 +62,12 @@ function wikicompare_inherit_compared_wikicompare_cache_compared_delete($node) {
     ->condition('nid', $to_update, 'IN')
     ->execute();
 
+  //If some implementation were inherting this compared, we update them
   wikicompare_update_compare_tree('compared', $to_update, 'update');
-
-
-//TODO Update the implementation qui heritait de ce compared TOTEST
 
 }
 
-//TODO
+//When we update a compared, we check if his inherit compared field has changed, and if yes we update him
 function wikicompare_inherit_compared_wikicompare_preupdate_compared($node_revision, $current_node) {
 
       if ($node_revision->compared_inherit_compared) {
@@ -93,39 +91,12 @@ function wikicompare_inherit_compared_wikicompare_preupdate_compared($node_revis
           ->condition('nid', array($node_revision->nid) , 'IN')
           ->execute();
 
-        $updated = True;
-
       }
 
-      //We use the $updated flag to know if the compared was updated.
-      //In such case, we update all compared which inherit the current compared
-/*      if ($updated = True) {   TODO
-
-        $query = db_select('cache_compared', 'c');
-        $query->addField('c', 'nid', 'nid');
-        $query->condition('c.inherit_compared_id', $node_revision->nid);
-        $result = $query->execute();
-
-        $inheriting_compared_to_update = array();
-        foreach($result as $record) {
-          $inheriting_compared_to_update[$record->nid] = $record->nid;
-        }
-
-        if (!empty($inheriting_compared_to_update)) {
-          db_update('cache_compared')
-            ->fields(array(
-              'to_update' => 1,
-            ))
-            ->condition('nid', $inheriting_compared_to_update, 'IN')
-            ->execute();
-         }
-
-
-      }
-*/
 }
 
 
+//When we update a compared, we check if his use_from_inherit has changed, and if yes we update him
 function wikicompare_inherit_compared_wikicompare_preupdate_implementation($node_revision, $current_node) {
 
       if ($node_revision->implementation_use_from_inherit['und'][0]['value'] != $current_node->implementation_use_from_inherit['und'][0]['value']) {
@@ -136,48 +107,17 @@ function wikicompare_inherit_compared_wikicompare_preupdate_implementation($node
           ->condition('nid', array($node_revision->nid) , 'IN')
           ->execute();
 
-//TODO        $updated = True;
-
       }
-
-      //We use the $updated flag to know if the implementation was updated.
-      //In such case, we update all implementation which inherit the current implementation
-/*      if ($updated = True) {
-
-        $query = db_select('cache_implementation', 'i');
-        $query->addField('i', 'nid', 'nid');
-        $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
-        $query->condition('nc.inherit_compared_id', $node_revision->implementation_compared_id['und'][0]['target_id']);
-        $query->condition('i.feature_id', $node_revision->implementation_feature_id['und'][0]['target_id']);
-        $result = $query->execute();
-
-        $inheriting_implementation_to_update = array();
-        foreach($result as $record) {
-          $inheriting_implementation_to_update[$record->nid] = $record->nid;
-        }
-
-        if (!empty($inheriting_implementation_to_update)) {
-          db_update('cache_implementation')
-            ->fields(array(
-              'to_update' => 1,
-            ))
-            ->condition('nid', $inheriting_implementation_to_update, 'IN')
-            ->execute();
-        }
-
-//TODO Estce vraiment bien utile si on met a jour a la fin de wikicompare_update_compare_tree? Supprimer variable $updated dans ce cas
-
-      }
-*/
 
 }
 
 
 
-//Dummy function for the hook_wikicompare_update_main_query()
+//Update the main query of wikicompare_update_compare_tree to add some value we will need later
 function wikicompare_inherit_compared_wikicompare_update_main_query(&$query) {
 
   $query->addField('fs', 'use_from_inherit', 'use_from_inherit');
+  //Recover the percent value of the inherited implementation
   $query->addField('nc', 'inherit_compared_id', 'inheriting_compared_id');
   $query->addField('ncinc', 'nid', 'inheriting_implementation_nid');
   $query->addField('ncincctc', 'nid', 'inheriting_implementation_cache_nid');
@@ -185,17 +125,16 @@ function wikicompare_inherit_compared_wikicompare_update_main_query(&$query) {
   $query->addField('ncincctc', 'css_class', 'inheriting_implementation_cache_css_class');
 
   $query->leftjoin('cache_implementation', 'ncinc', 'nc.inherit_compared_id = ncinc.compared_id'); //Get implementation of the inherit compared node
-  $query->leftjoin('cache_comparative_table', 'ncincctc', 'ncinc.nid = ncincctc.nid');  //TODO
-
+  $query->leftjoin('cache_comparative_table', 'ncincctc', 'ncinc.nid = ncincctc.nid');  //Get the percent of the inherited implementation
 
   $query->where('ncinc.feature_id = fs.feature_id OR nc.inherit_compared_id IS NULL'); //We keep only the implementation of the inherit compared node which has the same feature than the implementation.
 
 }
 
-//TODO
+//Prepare the variables before the node computation. Essentially check if we have the percent of the inherited implementation and recover the children through inherit we will update after the computation
 function wikicompare_inherit_compared_wikicompare_update_comparative_table_preparation($nids, &$nodes, $type) {
 
-//TODO
+    //Mark to update the inherited implementation without cache percent
     $to_update = array();
     foreach($nodes as $node) {
       if ($node->inheriting_compared_id) {
@@ -205,10 +144,10 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
       }
     }
 
-
-
+    //Recover the missing cache percent
     if (!empty($to_update)) {
-      $res = wikicompare_update_compare_tree('implementation', $to_update, 'update'); //TODO Le flag update est surement dangereux, mais on a pas trop le choix. Plus tard il faudra mettre en place un mecanisme qui detecte les loop
+      //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop.
+      $res = wikicompare_update_compare_tree('implementation', $to_update, 'update'); //TODO Retirer les flag par defaut
       foreach($nodes as $node) {
         if (isset($res[$node->inheriting_implementation_nid])) {
           $node->inheriting_implementation_cache_nid = $node->inheriting_implementation_nid;
@@ -234,7 +173,7 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
     $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
     $query->join('cache_feature', 'nf', 'i.feature_id = nf.nid');
     $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
-    //Only the implementation which has no children on both axis will be updated because it will have no effect otherwise
+    //Only the implementation which has no children on both axis will be updated because only them can have their percent updated by inheritance
     $query->condition('nf.has_children', 0); 
     $query->condition('nc.has_children', 0);
 
@@ -246,7 +185,6 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
         $query->where('(i.feature_id, nc.inherit_compared_id) IN (' . $res_search_inherit_compared_children . ')');
         break;
     }
-//TODO On garde uniquement les implementation qui n'ont pas d'enfant sur axe compared et feature TOTEST
     $result = $query->execute();
 
     $through_inherit_childs = array();
@@ -269,7 +207,7 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
 }
 
 
-//TODO
+//Add in the implementation to update the implementation which inherit the current implementation
 function wikicompare_inherit_compared_wikicompare_update_comparative_table_post(&$to_update, $node) {
 
   if (!empty($node->through_inherit_childs)) {
@@ -283,7 +221,7 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_post(
 //Return the data computed according to the inherited compared
 function wikicompare_inherit_compared_wikicompare_from_other_support(&$node) {
 
-//TODO
+  //Work only if the compared of the implementation inherit a node and we didn't override the information in the implementation
   if ($node->inheriting_compared_id && $node->use_from_inherit == 1) {
     $node->percent = $node->inheriting_implementation_cache_percent;
     $node->css_class = $node->inheriting_implementation_cache_css_class;
@@ -292,7 +230,7 @@ function wikicompare_inherit_compared_wikicompare_from_other_support(&$node) {
 }
 
 
-//TODO
+//Search for the new fields in compared in the flush tables function 
 function wikicompare_inherit_compared_wikicompare_select_compared(&$query) {
 
   $query->addField('nic', 'compared_inherit_compared_target_id', 'inherit_compared_id');
@@ -300,7 +238,7 @@ function wikicompare_inherit_compared_wikicompare_select_compared(&$query) {
 
 }
 
-//TODO
+//Search for the new fields in implementation in the flush tables function
 function wikicompare_inherit_compared_wikicompare_select_implementation(&$query) {
 
   $query->addField('nu', 'implementation_use_from_inherit_value', 'use_from_inherit');
@@ -308,14 +246,14 @@ function wikicompare_inherit_compared_wikicompare_select_implementation(&$query)
 
 }
 
-//TODO
+//Update the new fields in compared in the flush tables function
 function wikicompare_inherit_compared_wikicompare_flush_cache_compared(&$compared, $record) {
 
   $compared['inherit_compared_id'] = $record->inherit_compared_id;
 
 }
 
-//TODO
+//Update the new fields in implementation in the flush tables function
 function wikicompare_inherit_compared_wikicompare_flush_cache_implementation(&$implementation, $record) {
 
   $implementation['use_from_inherit'] = $record->use_from_inherit;
