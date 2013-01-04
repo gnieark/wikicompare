@@ -62,7 +62,7 @@ function wikicompare_inherit_compared_wikicompare_cache_compared_delete($node) {
     ->condition('nid', $to_update, 'IN')
     ->execute();
 
-  update_compare_tree('compared', $to_update, 'update');
+  wikicompare_update_compare_tree('compared', $to_update, 'update');
 
 
 //TODO Update the implementation qui heritait de ce compared TOTEST
@@ -165,7 +165,7 @@ function wikicompare_inherit_compared_wikicompare_preupdate_implementation($node
             ->execute();
         }
 
-//TODO Estce vraiment bien utile si on met a jour a la fin de update_compare_tree? Supprimer variable $updated dans ce cas
+//TODO Estce vraiment bien utile si on met a jour a la fin de wikicompare_update_compare_tree? Supprimer variable $updated dans ce cas
 
       }
 */
@@ -208,7 +208,7 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
 
 
     if (!empty($to_update)) {
-      $res = update_compare_tree('implementation', $to_update, 'update'); //TODO Le flag update est surement dangereux, mais on a pas trop le choix. Plus tard il faudra mettre en place un mecanisme qui detecte les loop
+      $res = wikicompare_update_compare_tree('implementation', $to_update, 'update'); //TODO Le flag update est surement dangereux, mais on a pas trop le choix. Plus tard il faudra mettre en place un mecanisme qui detecte les loop
       foreach($nodes as $node) {
         if (isset($res[$node->inheriting_implementation_nid])) {
           $node->inheriting_implementation_cache_nid = $node->inheriting_implementation_nid;
@@ -219,7 +219,7 @@ function wikicompare_inherit_compared_wikicompare_update_comparative_table_prepa
       }
     }
 
-    //Recover children_through_inherit, so we can update them at the end of update_compare_tree
+    //Recover children_through_inherit, so we can update them at the end of wikicompare_update_compare_tree
     $res_search_inherit_compared_children = '';
     foreach($nodes as $node) {
       if ($res_search_inherit_compared_children) {

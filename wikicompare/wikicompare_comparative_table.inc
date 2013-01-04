@@ -117,7 +117,7 @@ function wikicompare_comparative_table($form_state) {
 
     //If there is no cache for the implementation, we call the function to create it and then recover the value.
     if(!$item->cache_nid) {
-      $res = update_compare_tree(array($item->nid), 'update');
+      $res = wikicompare_update_compare_tree(array($item->nid), 'update');
       $item->percent = $res[$item->nid]['percent'];
       $item->css_class = $res[$item->nid]['css_class'];
     }

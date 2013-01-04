@@ -259,7 +259,7 @@ function feature_insert($node) {
 
 //TODO Actuellement le nid retourne dans la fonction recursive est nulle, a deboguer
   //Update the compare tree with the new data
-  update_compare_tree('feature', array($node->nid), 'update');
+  wikicompare_update_compare_tree('feature', array($node->nid), 'update');
 
 }
 
@@ -387,7 +387,7 @@ function compared_insert($node) {
   }
 
   //Update the compare tree with the new data
-  update_compare_tree('compared', array($node->nid), 'update');
+  wikicompare_update_compare_tree('compared', array($node->nid), 'update');
 
 }
 
@@ -458,7 +458,7 @@ function feature_delete($node) {
 
 
     //Update the compare tree
-    update_compare_tree('feature', array($node->feature_parent_feature['und'][0]['target_id']), 'update');
+    wikicompare_update_compare_tree('feature', array($node->feature_parent_feature['und'][0]['target_id']), 'update');
   }
 
 }
@@ -537,7 +537,7 @@ function compared_delete($node) {
 
 
     //Update the compare tree
-    update_compare_tree('compared', array($node->compared_parent_compared['und'][0]['target_id']), 'update');
+    wikicompare_update_compare_tree('compared', array($node->compared_parent_compared['und'][0]['target_id']), 'update');
   }
 
 }
@@ -837,7 +837,7 @@ function wikicompare_revisionapi($op, $node_revision) {
     }
     //Update all the feature marked. We force the update of the parent because in case of an update thanks to a parent feature change, the implementation percent may not have change but we still need to update their parent.
     if ($feature_nids) {
-      update_compare_tree('feature', $feature_nids, 'update');
+      wikicompare_update_compare_tree('feature', $feature_nids, 'update');
     }
 
     //Get all the compared to update
@@ -853,7 +853,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Update all the compared marked. We force the update of the parent because in case of an update thanks to a parent compared change, the implementation percent may not have change but we still need to update their parent.
     if ($compared_nids) {
-      update_compare_tree('compared', $compared_nids, 'update');
+      wikicompare_update_compare_tree('compared', $compared_nids, 'update');
     }
 
     //Get all the implementation to update
@@ -869,7 +869,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Update all the implementation marked. We force the update of the parent because in case of an update thanks to a parent feature or compared change, the implementation percent may not have change but we still need to update their parent.
     if ($implementation_nids) {
-      update_compare_tree('implementation', $implementation_nids, 'update');
+      wikicompare_update_compare_tree('implementation', $implementation_nids, 'update');
     }
 
     //Remove all update marks
@@ -912,7 +912,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   * It'll find all children on compared and feature axis for the ids passed in argument, compute the percent thanks to theses informations and feature type, and finally if the percent changed it'll update the parents on feature and compared axis.
   * This is a recursive function, which will call itself on children side if a cache percent is missing and parent side if the percent computed change, and in both the feature and compared axis.
   */
-function update_compare_tree($type, $nids, $update_parent) {
+function wikicompare_update_compare_tree($type, $nids, $update_parent) {
 
 
   $nodes = array();
@@ -1112,7 +1112,7 @@ function update_compare_tree($type, $nids, $update_parent) {
 
     if (!empty($to_update_feature_childs)) {
       //Update the children on feature axis with the flag no-update-feature. This flag ensure it'll not try to update parent on the same axis than the one we use here
-      $res = update_compare_tree('implementation', $to_update_feature_childs, 'no-update-feature');
+      $res = wikicompare_update_compare_tree('implementation', $to_update_feature_childs, 'no-update-feature');
       foreach($nodes as $node) {
         foreach($node->through_feature_childs as $key => $child) {
           //Update_compare_tree function return percent and css_class value of the implementation computed in array, we use it to update our children
@@ -1127,7 +1127,7 @@ function update_compare_tree($type, $nids, $update_parent) {
 
     if (!empty($to_update_compared_childs)) {
       //Update the children on compared axis with the flag no-update-compared. This flag ensure it'll not try to update parent on the same axis than the one we use here
-      $res = update_compare_tree('implementation', $to_update_compared_childs, 'no-update-compared');
+      $res = wikicompare_update_compare_tree('implementation', $to_update_compared_childs, 'no-update-compared');
       foreach($nodes as $node) {
         foreach($node->through_compared_childs as $key => $child) {
           //Update_compare_tree function return percent and css_class value of the implementation computed in array, we use it to update our children
@@ -1272,12 +1272,12 @@ function update_compare_tree($type, $nids, $update_parent) {
     //If the flag no-update is set, no update will be made.
     if (($node->percent != $node->cache_percent) || ($node->css_class != $node->cache_css_class)) {
 
-      //We mark the parent id through feature axis to update if exist, unless we have the flag no-update-feature. This flag deny the parent update through feature axis if update_compare_tree was launched for a children computation
+      //We mark the parent id through feature axis to update if exist, unless we have the flag no-update-feature. This flag deny the parent update through feature axis if wikicompare_update_compare_tree was launched for a children computation
       if (($node->parent_fs_through_feature_nid) && ($update_parent != 'no-update-feature')) {
         $to_update[$node->parent_fs_through_feature_nid] = $node->parent_fs_through_feature_nid;
       }
 
-      //We mark the parent id through compared axis to update if exist, unless we have the flag no-update-compared. This flag deny the parent update through compared axis if update_compare_tree was launched for a children computation
+      //We mark the parent id through compared axis to update if exist, unless we have the flag no-update-compared. This flag deny the parent update through compared axis if wikicompare_update_compare_tree was launched for a children computation
       if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update') {
         if (($node->parent_fs_through_compared_nid) && ($update_parent != 'no-update-compared')) {
           $to_update[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
@@ -1327,7 +1327,7 @@ function update_compare_tree($type, $nids, $update_parent) {
 
   //Update the parent marked
   if (!empty($to_update)) {
-    update_compare_tree('implementation', $to_update, 'update');
+    wikicompare_update_compare_tree('implementation', $to_update, 'update');
   }
   return $res;
 
@@ -1586,7 +1586,7 @@ function wikicompare_flush_caches() {
 
 
   //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the compared tree.
-  update_compare_tree('feature', $feature_without_children, 'update');
+  wikicompare_update_compare_tree('feature', $feature_without_children, 'update');
 
   //We only reactive the website if it wasn't in maintenance at the beginning
   if ($was_in_maintenance == FALSE) {
