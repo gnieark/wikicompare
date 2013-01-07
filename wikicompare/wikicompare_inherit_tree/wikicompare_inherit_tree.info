@@ -1,0 +1,9 @@
+name = Wikicompare Tree Inheritance
+description = Add the possibility to inherit a tree in a feature. 
+
+dependencies[] = wikicompare
+
+project = "wikicompare"
+package = Wikicompare
+version = VERSION
+core = 7.x
