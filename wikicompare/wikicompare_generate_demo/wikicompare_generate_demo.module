@@ -122,7 +122,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['implementation_support_chance'] = array(
     '#type' => 'textfield',
     '#title' => t('Chance that the created implementation go to supported state'),
-    '#default_value' => 5,
+    '#default_value' => 20,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,

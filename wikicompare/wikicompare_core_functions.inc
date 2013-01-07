@@ -571,7 +571,9 @@ function wikicompare_flush_caches() {
       'has_children' => 0,
     );
 
-    $parent_array[$record->parent_compared_id] = $record->nid;
+    if ($record->parent_compared_id) {
+      $parent_array[$record->parent_compared_id][] = $record->nid;
+    }
 
     foreach (module_implements('wikicompare_flush_cache_compared') as $module) {
       $function = $module . '_wikicompare_flush_cache_compared';
@@ -583,11 +585,10 @@ function wikicompare_flush_caches() {
   }
 
   //Set has_children flag
-  foreach ($parent_array as $parent) {
-    $compareds[$parent]['has_children'] = 1;
+  foreach ($parent_array as $key => $parent) {
+    $compareds[$key]['has_children'] = 1;
   }
 
-  
 
   $header = array('nid', 'vid', 'title', 'parent_compared_id', 'has_children');
   foreach (module_implements('wikicompare_cache_compared_fields_header') as $module) {
