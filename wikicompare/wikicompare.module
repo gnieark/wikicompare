@@ -109,11 +109,25 @@ function wikicompare_menu() {
     'page arguments' => array(1, 2),
     'type' => MENU_CALLBACK,
     'file' => 'wikicompare_comparative_table.inc',
+    'delivery callback' => 'ajax_deliver',
   );
 
   return $items;
 }
 
+
+function wikicompare_library() {
+  $path = drupal_get_path('module', 'wikicompare');
+  $libraries['wikicompare_comparative_table'] = array(
+    'title' => 'Wikicompare',
+    'version' => '1.0',
+    'js' => array(
+       "$path/js/wikicompare_comparative_table.js" => array(),
+    ),
+  );
+
+  return $libraries;
+}
 
 
 /**

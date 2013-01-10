@@ -4,6 +4,8 @@
  * Building the compare table page
  */
 
+//For ajax, informations from http://www.angrydonuts.com/drupal-7-advanced-ajax-tips-and-tricks was really helpfull
+
 /**
  * Build the compare table form
  *
@@ -11,6 +13,12 @@
  *   A form array set for theming
  */
 function wikicompare_comparative_table($form_state) {
+
+  drupal_add_js('/misc/ajax.js');
+  drupal_add_js('/misc/progress.js');
+  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+
+
   // Identify that the elements in 'example_items' are a collection, to
   // prevent Form API from flattening the array when submitted.
   $form['compared_items']['#tree'] = TRUE;
@@ -162,6 +170,12 @@ function wikicompare_comparative_table($form_state) {
 
 
 function theme_wikicompare_comparative_table($variables) {
+
+//  drupal_add_js('/misc/ajax.js');
+//  drupal_add_js('/misc/progress.js');
+//  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+
+
   $form = $variables['form'];
 /*
   //Set each item in the array of his parent. This is a preparation of the rebuild of the tree
@@ -224,6 +238,7 @@ function theme_wikicompare_comparative_table($variables) {
 
 function get_compared_ajax_response($type = 'ajax', $cid, $action) {
 dpm($action);
+dpm($_POST);
 
   if ($type == 'ajax') {
 
@@ -268,9 +283,10 @@ dpm($action);
         ),
       );
 */
-
+//$output = 'Test';
       $commands = array();
-      $commands[] = ajax_command_append('#compared_children_' . $cid, $output);
+      $commands[] = ajax_command_html('#compared_children_' . $cid, $output);
+
 //      $commands[] = ajax_command_append('#compared_item_' . $cid, drupal_render($link));
 
 //      $commands[] = ajax_command_replace('#compared_link_' . $cid, drupal_render($link));
@@ -278,26 +294,27 @@ dpm($action);
 //        $commands[] = ajax_command_invoke('<a id="compared_link_' . $cid . '"', 'replaceAll', array('<a id="compared_backlink_' . $cid . '">'));
 
 //      $commands[] = ajax_command_invoke('<a id="compared_link_' . $cid . '" href="/get_compared_ajax_callback/nojs/' . $cid . '/expand"  class="ajax-processed">', 'replaceAll', array('<a id="compared_link_' . $cid . '" class=ajax-processed href="get_compared_ajax_callback/nojs/' . $cid . '/collapse">'));
-      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/collapse'));
-      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'removeClass', array('ajax-processed'));
+//*      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/collapse'));
+//*      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'removeClass', array('ajax-processed'));
 
 //      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('id', 'compared_backlink_' . $cid));
 
-      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'addClass', array('expanded'));
+//*      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'addClass', array('expanded'));
 
       $page = array('#type' => 'ajax', '#commands' => $commands);
-      ajax_deliver($page);
+      return $page;
+//      ajax_deliver($page);
 
     } elseif ($action == 'collapse') {
 
       $commands = array();
-      $commands[] = ajax_command_invoke('#compared_children_' . $cid, 'slideUp');
+/*      $commands[] = ajax_command_invoke('#compared_children_' . $cid, 'slideUp');
 //      $commands[] = ajax_command_replace('#compared_children_' . $cid, '<div id="compared_children_' . $cid . '"></div>');
       $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/expand'));
-      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'removeClass', array('expanded'));
+      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'removeClass', array('expanded'));*/
 
       $page = array('#type' => 'ajax', '#commands' => $commands);
-      ajax_deliver($page);
+      return $page;
 
     }
 
@@ -322,12 +339,15 @@ function get_compared_item_list($compareds){
         // this part will be stripped from the path before it is called.
         '#href' => 'get_compared_ajax_callback/nojs/' . $compared['nid'] . '/expand',
         '#id' => 'compared_link_' . $compared['nid'],
-        '#ajax' => array(
+        '#attributes' => array(
+          'class' => array('compared_link'),
+        ),
+//        '#ajax' => array(
 //            'callback' => 'get_compared_ajax_callback_test',
 //          'wrapper' => 'compared_children_' . $compared['nid'],
 //          'method' => 'html',
-          'effect' => 'slide',
-        ),
+//          'effect' => 'slide',
+//        ),
         '#suffix' => '<div id="compared_children_' . $compared['nid'] . '"></div>'
 
       );
