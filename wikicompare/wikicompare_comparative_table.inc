@@ -311,7 +311,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_ids'])) {
-	    //Recover the implementation needed for the cells
+        //Recover the implementation needed for the cells
         $query = db_select('cache_implementation', 'i');
         $query->addField('i', 'nid', 'nid');
         $query->addField('i', 'compared_id', 'compared_id');
@@ -322,13 +322,13 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         $query->condition("i.feature_id", $fid);
         $result = $query->execute();
 
-		//Insert the implementations in an array with their compared as key so we can then add them in the feature array
+        //Insert the implementations in an array with their compared as key so we can then add them in the feature array
         $implementations = array();
         foreach ($result as $record) {
           $implementations[$record->compared_id] = $record;
         }
-		
-		//Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
+
+        //Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
         foreach ($features as $key => $feature) {
           foreach ($_POST['compared_ids'] as $compared_id) {
             $features[$key]['implementations'][] = $implementations[$compared_id[0]];
@@ -336,33 +336,33 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         }
       }
 
-	  //Building the data for the table row
+      //Building the data for the table row
       $feature_row_data = get_feature_rows($features);
-	  
-	  
+
+
       $output = '';
-	  //Add a row for each feature children
+      //Add a row for each feature children
       foreach ($feature_row_data as $feature) {
         $output .= '<tr id="'. $feature['id'] . '" class="feature_row feature_children_' . $fid . '" style="display:none;">';
-		//Add a column for each column in the table
+        //Add a column for each column in the table
         foreach ($feature['data'] as $data) {
           $output .= $data;
         }
         $output .= '</tr>';
       }
-	  
-	  //Preparing the ajax commands to return to javascript
+
+      //Preparing the ajax commands to return to javascript
       $commands = array();
-	  //We add the code after the parent row
+      //We add the code after the parent row
       $commands[] = ajax_command_after('#feature_row_' . $fid, $output);
       $page = array('#type' => 'ajax', '#commands' => $commands);
-	  
+  
       return $page;
 
-	//If we want to collapse the feature children
+    //If we want to collapse the feature children
     } elseif ($action == 'collapse') {
 
-	  //In this case we return nothing, everything is managed on the javascript side
+      //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
@@ -403,9 +403,9 @@ function get_feature_rows($features){
     }
 
     $rows[$feature['nid']]['id'] = 'feature_row_' . $feature['nid'];
-	//Creating the first cell of the row, containing the feature details
+    //Creating the first cell of the row, containing the feature details
     $rows[$feature['nid']]['data'][0] = '<td>' . drupal_render($title)  . '<br/> Weight : ' .  drupal_render($feature['weight']) . '<br/> Type : ' . $feature['type'] . '</td>';
-	//Adding one cell for each implementation, which contain the details of the cells
+    //Adding one cell for each implementation, which contain the details of the cells
     foreach ($feature['implementations'] as $implementation) {
       $rows[$feature['nid']]['data'][] = '<td class="' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . '<br/>' . $implementation->percent . '%</td>';
     }
@@ -428,7 +428,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
     //If we want to displayed the compared children
     if ($action == 'show') {
 
-	  //Recover the detail of the compared we want to add
+      //Recover the detail of the compared we want to add
       $query = db_select('cache_compared', 's');
       $query->addField('s', 'nid', 'nid');
       $query->addField('s', 'title', 'title');
@@ -438,12 +438,12 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
         $compared = $record;
       }
 
-	  //Add the header of the new column, with the compared detail
+      //Add the header of the new column, with the compared detail
       $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;">' . $compared->title . '</th>';
 
-	  //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
+      //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
-	    //Recover the implementation needed for the cells
+        //Recover the implementation needed for the cells
         $query = db_select('cache_implementation', 'i');
         $query->addField('i', 'nid', 'nid');
         $query->addField('i', 'feature_id', 'feature_id');
@@ -454,29 +454,29 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
         $query->condition("i.feature_id", $_POST['feature_ids'], 'in');
         $result = $query->execute();
 
-		//Build the cells we have to add in each row.
+        //Build the cells we have to add in each row.
         $implementations = array();
         foreach ($result as $record) {
           $implementations[$record->feature_id] = '<td class="' . $record->css_class . ' implementation_compared_' . $cid . ' implementation_feature_' . $record->feature_id . '" style="display:none;">' . $record->nid . '<br/>' . $record->percent . '%</td>';
         }
       }
 
-	  //Preparing the ajax commands to return to javascript
+      //Preparing the ajax commands to return to javascript
       $commands = array();
-	  //Add the new cell at the end of the header
+      //Add the new cell at the end of the header
       $commands[] = ajax_command_append('#comparative_table_header', $header);
       //Add the new cells at the end of each row
       foreach ($implementations as $key => $implementation) {
         $commands[] = ajax_command_append('#feature_row_' . $key, $implementation);
       }
       $page = array('#type' => 'ajax', '#commands' => $commands);
-	  
+  
       return $page;
 
-	//If we want to remove the column
+    //If we want to remove the column
     } elseif ($action == 'hide') {
 
-	  //In this case we return nothing, everything is managed on the javascript side
+      //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
