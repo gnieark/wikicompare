@@ -14,75 +14,46 @@
  */
 function wikicompare_comparative_table($form_state) {
 
+  //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
 
-
-  // Identify that the elements in 'example_items' are a collection, to
-  // prevent Form API from flattening the array when submitted.
-//  $form['compared_items']['#tree'] = TRUE;
-
-
-//  $compared_ids = array(4,8,12);
-
-  //Inform them of the compared item which should be displayed in the table
-//  $form['#compared_ids'] = $compared_ids;
-
-  //Find all the compared item and the data required to rebuild the tree in the theme
+  //Find all the compared on the first level of the tree
   $query = db_select('cache_compared', 's');
   $query->addField('s', 'nid', 'nid');
   $query->addField('s', 'title', 'title');
-//  $query->addField('s', 'parent_compared_id', 'pid');
   $query->addField('s', 'has_children', 'has_children');
   $query->condition("s.parent_compared_id", NULL);
   $result = $query->execute();
 
-  // Iterate through each database result
+  //Insert the compared in the form array to retrieve them in the theme
   foreach ($result as $record) {
-
-    //Insert each compared item in the array
     $form['compared_items'][$record->nid] = array(
-
-      // We'll use a form element of type '#markup' to display the item name.
       'title' => array(
         '#markup' => check_plain($record->title),
       ),
-
     );
-
-    //We set the parent id in the #parents field so we can rebuild the tree later
-//    $form['compared_items'][$record->nid]['#parents'] = array('id' => $record->pid);
-    //We also set the nid so we can use it later
     $form['compared_items'][$record->nid]['#id'] = $record->nid;
     $form['compared_items'][$record->nid]['#has_children'] = $record->has_children;
-
   }
 
 
 
-  //Find all the features which should be displayed in the table
+  //Find all the features on the first level of the tree
   $query = db_select('cache_feature', 'f');
   $query->addField('f', 'nid', 'nid');
   $query->addField('f', 'title', 'title');
   $query->addField('f', 'type', 'type');
-//  $query->addField('f', 'parent_feature_id', 'pid');
   $query->addField('f', 'weight', 'weight');
   $query->addField('f', 'has_children', 'has_children');
   $query->condition('f.parent_feature_id', NULL);
   $query->condition('f.state', 'Published', '=');
   $features = $query->execute();
 
-
-
-  $feature_ids = array();
-  // Iterate through each database result
+  //Insert the feature in the form array to retrieve them in the theme
   foreach ($features as $item) {
-
-    //Insert each feature item in the array
     $form['feature_items'][$item->nid] = array(
-
-      // We'll use a form element of type '#markup' to display the item name.
       'title' => array(
         '#markup' => check_plain($item->title),
       ),
@@ -90,67 +61,10 @@ function wikicompare_comparative_table($form_state) {
         '#markup' => check_plain($item->weight),
       ),
     );
-
-    //We set the parent id in the #parents field so we can rebuild the tree later
-//    $form['feature_items'][$item->nid]['#parents'] = array('id' => $item->pid);
-    //We set the nid so we can use it later
     $form['feature_items'][$item->nid]['#id'] = $item->nid;
-    //We set the type so we can adapt the line to the type later
     $form['feature_items'][$item->nid]['#type'] = $item->type;
-    //We create the array now in case there is no implementations
     $form['feature_items'][$item->nid]['#has_children'] = $item->has_children;
-
-
-    //We set the feature ids in this array so we can build the implementation database query later
-//    $feature_ids[] = (int) $item->nid;
-
-
   }
-/*
-  //We get all implementation which have the feature and compared item above  
-  $query = db_select('cache_implementation', 'fs');
-  $query->addField('fs', 'nid', 'nid');
-  $query->addField('fs', 'compared_id', 'cid');
-  $query->addField('fs', 'feature_id', 'fid');
-  $query->addField('fs', 'support', 'support');
-  $query->addField('ctc', 'nid', 'cache_nid');
-  $query->addField('ctc', 'percent', 'percent');
-  $query->addField('ctc', 'css_class', 'css_class');
-  $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
-  $query->where("fs.compared_id IN (" . implode(',',$compared_ids) . ")");
-  $query->where("fs.feature_id IN (" . implode(',',$feature_ids) . ")");
-  $implementations = $query->execute();
-
-
-
-  //Then we set the implementation in the corresponding feature array, with the compared nid as key
-  foreach ($implementations as $item) {
-
-    //If there is no cache for the implementation, we call the function to create it and then recover the value.
-    if(!$item->cache_nid) {
-      $res = wikicompare_update_compare_tree(array($item->nid), 'update');
-      $item->percent = $res[$item->nid]['percent'];
-      $item->css_class = $res[$item->nid]['css_class'];
-    }
-
-    $form['feature_items'][$item->fid]['#implementations'][$item->cid] = array(
-
-      'title' => array(
-        '#markup' => check_plain($item->nid),
-      ),
-      'percent' => array(
-        '#markup' => check_plain($item->percent),
-      ),
-      'css_class' => array(
-        '#markup' => check_plain($item->css_class),
-      ),
-      'support' => array(
-        '#markup' => check_plain($item->support),
-      ),
-    );
-
-  };
-*/
 
   return $form;
 
@@ -173,28 +87,11 @@ function wikicompare_comparative_table($form_state) {
 
 function theme_wikicompare_comparative_table($variables) {
 
-//  drupal_add_js('/misc/ajax.js');
-//  drupal_add_js('/misc/progress.js');
-//  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
-
   $form = $variables['form'];
 
-
-/*
-  //Set each item in the array of his parent. This is a preparation of the rebuild of the tree
-  $list_parent_compared = array();
-  foreach (element_children($form['compared_items']) as $a){
-    if ($form['compared_items'][$a]['#parents']['id'] == NULL) {
-      $list_parent_compared[0][] = $form['compared_items'][$a]; //If the item has no parent, we assign it at the array with key 0, considered as root of the tree
-    } else {
-      $list_parent_compared[$form['compared_items'][$a]['#parents']['id']][] = $form['compared_items'][$a]; //We assign the item in the array of his parent id
-    }
-  }
-*/
-  //Call the recursive function which will rebuild the tree. Return an array which has the good format for an item list theme
-//  $compared_items = build_list_compared($list_parent_compared, $list_parent_compared[0]); 
-
+  //Prepare the array to use as argument for the item list building function.
   $compareds = array();
+  //element_children is used to avoid the children beginning by # which are inserted by drupal in $form
   foreach (element_children($form['compared_items']) as $cid) {
     $compareds[$cid] = array(
       'nid' => $cid,
@@ -203,14 +100,17 @@ function theme_wikicompare_comparative_table($variables) {
     );
   }
 
+  //Building the data for the item list
   $compared_item_list_data = get_compared_item_list($compareds);
 
 
-  //Insert the item list of the compared in the page
+  //Render the item list
   $output = theme_item_list(array('items' => $compared_item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
 
 
-  $featuress = array();
+  //Prepare the array to use as argument for the table row building function.
+  $features = array();
+  //element_children is used to avoid the children beginning by # which are inserted by drupal in $form
   foreach (element_children($form['feature_items']) as $fid) {
     $features[$fid] = array(
       'nid' => $fid,
@@ -222,30 +122,14 @@ function theme_wikicompare_comparative_table($variables) {
     );
   }
 
+  //Building the data for the table
   $feature_rows = get_feature_rows($features);
 
 
-  //Set each item in the array of his parent. This is a preparation of the rebuild of the tree
-/*  $list_parent_feature = array();
-  foreach (element_children($form['feature_items']) as $a){
-    if ($form['feature_items'][$a]['#parents']['id'] == NULL) {
-      $list_parent_feature[0][] = $form['feature_items'][$a]; //If the item has no parent, we assign it at the array with key 0, considered as root of the tree
-    } else {
-      $list_parent_feature[$form['feature_items'][$a]['#parents']['id']][] = $form['feature_items'][$a]; //We assign the item in the array of his parent id
-    }
-  }
-*/
-  //Call the recursive function which will return the rows of the table. Use the same kind of code than the one which rebuild tree so we have the children rows under the parent rows
-//  $table_rows = build_rows_feature($form['feature_items'], $list_parent_feature, $list_parent_feature[0], -1);
-
-  //Will return the header of the table, with one column for each compared item in the table
+  //Prepare the header of the table. As this point we have no compared column displayed so only the first column with the feature will be displayed
   $header = array(t('Features'));
-/*  foreach($form['#compared_ids'] as $id) {
-    $header[] = drupal_render($form['compared_items'][$id]['title']);
-  }*/
 
-  //Insert the comparative table in the page
-
+  //Building the table
   $output .= '<table id="comparative_table">';
   $output .= '<thead>';
   $output .= '<tr id="comparative_table_header">';
@@ -257,7 +141,6 @@ function theme_wikicompare_comparative_table($variables) {
     $output .= '<tr id="'. $row['id'] . '" class="feature_row">';
     $output .= $row['data'][0];
     $output .= '</tr>';
-//    $output .= '<div id="feature_children_' . $row['id'] . '"></div>';
   }
   $output .= '</tbody>';
   $output .= '</table>';
@@ -266,13 +149,18 @@ function theme_wikicompare_comparative_table($variables) {
 }
 
 
-
+/*
+ * Ajax callback cunction called by javascript to recover the compared children of the clicked compared
+ */
 function get_compared_ajax_response($type = 'ajax', $cid, $action) {
 
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
+    //If we want to displayed the compared children
     if ($action == 'expand') {
 
+      //Recover the children from database
       $query = db_select('cache_compared', 's');
       $query->addField('s', 'nid', 'nid');
       $query->addField('s', 'title', 'title');
@@ -280,9 +168,9 @@ function get_compared_ajax_response($type = 'ajax', $cid, $action) {
       $query->condition("s.parent_compared_id", $cid);
       $result = $query->execute();
 
+      //Prepare the array to use as argument for the item list building function
       $compareds = array();
       foreach ($result as $record) {
-
         $compareds[$record->nid] = array(
           'nid' => $record->nid,
           'title' => array(
@@ -290,127 +178,88 @@ function get_compared_ajax_response($type = 'ajax', $cid, $action) {
           ),
           'has_children' => $record->has_children,
         );
-
       }
 
+      //Building the data for the item list
       $compared_item_list_data = get_compared_item_list($compareds);
 
+      //Rendering the item list
       $output = theme_item_list(array('items' => $compared_item_list_data, 'type' => 'ul', 'attributes' => array()));
-//$output = 'Test';
-/*
-      $link = array(
-        '#type' => 'link',
-        '#title' => 'Link',
-        // Note the /nojs portion of the href - if javascript is enabled,
-        // this part will be stripped from the path before it is called.
-        '#href' => 'get_compared_ajax_callback/nojs/' . $cid . '/collapse',
-        '#id' => 'compared_backlink_' . $cid,
-        '#ajax' => array(
-//          'wrapper' => 'compared_children_' . $cid,
-//          'method' => 'html',
-          'effect' => 'slide',
-        ),
-      );
-*/
-//$output = 'Test';
+
+      //Preparing the ajax commands to return to javascript
       $commands = array();
+      //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
       $commands[] = ajax_command_html('#compared_children_' . $cid, $output);
-
-//      $commands[] = ajax_command_append('#compared_item_' . $cid, drupal_render($link));
-
-//      $commands[] = ajax_command_replace('#compared_link_' . $cid, drupal_render($link));
-
-//        $commands[] = ajax_command_invoke('<a id="compared_link_' . $cid . '"', 'replaceAll', array('<a id="compared_backlink_' . $cid . '">'));
-
-//      $commands[] = ajax_command_invoke('<a id="compared_link_' . $cid . '" href="/get_compared_ajax_callback/nojs/' . $cid . '/expand"  class="ajax-processed">', 'replaceAll', array('<a id="compared_link_' . $cid . '" class=ajax-processed href="get_compared_ajax_callback/nojs/' . $cid . '/collapse">'));
-//*      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/collapse'));
-//*      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'removeClass', array('ajax-processed'));
-
-//      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('id', 'compared_backlink_' . $cid));
-
-//*      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'addClass', array('expanded'));
-
       $page = array('#type' => 'ajax', '#commands' => $commands);
-      return $page;
-//      ajax_deliver($page);
 
+      return $page;
+
+    //If we want to collapse the compared children
     } elseif ($action == 'collapse') {
 
+      //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
-/*      $commands[] = ajax_command_invoke('#compared_children_' . $cid, 'slideUp');
-//      $commands[] = ajax_command_replace('#compared_children_' . $cid, '<div id="compared_children_' . $cid . '"></div>');
-      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/expand'));
-      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'removeClass', array('expanded'));*/
-
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 
     }
 
-  }
-  else {
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
     $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
     return $output;
   }
+
 }
 
-
+/*
+ * Function which will build the compared item list. Used in table initial building and in compared ajax callback
+ */
 function get_compared_item_list($compareds){
 
   $compared_items = array();
   foreach ($compareds as $compared){
 
+    //If the compared has children, the compared name will become a link calling the callback function to display his children
     if ($compared['has_children'] == 1){
       $title = array(
         '#type' => 'link',
         '#title' => drupal_render($compared['title']),
-        // Note the /nojs portion of the href - if javascript is enabled,
-        // this part will be stripped from the path before it is called.
+        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the compared_id for recovering his children and if we have to display or hide them
         '#href' => 'get_compared_ajax_callback/nojs/' . $compared['nid'] . '/expand',
         '#id' => 'compared_link_' . $compared['nid'],
         '#attributes' => array(
           'class' => array('compared_link'),
         ),
-//        '#ajax' => array(
-//            'callback' => 'get_compared_ajax_callback_test',
-//          'wrapper' => 'compared_children_' . $compared['nid'],
-//          'method' => 'html',
-//          'effect' => 'slide',
-//        ),
+        //After the compared, we add the div which will contain the children
         '#suffix' => '<div id="compared_children_' . $compared['nid'] . '"></div>'
-
       );
     } else {
       $title = $compared['title'];
     }
 
+    //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table.
     $checkbox = theme_checkbox(array('element' => array(
       '#title' => $compared['nid'],
       '#id' => 'compared_checkbox_' . $compared['nid'],
       '#attributes' => array(
         'class' => array('compared_checkbox'),
       ),
-
-/*      '#ajax' => array(
-        'callback' => 'compared_checkbox_selected',
-        'wrapper' => 'compared_item_' . $compared['nid'],
-      ),*/
     )));
 
+    //We were not able to ajaxify the checkbox, so intead the checkbox will call this hidden link
     $checkbox_link = array(
       '#type' => 'link',
       '#title' => 'toggle',
-      // Note the /nojs portion of the href - if javascript is enabled,
-      // this part will be stripped from the path before it is called.
+      //The link for the callback function which will display or hide the column in the table
       '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/show',
       '#id' => 'compared_checkbox_link_' . $compared['nid'],
       '#attributes' => array(
         'class' => array('compared_checkbox_link'),
       )
+//TODO Move the hide css style here instead of in the javascript
     );
 
-
-    //Content of the list, a checkbox with the name of the compared item
     $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];
     $compared_items[$compared['nid']]['data'] = $checkbox . ' ' . drupal_render($checkbox_link) . drupal_render($title);
 
@@ -422,13 +271,18 @@ function get_compared_item_list($compareds){
 }
 
 
-
+/*
+ * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
+ */
 function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
+    //If we want to displayed the compared children
     if ($action == 'expand') {
 
+      //Recover the children from database
       $query = db_select('cache_feature', 's');
       $query->addField('s', 'nid', 'nid');
       $query->addField('s', 'title', 'title');
@@ -438,9 +292,9 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
       $query->condition("s.parent_feature_id", $fid);
       $result = $query->execute();
 
+      //Prepare the array to use as argument for the table row building function.
       $features = array();
       foreach ($result as $record) {
-
         $features[$record->nid] = array(
           'nid' => $record->nid,
           'title' => array(
@@ -453,10 +307,11 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           'has_children' => $record->has_children,
           'implementations' => array(),
         );
-
       }
 
+      //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_ids'])) {
+	    //Recover the implementation needed for the cells
         $query = db_select('cache_implementation', 'i');
         $query->addField('i', 'nid', 'nid');
         $query->addField('i', 'compared_id', 'compared_id');
@@ -465,13 +320,15 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
         $query->condition("i.compared_id", $_POST['compared_ids'], 'in');
         $query->condition("i.feature_id", $fid);
-
         $result = $query->execute();
 
+		//Insert the implementations in an array with their compared as key so we can then add them in the feature array
         $implementations = array();
         foreach ($result as $record) {
           $implementations[$record->compared_id] = $record;
         }
+		
+		//Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
         foreach ($features as $key => $feature) {
           foreach ($_POST['compared_ids'] as $compared_id) {
             $features[$key]['implementations'][] = $implementations[$compared_id[0]];
@@ -479,74 +336,40 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         }
       }
 
+	  //Building the data for the table row
       $feature_row_data = get_feature_rows($features);
+	  
+	  
       $output = '';
-
+	  //Add a row for each feature children
       foreach ($feature_row_data as $feature) {
-
         $output .= '<tr id="'. $feature['id'] . '" class="feature_row feature_children_' . $fid . '" style="display:none;">';
-
+		//Add a column for each column in the table
         foreach ($feature['data'] as $data) {
           $output .= $data;
         }
-
         $output .= '</tr>';
-
-//        $output .= '<div id="feature_children_' . $fid . '"></div>';
-
       }
-dpm($output);
-//$output = 'Test';
-/*
-      $link = array(
-        '#type' => 'link',
-        '#title' => 'Link',
-        // Note the /nojs portion of the href - if javascript is enabled,
-        // this part will be stripped from the path before it is called.
-        '#href' => 'get_compared_ajax_callback/nojs/' . $cid . '/collapse',
-        '#id' => 'compared_backlink_' . $cid,
-        '#ajax' => array(
-//          'wrapper' => 'compared_children_' . $cid,
-//          'method' => 'html',
-          'effect' => 'slide',
-        ),
-      );
-*/
-//$output = 'Test';
+	  
+	  //Preparing the ajax commands to return to javascript
       $commands = array();
+	  //We add the code after the parent row
       $commands[] = ajax_command_after('#feature_row_' . $fid, $output);
-
-//      $commands[] = ajax_command_append('#compared_item_' . $cid, drupal_render($link));
-
-//      $commands[] = ajax_command_replace('#compared_link_' . $cid, drupal_render($link));
-
-//        $commands[] = ajax_command_invoke('<a id="compared_link_' . $cid . '"', 'replaceAll', array('<a id="compared_backlink_' . $cid . '">'));
-
-//      $commands[] = ajax_command_invoke('<a id="compared_link_' . $cid . '" href="/get_compared_ajax_callback/nojs/' . $cid . '/expand"  class="ajax-processed">', 'replaceAll', array('<a id="compared_link_' . $cid . '" class=ajax-processed href="get_compared_ajax_callback/nojs/' . $cid . '/collapse">'));
-//*      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/collapse'));
-//*      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'removeClass', array('ajax-processed'));
-
-//      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('id', 'compared_backlink_' . $cid));
-
-//*      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'addClass', array('expanded'));
-dpm($commands);
       $page = array('#type' => 'ajax', '#commands' => $commands);
+	  
       return $page;
-//      ajax_deliver($page);
 
+	//If we want to collapse the feature children
     } elseif ($action == 'collapse') {
 
+	  //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
-/*      $commands[] = ajax_command_invoke('#compared_children_' . $cid, 'slideUp');
-//      $commands[] = ajax_command_replace('#compared_children_' . $cid, '<div id="compared_children_' . $cid . '"></div>');
-      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/expand'));
-      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'removeClass', array('expanded'));*/
-
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 
     }
 
+  //If javascript isn't enabled, we redirect to an error page.
   } else {
     $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
     return $output;
@@ -555,41 +378,37 @@ dpm($commands);
 
 
 
+/*
+ * Function which will build the features row. Used in table initial building and in feature ajax callback
+ */
 function get_feature_rows($features){
 
   $rows = array();
   foreach ($features as $feature){
 
+    //If the feature has children, the feature name will become a link calling the callback function to display his children
     if ($feature['has_children'] == 1){
       $title = array(
         '#type' => 'link',
         '#title' => drupal_render($feature['title']),
-        // Note the /nojs portion of the href - if javascript is enabled,
-        // this part will be stripped from the path before it is called.
+        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the feature_id for recovering his children and if we have to display or hide them
         '#href' => 'get_feature_ajax_callback/nojs/' . $feature['nid'] . '/expand',
         '#id' => 'feature_link_' . $feature['nid'],
         '#attributes' => array(
           'class' => array('feature_link'),
         ),
-//        '#ajax' => array(
-//            'callback' => 'get_compared_ajax_callback_test',
-//          'wrapper' => 'compared_children_' . $compared['nid'],
-//          'method' => 'html',
-//          'effect' => 'slide',
-//        ),
-
       );
     } else {
       $title = $feature['title'];
     }
 
     $rows[$feature['nid']]['id'] = 'feature_row_' . $feature['nid'];
+	//Creating the first cell of the row, containing the feature details
     $rows[$feature['nid']]['data'][0] = '<td>' . drupal_render($title)  . '<br/> Weight : ' .  drupal_render($feature['weight']) . '<br/> Type : ' . $feature['type'] . '</td>';
+	//Adding one cell for each implementation, which contain the details of the cells
     foreach ($feature['implementations'] as $implementation) {
       $rows[$feature['nid']]['data'][] = '<td class="' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . '<br/>' . $implementation->percent . '%</td>';
     }
-//    $rows[$feature['nid']]['class'] = array('feature_children_' . $feature['nid']);
-
 
   }
 
@@ -597,25 +416,34 @@ function get_feature_rows($features){
 
 }
 
+
+/*
+ * Ajax callback cunction called by javascript to add or remove a column in the comparative table
+ */
 function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
+    //If we want to displayed the compared children
     if ($action == 'show') {
 
-
+	  //Recover the detail of the compared we want to add
       $query = db_select('cache_compared', 's');
       $query->addField('s', 'nid', 'nid');
       $query->addField('s', 'title', 'title');
       $query->condition("s.nid", $cid);
       $result = $query->execute();
-
       foreach ($result as $record) {
         $compared = $record;
       }
 
+	  //Add the header of the new column, with the compared detail
       $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;">' . $compared->title . '</th>';
 
+	  //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
+	    //Recover the implementation needed for the cells
         $query = db_select('cache_implementation', 'i');
         $query->addField('i', 'nid', 'nid');
         $query->addField('i', 'feature_id', 'feature_id');
@@ -626,75 +454,41 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
         $query->condition("i.feature_id", $_POST['feature_ids'], 'in');
         $result = $query->execute();
 
+		//Build the cells we have to add in each row.
         $implementations = array();
         foreach ($result as $record) {
           $implementations[$record->feature_id] = '<td class="' . $record->css_class . ' implementation_compared_' . $cid . ' implementation_feature_' . $record->feature_id . '" style="display:none;">' . $record->nid . '<br/>' . $record->percent . '%</td>';
         }
       }
 
-
-
-
+	  //Preparing the ajax commands to return to javascript
       $commands = array();
+	  //Add the new cell at the end of the header
       $commands[] = ajax_command_append('#comparative_table_header', $header);
-
+      //Add the new cells at the end of each row
       foreach ($implementations as $key => $implementation) {
         $commands[] = ajax_command_append('#feature_row_' . $key, $implementation);
       }
-
       $page = array('#type' => 'ajax', '#commands' => $commands);
+	  
       return $page;
 
+	//If we want to remove the column
     } elseif ($action == 'hide') {
 
+	  //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
-/*      $commands[] = ajax_command_invoke('#compared_children_' . $cid, 'slideUp');
-//      $commands[] = ajax_command_replace('#compared_children_' . $cid, '<div id="compared_children_' . $cid . '"></div>');
-      $commands[] = ajax_command_invoke('#compared_link_' . $cid, 'attr', array('href', 'get_compared_ajax_callback/nojs/' . $cid . '/expand'));
-      $commands[] = ajax_command_invoke('#compared_item_' . $cid, 'removeClass', array('expanded'));*/
-
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 
     }
 
+  //If javascript isn't enabled, we redirect to an error page.
   } else {
     $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
     return $output;
   }
 
-
 }
-/*
-function build_rows_feature($support_array, &$list, $parent, $depth){
-    $rows = array();
-    //We need to know the depth of the recursivity to know how many indent set
-    $depth = $depth + 1;
-    //Will add rows for each children of the arry
-    foreach ($parent as $child){
-        $array = array(
-          'data' => array()
-        );
-        //In the first column, add the feature name with indentation corresponding of the depth
-        $array['data'][] = theme('indentation', array('size' => $depth)) . drupal_render($child['title']) . '<br/> Weight : ' .  drupal_render($child['weight']) . '<br/> Type : ' . $child['#type'];
-        //Then add as many columns as the number of compared item in the table.
-        foreach($child['#implementations'] as $implementation){
-          $array['data'][] = drupal_render($implementation['title']) . '<br/>' . drupal_render($implementation['percent']) . '%<br/> CSS : ' . drupal_render($implementation['css_class']) . '<br/> Support :  ' . drupal_render($implementation['support']);
-        }
-        //Add the parent row in the returned array
-        $rows[] = $array;
-        //Check if the item has children
-        if(isset($list[$child['#id']])){
-            //If yes, call the recursive function to add children to the returned array
-            $child_rows = build_rows_feature($support_array, $list, $list[$child['#id']], $depth);
-            //Add children to the returned array
-            foreach($child_rows as $child_row){
-               $rows[] = $child_row;
-            }
-        }
-    }
-    return $rows;
-}
-*/
 
 ?>
