@@ -313,9 +313,8 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       $node->percent = round(($total / $count),4);
       $node->css_class = find_css_class($node->percent);
 
-    //If the feature is of type hightest percentage, it'll use the children through feature axis to compute the percent
-    } elseif ($node->type == 'parent-hightest-percentage') {
-
+    //If the feature is of type highest percentage, it'll use the children through feature axis to compute the percent
+    } elseif ($node->type == 'parent-highest-percentage') {
       $node->percent = 0;
       $node->css_class = 'cell-support-no';
       foreach($node->through_feature_childs as $child) {
@@ -672,5 +671,25 @@ function wikicompare_flush_caches() {
   }
 
 }
+
+
+//Function to easily find the implementation id with the compared and the feature
+function wikicompare_get_implementation_id($compared_id, $feature_id) {
+
+  $query = db_select('cache_implementation', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->condition('compared_id', $compared_id);
+  $query->condition('feature_id', $feature_id);
+  $result = $query->execute();
+
+  foreach ($result as $record) {
+    $nid = $record->nid;
+  }
+
+  return $nid;
+
+}
+
+
 
 ?>

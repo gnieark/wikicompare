@@ -357,7 +357,7 @@ function wikicompare_install() {
       'settings' => array(
         'allowed_values' => array(
           'parent-weighted-average' => 'Parent Feature - Weighted Average',
-          'parent-hightest-percentage' => 'Parent Feature - Hightest Percentage',
+          'parent-highest-percentage' => 'Parent Feature - Highest Percentage',
         ),
       ),
     );
