@@ -257,6 +257,68 @@ Drupal.behaviors.WikicompareComparativeTable = {
       });
     });
 
+//TODO Comment
+    //Dynamize the toogle fast edit link to display the elements add/edit/remove. Note we need to make a dummy ajax call so the user is correctly redirected to error page if javascript isn't enabled.
+    $('#toogle_fastedit_link:not(.event_set)').addClass('event_set').each(function () {
+
+      fastedit_toggled = 0;
+
+      //Configure the ajax event
+      var element_settings = {};
+      element_settings.progress = { 'type': 'throbber' };
+      if ($(this).attr('href')) {
+        element_settings.url = $(this).attr('href');
+        element_settings.event = 'click';
+      }
+      var base = $(this).attr('id');
+      //Create the ajax event
+      var ajax = new Drupal.ajax(base, this, element_settings);
+
+      //The success function is launched when drupal return the commands. We will override it to add some other commands
+      ajax.old_success = ajax.success;
+
+      ajax.success = function (response, status) {
+
+        //First launch regular success function
+        this.old_success(response, status);
+
+        if (fastedit_toggled == 0) {
+          fastedit_toggled = 1;
+        } else {
+          fastedit_toggled = 0;
+alert('test');
+        }
+
+/*        //If we are displaying the column
+        if ($(link_id).hasClass('hidden')) {
+          //Change the class link, so next time we click on this link it will hide the column
+          $(link_id).addClass('displayed');
+          $(link_id).removeClass('hidden');
+          //Change the last argument of the callback function
+          $(link_id).attr('href', 'toogle_compared_checkbox_ajax_callback/' + compared_id + '/hide');
+          //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
+          $('#header_compared_' + compared_id).show();
+          $('.implementation_compared_' + compared_id).fadeIn();
+        //If we are hiding the column
+        } else {
+          //Change the class link, so next time we click on this link it will display the column
+          $(link_id).addClass('hidden');
+          $(link_id).removeClass('displayed');
+          //Hide the column. We can't use animation because of the current template, to check when we will have the final template
+          $('#header_compared_' + compared_id).hide();
+          $('.implementation_compared_' + compared_id).hide();
+          //Mark the column element so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
+          $('#header_compared_' + compared_id).addClass('to_remove');
+          $('.implementation_compared_' + compared_id).addClass('to_remove');
+       }*/
+      }
+
+
+      //Active the code
+      Drupal.ajax[base] = ajax;
+
+    });
+
 
 
 

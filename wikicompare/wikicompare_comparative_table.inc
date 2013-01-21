@@ -145,6 +145,17 @@ function theme_wikicompare_comparative_table($variables) {
   $output .= '</tbody>';
   $output .= '</table>';
 
+  //Add the link to go on FastEdit mode
+  $toogle_link = array(
+    '#type' => 'link',
+    '#title' => 'Toogle FastEdit',
+    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
+    '#href' => 'toogle_fastedit_callback/nojs',
+    '#id' => 'toogle_fastedit_link',
+  );
+
+  $output .= '<p>' . drupal_render($toogle_link) . '</p>';
+
   return $output;
 }
 
@@ -231,8 +242,6 @@ function get_compared_item_list($compareds){
         '#attributes' => array(
           'class' => array('compared_link'),
         ),
-        //After the compared, we add the div which will contain the children
-        '#suffix' => '<div id="compared_children_' . $compared['nid'] . '"></div>'
       );
     } else {
       $title = $compared['title'];
@@ -264,8 +273,21 @@ function get_compared_item_list($compareds){
       $checkbox_area = $checkbox . ' ' . drupal_render($checkbox_link);
     }
 
+    //Create the image link to go to the node page
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to compared ') . $compared['nid'],
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_node = l($img, 'node/' . $compared['nid'], array('html' => True));
+
+
     $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];
-    $compared_items[$compared['nid']]['data'] = $checkbox_area . drupal_render($title);
+    $compared_items[$compared['nid']]['data'] = $checkbox_area . drupal_render($title) . ' ' . $img_link_to_node;
+
+    //After the compared, we add the div which will contain the children
+    $compared_items[$compared['nid']]['data'] = $compared_items[$compared['nid']]['data'] . '<div id="compared_children_' . $compared['nid'] . '"></div>';
 
 
   }
@@ -390,6 +412,15 @@ function get_feature_rows($features){
   $rows = array();
   foreach ($features as $feature){
 
+    //Create the image link to go to the node page
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to feature ') . $feature['nid'],
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_node = l($img, 'node/' . $feature['nid'], array('html' => True));
+
     //If the feature has children, the feature name will become a link calling the callback function to display his children
     if ($feature['has_children'] == 1){
       $title = array(
@@ -403,15 +434,26 @@ function get_feature_rows($features){
         ),
       );
     } else {
-      $title = $feature['title'];
+      $title = drupal_render($feature['title']);
     }
 
     $rows[$feature['nid']]['id'] = 'feature_row_' . $feature['nid'];
     //Creating the first cell of the row, containing the feature details
-    $rows[$feature['nid']]['data'][0] = '<td>' . drupal_render($title)  . '<br/> Weight : ' .  drupal_render($feature['weight']) . '<br/> Type : ' . $feature['type'] . '</td>';
+    $rows[$feature['nid']]['data'][0] = '<td>' . drupal_render($title) . ' ' . $img_link_to_node  . '<br/> Weight : ' .  drupal_render($feature['weight']) . '<br/> Type : ' . $feature['type'] . '</td>';
     //Adding one cell for each implementation, which contain the details of the cells
     foreach ($feature['implementations'] as $implementation) {
-      $rows[$feature['nid']]['data'][] = '<td class="' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . '<br/>' . $implementation->percent . '%</td>';
+
+      //Create the image link to go to the node page
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to implementation ') . $implementation->nid,
+        'height' => '100%',
+      ));
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link_to_node = l($img, 'node/' . $implementation->nid, array('html' => True));
+
+      $rows[$feature['nid']]['data'][] = '<td class="' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>' . $implementation->percent . '%</td>';
+
     }
 
   }
@@ -461,7 +503,17 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
         //Build the cells we have to add in each row.
         $implementations = array();
         foreach ($result as $record) {
-          $implementations[$record->feature_id] = '<td class="' . $record->css_class . ' implementation_compared_' . $cid . ' implementation_feature_' . $record->feature_id . '" style="display:none;">' . $record->nid . '<br/>' . $record->percent . '%</td>';
+
+          //Create the image link to go to the node page
+          $img = theme('image', array(
+            'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+            'alt' => t('Link to implementation ') . $record->nid,
+            'height' => '100%',
+          ));
+          //Create the link. The html = True indicate that the title of the link contain html.
+          $img_link_to_node = l($img, 'node/' . $record->nid, array('html' => True));
+
+          $implementations[$record->feature_id] = '<td class="' . $record->css_class . ' implementation_compared_' . $cid . ' implementation_feature_' . $record->feature_id . '" style="display:none;">' . $record->nid . ' ' . $img_link_to_node . '<br/>' . $record->percent . '%</td>';
         }
       }
 
@@ -493,6 +545,27 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
     return $output;
   }
 
+}
+
+
+
+/*
+ * Ajax callback function called by javascript to add or remove the fastedit items in the comparative table. Essentially a dummy function.
+ */
+function toggle_fastedit_response($type='ajax'){
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($type == 'ajax') {
+
+      $commands = array();
+      $page = array('#type' => 'ajax', '#commands' => $commands);
+      return $page;
+
+  //If javascript isn't enabled, we redirect to an error page.nds = array();
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
 }
 
 ?>
