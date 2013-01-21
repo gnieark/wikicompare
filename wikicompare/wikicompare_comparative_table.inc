@@ -238,30 +238,34 @@ function get_compared_item_list($compareds){
       $title = $compared['title'];
     }
 
-    //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table.
-    $checkbox = theme_checkbox(array('element' => array(
-      '#title' => $compared['nid'],
-      '#id' => 'compared_checkbox_' . $compared['nid'],
-      '#attributes' => array(
-        'class' => array('compared_checkbox'),
-      ),
-    )));
+    //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
+    $checkbox_area = '';
+    if ((variable_get('wikicompare_update_compared', 'no-update') != 'no-update') || ($compared['has_children'] != 1)) {
+      $checkbox = theme_checkbox(array('element' => array(
+        '#title' => $compared['nid'],
+        '#id' => 'compared_checkbox_' . $compared['nid'],
+        '#attributes' => array(
+          'class' => array('compared_checkbox'),
+        ),
+      )));
 
-    //We were not able to ajaxify the checkbox, so intead the checkbox will call this hidden link
-    $checkbox_link = array(
-      '#type' => 'link',
-      '#title' => 'toggle',
-      //The link for the callback function which will display or hide the column in the table
-      '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/show',
-      '#id' => 'compared_checkbox_link_' . $compared['nid'],
-      '#attributes' => array(
-        'class' => array('compared_checkbox_link', 'hidden'),
-        'style' => 'display:none',
-      )
-    );
+      //We were not able to ajaxify the checkbox, so intead the checkbox will call this hidden link
+      $checkbox_link = array(
+        '#type' => 'link',
+        '#title' => 'toggle',
+        //The link for the callback function which will display or hide the column in the table
+        '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/show',
+        '#id' => 'compared_checkbox_link_' . $compared['nid'],
+        '#attributes' => array(
+          'class' => array('compared_checkbox_link', 'hidden'),
+          'style' => 'display:none',
+        )
+      );
+      $checkbox_area = $checkbox . ' ' . drupal_render($checkbox_link);
+    }
 
     $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];
-    $compared_items[$compared['nid']]['data'] = $checkbox . ' ' . drupal_render($checkbox_link) . drupal_render($title);
+    $compared_items[$compared['nid']]['data'] = $checkbox_area . drupal_render($title);
 
 
   }
