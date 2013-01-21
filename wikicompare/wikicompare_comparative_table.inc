@@ -255,9 +255,9 @@ function get_compared_item_list($compareds){
       '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/show',
       '#id' => 'compared_checkbox_link_' . $compared['nid'],
       '#attributes' => array(
-        'class' => array('compared_checkbox_link'),
+        'class' => array('compared_checkbox_link', 'hidden'),
+        'style' => 'display:none',
       )
-//TODO Move the hide css style here instead of in the javascript
     );
 
     $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];

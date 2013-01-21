@@ -178,10 +178,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var patt = /[0-9]+/g;
       var compared_id = patt.exec($(this).attr('id'));
 
-      //This link is activate through the checkbox, we will not display it
-      $(this).addClass('hidden');
-      $(link_id).hide();
-
       //Configure the ajax event
       var element_settings = {};
       element_settings.progress = { 'type': 'throbber' };
@@ -260,6 +256,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         $('#compared_checkbox_link_' + compared_id).click();
       });
     });
+
 
 
 
