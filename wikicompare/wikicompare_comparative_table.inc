@@ -150,8 +150,12 @@ function theme_wikicompare_comparative_table($variables) {
     '#type' => 'link',
     '#title' => 'Toogle FastEdit',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'toogle_fastedit_callback/nojs',
+    '#href' => 'toogle_fastedit_callback/nojs/show',
     '#id' => 'toogle_fastedit_link',
+    '#attributes' => array(
+      'class' => array('toogle_fastedit_link', 'hidden'),
+    ),
+
   );
 
   $output .= '<p>' . drupal_render($toogle_link) . '</p>';
@@ -280,11 +284,12 @@ function get_compared_item_list($compareds){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $compared['nid'], array('html' => True));
+    $img_link_to_node = l($img, 'node/' . $compared['nid'], array('attributes' => array('id' => 'compared_node_link_' . $compared['nid'], 'class' => array('compared_node_link')), 'html' => True));
 
 
     $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];
     $compared_items[$compared['nid']]['data'] = $checkbox_area . drupal_render($title) . ' ' . $img_link_to_node;
+    $compared_items[$compared['nid']]['class'] = array('compared_item');
 
     //After the compared, we add the div which will contain the children
     $compared_items[$compared['nid']]['data'] = $compared_items[$compared['nid']]['data'] . '<div id="compared_children_' . $compared['nid'] . '"></div>';
@@ -379,14 +384,18 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 
       //Preparing the ajax commands to return to javascript
       $commands = array();
-      //We add the code after the parent row
-      $commands[] = ajax_command_after('#feature_row_' . $fid, $output);
+      //We add the code after the parent row. Note we can't use ajax_command_after because it adds an unwilling div
+      $commands[] = ajax_command_invoke('#feature_row_' . $fid, 'after', array($output));
+
+      //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+      $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+
       $page = array('#type' => 'ajax', '#commands' => $commands);
   
       return $page;
 
     //If we want to collapse the feature children
-    } elseif ($action == 'collapse') {
+    } else {
 
       //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
@@ -419,7 +428,7 @@ function get_feature_rows($features){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $feature['nid'], array('html' => True));
+    $img_link_to_node = l($img, 'node/' . $feature['nid'], array('attributes' => array('id' => 'feature_node_link_' . $feature['nid'], 'class' => array('feature_node_link')), 'html' => True));
 
     //If the feature has children, the feature name will become a link calling the callback function to display his children
     if ($feature['has_children'] == 1){
@@ -450,7 +459,7 @@ function get_feature_rows($features){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_node = l($img, 'node/' . $implementation->nid, array('html' => True));
+      $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation['nid'], 'class' => array('implementation_node_link')), 'html' => True));
 
       $rows[$feature['nid']]['data'][] = '<td class="' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>' . $implementation->percent . '%</td>';
 
@@ -530,7 +539,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
       return $page;
 
     //If we want to remove the column
-    } elseif ($action == 'hide') {
+    } else {
 
       //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
@@ -547,25 +556,135 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
 
 }
 
-
+//TODO remove all info about dummy
 
 /*
  * Ajax callback function called by javascript to add or remove the fastedit items in the comparative table. Essentially a dummy function.
  */
-function toggle_fastedit_response($type='ajax'){
-
+function toggle_fastedit_response($type='ajax', $action){
+dpm($action);
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
+    //If we want to displayed the fastedit items
+    if ($action == 'show') {
+
+      $compareds = array();
+      if (!empty($_POST['compared_ids'])) {
+
+        $query = db_select('node_revision', 'r');
+        $query->addField('r', 'nid', 'nid');
+        $query->addField('r', 'uid', 'uid');
+        $query->condition('r.nid', $_POST['compared_ids'], 'in');
+        $result = $query->execute();
+
+        foreach ($result as $record) {
+          $compareds[$record->nid]['nid'] = $record->nid;
+          //If the node was created by or have some revision from other users, current user will not be able to edit it
+          if ($GLOBALS['user']->uid != $record->uid) {
+            $compareds[$record->nid]['no-edit'] = True;
+          }
+        }
+
+      }
+
+      $commands = array();
+      foreach($compareds as $compared) {
+
+        $output = add_fastedit_items('compared' , $compared);
+        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
+        $commands[] = ajax_command_invoke('#compared_node_link_' . $compared['nid'], 'after', array($output));
+        //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+        $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+
+      }
+
+
+      $features = array();
+      if (!empty($_POST['feature_ids'])) {
+
+        $query = db_select('node_revision', 'r');
+        $query->addField('r', 'nid', 'nid');
+        $query->addField('r', 'uid', 'uid');
+        $query->condition('r.nid', $_POST['feature_ids'], 'in');
+        $result = $query->execute();
+
+        foreach ($result as $record) {
+          $features[$record->nid]['nid'] = $record->nid;
+          //If the node was created by or have some revision from other users, current user will not be able to edit it
+          if ($GLOBALS['user']->uid != $record->uid) {
+            $features[$record->nid]['no-edit'] = True;
+          }
+        }
+
+      }
+
+      foreach($features as $feature) {
+
+        $output = add_fastedit_items('feature', $feature);
+        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
+        $commands[] = ajax_command_invoke('#feature_node_link_' . $feature['nid'], 'after', array($output));
+        //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+        $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+
+      }
+
+      $page = array('#type' => 'ajax', '#commands' => $commands);
+      return $page;
+
+    //If we want to hide the fastedit items
+    } else {
+
+      //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
+
+    }
 
   //If javascript isn't enabled, we redirect to an error page.nds = array();
   } else {
     $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
     return $output;
   }
+}
+
+function add_fastedit_items($type, $node){
+
+  //Create the image link to add a new children
+  $img = theme('image', array(
+    'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+    'alt' => t('Link to add children ') . $type . ' ' . $node['nid'],
+    'height' => '100%',
+  ));
+  //Create the link. The html = True indicate that the title of the link contain html.
+  $img_link_to_add = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
+  $output = $img_link_to_add;
+
+  if (!isset($node['no-edit'])) {
+    //Create the image link to edit the node
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to edit ') . $type . ' ' . $node['nid'],
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_edit = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
+    $output .= $img_link_to_edit;
+
+    //Create the image link to remove the node
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to remove ') . $type . ' ' . $node['nid'],
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_remove = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_remove_link_' . $node['nid'], 'class' => array($type . '_remove_link')), 'html' => True));
+      $output .= $img_link_to_remove;
+    }
+
+  return $output;
+
 }
 
 ?>

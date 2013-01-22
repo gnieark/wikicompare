@@ -223,7 +223,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $(link_id).addClass('displayed');
           $(link_id).removeClass('hidden');
           //Change the last argument of the callback function
-          $(link_id).attr('href', 'toogle_compared_checkbox_ajax_callback/' + compared_id + '/hide');
+          $(link_id).attr('href', 'toogle_compared_checkbox_ajax_callback/nojs/' + compared_id + '/hide');
           //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
           $('#header_compared_' + compared_id).show();
           $('.implementation_compared_' + compared_id).fadeIn();
@@ -257,11 +257,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
       });
     });
 
-//TODO Comment
+//TODO Toujours le probleme avec l'argument non mis a jour au second click
     //Dynamize the toogle fast edit link to display the elements add/edit/remove. Note we need to make a dummy ajax call so the user is correctly redirected to error page if javascript isn't enabled.
-    $('#toogle_fastedit_link:not(.event_set)').addClass('event_set').each(function () {
+    $('.toogle_fastedit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       fastedit_toggled = 0;
+
+      //Recover the link_id used later in the functions
+      var link_id = $('#' + $(this).attr('id'));
 
       //Configure the ajax event
       var element_settings = {};
@@ -274,6 +277,48 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Create the ajax event
       var ajax = new Drupal.ajax(base, this, element_settings);
 
+      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
+      ajax.old_beforeSerialize = ajax.beforeSerialize;
+
+      ajax.beforeSerialize = function (element, options) {
+        //We remove all hidded element so they can't perturb the computation
+        $('.to_remove').remove();
+//alert(options.url);
+/*        if ($(link_id).attr('href') == 'toogle_fastedit_callback/nojs/hide') {
+          options.url = 'toogle_fastedit_callback/ajax/hide';
+        }
+alert(options.url);
+alert(options.toSource());*/
+        //Recover all compared columns displayed in the table to send their id to drupal
+        var compared_ids = new Array();
+        var i = 0;
+        $('.compared_item').each(function (key, value) {
+          var column_id = $('#' + $(this).attr('id'));
+          var patt = /[0-9]+/g;
+          compared_ids[i] = patt.exec($(this).attr('id'));
+          i = i + 1;
+        });
+        //Add them in the ajax call variables
+        options.data.compared_ids = compared_ids;
+
+        //Recover all feature row displayed in the table to send their id to drupal
+        var feature_ids = new Array();
+        var i = 0;
+        $('.feature_row').each(function (key, value) {
+          var row_id = $('#' + $(this).attr('id'));
+          var patt = /[0-9]+/g;
+          feature_ids[i] = patt.exec($(this).attr('id'));
+          i = i + 1;
+        });
+        //Add them in the ajax call variables
+        options.data.feature_ids = feature_ids;
+
+        //Launch regular beforeSerialize function
+        this.old_beforeSerialize(element, options);
+      }
+
+
+
       //The success function is launched when drupal return the commands. We will override it to add some other commands
       ajax.old_success = ajax.success;
 
@@ -281,38 +326,28 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //First launch regular success function
         this.old_success(response, status);
-
-        if (fastedit_toggled == 0) {
-          fastedit_toggled = 1;
-        } else {
-          fastedit_toggled = 0;
-alert('test');
-        }
-
-/*        //If we are displaying the column
+//alert(response.toSource());
+       //If we are displaying the items
         if ($(link_id).hasClass('hidden')) {
-          //Change the class link, so next time we click on this link it will hide the column
+          //Change the class link, so next time we click on this link it will hide the items
           $(link_id).addClass('displayed');
           $(link_id).removeClass('hidden');
           //Change the last argument of the callback function
-          $(link_id).attr('href', 'toogle_compared_checkbox_ajax_callback/' + compared_id + '/hide');
-          //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
-          $('#header_compared_' + compared_id).show();
-          $('.implementation_compared_' + compared_id).fadeIn();
-        //If we are hiding the column
+          $(link_id).attr('href', 'toogle_fastedit_callback/nojs/hide');
+          //Set the global variable
+          fastedit_toggled = 1;
+        //If we are hidding the items
         } else {
           //Change the class link, so next time we click on this link it will display the column
           $(link_id).addClass('hidden');
           $(link_id).removeClass('displayed');
-          //Hide the column. We can't use animation because of the current template, to check when we will have the final template
-          $('#header_compared_' + compared_id).hide();
-          $('.implementation_compared_' + compared_id).hide();
-          //Mark the column element so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
-          $('#header_compared_' + compared_id).addClass('to_remove');
-          $('.implementation_compared_' + compared_id).addClass('to_remove');
-       }*/
-      }
+          //Change the last argument of the callback function
+          $(link_id).attr('href', 'toogle_fastedit_callback/nojs/show');
+          //Set the global variable
+          fastedit_toggled = 0;
 
+        }
+      }
 
       //Active the code
       Drupal.ajax[base] = ajax;
