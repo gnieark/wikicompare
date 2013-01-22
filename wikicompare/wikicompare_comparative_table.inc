@@ -194,13 +194,10 @@ function get_compared_ajax_response($type = 'ajax', $cid, $action) {
           'has_children' => $record->has_children,
         );
       }
-
       //Building the data for the item list
       $compared_item_list_data = get_compared_item_list($compareds);
-
       //Rendering the item list
       $output = theme_item_list(array('items' => $compared_item_list_data, 'type' => 'ul', 'attributes' => array()));
-
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
@@ -286,7 +283,6 @@ function get_compared_item_list($compareds){
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $compared['nid'], array('attributes' => array('id' => 'compared_node_link_' . $compared['nid'], 'class' => array('compared_node_link')), 'html' => True));
 
-
     $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];
     $compared_items[$compared['nid']]['data'] = $checkbox_area . drupal_render($title) . ' ' . $img_link_to_node;
     $compared_items[$compared['nid']]['class'] = array('compared_item');
@@ -306,7 +302,6 @@ function get_compared_item_list($compareds){
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
 function get_feature_ajax_response($type = 'ajax', $fid, $action) {
-
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
@@ -339,7 +334,6 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           'implementations' => array(),
         );
       }
-
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_ids'])) {
         //Recover the implementation needed for the cells
@@ -366,10 +360,8 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           }
         }
       }
-
       //Building the data for the table row
       $feature_row_data = get_feature_rows($features);
-
 
       $output = '';
       //Add a row for each feature children
@@ -389,7 +381,6 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
-
       $page = array('#type' => 'ajax', '#commands' => $commands);
   
       return $page;
@@ -443,7 +434,7 @@ function get_feature_rows($features){
         ),
       );
     } else {
-      $title = drupal_render($feature['title']);
+      $title = $feature['title'];
     }
 
     $rows[$feature['nid']]['id'] = 'feature_row_' . $feature['nid'];
@@ -451,7 +442,6 @@ function get_feature_rows($features){
     $rows[$feature['nid']]['data'][0] = '<td>' . drupal_render($title) . ' ' . $img_link_to_node  . '<br/> Weight : ' .  drupal_render($feature['weight']) . '<br/> Type : ' . $feature['type'] . '</td>';
     //Adding one cell for each implementation, which contain the details of the cells
     foreach ($feature['implementations'] as $implementation) {
-
       //Create the image link to go to the node page
       $img = theme('image', array(
         'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
@@ -459,7 +449,7 @@ function get_feature_rows($features){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation['nid'], 'class' => array('implementation_node_link')), 'html' => True));
+      $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
 
       $rows[$feature['nid']]['data'][] = '<td class="' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>' . $implementation->percent . '%</td>';
 
