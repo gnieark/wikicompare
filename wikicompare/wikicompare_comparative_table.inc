@@ -150,11 +150,8 @@ function theme_wikicompare_comparative_table($variables) {
     '#type' => 'link',
     '#title' => 'Toogle FastEdit',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'toogle_fastedit_callback/nojs/show',
+    '#href' => 'toogle_fastedit_callback/nojs',
     '#id' => 'toogle_fastedit_link',
-    '#attributes' => array(
-      'class' => array('toogle_fastedit_link', 'hidden'),
-    ),
 
   );
 
@@ -551,13 +548,13 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
 /*
  * Ajax callback function called by javascript to add or remove the fastedit items in the comparative table. Essentially a dummy function.
  */
-function toggle_fastedit_response($type='ajax', $action){
-dpm($action);
+function toggle_fastedit_response($type='ajax'){
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
     //If we want to displayed the fastedit items
-    if ($action == 'show') {
+    if ($_POST['action'] == 'show') {
 
       $compareds = array();
       if (!empty($_POST['compared_ids'])) {

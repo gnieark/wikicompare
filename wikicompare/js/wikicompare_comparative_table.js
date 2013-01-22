@@ -259,7 +259,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 //TODO Toujours le probleme avec l'argument non mis a jour au second click
     //Dynamize the toogle fast edit link to display the elements add/edit/remove. Note we need to make a dummy ajax call so the user is correctly redirected to error page if javascript isn't enabled.
-    $('.toogle_fastedit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('#toogle_fastedit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       fastedit_toggled = 0;
 
@@ -289,6 +289,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 alert(options.url);
 alert(options.toSource());*/
+
+        if (fastedit_toggled == 0) {
+          options.data.action = 'show';
+        } else {
+          options.data.action = 'hide';
+        }
+
         //Recover all compared columns displayed in the table to send their id to drupal
         var compared_ids = new Array();
         var i = 0;
@@ -328,24 +335,19 @@ alert(options.toSource());*/
         this.old_success(response, status);
 //alert(response.toSource());
        //If we are displaying the items
-        if ($(link_id).hasClass('hidden')) {
-          //Change the class link, so next time we click on this link it will hide the items
-          $(link_id).addClass('displayed');
-          $(link_id).removeClass('hidden');
-          //Change the last argument of the callback function
-          $(link_id).attr('href', 'toogle_fastedit_callback/nojs/hide');
+        if (fastedit_toggled == 0) {
           //Set the global variable
           fastedit_toggled = 1;
         //If we are hidding the items
         } else {
-          //Change the class link, so next time we click on this link it will display the column
-          $(link_id).addClass('hidden');
-          $(link_id).removeClass('displayed');
-          //Change the last argument of the callback function
-          $(link_id).attr('href', 'toogle_fastedit_callback/nojs/show');
           //Set the global variable
           fastedit_toggled = 0;
-
+          $('.compared_add_link').remove();
+          $('.compared_edit_link').remove();
+          $('.compared_remove_link').remove();
+          $('.feature_add_link').remove();
+          $('.feature_edit_link').remove();
+          $('.feature_remove_link').remove();
         }
       }
 
@@ -354,7 +356,7 @@ alert(options.toSource());*/
 
     });
 
-
+//TODO Add the edit link in implementation, if toogle mode the item are already added in the new feature and compared in other functions
 
 
   }
