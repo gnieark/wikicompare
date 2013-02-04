@@ -119,11 +119,12 @@ function theme_wikicompare_comparative_table($variables) {
       'type' => $form['feature_items'][$fid]['#type'],
       'has_children' => $form['feature_items'][$fid]['#has_children'],
       'implementations' => array(),
+      'no-edit' => False,
     );
   }
 
   //Building the data for the table
-  $feature_rows = get_feature_rows($features);
+  $feature_rows = get_feature_rows($features, 0);
 
 
   //Prepare the header of the table. As this point we have no compared column displayed so only the first column with the feature will be displayed
@@ -312,6 +313,8 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
       $query->addField('s', 'weight', 'weight');
       $query->addField('s', 'type', 'type');
       $query->addField('s', 'has_children', 'has_children');
+      $query->addField('r', 'uid', 'uid');
+      $query->leftjoin('node_revision', 'r', 's.nid = r.nid');
       $query->condition("s.parent_feature_id", $fid);
       $result = $query->execute();
 
@@ -330,6 +333,10 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           'has_children' => $record->has_children,
           'implementations' => array(),
         );
+        //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
+        if ($GLOBALS['user']->uid != $record->uid) {
+          $features[$record->nid]['no-edit'] = True;
+        }
       }
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_ids'])) {
@@ -357,8 +364,12 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           }
         }
       }
+      $fastedit_toggled = 0;
+      if (!empty($_POST['fastedit_toggled'])) {
+        $fastedit_toggled = $_POST['fastedit_toggled'];
+      }
       //Building the data for the table row
-      $feature_row_data = get_feature_rows($features);
+      $feature_row_data = get_feature_rows($features, $fastedit_toggled);
 
       $output = '';
       //Add a row for each feature children
@@ -404,7 +415,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 /*
  * Function which will build the features row. Used in table initial building and in feature ajax callback
  */
-function get_feature_rows($features){
+function get_feature_rows($features, $fastedit_toggled){
 
   $rows = array();
   foreach ($features as $feature){
@@ -417,6 +428,9 @@ function get_feature_rows($features){
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $feature['nid'], array('attributes' => array('id' => 'feature_node_link_' . $feature['nid'], 'class' => array('feature_node_link')), 'html' => True));
+    if ($fastedit_toggled == 1) {
+      $img_link_to_node .= add_fastedit_items('feature', $feature); 
+    }
 
     //If the feature has children, the feature name will become a link calling the callback function to display his children
     if ($feature['has_children'] == 1){
@@ -558,7 +572,6 @@ function toggle_fastedit_response($type='ajax'){
 
       $compareds = array();
       if (!empty($_POST['compared_ids'])) {
-
         $query = db_select('node_revision', 'r');
         $query->addField('r', 'nid', 'nid');
         $query->addField('r', 'uid', 'uid');

@@ -70,7 +70,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 
-    //Ajaxify the compared link
+    //Ajaxify the feature link
     $('.feature_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
@@ -118,6 +118,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         });
         //Add them in the ajax call variables
         options.data.compared_ids = compared_ids;
+        //Check if fastedit is enabled
+        options.data.fastedit_toggled = fastedit_toggled;
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
