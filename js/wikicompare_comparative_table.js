@@ -220,6 +220,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         });
         //Add them in the ajax call variables
         options.data.feature_ids = feature_ids;
+        //Check if fastedit is enabled
+        options.data.fastedit_toggled = fastedit_toggled;
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -333,6 +335,18 @@ alert(options.toSource());*/
         });
         //Add them in the ajax call variables
         options.data.feature_ids = feature_ids;
+        
+        //Recover all implementation displayed in the table to send their id to drupal
+        var implementation_ids = new Array();
+        var i = 0;
+        $('.implementation_cell').each(function (key, value) {
+          var cell_id = $('#' + $(this).attr('id'));
+          var patt = /[0-9]+/g;
+          implementation_ids[i] = patt.exec($(this).attr('id'));
+          i = i + 1;
+        });
+        //Add them in the ajax call variables
+        options.data.implementation_ids = implementation_ids;
 
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
@@ -362,6 +376,7 @@ alert(options.toSource());*/
           $('.feature_add_link').remove();
           $('.feature_edit_link').remove();
           $('.feature_remove_link').remove();
+          $('.implementation_edit_link').remove();
         }
       }
 

@@ -123,7 +123,7 @@ function theme_wikicompare_comparative_table($variables) {
       'no-edit' => False,
     );
   }
-
+//TODO retirer les no-edit initiaux car on fait un check en !isset
   //Building the data for the table
   $feature_rows = get_feature_rows($features, 0);
 
@@ -477,7 +477,7 @@ function get_feature_rows($features, $fastedit_toggled){
       //Create the link. The html = True indicate that the title of the link contain html.
       $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
 
-      $rows[$feature['nid']]['data'][] = '<td class="' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>' . $implementation->percent . '%</td>';
+      $rows[$feature['nid']]['data'][] = '<td id="implementation_' . $implementation->nid . '" class="implementation_cell ' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>' . $implementation->percent . '%</td>';
 
     }
 
@@ -499,6 +499,12 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
     //If we want to displayed the compared children
     if ($action == 'show') {
 
+      //Recover fastedit status
+      $fastedit_toggled = 0;
+      if (!empty($_POST['fastedit_toggled'])) {
+        $fastedit_toggled = $_POST['fastedit_toggled'];
+      }
+    
       //Recover the detail of the compared we want to add
       $query = db_select('cache_compared', 's');
       $query->addField('s', 'nid', 'nid');
@@ -520,7 +526,9 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
         $query->addField('i', 'feature_id', 'feature_id');
         $query->addField('ctc', 'percent', 'percent');
         $query->addField('ctc', 'css_class', 'css_class');
+        $query->addField('r', 'uid', 'uid');
         $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
+        $query->leftjoin('node_revision', 'r', 'i.nid = r.nid');
         $query->condition("i.compared_id", $cid);
         $query->condition("i.feature_id", $_POST['feature_ids'], 'in');
         $result = $query->execute();
@@ -528,17 +536,30 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
         //Build the cells we have to add in each row.
         $implementations = array();
         foreach ($result as $record) {
-
+          $implementations[$record->nid]['nid'] = $record->nid;
+          $implementations[$record->nid]['feature_id'] = $record->feature_id;
+          $implementations[$record->nid]['percent'] = $record->percent;
+          $implementations[$record->nid]['css_class'] = $record->css_class;
+          //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
+          if ($GLOBALS['user']->uid != $record->uid) {
+            $implementations[$record->nid]['no-edit'] = True;
+          }
+        }
+        
+        $cells = array();
+        foreach ($implementations as $implementation) {
           //Create the image link to go to the node page
           $img = theme('image', array(
             'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-            'alt' => t('Link to implementation ') . $record->nid,
+            'alt' => t('Link to implementation ') . $implementation['nid'],
             'height' => '100%',
           ));
           //Create the link. The html = True indicate that the title of the link contain html.
-          $img_link_to_node = l($img, 'node/' . $record->nid, array('html' => True));
-
-          $implementations[$record->feature_id] = '<td class="' . $record->css_class . ' implementation_compared_' . $cid . ' implementation_feature_' . $record->feature_id . '" style="display:none;">' . $record->nid . ' ' . $img_link_to_node . '<br/>' . $record->percent . '%</td>';
+          $img_link_to_node = l($img, 'node/' . $implementation['nid'], array('attributes' => array('id' => 'implementation_node_link_' . $implementation['nid'], 'class' => array('implementation_node_link')), 'html' => True));
+          if ($fastedit_toggled == 1) {
+            $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
+          }
+          $cells[$implementation['feature_id']] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $cid . ' implementation_feature_' . $implementation['feature_id'] . '" style="display:none;">' . $implementation['nid'] . ' ' . $img_link_to_node . '<br/>' . $implementation['percent'] . '%</td>';
         }
       }
 
@@ -547,8 +568,8 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
       //Add the new cell at the end of the header
       $commands[] = ajax_command_append('#comparative_table_header', $header);
       //Add the new cells at the end of each row
-      foreach ($implementations as $key => $implementation) {
-        $commands[] = ajax_command_append('#feature_row_' . $key, $implementation);
+      foreach ($cells as $key => $cell) {
+        $commands[] = ajax_command_append('#feature_row_' . $key, $cell);
       }
       $page = array('#type' => 'ajax', '#commands' => $commands);
   
@@ -643,7 +664,36 @@ function toggle_fastedit_response($type='ajax'){
         $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
 
       }
+      
+      $implementations = array();
+      if (!empty($_POST['implementation_ids'])) {
 
+        $query = db_select('node_revision', 'r');
+        $query->addField('r', 'nid', 'nid');
+        $query->addField('r', 'uid', 'uid');
+        $query->condition('r.nid', $_POST['implementation_ids'], 'in');
+        $result = $query->execute();
+
+        foreach ($result as $record) {
+          $implementations[$record->nid]['nid'] = $record->nid;
+          //If the node was created by or have some revision from other users, current user will not be able to edit it
+          if ($GLOBALS['user']->uid != $record->uid) {
+            $implementations[$record->nid]['no-edit'] = True;
+          }
+        }
+
+      }
+
+      foreach($implementations as $implementation) {
+
+        $output = add_fastedit_items('implementation', $implementation);
+        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
+        $commands[] = ajax_command_invoke('#implementation_node_link_' . $implementation['nid'], 'after', array($output));
+        //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+        $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+
+      }
+//TODO il faut surement sortir les commande dummy to remove des boucle et en mettre juste une à la fin
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 
@@ -666,37 +716,53 @@ function toggle_fastedit_response($type='ajax'){
 
 function add_fastedit_items($type, $node){
 
-  //Create the image link to add a new children
-  $img = theme('image', array(
-    'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-    'alt' => t('Link to add children ') . $type . ' ' . $node['nid'],
-    'height' => '100%',
-  ));
-  //Create the link. The html = True indicate that the title of the link contain html.
-  $img_link_to_add = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
-  $output = $img_link_to_add;
-
-  if (!isset($node['no-edit'])) {
-    //Create the image link to edit the node
+  if ($type == 'implementation') {
+    $output = '';
+    if (!isset($node['no-edit'])) {   
+      //Create the image link to edit the node
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to edit ') . $type . ' ' . $node['nid'],
+        'height' => '100%',
+      ));
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link_to_edit = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
+      $output = $img_link_to_edit;
+    }
+  
+  } else {
+    //Create the image link to add a new children
     $img = theme('image', array(
       'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to edit ') . $type . ' ' . $node['nid'],
+      'alt' => t('Link to add children ') . $type . ' ' . $node['nid'],
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_edit = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
-    $output .= $img_link_to_edit;
+    $img_link_to_add = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
+    $output = $img_link_to_add;
 
-    //Create the image link to remove the node
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to remove ') . $type . ' ' . $node['nid'],
-      'height' => '100%',
-    ));
-    //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_remove = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_remove_link_' . $node['nid'], 'class' => array($type . '_remove_link')), 'html' => True));
+    if (!isset($node['no-edit'])) {
+      //Create the image link to edit the node
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to edit ') . $type . ' ' . $node['nid'],
+        'height' => '100%',
+      ));
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link_to_edit = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
+      $output .= $img_link_to_edit;
+
+      //Create the image link to remove the node
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to remove ') . $type . ' ' . $node['nid'],
+        'height' => '100%',
+      ));
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link_to_remove = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_remove_link_' . $node['nid'], 'class' => array($type . '_remove_link')), 'html' => True));
       $output .= $img_link_to_remove;
     }
+  }
 
   return $output;
 
