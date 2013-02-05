@@ -40,6 +40,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.beforeSerialize = function (element, options) {
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
+        //Recover all compared columns displayed in the table to send their id to drupal
+        var compared_ids = new Array();
+        var i = 0;
+        $('.header_compared').each(function (key, value) {
+          var column_id = $('#' + $(this).attr('id'));
+          var patt = /[0-9]+/g;
+          compared_ids[i] = patt.exec($(this).attr('id'))[0];
+          i = i + 1;
+        });
+        //Add them in the ajax call variables
+        options.data.compared_ids = compared_ids;
         //Check if fastedit is enabled
         options.data.fastedit_toggled = fastedit_toggled;
         //Launch regular beforeSerialize function
@@ -125,7 +136,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         $('.header_compared').each(function (key, value) {
           var column_id = $('#' + $(this).attr('id'));
           var patt = /[0-9]+/g;
-          compared_ids[i] = patt.exec($(this).attr('id'));
+          compared_ids[i] = patt.exec($(this).attr('id'))[0];
           i = i + 1;
         });
         //Add them in the ajax call variables
@@ -248,6 +259,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Change the class link, so next time we click on this link it will display the column
           $(link_id).addClass('hidden');
           $(link_id).removeClass('displayed');
+          //Change the last argument of the callback function
+          $(link_id).attr('href', 'toogle_compared_checkbox_ajax_callback/nojs/' + compared_id + '/show');
           //Hide the column. We can't use animation because of the current template, to check when we will have the final template
           $('#header_compared_' + compared_id).hide();
           $('.implementation_compared_' + compared_id).hide();
@@ -387,7 +400,8 @@ alert(options.toSource());*/
     });
 
 //TODO Add the edit link in implementation, if toogle mode the item are already added in the new feature and compared in other functions
-
+//TODO check the checkbox if column already displayed
+//TODO remove all children feature when collapsing
 
   }
 };

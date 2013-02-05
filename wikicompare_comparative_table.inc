@@ -194,6 +194,12 @@ function get_compared_ajax_response($type = 'ajax', $cid, $action) {
           ),
           'has_children' => $record->has_children,
         );
+        //If already displayed in the table, we check it by default
+        if (!empty($_POST['compared_ids'])) {
+          if (in_array($record->nid, $_POST['compared_ids'])) {
+            $compareds[$record->nid]['displayed'] = True;
+          }
+        }
         //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
         if ($GLOBALS['user']->uid != $record->uid) {
           $compareds[$record->nid]['no-edit'] = True;
@@ -260,15 +266,14 @@ function get_compared_item_list($compareds, $fastedit_toggled){
     //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
     $checkbox_area = '';
     if ((variable_get('wikicompare_update_compared', 'no-update') != 'no-update') || ($compared['has_children'] != 1)) {
-      $checkbox = theme_checkbox(array('element' => array(
+      $checkbox_settings = array('element' => array(
         '#title' => $compared['nid'],
         '#id' => 'compared_checkbox_' . $compared['nid'],
         '#attributes' => array(
           'class' => array('compared_checkbox'),
         ),
-      )));
-
-      //We were not able to ajaxify the checkbox, so intead the checkbox will call this hidden link
+      ));
+      //We were not able to ajaxify the checkbox, so instead the checkbox will call this hidden link
       $checkbox_link = array(
         '#type' => 'link',
         '#title' => 'toggle',
@@ -276,10 +281,17 @@ function get_compared_item_list($compareds, $fastedit_toggled){
         '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/show',
         '#id' => 'compared_checkbox_link_' . $compared['nid'],
         '#attributes' => array(
-          'class' => array('compared_checkbox_link', 'hidden'),
+          'class' => array('compared_checkbox_link' => 'compared_checkbox_link', 'hidden' => 'hidden'),
           'style' => 'display:none',
         )
       );
+      if (isset($compared['displayed'])) {
+        $checkbox_settings['element']['#checked'] = True;
+        $checkbox_link['#href'] = 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/hide';
+		unset($checkbox_link['#attributes']['class']['hidden']);
+        $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
+      }
+      $checkbox = theme_checkbox($checkbox_settings);
       $checkbox_area = $checkbox . ' ' . drupal_render($checkbox_link);
     }
 
@@ -385,14 +397,11 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           }
         }
         //Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
-dpm($_POST['compared_ids']);
         foreach ($features as $key => $feature) {
           foreach ($_POST['compared_ids'] as $compared_id) {
-
-            $features[$key]['implementations'][] = $implementations[$key][$compared_id[0]];
+            $features[$key]['implementations'][] = $implementations[$key][$compared_id];
           }
         }
-dpm($features);        
       }
       $fastedit_toggled = 0;
       if (!empty($_POST['fastedit_toggled'])) {
