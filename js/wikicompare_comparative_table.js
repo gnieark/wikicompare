@@ -34,6 +34,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Create the ajax event
       var ajax = new Drupal.ajax(base, this, element_settings);
 
+      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
+      ajax.old_beforeSerialize = ajax.beforeSerialize;
+
+      ajax.beforeSerialize = function (element, options) {
+        //We remove all hidded element so they can't perturb the computation
+        $('.to_remove').remove();
+        //Check if fastedit is enabled
+        options.data.fastedit_toggled = fastedit_toggled;
+        //Launch regular beforeSerialize function
+        this.old_beforeSerialize(element, options);
+      }
+      
       //The success function is launched when drupal return the commands. We will override it to add some other commands
       ajax.old_success = ajax.success;
 
@@ -352,6 +364,7 @@ alert(options.toSource());*/
           $('.feature_remove_link').remove();
         }
       }
+
 
       //Active the code
       Drupal.ajax[base] = ajax;

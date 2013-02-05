@@ -97,11 +97,12 @@ function theme_wikicompare_comparative_table($variables) {
       'nid' => $cid,
       'title' => $form['compared_items'][$cid]['title'],
       'has_children' => $form['compared_items'][$cid]['#has_children'],
+      'no-edit' => False,
     );
   }
 
   //Building the data for the item list
-  $compared_item_list_data = get_compared_item_list($compareds);
+  $compared_item_list_data = get_compared_item_list($compareds, 0);
 
 
   //Render the item list
@@ -178,6 +179,8 @@ function get_compared_ajax_response($type = 'ajax', $cid, $action) {
       $query->addField('s', 'nid', 'nid');
       $query->addField('s', 'title', 'title');
       $query->addField('s', 'has_children', 'has_children');
+      $query->addField('r', 'uid', 'uid');
+      $query->leftjoin('node_revision', 'r', 's.nid = r.nid');
       $query->condition("s.parent_compared_id", $cid);
       $result = $query->execute();
 
@@ -191,9 +194,17 @@ function get_compared_ajax_response($type = 'ajax', $cid, $action) {
           ),
           'has_children' => $record->has_children,
         );
+        //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
+        if ($GLOBALS['user']->uid != $record->uid) {
+          $compareds[$record->nid]['no-edit'] = True;
+        }
+      }
+      $fastedit_toggled = 0;
+      if (!empty($_POST['fastedit_toggled'])) {
+        $fastedit_toggled = $_POST['fastedit_toggled'];
       }
       //Building the data for the item list
-      $compared_item_list_data = get_compared_item_list($compareds);
+      $compared_item_list_data = get_compared_item_list($compareds, $fastedit_toggled);
       //Rendering the item list
       $output = theme_item_list(array('items' => $compared_item_list_data, 'type' => 'ul', 'attributes' => array()));
       //Preparing the ajax commands to return to javascript
@@ -225,7 +236,7 @@ function get_compared_ajax_response($type = 'ajax', $cid, $action) {
 /*
  * Function which will build the compared item list. Used in table initial building and in compared ajax callback
  */
-function get_compared_item_list($compareds){
+function get_compared_item_list($compareds, $fastedit_toggled){
 
   $compared_items = array();
   foreach ($compareds as $compared){
@@ -281,6 +292,10 @@ function get_compared_item_list($compareds){
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $compared['nid'], array('attributes' => array('id' => 'compared_node_link_' . $compared['nid'], 'class' => array('compared_node_link')), 'html' => True));
 
+    if ($fastedit_toggled == 1) {
+      $img_link_to_node .= add_fastedit_items('compared', $compared);
+    }
+    
     $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];
     $compared_items[$compared['nid']]['data'] = $checkbox_area . drupal_render($title) . ' ' . $img_link_to_node;
     $compared_items[$compared['nid']]['class'] = array('compared_item');
