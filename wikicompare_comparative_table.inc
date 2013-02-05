@@ -335,6 +335,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 
       //Prepare the array to use as argument for the table row building function.
       $features = array();
+      $features_ids = array();
       foreach ($result as $record) {
         $features[$record->nid] = array(
           'nid' => $record->nid,
@@ -348,6 +349,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           'has_children' => $record->has_children,
           'implementations' => array(),
         );
+        $features_ids[$record->nid] = $record->nid;
         //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
         if ($GLOBALS['user']->uid != $record->uid) {
           $features[$record->nid]['no-edit'] = True;
@@ -358,6 +360,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         //Recover the implementation needed for the cells
         $query = db_select('cache_implementation', 'i');
         $query->addField('i', 'nid', 'nid');
+        $query->addField('i', 'feature_id', 'feature_id');
         $query->addField('i', 'compared_id', 'compared_id');
         $query->addField('ctc', 'percent', 'percent');
         $query->addField('ctc', 'css_class', 'css_class');
@@ -365,28 +368,31 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
         $query->leftjoin('node_revision', 'r', 'i.nid = r.nid');
         $query->condition("i.compared_id", $_POST['compared_ids'], 'in');
-        $query->condition("i.feature_id", $fid);
+        $query->condition("i.feature_id", $features_ids, 'in');
         $result = $query->execute();
 
         //Insert the implementations in an array with their compared as key so we can then add them in the feature array
         $implementations = array();
         foreach ($result as $record) {
-          $implementations[$record->compared_id]['nid'] = $record->nid;
-          $implementations[$record->compared_id]['compared_id'] = $record->compared_id;
-          $implementations[$record->compared_id]['percent'] = $record->percent;
-          $implementations[$record->compared_id]['css_class'] = $record->css_class;
+          $implementations[$record->feature_id][$record->compared_id]['nid'] = $record->nid;
+          $implementations[$record->feature_id][$record->compared_id]['feature_id'] = $record->feature_id;
+          $implementations[$record->feature_id][$record->compared_id]['compared_id'] = $record->compared_id;
+          $implementations[$record->feature_id][$record->compared_id]['percent'] = $record->percent;
+          $implementations[$record->feature_id][$record->compared_id]['css_class'] = $record->css_class;
           //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
           if ($GLOBALS['user']->uid != $record->uid) {
-            $implementations[$record->compared_id]['no-edit'] = True;
+            $implementations[$record->feature_id][$record->compared_id]['no-edit'] = True;
           }
         }
         //Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
+dpm($_POST['compared_ids']);
         foreach ($features as $key => $feature) {
           foreach ($_POST['compared_ids'] as $compared_id) {
 
-            $features[$key]['implementations'][] = $implementations[$compared_id[0]];
+            $features[$key]['implementations'][] = $implementations[$key][$compared_id[0]];
           }
         }
+dpm($features);        
       }
       $fastedit_toggled = 0;
       if (!empty($_POST['fastedit_toggled'])) {
@@ -460,7 +466,7 @@ function get_feature_rows($features, $fastedit_toggled){
     if ($feature['has_children'] == 1){
       $title = array(
         '#type' => 'link',
-        '#title' => drupal_render($feature['title']),
+        '#title' => drupal_render($feature['title']) . ' ' . $feature['nid'],
         //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the feature_id for recovering his children and if we have to display or hide them
         '#href' => 'get_feature_ajax_callback/nojs/' . $feature['nid'] . '/expand',
         '#id' => 'feature_link_' . $feature['nid'],
@@ -488,7 +494,7 @@ function get_feature_rows($features, $fastedit_toggled){
         $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
       }
 
-      $rows[$feature['nid']]['data'][] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $implementation['compared_id'] . ' implementation_feature_' . $feature['nid'] . '">' . $implementation['nid'] . ' ' .  $img_link_to_node . '<br/>' . $implementation['percent'] . '%</td>';
+      $rows[$feature['nid']]['data'][] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $implementation['compared_id'] . ' implementation_feature_' . $feature['nid'] . '">' . $implementation['nid'] . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation['feature_id'] . '<br/>Compared : ' . $implementation['compared_id'] . '<br/>' . $implementation['percent'] . '%</td>';
 
     }
 
@@ -527,7 +533,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
       }
 
       //Add the header of the new column, with the compared detail
-      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;">' . $compared->title . '</th>';
+      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;">' . $compared->title . ' ' . $cid . '</th>';
 
       //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
@@ -570,7 +576,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
           if ($fastedit_toggled == 1) {
             $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
           }
-          $cells[$implementation['feature_id']] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $cid . ' implementation_feature_' . $implementation['feature_id'] . '" style="display:none;">' . $implementation['nid'] . ' ' . $img_link_to_node . '<br/>' . $implementation['percent'] . '%</td>';
+          $cells[$implementation['feature_id']] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $cid . ' implementation_feature_' . $implementation['feature_id'] . '" style="display:none;">' . $implementation['nid'] . ' ' . $img_link_to_node . '<br/>Feature : ' . $implementation['feature_id'] . '<br/>Compared : ' . $cid . '<br/>' . $implementation['percent'] . '%</td>';
         }
       }
 
