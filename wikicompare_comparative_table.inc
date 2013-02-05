@@ -361,7 +361,9 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         $query->addField('i', 'compared_id', 'compared_id');
         $query->addField('ctc', 'percent', 'percent');
         $query->addField('ctc', 'css_class', 'css_class');
+        $query->addField('r', 'uid', 'uid');
         $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
+        $query->leftjoin('node_revision', 'r', 'i.nid = r.nid');
         $query->condition("i.compared_id", $_POST['compared_ids'], 'in');
         $query->condition("i.feature_id", $fid);
         $result = $query->execute();
@@ -369,12 +371,19 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         //Insert the implementations in an array with their compared as key so we can then add them in the feature array
         $implementations = array();
         foreach ($result as $record) {
-          $implementations[$record->compared_id] = $record;
+          $implementations[$record->compared_id]['nid'] = $record->nid;
+          $implementations[$record->compared_id]['compared_id'] = $record->compared_id;
+          $implementations[$record->compared_id]['percent'] = $record->percent;
+          $implementations[$record->compared_id]['css_class'] = $record->css_class;
+          //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
+          if ($GLOBALS['user']->uid != $record->uid) {
+            $implementations[$record->compared_id]['no-edit'] = True;
+          }
         }
-
         //Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
         foreach ($features as $key => $feature) {
           foreach ($_POST['compared_ids'] as $compared_id) {
+
             $features[$key]['implementations'][] = $implementations[$compared_id[0]];
           }
         }
@@ -462,7 +471,6 @@ function get_feature_rows($features, $fastedit_toggled){
     } else {
       $title = $feature['title'];
     }
-
     $rows[$feature['nid']]['id'] = 'feature_row_' . $feature['nid'];
     //Creating the first cell of the row, containing the feature details
     $rows[$feature['nid']]['data'][0] = '<td>' . drupal_render($title) . ' ' . $img_link_to_node  . '<br/> Weight : ' .  drupal_render($feature['weight']) . '<br/> Type : ' . $feature['type'] . '</td>';
@@ -471,13 +479,16 @@ function get_feature_rows($features, $fastedit_toggled){
       //Create the image link to go to the node page
       $img = theme('image', array(
         'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to implementation ') . $implementation->nid,
+        'alt' => t('Link to implementation ') . $implementation['nid'],
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
+      $img_link_to_node = l($img, 'node/' . $implementation['nid'],  array('attributes' => array('id' => 'implementation_node_link_' . $implementation['nid'], 'class' => array('implementation_node_link')), 'html' => True));
+      if ($fastedit_toggled == 1) {
+        $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
+      }
 
-      $rows[$feature['nid']]['data'][] = '<td id="implementation_' . $implementation->nid . '" class="implementation_cell ' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature['nid'] . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>' . $implementation->percent . '%</td>';
+      $rows[$feature['nid']]['data'][] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $implementation['compared_id'] . ' implementation_feature_' . $feature['nid'] . '">' . $implementation['nid'] . ' ' .  $img_link_to_node . '<br/>' . $implementation['percent'] . '%</td>';
 
     }
 
