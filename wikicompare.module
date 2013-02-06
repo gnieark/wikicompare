@@ -102,11 +102,11 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table.inc',
   );
 
-  $items['get_compared_ajax_callback/%/%'] = array(
+  $items['get_compared_ajax_callback'] = array(
     'page callback' => 'get_compared_ajax_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
-    'page arguments' => array(1, 2),
+    'page arguments' => array(),
     'type' => MENU_CALLBACK,
     'file' => 'wikicompare_comparative_table.inc',
     'delivery callback' => 'ajax_deliver',

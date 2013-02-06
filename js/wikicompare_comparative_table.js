@@ -40,6 +40,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.beforeSerialize = function (element, options) {
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
+        //Add the clicked compared in argument
+        options.data.compared_id = compared_id[0];
+        //Check if the column is already displayed
+        if ($(link_id).hasClass('collapsed')) {
+          options.data.action = 'expand';
+        } else {
+          options.data.action = 'collapse';
+        }
         //Recover all compared columns displayed in the table to send their id to drupal
         var compared_ids = new Array();
         var i = 0;
@@ -69,8 +77,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Change the class link, so next time we click on this link it will hide the children
           $(link_id).addClass('expanded');
           $(link_id).removeClass('collapsed');
-          //Change the last argument of the callback function
-          $(link_id).attr('href', 'get_compared_ajax_callback/nojs/' + compared_id + '/collapse');
           //Display the children with slide animation
           $(children_id).slideDown();
         //If we are hiding the children
@@ -78,8 +84,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Change the class link, so next time we click on this link it will display the children
           $(link_id).addClass('collapsed');
           $(link_id).removeClass('expanded');
-          //Change the last argument of the callback function
-          $(link_id).attr('href', 'get_compared_ajax_callback/nojs/' + compared_id + '/expand');
           //Hide the children with slide animation
           $(children_id).slideUp();
         }

@@ -166,13 +166,15 @@ function theme_wikicompare_comparative_table($variables) {
 /*
  * Ajax callback cunction called by javascript to recover the compared children of the clicked compared
  */
-function get_compared_ajax_response($type = 'ajax', $cid, $action) {
+function get_compared_ajax_response($type = 'ajax') {
+
+  $cid = $_POST['compared_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
     //If we want to displayed the compared children
-    if ($action == 'expand') {
+    if ($_POST['action'] == 'expand') {
 
       //Recover the children from database
       $query = db_select('cache_compared', 's');
@@ -253,7 +255,7 @@ function get_compared_item_list($compareds, $fastedit_toggled){
         '#type' => 'link',
         '#title' => drupal_render($compared['title']),
         //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the compared_id for recovering his children and if we have to display or hide them
-        '#href' => 'get_compared_ajax_callback/nojs/' . $compared['nid'] . '/expand',
+        '#href' => 'get_compared_ajax_callback/nojs/',
         '#id' => 'compared_link_' . $compared['nid'],
         '#attributes' => array(
           'class' => array('compared_link'),
