@@ -278,7 +278,7 @@ function get_compared_item_list($compareds, $fastedit_toggled){
         '#type' => 'link',
         '#title' => 'toggle',
         //The link for the callback function which will display or hide the column in the table
-        '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/show',
+        '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/',
         '#id' => 'compared_checkbox_link_' . $compared['nid'],
         '#attributes' => array(
           'class' => array('compared_checkbox_link' => 'compared_checkbox_link', 'hidden' => 'hidden'),
@@ -517,13 +517,15 @@ function get_feature_rows($features, $fastedit_toggled){
 /*
  * Ajax callback cunction called by javascript to add or remove a column in the comparative table
  */
-function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
+function toggle_compared_checkbox_ajax_response($type='ajax'){
+
+  $cid = $_POST['compared_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
     //If we want to displayed the compared children
-    if ($action == 'show') {
+    if ($_POST['action'] == 'show') {
 
       //Recover fastedit status
       $fastedit_toggled = 0;
@@ -598,7 +600,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax', $cid, $action){
         $commands[] = ajax_command_append('#feature_row_' . $key, $cell);
       }
       $page = array('#type' => 'ajax', '#commands' => $commands);
-  
+
       return $page;
 
     //If we want to remove the column

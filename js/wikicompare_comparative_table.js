@@ -180,7 +180,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $(link_id).removeClass('expanded');
 //TODO pareil qu'au dessus, 
           //Hide the children with slide animation
-          $(children_id).hide();
+          remove_feature_children_row(feature_id);
           //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
           $(children_id).addClass('to_remove');
        }
@@ -191,6 +191,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
       Drupal.ajax[base] = ajax;
     });
 
+
+    function remove_feature_children_row(feature_id) {
+      $('.feature_children_' + feature_id).remove();
+      //TODOTODOTODO Hide children with recursive call
+      $('.feature_children_' + feature_id).alert($(this).attr('id'));
+    }
 
 
     //Ajaxify the compared checkbox link
@@ -229,6 +235,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           feature_ids[i] = patt.exec($(this).attr('id'));
           i = i + 1;
         });
+        //Add the clicked compared in argument
+        options.data.compared_id = compared_id[0];
+        //Check if the column is already displayed
+        if ($(link_id).hasClass('hidden')) {
+          options.data.action = 'show';
+        } else {
+          options.data.action = 'hide';
+        }
         //Add them in the ajax call variables
         options.data.feature_ids = feature_ids;
         //Check if fastedit is enabled
@@ -249,8 +263,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Change the class link, so next time we click on this link it will hide the column
           $(link_id).addClass('displayed');
           $(link_id).removeClass('hidden');
-          //Change the last argument of the callback function
-          $(link_id).attr('href', 'toogle_compared_checkbox_ajax_callback/nojs/' + compared_id + '/hide');
           //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
           $('#header_compared_' + compared_id).show();
           $('.implementation_compared_' + compared_id).fadeIn();
@@ -259,8 +271,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Change the class link, so next time we click on this link it will display the column
           $(link_id).addClass('hidden');
           $(link_id).removeClass('displayed');
-          //Change the last argument of the callback function
-          $(link_id).attr('href', 'toogle_compared_checkbox_ajax_callback/nojs/' + compared_id + '/show');
           //Hide the column. We can't use animation because of the current template, to check when we will have the final template
           $('#header_compared_' + compared_id).hide();
           $('.implementation_compared_' + compared_id).hide();
@@ -400,8 +410,9 @@ alert(options.toSource());*/
     });
 
 //TODO Add the edit link in implementation, if toogle mode the item are already added in the new feature and compared in other functions
-//TODO check the checkbox if column already displayed
+//TODO check the checkbox if column already displayed, il y a encore des problemes sur ce point
 //TODO remove all children feature when collapsing
+//TODO pass the argument through url isn't reliable. Modify all ajax call to insert the argument in beforeSerialize
 
   }
 };
