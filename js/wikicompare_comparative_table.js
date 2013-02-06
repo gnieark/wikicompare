@@ -202,9 +202,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     function remove_feature_children_row(feature_id) {
-      $('.feature_children_' + feature_id).remove();
       //TODOTODOTODO Hide children with recursive call
-      //$('.feature_children_' + feature_id).alert($(this).attr('id'));
+      $('.feature_children_' + feature_id).each(function(index) {
+        var patt = /[0-9]+/g;
+        var feature_child_id = patt.exec($(this).attr('id'));
+        remove_feature_children_row(feature_child_id);
+      });
+      $('.feature_children_' + feature_id).remove();
     }
 
 
@@ -393,7 +397,6 @@ alert(options.toSource());*/
 
         //First launch regular success function
         this.old_success(response, status);
-//alert(response.toSource());
        //If we are displaying the items
         if (fastedit_toggled == 0) {
           //Set the global variable
@@ -417,11 +420,6 @@ alert(options.toSource());*/
       Drupal.ajax[base] = ajax;
 
     });
-
-//TODO Add the edit link in implementation, if toogle mode the item are already added in the new feature and compared in other functions
-//TODO check the checkbox if column already displayed, il y a encore des problemes sur ce point
-//TODO remove all children feature when collapsing
-//TODO pass the argument through url isn't reliable. Modify all ajax call to insert the argument in beforeSerialize
 
   }
 };
