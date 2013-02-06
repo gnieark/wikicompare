@@ -133,7 +133,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.beforeSerialize = function (element, options) {
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
-
+        //Add the clicked feature in argument
+        options.data.feature_id = feature_id[0];
+        //Check if the column is already displayed
+        if ($(link_id).hasClass('collapsed')) {
+          options.data.action = 'expand';
+        } else {
+          options.data.action = 'collapse';
+        }
         //Recover all compared columns displayed in the table to send their id to drupal, in the right order
         var compared_ids = new Array();
         var i = 0;
@@ -164,8 +171,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Change the class link, so next time we click on this link it will hide the children
           $(link_id).addClass('expanded');
           $(link_id).removeClass('collapsed');
-          //Change the last argument of the callback function
-          $(link_id).attr('href', 'get_feature_ajax_callback/nojs/' + feature_id + '/collapse');
           //Display the children with slide animation
           $(children_id).show();
 //TODO Les lignes s'affichent instantanement pour une raison qui m'echappe si je met un slideDown(). Utiliser la fonction suivante pour les afficher les unes apres les autres
@@ -199,7 +204,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function remove_feature_children_row(feature_id) {
       $('.feature_children_' + feature_id).remove();
       //TODOTODOTODO Hide children with recursive call
-      $('.feature_children_' + feature_id).alert($(this).attr('id'));
+      //$('.feature_children_' + feature_id).alert($(this).attr('id'));
     }
 
 

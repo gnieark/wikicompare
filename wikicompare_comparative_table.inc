@@ -289,7 +289,7 @@ function get_compared_item_list($compareds, $fastedit_toggled){
       );
       if (isset($compared['displayed'])) {
         $checkbox_settings['element']['#checked'] = True;
-        $checkbox_link['#href'] = 'toogle_compared_checkbox_ajax_callback/nojs/' . $compared['nid'] . '/hide';
+        $checkbox_link['#href'] = 'toogle_compared_checkbox_ajax_callback/nojs/';
 		unset($checkbox_link['#attributes']['class']['hidden']);
         $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
       }
@@ -329,11 +329,14 @@ function get_compared_item_list($compareds, $fastedit_toggled){
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
 function get_feature_ajax_response($type = 'ajax', $fid, $action) {
+
+  $fid = $_POST['feature_id'];
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
     //If we want to displayed the compared children
-    if ($action == 'expand') {
+    if ($_POST['action'] == 'expand') {
 
       //Recover the children from database
       $query = db_select('cache_feature', 's');
@@ -479,7 +482,7 @@ function get_feature_rows($features, $fastedit_toggled){
         '#type' => 'link',
         '#title' => drupal_render($feature['title']) . ' ' . $feature['nid'],
         //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the feature_id for recovering his children and if we have to display or hide them
-        '#href' => 'get_feature_ajax_callback/nojs/' . $feature['nid'] . '/expand',
+        '#href' => 'get_feature_ajax_callback/nojs/',
         '#id' => 'feature_link_' . $feature['nid'],
         '#attributes' => array(
           'class' => array('feature_link'),
