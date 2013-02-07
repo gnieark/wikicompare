@@ -97,7 +97,6 @@ function theme_wikicompare_comparative_table($variables) {
       'nid' => $cid,
       'title' => $form['compared_items'][$cid]['title'],
       'has_children' => $form['compared_items'][$cid]['#has_children'],
-      'no-edit' => False,
     );
   }
 
@@ -120,10 +119,9 @@ function theme_wikicompare_comparative_table($variables) {
       'type' => $form['feature_items'][$fid]['#type'],
       'has_children' => $form['feature_items'][$fid]['#has_children'],
       'implementations' => array(),
-      'no-edit' => False,
     );
   }
-//TODO retirer les no-edit initiaux car on fait un check en !isset
+  
   //Building the data for the table
   $feature_rows = get_feature_rows($features, 0);
 
@@ -626,10 +624,9 @@ function toggle_compared_checkbox_ajax_response($type='ajax'){
 
 }
 
-//TODO remove all info about dummy
 
 /*
- * Ajax callback function called by javascript to add or remove the fastedit items in the comparative table. Essentially a dummy function.
+ * Ajax callback function called by javascript to add or remove the fastedit items in the comparative table.
  */
 function toggle_fastedit_response($type='ajax'){
 
@@ -693,8 +690,6 @@ function toggle_fastedit_response($type='ajax'){
         $output = add_fastedit_items('feature', $feature);
         //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
         $commands[] = ajax_command_invoke('#feature_node_link_' . $feature['nid'], 'after', array($output));
-        //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-        $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
 
       }
       
@@ -722,11 +717,11 @@ function toggle_fastedit_response($type='ajax'){
         $output = add_fastedit_items('implementation', $implementation);
         //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
         $commands[] = ajax_command_invoke('#implementation_node_link_' . $implementation['nid'], 'after', array($output));
-        //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-        $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
 
       }
-//TODO il faut surement sortir les commande dummy to remove des boucle et en mettre juste une à la fin
+      //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+      $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+      
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 

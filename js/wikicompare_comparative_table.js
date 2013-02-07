@@ -167,7 +167,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //If we are displaying the children
         if ($(link_id).hasClass('collapsed')) {
-//TODO RAAAHHHHH Pour une raison qui m'echappe, il renvoi les <tr> dans un div, ce qui fout en l'air le design du tableau. En plus c'est le seul endroit ou il me met ca dans un div, pourquoi?
           //Change the class link, so next time we click on this link it will hide the children
           $(link_id).addClass('expanded');
           $(link_id).removeClass('collapsed');
@@ -202,7 +201,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     function remove_feature_children_row(feature_id) {
-      //TODOTODOTODO Hide children with recursive call
       $('.feature_children_' + feature_id).each(function(index) {
         var patt = /[0-9]+/g;
         var feature_child_id = patt.exec($(this).attr('id'));
@@ -309,8 +307,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       });
     });
 
-//TODO Toujours le probleme avec l'argument non mis a jour au second click
-    //Dynamize the toogle fast edit link to display the elements add/edit/remove. Note we need to make a dummy ajax call so the user is correctly redirected to error page if javascript isn't enabled.
+    //Dynamize the toogle fast edit link to display the elements add/edit/remove.
     $('#toogle_fastedit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       fastedit_toggled = 0;
