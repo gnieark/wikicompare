@@ -418,7 +418,57 @@ alert(options.toSource());*/
 
     });
 
+    
+    //Dynamize the compared add fastedit element.
+    $('.compared_add_link:not(.event_set)').addClass('event_set').each(function () {
+    
+      //Recover the link_id used later in the functions
+      var link_id = $('#' + $(this).attr('id'));
+
+      //Recover the compared_id by using a regular expression on the compared_link
+      var patt = /[0-9]+/g;
+      var compared_id = patt.exec($(this).attr('id'));
+  
+      //Configure the ajax event
+      var element_settings = {};
+      element_settings.progress = { 'type': 'throbber' };
+      if ($(this).attr('href')) {
+        element_settings.url = $(this).attr('href');
+        element_settings.event = 'click';
+      }
+      var base = $(this).attr('id');
+      //Create the ajax event
+      var ajax = new Drupal.ajax(base, this, element_settings);
+
+      
+      //The success function is launched when drupal return the commands. We will override it to add some other commands
+      ajax.old_success = ajax.success;
+
+      ajax.success = function (response, status) {
+        //First launch regular success function
+        this.old_success(response, status);
+
+        //If we are displaying the form
+        if (!$(link_id).hasClass('displayed')) {
+          //Change the class link, so next time we click on this link it will hide the form
+          $(link_id).addClass('displayed');
+          $('#compared_children_' + compared_id).before('<div id="test_add">test');
+        //If we are hiding the children
+        } else {
+          //Change the class link, so next time we click on this link it will display the form
+          $(link_id).removeClass('displayed');
+          //Hide the form
+          $('#test_add').remove();
+        }
+
+      }
+
+      //Active the code
+      Drupal.ajax[base] = ajax;
+    });
   }
 };
 
+
+//TODO Ne plus utiliser qu'une seule classe, celle qui n'est pas par default,  pour se reperer plus facilement
 })(jQuery);

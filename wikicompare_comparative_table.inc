@@ -744,8 +744,10 @@ function toggle_fastedit_response($type='ajax'){
 
 function add_fastedit_items($type, $node){
 
+  $output = ' ';
+  
   if ($type == 'implementation') {
-    $output = '';
+    
     if (!isset($node['no-edit'])) {   
       //Create the image link to edit the node
       $img = theme('image', array(
@@ -755,7 +757,7 @@ function add_fastedit_items($type, $node){
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
       $img_link_to_edit = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
-      $output = $img_link_to_edit;
+      $output .= $img_link_to_edit;
     }
   
   } else {
@@ -766,8 +768,8 @@ function add_fastedit_items($type, $node){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_add = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
-    $output = $img_link_to_add;
+    $img_link_to_add = l($img, 'dummy_ajax_function_callback', array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
+    $output .= $img_link_to_add;
 
     if (!isset($node['no-edit'])) {
       //Create the image link to edit the node
@@ -794,6 +796,25 @@ function add_fastedit_items($type, $node){
 
   return $output;
 
+}
+
+
+/*
+ * Dummy Ajax callback function called by javascript for the link which should return nothing in javascript.
+ */
+function dummy_ajax_function_response($type='ajax'){
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($type == 'ajax') {
+    //We return nothing, everything is managed on the javascript side
+    $commands = array();
+    $page = array('#type' => 'ajax', '#commands' => $commands);
+    return $page;
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
 }
 
 ?>
