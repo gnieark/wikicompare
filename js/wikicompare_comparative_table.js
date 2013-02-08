@@ -423,65 +423,10 @@ alert(options.toSource());*/
     $('.compared_add_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
       //Recover the link_id used later in the functions
-      var link_id = $('#' + $(this).attr('id'));
-
-      //Recover the compared_id by using a regular expression on the compared_link
-      var patt = /[0-9]+/g;
-      var compared_id = patt.exec($(this).attr('id'));
-  
-      //Configure the ajax event
-      var element_settings = {};
-      element_settings.progress = { 'type': 'throbber' };
-      if ($(this).attr('href')) {
-        element_settings.url = $(this).attr('href');
-        element_settings.event = 'click';
-      }
-      var base = $(this).attr('id');
-      //Create the ajax event
-      var ajax = new Drupal.ajax(base, this, element_settings);
-
-      
-      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
-      ajax.old_beforeSerialize = ajax.beforeSerialize;
-
-      ajax.beforeSerialize = function (element, options) {
-        //We remove all hidded element so they can't perturb the computation
-        $('.to_remove').remove();
-        //Add the clicked compared in argument
-        options.data.compared_id = compared_id[0];
-        //Check if the column is already displayed
-        if (!$(link_id).hasClass('displayed')) {
-          options.data.action = 'display';
-        } else {
-          options.data.action = 'hide';
-        }
-        //Launch regular beforeSerialize function
-        this.old_beforeSerialize(element, options);
-      }
-      
-      //The success function is launched when drupal return the commands. We will override it to add some other commands
-      ajax.old_success = ajax.success;
-
-      ajax.success = function (response, status) {
-        //First launch regular success function
-        this.old_success(response, status);
-
-        //If we are displaying the form
-        if (!$(link_id).hasClass('displayed')) {
-          //Change the class link, so next time we click on this link it will hide the form
-          $(link_id).addClass('displayed');
-          if ($('#compared_link_' + compared_id).hasClass('expanded')) {
-            $('#compared_link_' + compared_id).click();
-          }
-        //If we are hiding the children
-        } else {
-          clean_fastedit_forms();
-        }
-
-      }
+      var link_id = $(this).attr('id');
 
       //Active the code
-      Drupal.ajax[base] = ajax;
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form');
     });
     
     $('.form_compared_fastadd').submit(function () {
@@ -503,36 +448,53 @@ alert(options.toSource());*/
     $('.form_compared_fastadd_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
       //Recover the link_id used later in the functions
-      var link_id = $('#' + $(this).attr('id'));
+      var link_id = $(this).attr('id');
 
-      //Recover the compared_id by using a regular expression on the compared_link
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form');
+    });    
+    
+    function build_ajax_link(link_id, object, action) {
+      //Recover the node_id by using a regular expression on the link_id
       var patt = /[0-9]+/g;
-      var compared_id = patt.exec($(this).attr('id'));
-  
+      var node_id = patt.exec(link_id);
+    
       //Configure the ajax event
       var element_settings = {};
       element_settings.progress = { 'type': 'throbber' };
-      if ($(this).attr('href')) {
-        element_settings.url = $(this).attr('href');
+      if ($(object).attr('href')) {
+        element_settings.url = $(object).attr('href');
         element_settings.event = 'click';
       }
-      var base = $(this).attr('id');
       //Create the ajax event
-      var ajax = new Drupal.ajax(base, this, element_settings);
+      var ajax = new Drupal.ajax(link_id, object, element_settings);
 
       
       //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
       ajax.old_beforeSerialize = ajax.beforeSerialize;
 
-      ajax.beforeSerialize = function (element, options) {
+      ajax.beforeSerialize = function (element, options) {  
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
-        //Add the clicked compared in argument
-        options.data.compared_id = compared_id[0];
-        options.data.title = $('#form_compared_fastadd_title_' + compared_id).val();
-        options.data.description = $('#form_compared_fastadd_description_' + compared_id).val();
-        options.data.revision = $('#form_compared_fastadd_revision_' + compared_id).val();
-        //TODO add the form element in argument
+        //Add the clicked node in argument
+        options.data.node_id = node_id[0];
+        
+        if (action == 'show_fastedit_form') {
+          //Check if the column is already displayed
+          options.data.action = '';
+          if (!$('#' + link_id).hasClass('displayed')) {
+            options.data.action = 'display';
+          }
+        }
+        
+        if (action == 'submit_fastedit_form') {
+          options.data.title = $('#form_compared_fastadd_title_' + node_id).val();
+          options.data.description = $('#form_compared_fastadd_description_' + node_id).val();
+          options.data.revision = $('#form_compared_fastadd_revision_' + node_id).val();
+        }
+        
+
+        
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -543,14 +505,33 @@ alert(options.toSource());*/
       ajax.success = function (response, status) {
         //First launch regular success function
         this.old_success(response, status);
-        clean_fastedit_forms();
 
-
+        to_clean = false;
+        
+        if (action == 'show_fastedit_form') {
+          //If we are displaying the form
+          if (!$('#' + link_id).hasClass('displayed')) {
+            //Change the class link, so next time we click on this link it will hide the form
+            $('#' + link_id).addClass('displayed');
+            if ($('#compared_link_' + node_id).hasClass('expanded')) {
+              $('#compared_link_' + node_id).click();
+            }
+          } else {
+            to_clean = true;
+          }
+        }
+        
+        if (action == 'submit_fastedit_form') {
+          to_clean = true;
+        }
+        
+        if (to_clean == true) {
+          clean_fastedit_forms();
+        }
       }
 
-      //Active the code
-      Drupal.ajax[base] = ajax;
-    });    
+      return ajax;
+    }
     
     function clean_fastedit_forms() {
       $('.form_compared_fastadd').remove();

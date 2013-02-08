@@ -803,7 +803,7 @@ function add_fastedit_items($type, $node){
  */
 function get_compared_fastadd_ajax_response($type='ajax'){
 
-  $cid = $_POST['compared_id'];
+  $cid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
@@ -843,7 +843,7 @@ function get_compared_fastadd_ajax_response($type='ajax'){
       $submit_link = array(
         '#type' => 'link',
         '#title' => 'submit',
-        '#href' => 'submit_compared_fastadd_callback/nojs/',
+        '#href' => 'submit_fastedit_form_callback/nojs/',
         '#id' => 'form_compared_fastadd_submit_link_' . $cid,
         '#attributes' => array(
           'class' => array('form_compared_fastadd_submit_link'),
@@ -862,7 +862,7 @@ function get_compared_fastadd_ajax_response($type='ajax'){
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
       
-      $page = array('#type' => 'ajax', '#commands' => $commands);
+      $page = array('#type' => 'ajax', '#commands' => $commands);      
       return $page;
 
     //If we want to hide the form
@@ -885,9 +885,9 @@ function get_compared_fastadd_ajax_response($type='ajax'){
 
 
 /*
- * Ajax callback function called by javascript when we submit the compared fastadd form.
+ * Ajax callback function called by javascript when we submit one of the fastedit form.
  */
-function submit_compared_fastadd_response($type='ajax'){
+function submit_fastedit_form_response($type='ajax'){
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
@@ -897,7 +897,7 @@ function submit_compared_fastadd_response($type='ajax'){
     $node->type = 'compared';
     $node->title = $_POST['title'];
     $node->language = LANGUAGE_NONE;
-    $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['compared_id'];
+    $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['node_id'];
     $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
     $node->body[$node->language][0] = array(
       'value' => $_POST['description'],

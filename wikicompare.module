@@ -152,8 +152,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
   
-  $items['submit_compared_fastadd_callback'] = array(
-    'page callback' => 'submit_compared_fastadd_response',
+  $items['submit_fastedit_form_callback'] = array(
+    'page callback' => 'submit_fastedit_form_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
