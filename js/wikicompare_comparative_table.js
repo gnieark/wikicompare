@@ -420,7 +420,7 @@ alert(options.toSource());*/
 
     
     //Dynamize the compared add fastedit element.
-    $('.compared_add_link:not(.event_set)').addClass('event_set').each(function () {
+    $('.compared_add_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
       //Recover the link_id used later in the functions
       var link_id = $('#' + $(this).attr('id'));
@@ -441,6 +441,24 @@ alert(options.toSource());*/
       var ajax = new Drupal.ajax(base, this, element_settings);
 
       
+      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
+      ajax.old_beforeSerialize = ajax.beforeSerialize;
+
+      ajax.beforeSerialize = function (element, options) {
+        //We remove all hidded element so they can't perturb the computation
+        $('.to_remove').remove();
+        //Add the clicked compared in argument
+        options.data.compared_id = compared_id[0];
+        //Check if the column is already displayed
+        if (!$(link_id).hasClass('displayed')) {
+          options.data.action = 'display';
+        } else {
+          options.data.action = 'hide';
+        }
+        //Launch regular beforeSerialize function
+        this.old_beforeSerialize(element, options);
+      }
+      
       //The success function is launched when drupal return the commands. We will override it to add some other commands
       ajax.old_success = ajax.success;
 
@@ -452,13 +470,12 @@ alert(options.toSource());*/
         if (!$(link_id).hasClass('displayed')) {
           //Change the class link, so next time we click on this link it will hide the form
           $(link_id).addClass('displayed');
-          $('#compared_children_' + compared_id).before('<div id="test_add">test');
+          if ($('#compared_link_' + compared_id).hasClass('expanded')) {
+            $('#compared_link_' + compared_id).click();
+          }
         //If we are hiding the children
         } else {
-          //Change the class link, so next time we click on this link it will display the form
-          $(link_id).removeClass('displayed');
-          //Hide the form
-          $('#test_add').remove();
+          clean_fastedit_forms();
         }
 
       }
@@ -466,9 +483,90 @@ alert(options.toSource());*/
       //Active the code
       Drupal.ajax[base] = ajax;
     });
+    
+    $('.form_compared_fastadd').submit(function () {
+      //Recover the compared_id by using a regular expression on the compared_link
+      var patt = /[0-9]+/g;
+      var compared_id = patt.exec($(this).attr('id'));
+      $('#form_compared_fastadd_submit_link_' + compared_id).click();
+      //Block the page loading
+      return false;
+    });
+        
+    $('.form_compared_fastadd_cancel').click(function () {
+      clean_fastedit_forms();
+    });
+    
+    
+    
+    //Dynamize the compared add fastedit submit link.
+    $('.form_compared_fastadd_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    
+      //Recover the link_id used later in the functions
+      var link_id = $('#' + $(this).attr('id'));
+
+      //Recover the compared_id by using a regular expression on the compared_link
+      var patt = /[0-9]+/g;
+      var compared_id = patt.exec($(this).attr('id'));
+  
+      //Configure the ajax event
+      var element_settings = {};
+      element_settings.progress = { 'type': 'throbber' };
+      if ($(this).attr('href')) {
+        element_settings.url = $(this).attr('href');
+        element_settings.event = 'click';
+      }
+      var base = $(this).attr('id');
+      //Create the ajax event
+      var ajax = new Drupal.ajax(base, this, element_settings);
+
+      
+      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
+      ajax.old_beforeSerialize = ajax.beforeSerialize;
+
+      ajax.beforeSerialize = function (element, options) {
+        //We remove all hidded element so they can't perturb the computation
+        $('.to_remove').remove();
+        //Add the clicked compared in argument
+        options.data.compared_id = compared_id[0];
+        options.data.title = $('#form_compared_fastadd_title_' + compared_id).val();
+        options.data.description = $('#form_compared_fastadd_description_' + compared_id).val();
+        options.data.revision = $('#form_compared_fastadd_revision_' + compared_id).val();
+        //TODO add the form element in argument
+        //Launch regular beforeSerialize function
+        this.old_beforeSerialize(element, options);
+      }
+      
+      //The success function is launched when drupal return the commands. We will override it to add some other commands
+      ajax.old_success = ajax.success;
+
+      ajax.success = function (response, status) {
+        //First launch regular success function
+        this.old_success(response, status);
+        clean_fastedit_forms();
+
+
+      }
+
+      //Active the code
+      Drupal.ajax[base] = ajax;
+    });    
+    
+    function clean_fastedit_forms() {
+      $('.form_compared_fastadd').remove();
+      
+      $('.compared_add_link:.displayed').each(function () {
+        $('#' + $(this).attr('id')).removeClass('displayed');
+      });
+    }
   }
 };
 
 
 //TODO Ne plus utiliser qu'une seule classe, celle qui n'est pas par default,  pour se reperer plus facilement
+//TODO enlever les ajax dans les ajax_response et ajax_callback
+//TODO dans edit et remove, centraliser les controles dans une function
+//TODO faire une fonction qui va recharger les fastedit items et les pourcentages / nom compared feature, données bref tout le tableau.
+//TODO If a form is open, expand un compared clean les fastedit items
+//TODO regrouper autant que possible les fonctions
 })(jQuery);

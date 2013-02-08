@@ -426,7 +426,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 
       //Preparing the ajax commands to return to javascript
       $commands = array();
-      //We add the code after the parent row. Note we can't use ajax_command_after because it adds an unwilling div
+      //We add the code after the parent row. Note we can't use ajax_command_after because it adds an unwanted div
       $commands[] = ajax_command_invoke('#feature_row_' . $fid, 'after', array($output));
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
@@ -658,7 +658,7 @@ function toggle_fastedit_response($type='ajax'){
       foreach($compareds as $compared) {
 
         $output = add_fastedit_items('compared' , $compared);
-        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
+        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
         $commands[] = ajax_command_invoke('#compared_node_link_' . $compared['nid'], 'after', array($output));
         //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
         $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
@@ -688,7 +688,7 @@ function toggle_fastedit_response($type='ajax'){
       foreach($features as $feature) {
 
         $output = add_fastedit_items('feature', $feature);
-        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
+        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
         $commands[] = ajax_command_invoke('#feature_node_link_' . $feature['nid'], 'after', array($output));
 
       }
@@ -715,7 +715,7 @@ function toggle_fastedit_response($type='ajax'){
       foreach($implementations as $implementation) {
 
         $output = add_fastedit_items('implementation', $implementation);
-        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwilling div
+        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
         $commands[] = ajax_command_invoke('#implementation_node_link_' . $implementation['nid'], 'after', array($output));
 
       }
@@ -768,7 +768,7 @@ function add_fastedit_items($type, $node){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_add = l($img, 'dummy_ajax_function_callback', array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
+    $img_link_to_add = l($img, 'get_' . $type . '_fastadd_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
     $output .= $img_link_to_add;
 
     if (!isset($node['no-edit'])) {
@@ -798,6 +798,125 @@ function add_fastedit_items($type, $node){
 
 }
 
+/*
+ * Ajax callback cunction called by javascript to display the compared fastadd form
+ */
+function get_compared_fastadd_ajax_response($type='ajax'){
+
+  $cid = $_POST['compared_id'];
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($type == 'ajax') {
+
+    //If we want to displayed the compared children
+    if ($_POST['action'] == 'display') {
+
+      $output = '<form id="form_compared_fastadd_'. $cid . '" class="form_compared_fastadd">';
+      $name_field = array(
+        '#type' => 'textfield',
+        '#title' => t('Title'),
+        '#id' => 'form_compared_fastadd_title_' . $cid,
+        '#attributes' => array(
+          'class' => array('form_compared_fastadd_title'),
+        )
+      );
+      $output .= drupal_render($name_field);
+      $description_field = array(
+        '#type' => 'textarea',
+        '#title' => t('Description'),
+        '#id' => 'form_compared_fastadd_description_' . $cid,
+        '#attributes' => array(
+          'class' => array('form_compared_fastadd_description'),
+        )
+      );
+      $output .= drupal_render($description_field);
+      $revision_field = array(
+        '#type' => 'textarea',
+        '#title' => t('Revision log message'),
+        '#id' => 'form_compared_fastadd_revision_' . $cid,
+        '#attributes' => array(
+          'class' => array('form_compared_fastadd_revision'),
+        )
+      );
+      $output .= drupal_render($revision_field);
+      $output .= '<input id="form_compared_fastadd_submit_'. $cid . '" type="submit" value="Add" class="form_compared_fastadd_submit button"/>';
+      $submit_link = array(
+        '#type' => 'link',
+        '#title' => 'submit',
+        '#href' => 'submit_compared_fastadd_callback/nojs/',
+        '#id' => 'form_compared_fastadd_submit_link_' . $cid,
+        '#attributes' => array(
+          'class' => array('form_compared_fastadd_submit_link'),
+          'style' => 'display:none',
+        )
+      );
+      $output .= drupal_render($submit_link);
+      $output .= '<input id="form_compared_fastadd_cancel_'. $cid . '" type="button" value="Cancel" class="form_compared_fastadd_cancel button"/>';
+      $output .= '</form>';
+    
+      //Preparing the ajax commands to return to javascript
+      $commands = array();
+      //Insert the form in the page. Note we can't use ajax_command_before because it adds an unwanted div
+      $commands[] = ajax_command_invoke('#compared_children_' . $cid, 'before', array($output));
+
+      //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+      $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+      
+      $page = array('#type' => 'ajax', '#commands' => $commands);
+      return $page;
+
+    //If we want to hide the form
+    } else {
+
+      //In this case we return nothing, everything is managed on the javascript side
+      $commands = array();
+      $page = array('#type' => 'ajax', '#commands' => $commands);
+      return $page;
+
+    }
+
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
+
+}
+
+
+/*
+ * Ajax callback function called by javascript when we submit the compared fastadd form.
+ */
+function submit_compared_fastadd_response($type='ajax'){
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($type == 'ajax') {
+
+    
+    $node = new stdClass();
+    $node->type = 'compared';
+    $node->title = $_POST['title'];
+    $node->language = LANGUAGE_NONE;
+    $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['compared_id'];
+    $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+    $node->body[$node->language][0] = array(
+      'value' => $_POST['description'],
+      'format' => 'full_html',
+    );
+    $node->log = $_POST['revision'];
+
+    node_save($node);
+
+    //We return nothing, everything is managed on the javascript side
+    $commands = array();
+    $page = array('#type' => 'ajax', '#commands' => $commands);
+    return $page;
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
+}
 
 /*
  * Dummy Ajax callback function called by javascript for the link which should return nothing in javascript.
