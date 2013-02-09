@@ -101,9 +101,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.feature_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
-      var link_id = $('#' + $(this).attr('id'));
+      var link_id = $(this).attr('id');
 
-      //Recover the feature_id by using a regular expression on the feature_link
+/*      //Recover the feature_id by using a regular expression on the feature_link
       var patt = /[0-9]+/g;
       var feature_id = patt.exec($(this).attr('id'));
 
@@ -134,9 +134,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
         //Add the clicked feature in argument
-        options.data.feature_id = feature_id[0];
+        options.data.feature_id = feature_id[0];*/
         //Check if the column is already displayed
-        if ($(link_id).hasClass('collapsed')) {
+/*        if ($(link_id).hasClass('collapsed')) {
           options.data.action = 'expand';
         } else {
           options.data.action = 'collapse';
@@ -151,8 +151,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           i = i + 1;
         });
         //Add them in the ajax call variables
-        options.data.compared_ids = compared_ids;
-        //Check if fastedit is enabled
+        options.data.compared_ids = compared_ids;*/
+/*        //Check if fastedit is enabled
         options.data.fastedit_toggled = fastedit_status;
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
@@ -181,6 +181,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             });
           })($(children_id))
 */
+/*
         //If we are hiding the children
         } else {
           //Change the class link, so next time we click on this link it will display the children
@@ -193,21 +194,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $(children_id).addClass('to_remove');
        }
 
-      }
+      }*/
 
       //Active the code
-      Drupal.ajax[base] = ajax;
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_feature_children');
     });
 
 
-    function remove_feature_children_row(feature_id) {
-      $('.feature_children_' + feature_id).each(function(index) {
-        var patt = /[0-9]+/g;
-        var feature_child_id = patt.exec($(this).attr('id'));
-        remove_feature_children_row(feature_child_id);
-      });
-      $('.feature_children_' + feature_id).remove();
-    }
+
 
 
     //Ajaxify the compared checkbox link
@@ -357,7 +351,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });    
     
     function build_ajax_link(link_id, object, action) {
-    
+
       fastedit_status = 0;
     
       //Recover the node_id by using a regular expression on the link_id
@@ -386,13 +380,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Add the clicked node in argument
           options.data.node_id = node_id[0];
         }
-        
         options.data.fastedit_status = fastedit_status;
         
         manage_displayed_flag = false;
         send_compareds = false;
+        send_compareds_columns = false;
         send_features = false;
         send_implementations = false;
+        
+        if (action == 'expand_feature_children') {
+          manage_displayed_flag = true;
+          send_compareds_columns = true;
+        }
         
         if (action == 'toogle_compared_checkbox') {
           manage_displayed_flag = true;
@@ -437,6 +436,20 @@ Drupal.behaviors.WikicompareComparativeTable = {
           });
           //Add them in the ajax call variables
           options.data.compared_ids = compared_ids;
+        }
+        
+        if (send_compareds_columns == true) {
+          //Recover all compared columns displayed in the table to send their id to drupal, in the right order
+          var compared_column_ids = new Array();
+          var i = 0;
+          $('.header_compared').each(function (key, value) {
+            var column_id = $('#' + $(this).attr('id'));
+            var patt = /[0-9]+/g;
+            compared_column_ids[i] = patt.exec($(this).attr('id'))[0];
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.compared_column_ids = compared_column_ids;
         }
         
         if (send_features == true) {
@@ -505,8 +518,24 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (manage_displayed_flag == true) {
         
           if (!$('#' + link_id).hasClass('displayed')) {
-            //Change the class link, so next time we click on this link it will hide the form
+            //Change the class link, so next time we click on this link it will hide the content
             $('#' + link_id).addClass('displayed');
+  
+            if (action == 'expand_feature_children') {
+             
+              //Display the children with slide animation
+              $('.feature_children_' + node_id).show();
+//TODO Tester avec fonction .each . Les lignes s'affichent instantanement pour une raison qui m'echappe si je met un slideDown(). Utiliser la fonction suivante pour les afficher les unes apres les autres
+//http://paulirish.com/2008/sequentially-chain-your-callbacks-in-jquery-two-ways/
+/*
+          (function shownext(jq){
+            jq.eq(0).slideDown("slow", function(){
+              (jq=jq.slice(1)).length && hidenext(jq);
+            });
+          })($(children_id))
+*/
+            
+            }
             
             if (action == 'toogle_compared_checkbox') {    
               //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
@@ -520,6 +549,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
               }
             }
           } else {
+          
+            //Change the class link, so next time we click on this link it will display the content
+            $('#' + link_id).removeClass('displayed');
+          
+            if (action == 'expand_feature_children') {
+              //Hide the children with slide animation
+              remove_feature_children_row(node_id);
+              //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
+              $('.feature_children_' + node_id).addClass('to_remove');
+            }
           
             if (action == 'toogle_compared_checkbox') {   
               //Hide the column. We can't use animation because of the current template, to check when we will have the final template
@@ -539,6 +578,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         }
         
+        //TODO Plus utile je crois
         if (action == 'show_fastedit_form') {
           //If we are displaying the form
           if (!$('#' + link_id).hasClass('displayed')) {
@@ -562,6 +602,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
       }
 
       return ajax;
+    }
+    
+    
+    function remove_feature_children_row(feature_id) {
+      $('.feature_children_' + feature_id).each(function(index) {
+        var patt = /[0-9]+/g;
+        var feature_child_id = patt.exec($(this).attr('id'));
+        remove_feature_children_row(feature_child_id);
+      });
+      $('.feature_children_' + feature_id).remove();
     }
     
     function clean_fastedit_forms() {

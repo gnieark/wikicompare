@@ -326,15 +326,15 @@ function get_compared_item_list($compareds, $fastedit_status){
 /*
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
-function get_feature_ajax_response($type = 'ajax', $fid, $action) {
-
-  $fid = $_POST['feature_id'];
+function get_feature_ajax_response($type = 'ajax') {
+dpm($_POST);
+  $fid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
     //If we want to displayed the compared children
-    if ($_POST['action'] == 'expand') {
+    if ($_POST['action'] == 'display') {
 
       //Recover the children from database
       $query = db_select('cache_feature', 's');
@@ -371,7 +371,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         }
       }
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
-      if (!empty($_POST['compared_ids'])) {
+      if (!empty($_POST['compared_column_ids'])) {
         //Recover the implementation needed for the cells
         $query = db_select('cache_implementation', 'i');
         $query->addField('i', 'nid', 'nid');
@@ -382,7 +382,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         $query->addField('r', 'uid', 'uid');
         $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
         $query->leftjoin('node_revision', 'r', 'i.nid = r.nid');
-        $query->condition("i.compared_id", $_POST['compared_ids'], 'in');
+        $query->condition("i.compared_id", $_POST['compared_column_ids'], 'in');
         $query->condition("i.feature_id", $features_ids, 'in');
         $result = $query->execute();
 
@@ -401,14 +401,14 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
         }
         //Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
         foreach ($features as $key => $feature) {
-          foreach ($_POST['compared_ids'] as $compared_id) {
+          foreach ($_POST['compared_column_ids'] as $compared_id) {
             $features[$key]['implementations'][] = $implementations[$key][$compared_id];
           }
         }
       }
       $fastedit_status = 0;
-      if (!empty($_POST['fastedit_toggled'])) {
-        $fastedit_status = $_POST['fastedit_toggled'];
+      if (!empty($_POST['fastedit_status'])) {
+        $fastedit_status = $_POST['fastedit_status'];
       }
       //Building the data for the table row
       $feature_row_data = get_feature_rows($features, $fastedit_status);
@@ -603,7 +603,6 @@ function toggle_compared_checkbox_ajax_response($type='ajax'){
         $commands[] = ajax_command_append('#feature_row_' . $key, $cell);
       }
       $page = array('#type' => 'ajax', '#commands' => $commands);
-dpm($page);
       return $page;
 
     //If we want to remove the column
