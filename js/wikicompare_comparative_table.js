@@ -11,8 +11,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.compared_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
-      var link_id = $('#' + $(this).attr('id'));
-
+      var link_id = $(this).attr('id');
+/*
       //Recover the compared_id by using a regular expression on the compared_link
       var patt = /[0-9]+/g;
       var compared_id = patt.exec($(this).attr('id'));
@@ -21,11 +21,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var children_id = '#compared_children_' + compared_id;
 
       //Set the class to collapsed at the creation of the compared
-      $(this).addClass('collapsed');
+      $(this).addClass('collapsed');*/
   
       //We hide the children div at the creation so the slideDown go without problem
-      $(children_id).hide();
-
+      //$(children_id).hide();
+/*
       //Configure the ajax event
       var element_settings = {};
       element_settings.progress = { 'type': 'throbber' };
@@ -44,8 +44,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
         //Add the clicked compared in argument
-        options.data.compared_id = compared_id[0];
-        //Check if the column is already displayed
+        options.data.compared_id = compared_id[0];*/
+   /*     //Check if the column is already displayed
         if ($(link_id).hasClass('collapsed')) {
           options.data.action = 'expand';
         } else {
@@ -61,8 +61,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           i = i + 1;
         });
         //Add them in the ajax call variables
-        options.data.compared_ids = compared_ids;
-        //Check if fastedit is enabled
+        options.data.compared_ids = compared_ids;*/
+        /*//Check if fastedit is enabled
         options.data.fastedit_toggled = fastedit_status;
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
@@ -74,8 +74,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.success = function (response, status) {
         //First launch regular success function
         this.old_success(response, status);
-
-        //If we are displaying the children
+*/
+  /*      //If we are displaying the children
         if ($(link_id).hasClass('collapsed')) {
           //Change the class link, so next time we click on this link it will hide the children
           $(link_id).addClass('expanded');
@@ -91,10 +91,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $(children_id).slideUp();
         }
 
-      }
+      }*/
 
       //Active the code
-      Drupal.ajax[base] = ajax;
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_compared_children');
     });
 
 
@@ -389,6 +389,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_features = false;
         send_implementations = false;
         
+        if ('expand_compared_children') {
+          manage_displayed_flag = true;
+          send_compareds_columns = true;
+        }
+        
         if (action == 'expand_feature_children') {
           manage_displayed_flag = true;
           send_compareds_columns = true;
@@ -522,6 +527,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //Change the class link, so next time we click on this link it will hide the content
             $('#' + link_id).addClass('displayed');
   
+            if (action == 'expand_compared_children') {
+              $('#compared_children_' + node_id).slideDown();
+            }
+  
             if (action == 'expand_feature_children') {
              
               //Display the children with slide animation
@@ -545,7 +554,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             }
             
             if (action == 'show_fastedit_form') {
-              if ($('#compared_link_' + node_id).hasClass('expanded')) {
+              if ($('#compared_link_' + node_id).hasClass('displayed')) {
                 $('#compared_link_' + node_id).click();
               }
             }
@@ -553,6 +562,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
             //Change the class link, so next time we click on this link it will display the content
             $('#' + link_id).removeClass('displayed');
+          
+            if (action == 'expand_compared_children') {
+              $('#compared_children_' + node_id).slideUp();
+            }
           
             if (action == 'expand_feature_children') {
               //Hide the children with slide animation

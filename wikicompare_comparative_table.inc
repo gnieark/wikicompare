@@ -166,13 +166,13 @@ function theme_wikicompare_comparative_table($variables) {
  */
 function get_compared_ajax_response($type = 'ajax') {
 
-  $cid = $_POST['compared_id'];
+  $cid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
     //If we want to displayed the compared children
-    if ($_POST['action'] == 'expand') {
+    if ($_POST['action'] == 'display') {
 
       //Recover the children from database
       $query = db_select('cache_compared', 's');
@@ -195,8 +195,8 @@ function get_compared_ajax_response($type = 'ajax') {
           'has_children' => $record->has_children,
         );
         //If already displayed in the table, we check it by default
-        if (!empty($_POST['compared_ids'])) {
-          if (in_array($record->nid, $_POST['compared_ids'])) {
+        if (!empty($_POST['compared_column_ids'])) {
+          if (in_array($record->nid, $_POST['compared_column_ids'])) {
             $compareds[$record->nid]['displayed'] = True;
           }
         }
@@ -222,7 +222,7 @@ function get_compared_ajax_response($type = 'ajax') {
       return $page;
 
     //If we want to collapse the compared children
-    } elseif ($action == 'collapse') {
+    } else {
 
       //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
@@ -313,7 +313,7 @@ function get_compared_item_list($compareds, $fastedit_status){
     $compared_items[$compared['nid']]['class'] = array('compared_item');
 
     //After the compared, we add the div which will contain the children
-    $compared_items[$compared['nid']]['data'] = $compared_items[$compared['nid']]['data'] . '<div id="compared_children_' . $compared['nid'] . '"></div>';
+    $compared_items[$compared['nid']]['data'] = $compared_items[$compared['nid']]['data'] . '<div id="compared_children_' . $compared['nid'] . '"  style="display:none;"></div>';
 
 
   }
