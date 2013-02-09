@@ -767,7 +767,7 @@ function add_fastedit_items($type, $node){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
+    $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array('fastedit_item ' . $type . '_add_link')), 'html' => True));
     $output .= $img_link_to_add;
 
     if (!isset($node['no-edit'])) {
@@ -778,7 +778,7 @@ function add_fastedit_items($type, $node){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
+      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array('fastedit_item ' . $type . '_edit_link')), 'html' => True));
       $output .= $img_link_to_edit;
 
       //Create the image link to remove the node
@@ -788,7 +788,7 @@ function add_fastedit_items($type, $node){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_remove = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_remove_link_' . $node['nid'], 'class' => array($type . '_remove_link')), 'html' => True));
+      $img_link_to_remove = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_remove_link_' . $node['nid'], 'class' => array('fastedit_item ' . $type . '_remove_link')), 'html' => True));
       $output .= $img_link_to_remove;
     }
   }
@@ -846,7 +846,7 @@ function get_fastedit_form_response($method='ajax'){
         '#href' => 'submit_fastedit_form_callback/nojs/',
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_submit_link_' . $nid,
         '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_submit_link'),
+          'class' => array('form_fastedit_submit_link form_' . $type . '_fast' . $fastaction . '_submit_link'),
           'style' => 'display:none',
         )
       );
@@ -860,7 +860,7 @@ function get_fastedit_form_response($method='ajax'){
 
       }
       
-      $output = '<form id="form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_'. $type . '_fast' . $fastaction . '">';
+      $output = '<form id="form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '">';
       $output .= drupal_render($name_field);
       $output .= drupal_render($description_field);
       $output .= drupal_render($revision_field);

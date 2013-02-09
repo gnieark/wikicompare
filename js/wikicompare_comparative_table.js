@@ -319,20 +319,67 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     
     //Dynamize the compared add fastedit element.
-    $('.compared_add_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('.fastedit_item:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
+      
+      if ($(this).hasClass('compared_add_link')) {
+        type = 'compared';
+        fastaction = 'add';
+      } else if ($(this).hasClass('compared_edit_link')) {
+        type = 'compared';
+        fastaction = 'edit';
+      } else if ($(this).hasClass('compared_remove_link')) {
+        type = 'compared';
+        fastaction = 'remove';
+      } else if ($(this).hasClass('feature_add_link')) {
+        type = 'feature';
+        fastaction = 'add';
+      } else if ($(this).hasClass('feature_edit_link')) {
+        type = 'feature';
+        fastaction = 'edit';
+      } else if ($(this).hasClass('feature_remove_link')) {
+        type = 'feature';
+        fastaction = 'remove';
+      } else if ($(this).hasClass('implementation_edit_link')) {
+        type = 'implementation';
+        fastaction = 'edit';
+      }
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', 'compared', 'add');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, fastaction);
     });
     
-    $('.form_compared_fastadd').submit(function () {
+    $('.form_fastedit').submit(function () {
       //Recover the compared_id by using a regular expression on the compared_link
       var patt = /[0-9]+/g;
-      var compared_id = patt.exec($(this).attr('id'));
-      $('#form_compared_fastadd_submit_link_' + compared_id).click();
+      var node_id = patt.exec($(this).attr('id'));
+      
+      if ($(this).hasClass('form_compared_fastadd')) {
+        type = 'compared';
+        fastaction = 'add';
+      } else if ($(this).hasClass('form_compared_fastedit')) {
+        type = 'compared';
+        fastaction = 'edit';
+      } else if ($(this).hasClass('form_compared_fastremove')) {
+        type = 'compared';
+        fastaction = 'remove';
+      } else if ($(this).hasClass('form_feature_fastadd')) {
+        type = 'feature';
+        fastaction = 'add';
+      } else if ($(this).hasClass('form_feature_fastedit')) {
+        type = 'feature';
+        fastaction = 'edit';
+      } else if ($(this).hasClass('form_feature_fastremove')) {
+        type = 'feature';
+        fastaction = 'remove';
+      } else if ($(this).hasClass('form_implementation_fastedit')) {
+        type = 'implementation';
+        fastaction = 'edit';
+      }
+      
+      $('#form_' + type + '_fast' + fastaction + '_submit_link_' + node_id).click();
       //Block the page loading
       return false;
     });
@@ -344,50 +391,38 @@ Drupal.behaviors.WikicompareComparativeTable = {
     
     
     //Dynamize the compared add fastedit submit link.
-    $('.form_compared_fastadd_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('.form_fastedit_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
+      if ($(this).hasClass('form_compared_fastadd_submit_link')) {
+        type = 'compared';
+        fastaction = 'add';
+      } else if ($(this).hasClass('form_compared_fastedit_submit_link')) {
+        type = 'compared';
+        fastaction = 'edit';
+      } else if ($(this).hasClass('form_compared_fastremove_submit_link')) {
+        type = 'compared';
+        fastaction = 'remove';
+      } else if ($(this).hasClass('form_feature_fastadd_submit_link')) {
+        type = 'feature';
+        fastaction = 'add';
+      } else if ($(this).hasClass('form_feature_fastedit_submit_link')) {
+        type = 'feature';
+        fastaction = 'edit';
+      } else if ($(this).hasClass('form_feature_fastremove_submit_link')) {
+        type = 'feature';
+        fastaction = 'remove';
+      } else if ($(this).hasClass('form_implementation_fastedit_submit_link')) {
+        type = 'implementation';
+        fastaction = 'edit';
+      }
+      
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', 'compared', 'add');
-    }); 
-
-    //Dynamize the compared edit fastedit element.
-    $('.compared_edit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-    
-      //Recover the link_id used later in the functions
-      var link_id = $(this).attr('id');
-
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', 'compared', 'edit');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', type, fastaction);
     });
-    
-    $('.form_compared_fastedit').submit(function () {
-      //Recover the compared_id by using a regular expression on the compared_link
-      var patt = /[0-9]+/g;
-      var compared_id = patt.exec($(this).attr('id'));
-      $('#form_compared_fastedit_submit_link_' + compared_id).click();
-      //Block the page loading
-      return false;
-    });
-        
-    $('.form_compared_fastedit_cancel').click(function () {
-      clean_fastedit_forms();
-    });
-    
-    
-    
-    //Dynamize the compared edit fastedit submit link.
-    $('.form_compared_fastedit_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-    
-      //Recover the link_id used later in the functions
-      var link_id = $(this).attr('id');
 
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', 'compared', 'edit');
-    });  
-    
     
     function build_ajax_link(link_id, object, action, type=false, fastaction=false) {
 
