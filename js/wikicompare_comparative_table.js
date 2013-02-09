@@ -4,6 +4,9 @@
 Drupal.behaviors.WikicompareComparativeTable = {
   attach: function (context, settings) {
 
+    //Set global variable
+    fastedit_status = 0;
+  
     //Ajaxify the compared link
     $('.compared_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
@@ -352,8 +355,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
     
     function build_ajax_link(link_id, object, action) {
 
-      fastedit_status = 0;
-    
       //Recover the node_id by using a regular expression on the link_id
       var patt = /[0-9]+/g;
       var node_id = patt.exec(link_id);
@@ -525,7 +526,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
              
               //Display the children with slide animation
               $('.feature_children_' + node_id).show();
-//TODO Tester avec fonction .each . Les lignes s'affichent instantanement pour une raison qui m'echappe si je met un slideDown(). Utiliser la fonction suivante pour les afficher les unes apres les autres
+//TODO Les lignes s'affichent instantanement pour une raison qui m'echappe si je met un slideDown(). Utiliser la fonction suivante pour les afficher les unes apres les autres
 //http://paulirish.com/2008/sequentially-chain-your-callbacks-in-jquery-two-ways/
 /*
           (function shownext(jq){
@@ -574,23 +575,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
             }
           }
           
-
-        
         }
         
-        //TODO Plus utile je crois
-        if (action == 'show_fastedit_form') {
-          //If we are displaying the form
-          if (!$('#' + link_id).hasClass('displayed')) {
-            //Change the class link, so next time we click on this link it will hide the form
-            $('#' + link_id).addClass('displayed');
-            if ($('#compared_link_' + node_id).hasClass('expanded')) {
-              $('#compared_link_' + node_id).click();
-            }
-          } else {
-            to_clean = true;
-          }
-        }
         
         if (action == 'submit_fastedit_form') {
           to_clean = true;
@@ -611,6 +597,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         var feature_child_id = patt.exec($(this).attr('id'));
         remove_feature_children_row(feature_child_id);
       });
+      //TODO replace with a slideUp()
       $('.feature_children_' + feature_id).remove();
     }
     

@@ -282,7 +282,7 @@ function get_compared_item_list($compareds, $fastedit_status){
         '#id' => 'compared_checkbox_link_' . $compared['nid'],
         '#attributes' => array(
           'class' => array('compared_checkbox_link' => 'compared_checkbox_link', 'hidden' => 'hidden'),
-          'style' => 'display:none',
+         // 'style' => 'display:none',
         )
       );
       if (isset($compared['displayed'])) {
@@ -327,7 +327,7 @@ function get_compared_item_list($compareds, $fastedit_status){
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
 function get_feature_ajax_response($type = 'ajax') {
-dpm($_POST);
+
   $fid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
@@ -861,7 +861,7 @@ function get_compared_fastadd_ajax_response($type='ajax'){
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
       
-      $page = array('#type' => 'ajax', '#commands' => $commands);      
+      $page = array('#type' => 'ajax', '#commands' => $commands);          
       return $page;
 
     //If we want to hide the form
