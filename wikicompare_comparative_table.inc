@@ -205,12 +205,12 @@ function get_compared_ajax_response($type = 'ajax') {
           $compareds[$record->nid]['no-edit'] = True;
         }
       }
-      $fastedit_toggled = 0;
+      $fastedit_status = 0;
       if (!empty($_POST['fastedit_toggled'])) {
-        $fastedit_toggled = $_POST['fastedit_toggled'];
+        $fastedit_status = $_POST['fastedit_toggled'];
       }
       //Building the data for the item list
-      $compared_item_list_data = get_compared_item_list($compareds, $fastedit_toggled);
+      $compared_item_list_data = get_compared_item_list($compareds, $fastedit_status);
       //Rendering the item list
       $output = theme_item_list(array('items' => $compared_item_list_data, 'type' => 'ul', 'attributes' => array()));
       //Preparing the ajax commands to return to javascript
@@ -242,7 +242,7 @@ function get_compared_ajax_response($type = 'ajax') {
 /*
  * Function which will build the compared item list. Used in table initial building and in compared ajax callback
  */
-function get_compared_item_list($compareds, $fastedit_toggled){
+function get_compared_item_list($compareds, $fastedit_status){
 
   $compared_items = array();
   foreach ($compareds as $compared){
@@ -304,7 +304,7 @@ function get_compared_item_list($compareds, $fastedit_toggled){
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $compared['nid'], array('attributes' => array('id' => 'compared_node_link_' . $compared['nid'], 'class' => array('compared_node_link')), 'html' => True));
 
-    if ($fastedit_toggled == 1) {
+    if ($fastedit_status == 1) {
       $img_link_to_node .= add_fastedit_items('compared', $compared);
     }
     
@@ -406,12 +406,12 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
           }
         }
       }
-      $fastedit_toggled = 0;
+      $fastedit_status = 0;
       if (!empty($_POST['fastedit_toggled'])) {
-        $fastedit_toggled = $_POST['fastedit_toggled'];
+        $fastedit_status = $_POST['fastedit_toggled'];
       }
       //Building the data for the table row
-      $feature_row_data = get_feature_rows($features, $fastedit_toggled);
+      $feature_row_data = get_feature_rows($features, $fastedit_status);
 
       $output = '';
       //Add a row for each feature children
@@ -457,7 +457,7 @@ function get_feature_ajax_response($type = 'ajax', $fid, $action) {
 /*
  * Function which will build the features row. Used in table initial building and in feature ajax callback
  */
-function get_feature_rows($features, $fastedit_toggled){
+function get_feature_rows($features, $fastedit_status){
 
   $rows = array();
   foreach ($features as $feature){
@@ -470,7 +470,7 @@ function get_feature_rows($features, $fastedit_toggled){
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $feature['nid'], array('attributes' => array('id' => 'feature_node_link_' . $feature['nid'], 'class' => array('feature_node_link')), 'html' => True));
-    if ($fastedit_toggled == 1) {
+    if ($fastedit_status == 1) {
       $img_link_to_node .= add_fastedit_items('feature', $feature); 
     }
 
@@ -502,7 +502,7 @@ function get_feature_rows($features, $fastedit_toggled){
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
       $img_link_to_node = l($img, 'node/' . $implementation['nid'],  array('attributes' => array('id' => 'implementation_node_link_' . $implementation['nid'], 'class' => array('implementation_node_link')), 'html' => True));
-      if ($fastedit_toggled == 1) {
+      if ($fastedit_status == 1) {
         $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
       }
 
@@ -522,18 +522,18 @@ function get_feature_rows($features, $fastedit_toggled){
  */
 function toggle_compared_checkbox_ajax_response($type='ajax'){
 
-  $cid = $_POST['compared_id'];
+  $cid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($type == 'ajax') {
 
     //If we want to displayed the compared children
-    if ($_POST['action'] == 'show') {
+    if ($_POST['action'] == 'display') {
 
       //Recover fastedit status
-      $fastedit_toggled = 0;
-      if (!empty($_POST['fastedit_toggled'])) {
-        $fastedit_toggled = $_POST['fastedit_toggled'];
+      $fastedit_status = 0;
+      if (!empty($_POST['fastedit_status'])) {
+        $fastedit_status = $_POST['fastedit_status'];
       }
     
       //Recover the detail of the compared we want to add
@@ -587,7 +587,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax'){
           ));
           //Create the link. The html = True indicate that the title of the link contain html.
           $img_link_to_node = l($img, 'node/' . $implementation['nid'], array('attributes' => array('id' => 'implementation_node_link_' . $implementation['nid'], 'class' => array('implementation_node_link')), 'html' => True));
-          if ($fastedit_toggled == 1) {
+          if ($fastedit_status == 1) {
             $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
           }
           $cells[$implementation['feature_id']] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $cid . ' implementation_feature_' . $implementation['feature_id'] . '" style="display:none;">' . $implementation['nid'] . ' ' . $img_link_to_node . '<br/>Feature : ' . $implementation['feature_id'] . '<br/>Compared : ' . $cid . '<br/>' . $implementation['percent'] . '%</td>';
@@ -603,7 +603,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax'){
         $commands[] = ajax_command_append('#feature_row_' . $key, $cell);
       }
       $page = array('#type' => 'ajax', '#commands' => $commands);
-
+dpm($page);
       return $page;
 
     //If we want to remove the column
@@ -634,7 +634,7 @@ function toggle_fastedit_response($type='ajax'){
   if ($type == 'ajax') {
 
     //If we want to displayed the fastedit items
-    if ($_POST['action'] == 'show') {
+    if ($_POST['fastedit_status'] == false) {
 
       $compareds = array();
       if (!empty($_POST['compared_ids'])) {

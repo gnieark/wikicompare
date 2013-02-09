@@ -60,7 +60,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //Add them in the ajax call variables
         options.data.compared_ids = compared_ids;
         //Check if fastedit is enabled
-        options.data.fastedit_toggled = fastedit_toggled;
+        options.data.fastedit_toggled = fastedit_status;
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -153,7 +153,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //Add them in the ajax call variables
         options.data.compared_ids = compared_ids;
         //Check if fastedit is enabled
-        options.data.fastedit_toggled = fastedit_toggled;
+        options.data.fastedit_toggled = fastedit_status;
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -214,8 +214,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.compared_checkbox_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
-      var link_id = $('#' + $(this).attr('id'));
-
+      var link_id = $(this).attr('id');
+/*
       //Recover the compared_id by using a regular expression on the compared_link
       var patt = /[0-9]+/g;
       var compared_id = patt.exec($(this).attr('id'));
@@ -236,28 +236,29 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       ajax.beforeSerialize = function (element, options) {
         //We remove all hidded element so they can't perturb the computation
-        $('.to_remove').remove();
+        $('.to_remove').remove();*/
         //Recover all feature row displayed in the table to send their id to drupal
-        var feature_ids = new Array(); 
+/*        var feature_ids = new Array(); 
         var i = 0;
         $('.feature_row').each(function (key, value) {
           var row_id = $('#' + $(this).attr('id'));
           var patt = /[0-9]+/g;
           feature_ids[i] = patt.exec($(this).attr('id'));
           i = i + 1;
-        });
+        });*//*
         //Add the clicked compared in argument
-        options.data.compared_id = compared_id[0];
-        //Check if the column is already displayed
+        options.data.compared_id = compared_id[0];*/
+        //Check if the column is already displayed 
+        /*
         if ($(link_id).hasClass('hidden')) {
           options.data.action = 'show';
         } else {
           options.data.action = 'hide';
-        }
+        }*/ /*
         //Add them in the ajax call variables
         options.data.feature_ids = feature_ids;
         //Check if fastedit is enabled
-        options.data.fastedit_toggled = fastedit_toggled;
+        options.data.fastedit_toggled = fastedit_status;
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -269,7 +270,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //First launch regular success function	  
         this.old_success(response, status);
-        //If we are displaying the column
+        //If we are displaying the column*//*
         if ($(link_id).hasClass('hidden')) {
           //Change the class link, so next time we click on this link it will hide the column
           $(link_id).addClass('displayed');
@@ -289,10 +290,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('#header_compared_' + compared_id).addClass('to_remove');
           $('.implementation_compared_' + compared_id).addClass('to_remove');
        }
-      }
+      }*/
 
       //Active the code
-      Drupal.ajax[base] = ajax;
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_compared_checkbox');
     });
 
 
@@ -310,111 +311,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
     //Dynamize the toogle fast edit link to display the elements add/edit/remove.
     $('#toogle_fastedit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
-      fastedit_toggled = 0;
 
       //Recover the link_id used later in the functions
-      var link_id = $('#' + $(this).attr('id'));
-
-      //Configure the ajax event
-      var element_settings = {};
-      element_settings.progress = { 'type': 'throbber' };
-      if ($(this).attr('href')) {
-        element_settings.url = $(this).attr('href');
-        element_settings.event = 'click';
-      }
-      var base = $(this).attr('id');
-      //Create the ajax event
-      var ajax = new Drupal.ajax(base, this, element_settings);
-
-      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
-      ajax.old_beforeSerialize = ajax.beforeSerialize;
-
-      ajax.beforeSerialize = function (element, options) {
-        //We remove all hidded element so they can't perturb the computation
-        $('.to_remove').remove();
-//alert(options.url);
-/*        if ($(link_id).attr('href') == 'toogle_fastedit_callback/nojs/hide') {
-          options.url = 'toogle_fastedit_callback/ajax/hide';
-        }
-alert(options.url);
-alert(options.toSource());*/
-
-        if (fastedit_toggled == 0) {
-          options.data.action = 'show';
-        } else {
-          options.data.action = 'hide';
-        }
-
-        //Recover all compared columns displayed in the table to send their id to drupal
-        var compared_ids = new Array();
-        var i = 0;
-        $('.compared_item').each(function (key, value) {
-          var column_id = $('#' + $(this).attr('id'));
-          var patt = /[0-9]+/g;
-          compared_ids[i] = patt.exec($(this).attr('id'));
-          i = i + 1;
-        });
-        //Add them in the ajax call variables
-        options.data.compared_ids = compared_ids;
-
-        //Recover all feature row displayed in the table to send their id to drupal
-        var feature_ids = new Array();
-        var i = 0;
-        $('.feature_row').each(function (key, value) {
-          var row_id = $('#' + $(this).attr('id'));
-          var patt = /[0-9]+/g;
-          feature_ids[i] = patt.exec($(this).attr('id'));
-          i = i + 1;
-        });
-        //Add them in the ajax call variables
-        options.data.feature_ids = feature_ids;
-        
-        //Recover all implementation displayed in the table to send their id to drupal
-        var implementation_ids = new Array();
-        var i = 0;
-        $('.implementation_cell').each(function (key, value) {
-          var cell_id = $('#' + $(this).attr('id'));
-          var patt = /[0-9]+/g;
-          implementation_ids[i] = patt.exec($(this).attr('id'));
-          i = i + 1;
-        });
-        //Add them in the ajax call variables
-        options.data.implementation_ids = implementation_ids;
-
-        //Launch regular beforeSerialize function
-        this.old_beforeSerialize(element, options);
-      }
-
-
-
-      //The success function is launched when drupal return the commands. We will override it to add some other commands
-      ajax.old_success = ajax.success;
-
-      ajax.success = function (response, status) {
-
-        //First launch regular success function
-        this.old_success(response, status);
-       //If we are displaying the items
-        if (fastedit_toggled == 0) {
-          //Set the global variable
-          fastedit_toggled = 1;
-        //If we are hidding the items
-        } else {
-          //Set the global variable
-          fastedit_toggled = 0;
-          $('.compared_add_link').remove();
-          $('.compared_edit_link').remove();
-          $('.compared_remove_link').remove();
-          $('.feature_add_link').remove();
-          $('.feature_edit_link').remove();
-          $('.feature_remove_link').remove();
-          $('.implementation_edit_link').remove();
-        }
-      }
-
+      var link_id = $(this).attr('id');
 
       //Active the code
-      Drupal.ajax[base] = ajax;
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit');
 
     });
 
@@ -455,6 +357,9 @@ alert(options.toSource());*/
     });    
     
     function build_ajax_link(link_id, object, action) {
+    
+      fastedit_status = 0;
+    
       //Recover the node_id by using a regular expression on the link_id
       var patt = /[0-9]+/g;
       var node_id = patt.exec(link_id);
@@ -476,15 +381,34 @@ alert(options.toSource());*/
       ajax.beforeSerialize = function (element, options) {  
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
-        //Add the clicked node in argument
-        options.data.node_id = node_id[0];
+        
+        if (action != 'toogle_fastedit') {
+          //Add the clicked node in argument
+          options.data.node_id = node_id[0];
+        }
+        
+        options.data.fastedit_status = fastedit_status;
+        
+        manage_displayed_flag = false;
+        send_compareds = false;
+        send_features = false;
+        send_implementations = false;
+        
+        if (action == 'toogle_compared_checkbox') {
+          manage_displayed_flag = true;
+          send_features = true;
+        }
+        
+        if (action == 'toogle_fastedit') {
+          manage_displayed_flag = true;
+          send_compareds = true;
+          send_features = true;
+          send_implementations = true;
+        }
+        
         
         if (action == 'show_fastedit_form') {
-          //Check if the column is already displayed
-          options.data.action = '';
-          if (!$('#' + link_id).hasClass('displayed')) {
-            options.data.action = 'display';
-          }
+          manage_displayed_flag = true;
         }
         
         if (action == 'submit_fastedit_form') {
@@ -492,6 +416,57 @@ alert(options.toSource());*/
           options.data.description = $('#form_compared_fastadd_description_' + node_id).val();
           options.data.revision = $('#form_compared_fastadd_revision_' + node_id).val();
         }
+        
+        if (manage_displayed_flag == true) {
+          //Check if the column is already displayed
+          options.data.action = '';
+          if (!$('#' + link_id).hasClass('displayed')) {
+            options.data.action = 'display';
+          }
+        }
+        
+        if (send_compareds == true) {
+          //Recover all compared columns displayed in the table to send their id to drupal
+          var compared_ids = new Array();
+          var i = 0;
+          $('.compared_item').each(function (key, value) {
+            var column_id = $('#' + $(this).attr('id'));
+            var patt = /[0-9]+/g;
+            compared_ids[i] = patt.exec($(this).attr('id'));
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.compared_ids = compared_ids;
+        }
+        
+        if (send_features == true) {
+          //Recover all feature row displayed in the table to send their id to drupal
+          var feature_ids = new Array();
+          var i = 0;
+          $('.feature_row').each(function (key, value) {
+            var row_id = $('#' + $(this).attr('id'));
+            var patt = /[0-9]+/g;
+            feature_ids[i] = patt.exec($(this).attr('id'));
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.feature_ids = feature_ids;
+        }
+        
+        if (send_implementations == true) {
+          //Recover all implementation displayed in the table to send their id to drupal
+          var implementation_ids = new Array();
+          var i = 0;
+          $('.implementation_cell').each(function (key, value) {
+            var cell_id = $('#' + $(this).attr('id'));
+            var patt = /[0-9]+/g;
+            implementation_ids[i] = patt.exec($(this).attr('id'));
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.implementation_ids = implementation_ids;
+        }
+
         
 
         
@@ -507,6 +482,62 @@ alert(options.toSource());*/
         this.old_success(response, status);
 
         to_clean = false;
+        
+        if (action == 'toogle_fastedit') {
+          if (fastedit_status == 0) {
+            //Set the global variable
+            fastedit_status = 1;
+          //If we are hidding the items
+          } else {
+            //Set the global variable
+            fastedit_status = 0;
+            to_clean = true;
+            $('.compared_add_link').remove();
+            $('.compared_edit_link').remove();
+            $('.compared_remove_link').remove();
+            $('.feature_add_link').remove();
+            $('.feature_edit_link').remove();
+            $('.feature_remove_link').remove();
+            $('.implementation_edit_link').remove();
+          }
+        }
+        
+        if (manage_displayed_flag == true) {
+        
+          if (!$('#' + link_id).hasClass('displayed')) {
+            //Change the class link, so next time we click on this link it will hide the form
+            $('#' + link_id).addClass('displayed');
+            
+            if (action == 'toogle_compared_checkbox') {    
+              //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
+              $('#header_compared_' + node_id).show();
+              $('.implementation_compared_' + node_id).fadeIn();
+            }
+            
+            if (action == 'show_fastedit_form') {
+              if ($('#compared_link_' + node_id).hasClass('expanded')) {
+                $('#compared_link_' + node_id).click();
+              }
+            }
+          } else {
+          
+            if (action == 'toogle_compared_checkbox') {   
+              //Hide the column. We can't use animation because of the current template, to check when we will have the final template
+              $('#header_compared_' + node_id).hide();
+              $('.implementation_compared_' + node_id).hide();
+              //Mark the column element so they will be remove at the next event. We can't do it now because otherwise it will crash the fade animation
+              $('#header_compared_' + compared_id).addClass('to_remove');
+              $('.implementation_compared_' + compared_id).addClass('to_remove');
+            }
+          
+            if (action == 'show_fastedit_form') {
+              to_clean = true;
+            }
+          }
+          
+
+        
+        }
         
         if (action == 'show_fastedit_form') {
           //If we are displaying the form
@@ -550,4 +581,5 @@ alert(options.toSource());*/
 //TODO faire une fonction qui va recharger les fastedit items et les pourcentages / nom compared feature, données bref tout le tableau.
 //TODO If a form is open, expand un compared clean les fastedit items
 //TODO regrouper autant que possible les fonctions
+//TODO remplacer les if action par des case
 })(jQuery);
