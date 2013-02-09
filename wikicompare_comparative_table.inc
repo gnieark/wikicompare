@@ -282,7 +282,7 @@ function get_compared_item_list($compareds, $fastedit_status){
         '#id' => 'compared_checkbox_link_' . $compared['nid'],
         '#attributes' => array(
           'class' => array('compared_checkbox_link' => 'compared_checkbox_link', 'hidden' => 'hidden'),
-         // 'style' => 'display:none',
+          'style' => 'display:none',
         )
       );
       if (isset($compared['displayed'])) {

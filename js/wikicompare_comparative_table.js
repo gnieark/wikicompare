@@ -566,8 +566,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('#header_compared_' + node_id).hide();
               $('.implementation_compared_' + node_id).hide();
               //Mark the column element so they will be remove at the next event. We can't do it now because otherwise it will crash the fade animation
-              $('#header_compared_' + compared_id).addClass('to_remove');
-              $('.implementation_compared_' + compared_id).addClass('to_remove');
+              $('#header_compared_' + node_id).addClass('to_remove');
+              $('.implementation_compared_' + node_id).addClass('to_remove');
             }
           
             if (action == 'show_fastedit_form') {
@@ -598,7 +598,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         remove_feature_children_row(feature_child_id);
       });
       //TODO replace with a slideUp()
-      $('.feature_children_' + feature_id).remove();
+      $('.feature_children_' + feature_id).hide();
     }
     
     function clean_fastedit_forms() {
