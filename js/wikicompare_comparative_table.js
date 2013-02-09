@@ -325,7 +325,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var link_id = $(this).attr('id');
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', 'compared', 'add');
     });
     
     $('.form_compared_fastadd').submit(function () {
@@ -350,10 +350,46 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var link_id = $(this).attr('id');
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form');
-    });    
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', 'compared', 'add');
+    }); 
+
+    //Dynamize the compared edit fastedit element.
+    $('.compared_edit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
-    function build_ajax_link(link_id, object, action) {
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', 'compared', 'edit');
+    });
+    
+    $('.form_compared_fastedit').submit(function () {
+      //Recover the compared_id by using a regular expression on the compared_link
+      var patt = /[0-9]+/g;
+      var compared_id = patt.exec($(this).attr('id'));
+      $('#form_compared_fastedit_submit_link_' + compared_id).click();
+      //Block the page loading
+      return false;
+    });
+        
+    $('.form_compared_fastedit_cancel').click(function () {
+      clean_fastedit_forms();
+    });
+    
+    
+    
+    //Dynamize the compared edit fastedit submit link.
+    $('.form_compared_fastedit_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', 'compared', 'edit');
+    });  
+    
+    
+    function build_ajax_link(link_id, object, action, type=false, fastaction=false) {
 
       //Recover the node_id by using a regular expression on the link_id
       var patt = /[0-9]+/g;
@@ -414,12 +450,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         if (action == 'show_fastedit_form') {
           manage_displayed_flag = true;
+          
+          options.data.type = type;
+          options.data.fastaction = fastaction;
         }
         
         if (action == 'submit_fastedit_form') {
-          options.data.title = $('#form_compared_fastadd_title_' + node_id).val();
-          options.data.description = $('#form_compared_fastadd_description_' + node_id).val();
-          options.data.revision = $('#form_compared_fastadd_revision_' + node_id).val();
+          options.data.type = type;
+          options.data.fastaction = fastaction;
+          options.data.title = $('#form_' + type + '_fast' + fastaction + '_title_' + node_id).val();
+          options.data.description = $('#form_' + type + '_fast' + fastaction + '_description_' + node_id).val();
+          options.data.revision = $('#form_' + type + '_fast' + fastaction + '_revision_' + node_id).val();
         }
         
         if (manage_displayed_flag == true) {
@@ -487,7 +528,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         
-
         
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
@@ -625,11 +665,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
 };
 
 
-//TODO Ne plus utiliser qu'une seule classe, celle qui n'est pas par default,  pour se reperer plus facilement
 //TODO enlever les ajax dans les ajax_response et ajax_callback
 //TODO dans edit et remove, centraliser les controles dans une function
 //TODO faire une fonction qui va recharger les fastedit items et les pourcentages / nom compared feature, données bref tout le tableau.
 //TODO If a form is open, expand un compared clean les fastedit items
 //TODO regrouper autant que possible les fonctions
 //TODO remplacer les if action par des case
+//TODO Remplacer type variable par method pour ajax / nojs
 })(jQuery);

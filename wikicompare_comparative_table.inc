@@ -767,7 +767,7 @@ function add_fastedit_items($type, $node){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_add = l($img, 'get_' . $type . '_fastadd_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
+    $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $node['nid'], 'class' => array($type . '_add_link')), 'html' => True));
     $output .= $img_link_to_add;
 
     if (!isset($node['no-edit'])) {
@@ -778,7 +778,7 @@ function add_fastedit_items($type, $node){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
+      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
       $output .= $img_link_to_edit;
 
       //Create the image link to remove the node
@@ -798,65 +798,81 @@ function add_fastedit_items($type, $node){
 }
 
 /*
- * Ajax callback cunction called by javascript to display the compared fastadd form
+ * Ajax callback cunction called by javascript to display the fastedit form
  */
-function get_compared_fastadd_ajax_response($type='ajax'){
+function get_fastedit_form_response($method='ajax'){
 
-  $cid = $_POST['node_id'];
+  $nid = $_POST['node_id'];
+  $type = $_POST['type'];
+  $fastaction = $_POST['fastaction'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($type == 'ajax') {
+  if ($method == 'ajax') {
 
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
-      $output = '<form id="form_compared_fastadd_'. $cid . '" class="form_compared_fastadd">';
+      
       $name_field = array(
         '#type' => 'textfield',
         '#title' => t('Title'),
-        '#id' => 'form_compared_fastadd_title_' . $cid,
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_title_' . $nid,
         '#attributes' => array(
-          'class' => array('form_compared_fastadd_title'),
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_title'),
         )
       );
-      $output .= drupal_render($name_field);
+      
       $description_field = array(
         '#type' => 'textarea',
         '#title' => t('Description'),
-        '#id' => 'form_compared_fastadd_description_' . $cid,
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_description_' . $nid,
         '#attributes' => array(
-          'class' => array('form_compared_fastadd_description'),
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_description'),
         )
       );
-      $output .= drupal_render($description_field);
+      
       $revision_field = array(
         '#type' => 'textarea',
         '#title' => t('Revision log message'),
-        '#id' => 'form_compared_fastadd_revision_' . $cid,
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_revision_' . $nid,
         '#attributes' => array(
-          'class' => array('form_compared_fastadd_revision'),
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_revision'),
         )
       );
-      $output .= drupal_render($revision_field);
-      $output .= '<input id="form_compared_fastadd_submit_'. $cid . '" type="submit" value="Add" class="form_compared_fastadd_submit button"/>';
+      
       $submit_link = array(
         '#type' => 'link',
         '#title' => 'submit',
         '#href' => 'submit_fastedit_form_callback/nojs/',
-        '#id' => 'form_compared_fastadd_submit_link_' . $cid,
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_submit_link_' . $nid,
         '#attributes' => array(
-          'class' => array('form_compared_fastadd_submit_link'),
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_submit_link'),
           'style' => 'display:none',
         )
       );
+      
+      if ($fastaction == 'edit') {
+      
+        $node = node_load($nid);
+     
+        $name_field['#value'] = $node->title;
+        $description_field['#value'] = $node->body['und'][0]['value'];
+
+      }
+      
+      $output = '<form id="form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_'. $type . '_fast' . $fastaction . '">';
+      $output .= drupal_render($name_field);
+      $output .= drupal_render($description_field);
+      $output .= drupal_render($revision_field);
+      $output .= '<input id="form_'. $type . '_fast' . $fastaction . '_submit_'. $nid . '" type="submit" value="Confirm" class="form_' . $type . '_fast' . $fastaction . '_submit button"/>';
       $output .= drupal_render($submit_link);
-      $output .= '<input id="form_compared_fastadd_cancel_'. $cid . '" type="button" value="Cancel" class="form_compared_fastadd_cancel button"/>';
+      $output .= '<input id="form_' . $type . '_fast' . $fastaction . '_cancel_'. $nid . '" type="button" value="Cancel" class="form_' . $type . '_fast' . fastaction . '_cancel button"/>';
       $output .= '</form>';
     
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //Insert the form in the page. Note we can't use ajax_command_before because it adds an unwanted div
-      $commands[] = ajax_command_invoke('#compared_children_' . $cid, 'before', array($output));
+      $commands[] = ajax_command_invoke('#compared_children_' . $nid, 'before', array($output));
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
@@ -886,25 +902,44 @@ function get_compared_fastadd_ajax_response($type='ajax'){
 /*
  * Ajax callback function called by javascript when we submit one of the fastedit form.
  */
-function submit_fastedit_form_response($type='ajax'){
+function submit_fastedit_form_response($method='ajax'){
+
+  $type = $_POST['type'];
+  $fastaction = $_POST['fastaction'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($type == 'ajax') {
+  if ($method == 'ajax') {
 
+    switch ($fastaction) {
+      case 'add':
+        $node = new stdClass();
+        $node->type = $type;
+        $node->language = LANGUAGE_NONE;
+        switch ($type) {
+          case 'compared':
+            $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['node_id'];
+            $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+            break;
+        }
+        break;
+      case 'edit':
+        $node = node_load($_POST['node_id']);
+        $node->revision = 1;
+        break;
+    }
     
-    $node = new stdClass();
-    $node->type = 'compared';
     $node->title = $_POST['title'];
-    $node->language = LANGUAGE_NONE;
-    $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['node_id'];
-    $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+
+        
     $node->body[$node->language][0] = array(
       'value' => $_POST['description'],
       'format' => 'full_html',
     );
     $node->log = $_POST['revision'];
-
+   
     node_save($node);
+    
+    _revisioning_publish_latest_revision($node);
 
     //We return nothing, everything is managed on the javascript side
     $commands = array();
