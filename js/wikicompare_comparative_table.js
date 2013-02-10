@@ -707,4 +707,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO regrouper autant que possible les fonctions
 //TODO remplacer les if action par des case
 //TODO Remplacer type variable par method pour ajax / nojs
+//TODO mettre les securité dans la fonction submit pour edit et remove
 })(jQuery);
