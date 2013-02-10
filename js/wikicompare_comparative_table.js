@@ -496,6 +496,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.title = $('#form_' + type + '_fast' + fastaction + '_title_' + node_id).val();
           options.data.description = $('#form_' + type + '_fast' + fastaction + '_description_' + node_id).val();
           options.data.revision = $('#form_' + type + '_fast' + fastaction + '_revision_' + node_id).val();
+          
+          if (type == 'feature') {
+            options.data.feature_type = $('#form_' + type + '_fast' + fastaction + '_type_' + node_id).val();
+            options.data.guidelines = $('#form_' + type + '_fast' + fastaction + '_guidelines_' + node_id).val();
+            options.data.weight = $('#form_' + type + '_fast' + fastaction + '_weight_' + node_id).val();
+            options.data.state = $('#form_' + type + '_fast' + fastaction + '_state_' + node_id).val();
+          }
         }
         
         if (manage_displayed_flag == true) {
@@ -708,4 +715,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer les if action par des case
 //TODO Remplacer type variable par method pour ajax / nojs
 //TODO mettre les securité dans la fonction submit pour edit et remove
+//TODO ajuster les colspan automatiquement pour les line_fastedit
+//TODO remplacer drupal_render par render
+//TODO il faudrait générer les element du formulaire avec l'equivalent editable de field_view_field
 })(jQuery);

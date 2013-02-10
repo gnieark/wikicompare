@@ -53,6 +53,7 @@ function wikicompare_comparative_table($form_state) {
 
   //Insert the feature in the form array to retrieve them in the theme
   foreach ($features as $item) {
+
     $form['feature_items'][$item->nid] = array(
       'title' => array(
         '#markup' => check_plain($item->title),
@@ -106,7 +107,6 @@ function theme_wikicompare_comparative_table($variables) {
 
   //Render the item list
   $output = theme_item_list(array('items' => $compared_item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
-
 
   //Prepare the array to use as argument for the table row building function.
   $features = array();
@@ -801,7 +801,7 @@ function add_fastedit_items($type, $node){
  * Ajax callback cunction called by javascript to display the fastedit form
  */
 function get_fastedit_form_response($method='ajax'){
-dpm($_POST);
+
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
@@ -812,7 +812,13 @@ dpm($_POST);
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
-      $output = '<form id="form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '">';
+      if ($type == 'feature') {
+        $output .= '<tr id="line_form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="line_form_fastedit form_'. $type . '_fast' . $fastaction . '"><td>';
+      }
+      
+      $output .= '<form id="form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '">';
+      
+      
     
       if ($fastaction == 'remove') {
       
@@ -823,6 +829,12 @@ dpm($_POST);
       
       
       } else {
+      
+        if ($fastaction == 'edit') {
+    
+          $node = node_load($nid);
+          
+        }
       
         $name_field = array(
           '#type' => 'textfield',
@@ -851,20 +863,82 @@ dpm($_POST);
           )
         );
       
-
+        if ($type == 'feature') {
+          $type_field = array(
+            '#type' => 'select',
+            '#title' => t('Type'),
+            '#options' => array(
+              'parent-weighted-average' => 'Parent Feature - Weighted Average',
+              'parent-highest-percentage' => 'Parent Feature - Highest Percentage',
+            ),
+            '#id' => 'form_' . $type . '_fast' . $fastaction . '_type_' . $nid,
+            '#attributes' => array(
+              'class' => array('form_' . $type . '_fast' . $fastaction . '_type'),
+            )
+          );
+          
+          $guidelines_field = array(
+            '#type' => 'textarea',
+            '#title' => t('Validation guidelines'),
+            '#id' => 'form_' . $type . '_fast' . $fastaction . '_guidelines_' . $nid,
+            '#attributes' => array(
+              'class' => array('form_' . $type . '_fast' . $fastaction . '_guidelines'),
+            )
+          );
+          
+          $weight_field = array(
+            '#type' => 'textfield',
+            '#title' => t('Weight'),
+            '#default_value' => 100,
+            '#element_validate' => array('element_validate_integer_positive_or_null'),
+            '#id' => 'form_' . $type . '_fast' . $fastaction . '_weight_' . $nid,
+            '#attributes' => array(
+              'class' => array('form_' . $type . '_fast' . $fastaction . '_weight'),
+            )
+          );
+          
+          $state_field = array(
+            '#type' => 'select',
+            '#title' => t('State'),
+            '#options' => array(
+              'New' => 'New',
+              'Incomplete' => 'Incomplete',
+              'Published' => 'Published',
+              'Disactivated' => 'Disactivated',
+            ),
+            '#id' => 'form_' . $type . '_fast' . $fastaction . '_state_' . $nid,
+            '#attributes' => array(
+              'class' => array('form_' . $type . '_fast' . $fastaction . '_state'),
+            )
+          );
+        }
       
         if ($fastaction == 'edit') {
-    
-          $node = node_load($nid);
+
      
           $name_field['#value'] = $node->title;
           $description_field['#value'] = $node->body['und'][0]['value'];
+          
+          if ($type == 'feature') {
+            $type_field['#value'] = $node->feature_type['und'][0]['value'];
+            $guidelines_field['#value'] = $node->feature_validation_guidelines['und'][0]['value'];
+            $weight_field['#value'] = $node->feature_weight['und'][0]['value'];
+            $state_field['#value'] = $node->feature_state['und'][0]['value'];
+          }
 
         }
         
         $output .= drupal_render($name_field);
         $output .= drupal_render($description_field);
         $output .= drupal_render($revision_field);
+        
+        if ($type == 'feature') {
+          $output .= drupal_render($type_field);
+          $output .= drupal_render($guidelines_field);
+          $output .= drupal_render($weight_field);
+          $output .= drupal_render($state_field);
+          
+        }
       
       }
       
@@ -884,11 +958,22 @@ dpm($_POST);
       $output .= drupal_render($submit_link);
       $output .= '<input id="form_' . $type . '_fast' . $fastaction . '_cancel_'. $nid . '" type="button" value="Cancel" class="form_' . $type . '_fast' . fastaction . '_cancel button"/>';
       $output .= '</form>';
-    
+      
+      if ($type == 'feature') {
+        $output .= '</td></tr>';
+      }
+
       //Preparing the ajax commands to return to javascript
       $commands = array();
-      //Insert the form in the page. Note we can't use ajax_command_before because it adds an unwanted div
-      $commands[] = ajax_command_invoke('#compared_children_' . $nid, 'before', array($output));
+      //Insert the form in the page. Note we can't use ajax_command_before or ajax_command_after because it adds an unwanted div
+      switch ($type) {
+        case ('compared'):
+          $commands[] = ajax_command_invoke('#compared_children_' . $nid, 'before', array($output));
+          break;
+        case ('feature'):
+          $commands[] = ajax_command_invoke('#feature_row_' . $nid, 'after', array($output));
+          break;
+      }
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
@@ -927,7 +1012,7 @@ function submit_fastedit_form_response($method='ajax'){
   if ($method == 'ajax') {
 
     if ($fastaction == 'remove') {
-      dpm('delete done');
+
       node_delete($_POST['node_id']);
     
     } else {
@@ -941,6 +1026,10 @@ function submit_fastedit_form_response($method='ajax'){
             case 'compared':
               $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['node_id'];
               $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+              break;
+            case 'feature':
+              $node->feature_parent_feature[$node->language][0]['target_id'] = $_POST['node_id'];
+              $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
               break;
           }
           break;
@@ -957,8 +1046,21 @@ function submit_fastedit_form_response($method='ajax'){
         'value' => $_POST['description'],
         'format' => 'full_html',
       );
+      
+      if ($type == 'feature') {
+        $node->feature_type[$node->language][0]['value'] = $_POST['feature_type'];
+        
+        $node->feature_validation_guidelines[$node->language][0]['value'] = $_POST['guidelines'];
+        $node->feature_validation_guidelines[$node->language][0]['format'] = 'full_html';
+        
+        $node->feature_weight[$node->language][0]['value'] = $_POST['weight'];        
+        
+        $node->feature_state[$node->language][0]['value'] = $_POST['state'];
+        
+      }
+      
       $node->log = $_POST['revision'];
-   
+ 
       node_save($node);
     
       _revisioning_publish_latest_revision($node);
