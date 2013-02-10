@@ -487,7 +487,7 @@ function get_feature_rows($features, $fastedit_status){
         ),
       );
     } else {
-      $title = $feature['title'];
+      $title = $feature['title'] . ' ' . $feature['nid'];
     }
     $rows[$feature['nid']]['id'] = 'feature_row_' . $feature['nid'];
     //Creating the first cell of the row, containing the feature details
@@ -755,7 +755,7 @@ function add_fastedit_items($type, $node){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'node/' . $node['nid'], array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array($type . '_edit_link')), 'html' => True));
+      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $node['nid'], 'class' => array('fastedit_item ' . $type . '_edit_link')), 'html' => True));
       $output .= $img_link_to_edit;
     }
   
@@ -812,7 +812,7 @@ function get_fastedit_form_response($method='ajax'){
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
-      if ($type == 'feature') {
+      if ($type != 'compared') {
         $output .= '<tr id="line_form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="line_form_fastedit form_'. $type . '_fast' . $fastaction . '"><td>';
       }
       
@@ -830,20 +830,28 @@ function get_fastedit_form_response($method='ajax'){
       
       } else {
       
+      
         if ($fastaction == 'edit') {
     
           $node = node_load($nid);
           
         }
       
-        $name_field = array(
-          '#type' => 'textfield',
-          '#title' => t('Title'),
-          '#id' => 'form_' . $type . '_fast' . $fastaction . '_title_' . $nid,
-          '#attributes' => array(
-            'class' => array('form_' . $type . '_fast' . $fastaction . '_title'),
-          )
-        );
+        if ($type != 'implementation') {
+          $name_field = array(
+            '#type' => 'textfield',
+            '#title' => t('Title'),
+            '#id' => 'form_' . $type . '_fast' . $fastaction . '_title_' . $nid,
+            '#attributes' => array(
+              'class' => array('form_' . $type . '_fast' . $fastaction . '_title'),
+            )
+          );          
+          if ($fastaction == 'edit') {
+            $name_field['#value'] = $node->title;
+          }
+          $output .= drupal_render($name_field);
+
+        }
       
         $description_field = array(
           '#type' => 'textarea',
@@ -853,15 +861,12 @@ function get_fastedit_form_response($method='ajax'){
             'class' => array('form_' . $type . '_fast' . $fastaction . '_description'),
           )
         );
+        if ($fastaction == 'edit') {
+          $description_field['#value'] = $node->body['und'][0]['value'];
+        }
+        $output .= drupal_render($description_field);
       
-        $revision_field = array(
-          '#type' => 'textarea',
-          '#title' => t('Revision log message'),
-          '#id' => 'form_' . $type . '_fast' . $fastaction . '_revision_' . $nid,
-          '#attributes' => array(
-            'class' => array('form_' . $type . '_fast' . $fastaction . '_revision'),
-          )
-        );
+
       
         if ($type == 'feature') {
           $type_field = array(
@@ -876,6 +881,10 @@ function get_fastedit_form_response($method='ajax'){
               'class' => array('form_' . $type . '_fast' . $fastaction . '_type'),
             )
           );
+          if ($fastaction == 'edit') {
+            $type_field['#value'] = $node->feature_type['und'][0]['value'];
+          }
+          $output .= drupal_render($type_field);
           
           $guidelines_field = array(
             '#type' => 'textarea',
@@ -885,6 +894,10 @@ function get_fastedit_form_response($method='ajax'){
               'class' => array('form_' . $type . '_fast' . $fastaction . '_guidelines'),
             )
           );
+          if ($fastaction == 'edit') {
+            $guidelines_field['#value'] = $node->feature_validation_guidelines['und'][0]['value'];
+          }
+          $output .= drupal_render($guidelines_field);
           
           $weight_field = array(
             '#type' => 'textfield',
@@ -896,6 +909,10 @@ function get_fastedit_form_response($method='ajax'){
               'class' => array('form_' . $type . '_fast' . $fastaction . '_weight'),
             )
           );
+          if ($fastaction == 'edit') {
+            $weight_field['#value'] = $node->feature_weight['und'][0]['value'];
+          }
+          $output .= drupal_render($weight_field);
           
           $state_field = array(
             '#type' => 'select',
@@ -911,34 +928,44 @@ function get_fastedit_form_response($method='ajax'){
               'class' => array('form_' . $type . '_fast' . $fastaction . '_state'),
             )
           );
-        }
-      
-        if ($fastaction == 'edit') {
-
-     
-          $name_field['#value'] = $node->title;
-          $description_field['#value'] = $node->body['und'][0]['value'];
-          
-          if ($type == 'feature') {
-            $type_field['#value'] = $node->feature_type['und'][0]['value'];
-            $guidelines_field['#value'] = $node->feature_validation_guidelines['und'][0]['value'];
-            $weight_field['#value'] = $node->feature_weight['und'][0]['value'];
+          if ($fastaction == 'edit') {
             $state_field['#value'] = $node->feature_state['und'][0]['value'];
           }
-
-        }
-        
-        $output .= drupal_render($name_field);
-        $output .= drupal_render($description_field);
-        $output .= drupal_render($revision_field);
-        
-        if ($type == 'feature') {
-          $output .= drupal_render($type_field);
-          $output .= drupal_render($guidelines_field);
-          $output .= drupal_render($weight_field);
           $output .= drupal_render($state_field);
-          
         }
+        
+        if ($type == 'implementation') {
+        
+          $support_field = array(
+            '#type' => 'select',
+            '#title' => t('Support'),
+            '#options' => array(
+              0 => 'Unsupported',
+              1 => 'Supported',
+            ),
+            '#id' => 'form_' . $type . '_fast' . $fastaction . '_support_' . $nid,
+            '#attributes' => array(
+              'class' => array('form_' . $type . '_fast' . $fastaction . '_support'),
+            )
+          );
+          if ($fastaction == 'edit') {
+            $support_field['#value'] = $node->feature_support['und'][0]['value'];
+          }
+          $output .= drupal_render($support_field);
+
+        
+        }
+        
+        
+        $revision_field = array(
+          '#type' => 'textarea',
+          '#title' => t('Revision log message'),
+          '#id' => 'form_' . $type . '_fast' . $fastaction . '_revision_' . $nid,
+          '#attributes' => array(
+            'class' => array('form_' . $type . '_fast' . $fastaction . '_revision'),
+          )
+        );
+        $output .= drupal_render($revision_field);
       
       }
       
@@ -972,6 +999,9 @@ function get_fastedit_form_response($method='ajax'){
           break;
         case ('feature'):
           $commands[] = ajax_command_invoke('#feature_row_' . $nid, 'after', array($output));
+          break;
+        case ('implementation'):
+          $commands[] = ajax_command_invoke('#feature_row_' . $node->implementation_feature['und'][0]['target_id'], 'after', array($output));
           break;
       }
 
@@ -1039,7 +1069,9 @@ function submit_fastedit_form_response($method='ajax'){
           break;
       }
     
-      $node->title = $_POST['title'];
+      if ($type != 'implementation') {
+        $node->title = $_POST['title'];
+      }
 
         
       $node->body[$node->language][0] = array(
@@ -1057,6 +1089,10 @@ function submit_fastedit_form_response($method='ajax'){
         
         $node->feature_state[$node->language][0]['value'] = $_POST['state'];
         
+      }
+      
+      if ($type == 'implementation') {
+        $node->implementation_support[$node->language][0]['value'] = $_POST['support'];
       }
       
       $node->log = $_POST['revision'];

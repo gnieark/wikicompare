@@ -4,8 +4,6 @@
 Drupal.behaviors.WikicompareComparativeTable = {
   attach: function (context, settings) {
 
-    //Set global variable
-    fastedit_status = 0;
   
     //Ajaxify the compared link
     $('.compared_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
@@ -311,6 +309,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
+      
+      //Set global variable
+      fastedit_status = 0;
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit');
@@ -493,9 +494,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'submit_fastedit_form') {
           options.data.type = type;
           options.data.fastaction = fastaction;
-          options.data.title = $('#form_' + type + '_fast' + fastaction + '_title_' + node_id).val();
+          
+          if (type != 'implementation') {
+            options.data.title = $('#form_' + type + '_fast' + fastaction + '_title_' + node_id).val();
+          }
           options.data.description = $('#form_' + type + '_fast' + fastaction + '_description_' + node_id).val();
-          options.data.revision = $('#form_' + type + '_fast' + fastaction + '_revision_' + node_id).val();
           
           if (type == 'feature') {
             options.data.feature_type = $('#form_' + type + '_fast' + fastaction + '_type_' + node_id).val();
@@ -503,6 +506,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.weight = $('#form_' + type + '_fast' + fastaction + '_weight_' + node_id).val();
             options.data.state = $('#form_' + type + '_fast' + fastaction + '_state_' + node_id).val();
           }
+          
+          if (type == 'implementation') {
+            options.data.support = $('#form_' + type + '_fast' + fastaction + '_support_' + node_id).val();
+          }
+          options.data.revision = $('#form_' + type + '_fast' + fastaction + '_revision_' + node_id).val();
         }
         
         if (manage_displayed_flag == true) {
@@ -718,4 +726,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO ajuster les colspan automatiquement pour les line_fastedit
 //TODO remplacer drupal_render par render
 //TODO il faudrait générer les element du formulaire avec l'equivalent editable de field_view_field
+//TODO faire un check pour afficher ou non le champ support si l'implementation est un enfant sur axe compared et feature
 })(jQuery);
