@@ -727,4 +727,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer drupal_render par render
 //TODO il faudrait générer les element du formulaire avec l'equivalent editable de field_view_field
 //TODO faire un check pour afficher ou non le champ support si l'implementation est un enfant sur axe compared et feature
+//TODO rajouter un champ sequence dans compared et feature pour les classe. Pas de drag&drop sur la V1 du projet
+//TODO Rajouter un champ ajax qui fera apparaitre un popup sur le champ parent compared/feature. Ce code sera réutilisé dans les page d'édition.
+//TODO Rajouter sur le bouton calculer l'affichage des feature new/incomplete/obsolete
+//TODO Afficher un popup pour selectionner manuellement les feature qui nous interesse, et recalculer le tableau au clic sur "calculer"
 })(jQuery);
