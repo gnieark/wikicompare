@@ -108,6 +108,19 @@ function theme_wikicompare_comparative_table($variables) {
   //Render the item list
   $output = theme_item_list(array('items' => $compared_item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
 
+  //Add the link to open the select feature popup
+  $select_feature_link = array(
+    '#type' => 'link',
+    '#title' => 'Select features',
+    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
+    '#href' => 'dummy_ajax_function_callback/nojs',
+    '#id' => 'select_feature_link',
+
+  );
+
+  $output .= '<p>' . drupal_render($select_feature_link) . '</p>';
+  
+  
   //Prepare the array to use as argument for the table row building function.
   $features = array();
   //element_children is used to avoid the children beginning by # which are inserted by drupal in $form
