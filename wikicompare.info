@@ -8,6 +8,7 @@ dependencies[] = help
 dependencies[] = number
 dependencies[] = list
 dependencies[] = revisioning
+dependencies[] = simple_dialog
 
 dependencies[] = devel
 dependencies[] = field_ui

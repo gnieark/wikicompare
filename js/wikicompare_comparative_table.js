@@ -6,15 +6,27 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
   
     //Ajaxify the compared link
-    $('.compared_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('.list_item_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_compared_children');
-    });
 
+      if ($(this).hasClass('feature')) {
+        type = 'feature';
+      } else {
+        type = 'compared';
+      }
+
+      if ($(this).hasClass('compared_main_table')) {
+        subaction = 'compared_main_table';
+      } else if ($(this).hasClass('select_multi_dialog')) {
+        subaction = 'select_multi_dialog';
+      }
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, subaction);
+    });
 
 
 
@@ -25,7 +37,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var link_id = $(this).attr('id');
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_feature_children');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children');
     });
 
 
@@ -78,29 +90,29 @@ Drupal.behaviors.WikicompareComparativeTable = {
       
       if ($(this).hasClass('compared_add_link')) {
         type = 'compared';
-        fastaction = 'add';
+        subaction = 'add';
       } else if ($(this).hasClass('compared_edit_link')) {
         type = 'compared';
-        fastaction = 'edit';
+        subaction = 'edit';
       } else if ($(this).hasClass('compared_remove_link')) {
         type = 'compared';
-        fastaction = 'remove';
+        subaction = 'remove';
       } else if ($(this).hasClass('feature_add_link')) {
         type = 'feature';
-        fastaction = 'add';
+        subaction = 'add';
       } else if ($(this).hasClass('feature_edit_link')) {
         type = 'feature';
-        fastaction = 'edit';
+        subaction = 'edit';
       } else if ($(this).hasClass('feature_remove_link')) {
         type = 'feature';
-        fastaction = 'remove';
+        subaction = 'remove';
       } else if ($(this).hasClass('implementation_edit_link')) {
         type = 'implementation';
-        fastaction = 'edit';
+        subaction = 'edit';
       }
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, fastaction);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, subaction);
     });
     
     $('.form_fastedit').submit(function () {
@@ -110,28 +122,28 @@ Drupal.behaviors.WikicompareComparativeTable = {
       
       if ($(this).hasClass('form_compared_fastadd')) {
         type = 'compared';
-        fastaction = 'add';
+        subaction = 'add';
       } else if ($(this).hasClass('form_compared_fastedit')) {
         type = 'compared';
-        fastaction = 'edit';
+        subaction = 'edit';
       } else if ($(this).hasClass('form_compared_fastremove')) {
         type = 'compared';
-        fastaction = 'remove';
+        subaction = 'remove';
       } else if ($(this).hasClass('form_feature_fastadd')) {
         type = 'feature';
-        fastaction = 'add';
+        subaction = 'add';
       } else if ($(this).hasClass('form_feature_fastedit')) {
         type = 'feature';
-        fastaction = 'edit';
+        subaction = 'edit';
       } else if ($(this).hasClass('form_feature_fastremove')) {
         type = 'feature';
-        fastaction = 'remove';
+        subaction = 'remove';
       } else if ($(this).hasClass('form_implementation_fastedit')) {
         type = 'implementation';
-        fastaction = 'edit';
+        subaction = 'edit';
       }
       
-      $('#form_' + type + '_fast' + fastaction + '_submit_link_' + node_id).click();
+      $('#form_' + type + '_fast' + subaction + '_submit_link_' + node_id).click();
       //Block the page loading
       return false;
     });
@@ -150,33 +162,33 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       if ($(this).hasClass('form_compared_fastadd_submit_link')) {
         type = 'compared';
-        fastaction = 'add';
+        subaction = 'add';
       } else if ($(this).hasClass('form_compared_fastedit_submit_link')) {
         type = 'compared';
-        fastaction = 'edit';
+        subaction = 'edit';
       } else if ($(this).hasClass('form_compared_fastremove_submit_link')) {
         type = 'compared';
-        fastaction = 'remove';
+        subaction = 'remove';
       } else if ($(this).hasClass('form_feature_fastadd_submit_link')) {
         type = 'feature';
-        fastaction = 'add';
+        subaction = 'add';
       } else if ($(this).hasClass('form_feature_fastedit_submit_link')) {
         type = 'feature';
-        fastaction = 'edit';
+        subaction = 'edit';
       } else if ($(this).hasClass('form_feature_fastremove_submit_link')) {
         type = 'feature';
-        fastaction = 'remove';
+        subaction = 'remove';
       } else if ($(this).hasClass('form_implementation_fastedit_submit_link')) {
         type = 'implementation';
-        fastaction = 'edit';
+        subaction = 'edit';
       }
       
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', type, fastaction);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', type, subaction);
     });
 
     
-    function build_ajax_link(link_id, object, action, type=false, fastaction=false) {
+    function build_ajax_link(link_id, object, action, type=false, subaction=false) {
 
       //Recover the node_id by using a regular expression on the link_id
       var patt = /[0-9]+/g;
@@ -212,12 +224,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_features = false;
         send_implementations = false;
         
-        if ('expand_compared_children') {
+        if ('expand_list_children') {
           manage_displayed_flag = true;
           send_compareds_columns = true;
+          options.data.type = type;
+          options.data.subaction = subaction;
         }
         
-        if (action == 'expand_feature_children') {
+        if (action == 'expand_row_children') {
           manage_displayed_flag = true;
           send_compareds_columns = true;
         }
@@ -239,29 +253,29 @@ Drupal.behaviors.WikicompareComparativeTable = {
           manage_displayed_flag = true;
           
           options.data.type = type;
-          options.data.fastaction = fastaction;
+          options.data.fastaction = subaction;
         }
         
         if (action == 'submit_fastedit_form') {
           options.data.type = type;
-          options.data.fastaction = fastaction;
+          options.data.fastaction = subaction;
           
           if (type != 'implementation') {
-            options.data.title = $('#form_' + type + '_fast' + fastaction + '_title_' + node_id).val();
+            options.data.title = $('#form_' + type + '_fast' + subaction + '_title_' + node_id).val();
           }
-          options.data.description = $('#form_' + type + '_fast' + fastaction + '_description_' + node_id).val();
+          options.data.description = $('#form_' + type + '_fast' + subaction + '_description_' + node_id).val();
           
           if (type == 'feature') {
-            options.data.feature_type = $('#form_' + type + '_fast' + fastaction + '_type_' + node_id).val();
-            options.data.guidelines = $('#form_' + type + '_fast' + fastaction + '_guidelines_' + node_id).val();
-            options.data.weight = $('#form_' + type + '_fast' + fastaction + '_weight_' + node_id).val();
-            options.data.state = $('#form_' + type + '_fast' + fastaction + '_state_' + node_id).val();
+            options.data.feature_type = $('#form_' + type + '_fast' + subaction + '_type_' + node_id).val();
+            options.data.guidelines = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id).val();
+            options.data.weight = $('#form_' + type + '_fast' + subaction + '_weight_' + node_id).val();
+            options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
           }
           
           if (type == 'implementation') {
             options.data.support = $('#form_' + type + '_fast' + fastaction + '_support_' + node_id).val();
           }
-          options.data.revision = $('#form_' + type + '_fast' + fastaction + '_revision_' + node_id).val();
+          options.data.revision = $('#form_' + type + '_fast' + subaction + '_revision_' + node_id).val();
         }
         
         if (manage_displayed_flag == true) {
@@ -329,7 +343,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         
-        
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -368,11 +381,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //Change the class link, so next time we click on this link it will hide the content
             $('#' + link_id).addClass('displayed');
   
-            if (action == 'expand_compared_children') {
-              $('#compared_children_' + node_id).slideDown();
+            if (action == 'expand_list_children') {
+              $('#' + type + '_children_' + node_id).slideDown();
             }
   
-            if (action == 'expand_feature_children') {
+            if (action == 'expand_row_children') {
              
               //Display the children with slide animation
               $('.feature_children_' + node_id).show();
@@ -404,11 +417,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //Change the class link, so next time we click on this link it will display the content
             $('#' + link_id).removeClass('displayed');
           
-            if (action == 'expand_compared_children') {
-              $('#compared_children_' + node_id).slideUp();
+            if (action == 'expand_list_children') {
+              $('#' + type + '_children_' + node_id).slideUp();
             }
           
-            if (action == 'expand_feature_children') {
+            if (action == 'expand_row_children') {
               //Hide the children with slide animation
               remove_feature_children_row(node_id);
               //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation

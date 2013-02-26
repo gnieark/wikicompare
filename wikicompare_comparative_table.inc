@@ -102,23 +102,22 @@ function theme_wikicompare_comparative_table($variables) {
   }
 
   //Building the data for the item list
-  $compared_item_list_data = get_compared_item_list($compareds, 0);
+  $item_list_data = get_item_list($compareds, 'compared', 'compared_main_table', 0);
 
 
   //Render the item list
-  $output = theme_item_list(array('items' => $compared_item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
+  $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
 
   //Add the link to open the select feature popup
   $select_feature_link = array(
-    '#type' => 'link',
-    '#title' => 'Select features',
-    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'dummy_ajax_function_callback/nojs',
-    '#id' => 'select_feature_link',
+    'text' => 'Select features',
+    'title' => 'Select features',
+    'selector' => 'dialog-content',
+    'path' => 'get_select_feature_dialog_callback',
+    'id' => 'select_feature_link',
 
   );
-
-  $output .= '<p>' . drupal_render($select_feature_link) . '</p>';
+  $output .= '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
   
   
   //Prepare the array to use as argument for the table row building function.
@@ -177,59 +176,66 @@ function theme_wikicompare_comparative_table($variables) {
 /*
  * Ajax callback cunction called by javascript to recover the compared children of the clicked compared
  */
-function get_compared_ajax_response($type = 'ajax') {
+function get_item_list_children_response($method = 'ajax') {
 
-  $cid = $_POST['node_id'];
+  $nid = $_POST['node_id'];
+  $type = $_POST['type'];
+  $subaction = $_POST['subaction'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($type == 'ajax') {
+  if ($method == 'ajax') {
 
-    //If we want to displayed the compared children
+    //If we want to displayed the children
     if ($_POST['action'] == 'display') {
 
       //Recover the children from database
-      $query = db_select('cache_compared', 's');
+      $query = db_select('cache_' . $type, 's');
       $query->addField('s', 'nid', 'nid');
       $query->addField('s', 'title', 'title');
       $query->addField('s', 'has_children', 'has_children');
       $query->addField('r', 'uid', 'uid');
       $query->leftjoin('node_revision', 'r', 's.nid = r.nid');
-      $query->condition("s.parent_compared_id", $cid);
+      $query->condition("s.parent_" . $type . "_id", $nid);
       $result = $query->execute();
 
       //Prepare the array to use as argument for the item list building function
-      $compareds = array();
+      $nodes = array();
+      $fastedit_status = 0;
       foreach ($result as $record) {
-        $compareds[$record->nid] = array(
+        $nodes[$record->nid] = array(
           'nid' => $record->nid,
           'title' => array(
             '#markup' => check_plain($record->title),
           ),
           'has_children' => $record->has_children,
         );
-        //If already displayed in the table, we check it by default
-        if (!empty($_POST['compared_column_ids'])) {
-          if (in_array($record->nid, $_POST['compared_column_ids'])) {
-            $compareds[$record->nid]['displayed'] = True;
+
+        if ($subaction == 'compared_main_table') {
+          //If already displayed in the table, we check it by default
+          if (!empty($_POST['compared_column_ids'])) {
+            if (in_array($record->nid, $_POST['compared_column_ids'])) {
+              $nodes[$record->nid]['displayed'] = True;
+            }
+          }
+          //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
+          if ($GLOBALS['user']->uid != $record->uid) {
+            $nodes[$record->nid]['no-edit'] = True;
+          }
+          if (!empty($_POST['fastedit_status'])) {
+            $fastedit_status = $_POST['fastedit_status'];
           }
         }
-        //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
-        if ($GLOBALS['user']->uid != $record->uid) {
-          $compareds[$record->nid]['no-edit'] = True;
-        }
       }
-      $fastedit_status = 0;
-      if (!empty($_POST['fastedit_toggled'])) {
-        $fastedit_status = $_POST['fastedit_toggled'];
-      }
+
+
       //Building the data for the item list
-      $compared_item_list_data = get_compared_item_list($compareds, $fastedit_status);
+      $item_list_data = get_item_list($nodes, $type, $subaction, $fastedit_status);
       //Rendering the item list
-      $output = theme_item_list(array('items' => $compared_item_list_data, 'type' => 'ul', 'attributes' => array()));
+      $output = theme_item_list(array('items' => $item_list_data, 'type' => 'ul', 'attributes' => array()));
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
-      $commands[] = ajax_command_html('#compared_children_' . $cid, $output);
+      $commands[] = ajax_command_html('#'. $type . '_children_' . $nid, $output);
       $page = array('#type' => 'ajax', '#commands' => $commands);
 
       return $page;
@@ -253,88 +259,139 @@ function get_compared_ajax_response($type = 'ajax') {
 }
 
 /*
- * Function which will build the compared item list. Used in table initial building and in compared ajax callback
+ * Function which will build the item list. Used in table initial building, in compared ajax callback and in modal dialog
  */
-function get_compared_item_list($compareds, $fastedit_status){
+function get_item_list($nodes, $type, $action, $fastedit_status){
 
-  $compared_items = array();
-  foreach ($compareds as $compared){
+  $items = array();
+  foreach ($nodes as $node){
 
-    //If the compared has children, the compared name will become a link calling the callback function to display his children
-    if ($compared['has_children'] == 1){
+    //If the node has children, the node name will become a link calling the callback function to display his children
+    if ($node['has_children'] == 1){
       $title = array(
         '#type' => 'link',
-        '#title' => drupal_render($compared['title']),
-        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the compared_id for recovering his children and if we have to display or hide them
-        '#href' => 'get_compared_ajax_callback/nojs/',
-        '#id' => 'compared_link_' . $compared['nid'],
+        '#title' => drupal_render($node['title']),
+        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the node_id for recovering his children and if we have to display or hide them
+        '#href' => 'get_item_list_children_callback/nojs/',
+        '#id' => $type . '_link_' . $node['nid'],
         '#attributes' => array(
-          'class' => array('compared_link'),
+          'class' => array('list_item_link ' . $action . ' ' . $type),
         ),
       );
     } else {
-      $title = $compared['title'];
+      $title = $node['title'];
     }
 
     //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
     $checkbox_area = '';
-    if ((variable_get('wikicompare_update_compared', 'no-update') != 'no-update') || ($compared['has_children'] != 1)) {
-      $checkbox_settings = array('element' => array(
-        '#title' => $compared['nid'],
-        '#id' => 'compared_checkbox_' . $compared['nid'],
-        '#attributes' => array(
-          'class' => array('compared_checkbox'),
-        ),
-      ));
-      //We were not able to ajaxify the checkbox, so instead the checkbox will call this hidden link
-      $checkbox_link = array(
-        '#type' => 'link',
-        '#title' => 'toggle',
-        //The link for the callback function which will display or hide the column in the table
-        '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/',
-        '#id' => 'compared_checkbox_link_' . $compared['nid'],
-        '#attributes' => array(
-          'class' => array('compared_checkbox_link' => 'compared_checkbox_link', 'hidden' => 'hidden'),
-          'style' => 'display:none',
-        )
-      );
-      if (isset($compared['displayed'])) {
-        $checkbox_settings['element']['#checked'] = True;
-        $checkbox_link['#href'] = 'toogle_compared_checkbox_ajax_callback/nojs/';
-		unset($checkbox_link['#attributes']['class']['hidden']);
-        $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
+    $img_link_to_node = '';
+    if ($action == 'compared_main_table') {
+      if ((variable_get('wikicompare_update_compared', 'no-update') != 'no-update') || ($node['has_children'] != 1)) {
+        $checkbox_settings = array('element' => array(
+          '#title' => $node['nid'],
+          '#id' => 'compared_checkbox_' . $node['nid'],
+          '#attributes' => array(
+            'class' => array('compared_checkbox'),
+          ),
+        ));
+        //We were not able to ajaxify the checkbox, so instead the checkbox will call this hidden link
+        $checkbox_link = array(
+          '#type' => 'link',
+          '#title' => 'toggle',
+          //The link for the callback function which will display or hide the column in the table
+          '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/',
+          '#id' => 'compared_checkbox_link_' . $node['nid'],
+          '#attributes' => array(
+            'class' => array('compared_checkbox_link' => 'compared_checkbox_link', 'hidden' => 'hidden'),
+            'style' => 'display:none',
+          )
+        );
+        if (isset($node['displayed'])) {
+          $checkbox_settings['element']['#checked'] = True;
+          $checkbox_link['#href'] = 'toogle_compared_checkbox_ajax_callback/nojs/';
+		  unset($checkbox_link['#attributes']['class']['hidden']);
+          $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
+        }
+        $checkbox = theme_checkbox($checkbox_settings);
+        $checkbox_area = $checkbox . ' ' . drupal_render($checkbox_link);
       }
-      $checkbox = theme_checkbox($checkbox_settings);
-      $checkbox_area = $checkbox . ' ' . drupal_render($checkbox_link);
+
+      //Create the image link to go to the node page
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to compared ') . $node['nid'],
+        'height' => '100%',
+      ));
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link_to_node = ' ' . l($img, 'node/' . $node['nid'], array('attributes' => array('id' => 'compared_node_link_' . $node['nid'], 'class' => array('compared_node_link')), 'html' => True));
+
+      if ($fastedit_status == 1) {
+        $img_link_to_node .= add_fastedit_items('compared', $node);
+      }
     }
 
-    //Create the image link to go to the node page
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to compared ') . $compared['nid'],
-      'height' => '100%',
-    ));
-    //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $compared['nid'], array('attributes' => array('id' => 'compared_node_link_' . $compared['nid'], 'class' => array('compared_node_link')), 'html' => True));
-
-    if ($fastedit_status == 1) {
-      $img_link_to_node .= add_fastedit_items('compared', $compared);
+    if ($action == 'select_multi_dialog') {
+      if ($node['has_children'] != 1) {
+        $checkbox_settings = array('element' => array(
+          '#title' => $node['nid'],
+          '#id' => $type . '_checkbox_' . $node['nid'],
+          '#attributes' => array(
+            'class' => array($type . '_checkbox_dialog'),
+          ),
+        ));
+        $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
+      }
     }
     
-    $compared_items[$compared['nid']]['id'] = 'compared_item_' . $compared['nid'];
-    $compared_items[$compared['nid']]['data'] = $checkbox_area . drupal_render($title) . ' ' . $img_link_to_node;
-    $compared_items[$compared['nid']]['class'] = array('compared_item');
+    $items[$node['nid']]['id'] = $type . '_item_' . $node['nid'];
+    $items[$node['nid']]['data'] = $checkbox_area . drupal_render($title) . $img_link_to_node;
+    $items[$node['nid']]['class'] = array('list_item');
 
     //After the compared, we add the div which will contain the children
-    $compared_items[$compared['nid']]['data'] = $compared_items[$compared['nid']]['data'] . '<div id="compared_children_' . $compared['nid'] . '"  style="display:none;"></div>';
+    $items[$node['nid']]['data'] = $items[$node['nid']]['data'] . '<div id="' . $type . '_children_' . $node['nid'] . '"  style="display:none;"></div>';
 
 
   }
 
-  return $compared_items;
+  return $items;
 
 }
 
+function get_select_feature_dialog_response(){
+
+
+  $output = t("<div id='dialog-content'>");
+
+
+  //Find all the features on the first level of the tree
+  $query = db_select('cache_feature', 'f');
+  $query->addField('f', 'nid', 'nid');
+  $query->addField('f', 'title', 'title');
+  $query->addField('f', 'has_children', 'has_children');
+  $query->condition('f.parent_feature_id', NULL);
+  $query->condition('f.state', 'Published', '=');
+  $result = $query->execute();
+
+  $features = array();
+  foreach ($result as $record) {
+    $features[$record->nid] = array(
+      'nid' => $record->nid,
+      'title' => array(
+        '#markup' => check_plain($record->title),
+      ),
+      'has_children' => $record->has_children,
+    );
+  }
+
+  //Building the data for the item list
+  $item_list_data = get_item_list($features, 'feature', 'select_multi_dialog', 0);
+
+  $output .= theme_item_list(array('items' => $item_list_data, 'type' => 'ul', 'attributes' => array()));
+
+  $output .= t("</div>");
+  return $output;
+
+}
 
 /*
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
