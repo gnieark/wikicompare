@@ -28,7 +28,29 @@ Drupal.behaviors.WikicompareComparativeTable = {
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, subaction);
     });
 
+    //Dynamize the checkbox so it add the item in the return and mark the parent with css class
+    $('.checkbox_dialog:not(.event_set)').addClass('event_set').each(function () {
+      //Recover the node_id
+      var patt = /[0-9]+/g;
+      var node_id = patt.exec($(this).attr('id'));
+      //Set the onclick event
+      $('#' + $(this).attr('id')).click(function() {
+        selected_feature_ids[node_id] = node_id;
+        if ($(this).attr('value') == 1) {
 
+        } else {
+        //TODODODODODO unset key in array
+        }
+      });
+    });
+//TODODODODO insert in array on dialog submit
+
+    $('#compute_table_button:not(.event_set)').addClass('event_set').each(function () {
+      $('#' + $(this).attr('id')).click(function() {
+alert(selected_feature_ids.toSource());
+      return false;
+      });
+    });
 
     //Ajaxify the feature link
     $('.feature_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
@@ -75,6 +97,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       
       //Set global variable
       fastedit_status = 0;
+      selected_feature_ids = new Array();
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit');
@@ -495,4 +518,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Rajouter un champ ajax qui fera apparaitre un popup sur le champ parent compared/feature. Ce code sera réutilisé dans les page d'édition.
 //TODO Rajouter sur le bouton calculer l'affichage des feature new/incomplete/obsolete
 //TODO Afficher un popup pour selectionner manuellement les feature qui nous interesse, et recalculer le tableau au clic sur "calculer"
+//TODO bouger l'initialisation des variables globales dans un endroit plus sur
 })(jQuery);

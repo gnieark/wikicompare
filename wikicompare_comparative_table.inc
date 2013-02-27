@@ -119,6 +119,7 @@ function theme_wikicompare_comparative_table($variables) {
   );
   $output .= '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
   
+  $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/></p>';
   
   //Prepare the array to use as argument for the table row building function.
   $features = array();
@@ -336,7 +337,7 @@ function get_item_list($nodes, $type, $action, $fastedit_status){
           '#title' => $node['nid'],
           '#id' => $type . '_checkbox_' . $node['nid'],
           '#attributes' => array(
-            'class' => array($type . '_checkbox_dialog'),
+            'class' => array('checkbox_dialog'),
           ),
         ));
         $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
