@@ -119,7 +119,19 @@ function theme_wikicompare_comparative_table($variables) {
   );
   $output .= '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
   
-  $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/></p>';
+
+  //Add the compute button
+  $compute_link = array(
+    '#type' => 'link',
+    '#title' => 'Compute',
+    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
+    '#href' => 'compute_comparative_table_callback/nojs',
+    '#id' => 'compute_table_link',
+    '#attributes' => array(
+      'style' => 'display:none',
+    ),
+  );
+  $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/>' . drupal_render($compute_link) . '</p>';
   
   //Prepare the array to use as argument for the table row building function.
   $features = array();
@@ -528,10 +540,14 @@ function get_feature_ajax_response($type = 'ajax') {
 /*
  * Function which will build the features row. Used in table initial building and in feature ajax callback
  */
-function get_feature_rows($features, $fastedit_status){
+function get_feature_rows($features, $compareds, $implementations, $fastedit_status){
 
   $rows = array();
-  foreach ($features as $feature){
+  foreach ($features as $feature_array){
+
+    $feature = $feature_array['data'];
+
+//TODO probably, changer les array en objet
 
     //Create the image link to go to the node page
     $img = theme('image', array(
@@ -563,8 +579,21 @@ function get_feature_rows($features, $fastedit_status){
     $rows[$feature['nid']]['id'] = 'feature_row_' . $feature['nid'];
     //Creating the first cell of the row, containing the feature details
     $rows[$feature['nid']]['data'][0] = '<td>' . drupal_render($title) . ' ' . $img_link_to_node  . '<br/> Weight : ' .  drupal_render($feature['weight']) . '<br/> Type : ' . $feature['type'] . '</td>';
+
+    $children = get_feature_rows($feature_array['children'], $compareds, $implementations, $fastedit_status);
+    
+
     //Adding one cell for each implementation, which contain the details of the cells
-    foreach ($feature['implementations'] as $implementation) {
+    foreach ($compareds as $compared) {
+
+      $computation_ressource = array();
+      foreach ($children as $child_feature_id => $child) {
+        $computation_ressource[$child_feature_id]['percent'] = 
+        $computation_ressource[$child_feature_id]['weight'] = 
+      }
+
+      //TODO call the function to compute percent and css_class for this implementation from the percent and weight children
+
       //Create the image link to go to the node page
       $img = theme('image', array(
         'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
@@ -577,7 +606,7 @@ function get_feature_rows($features, $fastedit_status){
         $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
       }
 
-      $rows[$feature['nid']]['data'][] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $implementation['compared_id'] . ' implementation_feature_' . $feature['nid'] . '">' . $implementation['nid'] . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation['feature_id'] . '<br/>Compared : ' . $implementation['compared_id'] . '<br/>' . $implementation['percent'] . '%</td>';
+      $rows[$feature['nid']]['data'][$compared] = '<td id="implementation_' . $implementation['nid'] . '" class="implementation_cell ' . $implementation['css_class'] . ' implementation_compared_' . $implementation['compared_id'] . ' implementation_feature_' . $feature['nid'] . '">' . $implementation['nid'] . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation['feature_id'] . '<br/>Compared : ' . $implementation['compared_id'] . '<br/>' . $implementation['percent'] . '%</td>';
 
     }
 
@@ -691,6 +720,129 @@ function toggle_compared_checkbox_ajax_response($type='ajax'){
     $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
     return $output;
   }
+
+}
+
+
+function compute_comparative_table_response($method = 'ajax') {
+
+dpm($_POST);
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($method == 'ajax') {
+
+  //Since in javascript we use an associative array for storing the selected_feature_ids, we need to remove the [0] in the array
+  $selected_feature_ids = array();
+  foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
+    $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
+  }
+
+
+  $feature_array = array();
+
+  if ($selected_feature_ids) {
+    $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
+  }
+dpm($feature_array);
+
+
+  if (!empty($feature_array['ids'])) {
+    //Recover the implementation needed for the cells
+    $query = db_select('cache_implementation', 'i');
+    $query->addField('i', 'nid', 'nid');
+    $query->addField('i', 'feature_id', 'feature_id');
+    $query->addField('i', 'compared_id', 'compared_id');
+    $query->addField('ctc', 'percent', 'percent');
+    $query->addField('ctc', 'css_class', 'css_class');
+//    $query->addField('r', 'uid', 'uid'); TODO
+    $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
+//    $query->leftjoin('node_revision', 'r', 'i.nid = r.nid');
+    $query->condition("i.compared_id", $_POST('compared_column_ids');
+    $query->condition("i.feature_id", $feature_array['ids'], 'in');
+    $result = $query->execute();
+
+  }
+
+  //Insert the implementations in an array with their compared as key so we can then add them in the feature array
+  $implementations = array();
+  foreach ($result as $record) {
+    $implementations[$record->feature_id][$record->compared_id][$record->nid] = $record;
+/*    $implementations[$record->feature_id][$record->compared_id]['feature_id'] = $record->feature_id;
+    $implementations[$record->feature_id][$record->compared_id]['compared_id'] = $record->compared_id;
+    $implementations[$record->feature_id][$record->compared_id]['percent'] = $record->percent;
+    $implementations[$record->feature_id][$record->compared_id]['css_class'] = $record->css_class;*/
+    //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
+/*    if ($GLOBALS['user']->uid != $record->uid) {
+      $implementations[$record->feature_id][$record->compared_id]['no-edit'] = True;
+    }*/
+  }
+  //Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
+/*  foreach ($features_array['ids'] as $key => $feature) {
+    foreach ($_POST['compared_column_ids'] as $compared_id) {
+      $features_array['tree'][$key]['implementations'][] = $implementations[$key][$compared_id];
+    }
+  }*/
+  
+  $fastedit_status = 0;
+  if (!empty($_POST['fastedit_status'])) {
+    $fastedit_status = $_POST['fastedit_status'];
+  }
+  //Building the data for the table row
+  $feature_row_data = get_feature_rows($features_array['tree'], $_POST['compared_columns_ids'], $implementations, $fastedit_status);
+
+
+
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
+
+}
+
+function build_feature_tree($feature_ids, $features_array){
+
+  $parent_ids = array();
+
+  //No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
+  $query = db_select('cache_feature', 's');
+  $query->addField('s', 'nid', 'nid');
+  $query->addField('s', 'title', 'title');
+  $query->addField('s', 'weight', 'weight');
+  $query->addField('s', 'type', 'type');
+  $query->addField('s', 'parent_feature_id', 'parent_id');
+  $query->addField('s', 'has_children', 'has_children');
+//  $query->addField('r', 'uid', 'uid'); //TODO
+//  $query->leftjoin('node_revision', 'r', 's.nid = r.nid');
+  $query->condition("s.nid", $feature_ids, 'in');
+  $result = $query->execute();
+
+  foreach ($result as $record) {
+    $node_array = array();
+    $node_array['data'] = $record;
+    //Check if some children of this node launched the recursive function to find this node as their parent. Then assign them as children of this node and unset the node in the array.
+    if (isset($features_array['parent_ressource'][$record->nid]['children'])) {
+      $node_array['children'] = $features_array['parent_ressource'][$record->nid]['children'];
+      unset($features_array['parent_ressource'][$record->nid]);
+    }
+
+    //Build a list of all id, parent and children, to use them in implementation sql request
+    $features_array['ids'][$record->nid] = $record->nid;
+
+    //If the node has parent, assign him in the parent array and tell the recursive function to find the parent next time. Else, set the node at the root of the array.
+    if ($record->parent_id) {
+      $features_array['parent_ressource'][$record->parent_id]['children'][$record->nid] = $node_array;
+      $parent_ids[$record->parent_id] = $record->parent_id;
+    } else {
+      $features_array['tree'][$record->nid] = $node_array;
+    }
+  }
+
+  //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
+  if ($parent_ids){
+    $features_array = build_feature_tree($parent_ids, $features_array);
+  }
+  
+  return $features_array;
 
 }
 

@@ -35,22 +35,35 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var node_id = patt.exec($(this).attr('id'));
       //Set the onclick event
       $('#' + $(this).attr('id')).click(function() {
-        selected_feature_ids[node_id] = node_id;
-        if ($(this).attr('value') == 1) {
-
+        
+        if ($(this).attr('checked')) {
+          selected_feature_ids[node_id] = node_id;
         } else {
-        //TODODODODODO unset key in array
+          delete selected_feature_ids[node_id];
         }
       });
     });
-//TODODODODO insert in array on dialog submit
+//TODO Add has_selected_children to parent class thanks to a recursive function
+//TODO add all parent in the selected_feature_ids
 
     $('#compute_table_button:not(.event_set)').addClass('event_set').each(function () {
       $('#' + $(this).attr('id')).click(function() {
-alert(selected_feature_ids.toSource());
-      return false;
+        $('#compute_table_link').click();
+        return false;
       });
     });
+
+
+    //Ajaxify the compute table link
+    $('#compute_table_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_table');
+    });
+
 
     //Ajaxify the feature link
     $('.feature_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
@@ -97,7 +110,7 @@ alert(selected_feature_ids.toSource());
       
       //Set global variable
       fastedit_status = 0;
-      selected_feature_ids = new Array();
+      selected_feature_ids = {};
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit');
@@ -235,7 +248,7 @@ alert(selected_feature_ids.toSource());
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
         
-        if (action != 'toogle_fastedit') {
+        if ((action != 'toogle_fastedit') && (action != 'compute_table')) {
           //Add the clicked node in argument
           options.data.node_id = node_id[0];
         }
@@ -246,6 +259,7 @@ alert(selected_feature_ids.toSource());
         send_compareds_columns = false;
         send_features = false;
         send_implementations = false;
+        send_selected_features = false;
         
         if ('expand_list_children') {
           manage_displayed_flag = true;
@@ -262,6 +276,11 @@ alert(selected_feature_ids.toSource());
         if (action == 'toogle_compared_checkbox') {
           manage_displayed_flag = true;
           send_features = true;
+        }
+
+        if (action == 'compute_table') {
+          send_compareds_columns = true;
+          send_selected_features = true;
         }
         
         if (action == 'toogle_fastedit') {
@@ -365,6 +384,11 @@ alert(selected_feature_ids.toSource());
           options.data.implementation_ids = implementation_ids;
         }
 
+        if (send_selected_features == true) {
+          //Recover all manually selected feature to send their id to drupal
+          //Add them in the ajax call variables
+          options.data.selected_feature_ids = selected_feature_ids;
+        }
         
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
@@ -519,4 +543,9 @@ alert(selected_feature_ids.toSource());
 //TODO Rajouter sur le bouton calculer l'affichage des feature new/incomplete/obsolete
 //TODO Afficher un popup pour selectionner manuellement les feature qui nous interesse, et recalculer le tableau au clic sur "calculer"
 //TODO bouger l'initialisation des variables globales dans un endroit plus sur
+//TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
+//TODO isoler le test ajax dans une fonction a part
+//TODOfaire un submit sur les select_multi_dialog, qui vont ensuite refresh l'arbo selectionné sur la page principale. 
+//TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
+//TODO Centraliser toutes les requetes SQL dans une même fonction
 })(jQuery);
