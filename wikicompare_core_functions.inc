@@ -296,7 +296,11 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
 
     //If the feature is of type weighted average, it'll use the children through feature axis to compute the percent
-    } elseif ($node->type == 'parent-weighted-average') {
+    } else {
+
+      $node = wikicompare_compute_percent($node, $node->through_feature_childs);
+/*
+if ($node->type == 'parent-weighted-average') {
 
       $total = 0;
       $count = 0;
@@ -333,7 +337,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
       }
       $node->css_class = find_css_class($node->percent);
-
+*/
     }
 
     //If a children through compared axis is higher than the value computed, then it'll be used instead
@@ -422,6 +426,52 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
   return $res;
 
 }
+
+
+function wikicompare_compute_percent($node, $through_feature_childs) {
+
+    if ($node->type == 'parent-weighted-average') {
+
+      $total = 0;
+      $count = 0;
+      foreach($through_feature_childs as $child) {
+        $total += $child->percent * $child->weight;
+        $count += $child->weight;
+      }
+
+      //Security to avoid the divided by 0
+      if ($count == 0) {
+        $count = 1;
+      }
+
+      $node->percent = round(($total / $count),4);
+      $node->css_class = find_css_class($node->percent);
+
+    //If the feature is of type highest percentage, it'll use the children through feature axis to compute the percent
+    } elseif ($node->type == 'parent-highest-percentage') {
+      $node->percent = 0;
+      $node->css_class = 'cell-support-no';
+      foreach($through_feature_childs as $child) {
+
+          //Security if weight field is misconfigured
+          if ($child->weight > 100) {
+            $child->weight = 100;
+          }
+
+          //Compute the value for this children.
+          $child_percent = round(($child->percent * $child->weight / 100), 4);
+          //If percent for this children is highter, then it'll be the value computed
+          if ($child_percent >= $node->percent) {
+            $node->percent = $child_percent;
+          }
+
+      }
+      $node->css_class = find_css_class($node->percent);
+    }
+
+    return $node;
+}
+
 
 /*
  * Function used to computed the css_class according to the percent value
