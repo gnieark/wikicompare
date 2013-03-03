@@ -46,6 +46,7 @@ function wikicompare_comparative_table($form_state) {
   $query->addField('f', 'title', 'title');
   $query->addField('f', 'type', 'type');
   $query->addField('f', 'weight', 'weight');
+  $query->addField('f', 'parent_feature_id', 'parent_id');
   $query->addField('f', 'has_children', 'has_children');
   $query->condition('f.parent_feature_id', NULL);
   $query->condition('f.state', 'Published', '=');
@@ -151,28 +152,9 @@ dpm($form);
     );
   }*/
   
-  //Building the data for the table
-  $feature_rows = get_feature_rows($form['#feature_items'], array(), array(), 0);
 
+  $output .= render_comparative_table($form['#feature_items'], array(), array(), 0, 0);
 
-  //Prepare the header of the table. As this point we have no compared column displayed so only the first column with the feature will be displayed
-  $header = array(t('Features'));
-
-  //Building the table
-  $output .= '<table id="comparative_table">';
-  $output .= '<thead>';
-  $output .= '<tr id="comparative_table_header">';
-  $output .= '<th>' . t('Features') . '</th>';
-  $output .= '</tr>';
-  $output .= '</thead>';
-  $output .= '<tbody>';
-  foreach ($feature_rows as $row) {
-    $output .= '<tr id="'. $row['id'] . '" class="feature_row">';
-    $output .= $row['data'][0];
-    $output .= '</tr>';
-  }
-  $output .= '</tbody>';
-  $output .= '</table>';
 
   //Add the link to go on FastEdit mode
   $toogle_link = array(
@@ -248,7 +230,7 @@ function get_item_list_children_response($method = 'ajax') {
       //Building the data for the item list
       $item_list_data = get_item_list($nodes, $type, $subaction, $fastedit_status);
       //Rendering the item list
-      $output = theme_item_list(array('items' => $item_list_data, 'type' => 'ul', 'attributes' => array()));
+      $output = theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
@@ -537,97 +519,6 @@ function get_feature_ajax_response($type = 'ajax') {
 
 
 
-/*
- * Function which will build the features row. Used in table initial building and in feature ajax callback
- */
-function get_feature_rows($features, $compareds, $implementations, $fastedit_status){
-
-  $rows = array();
-  foreach ($features as $feature_array){
-
-dpm($feature_array);
-    $feature = $feature_array['data'];
-
-//TODO probably, changer les array en objet
-
-    //Create the image link to go to the node page
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to feature ') . $feature->nid,
-      'height' => '100%',
-    ));
-    //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $feature->nid, array('attributes' => array('id' => 'feature_node_link_' . $feature->nid, 'class' => array('feature_node_link')), 'html' => True));
-    if ($fastedit_status == 1) {
-      $img_link_to_node .= add_fastedit_items('feature', $feature); 
-    }
-
-    //If the feature has children, the feature name will become a link calling the callback function to display his children
-    if ($feature->has_children == 1){
-      $title_link = array(
-        '#type' => 'link',
-        '#title' => $feature->title . ' ' . $feature->nid,
-        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the feature_id for recovering his children and if we have to display or hide them
-        '#href' => 'get_feature_ajax_callback/nojs/',
-        '#id' => 'feature_link_' . $feature->nid,
-        '#attributes' => array(
-          'class' => array('feature_link'),
-        ),
-      );
-      $title = drupal_render($title_link);
-    } else {
-      $title = $feature->title . ' ' . $feature->nid;
-    }
-    $rows[$feature->nid]['id'] = 'feature_row_' . $feature->nid;
-    //Creating the first cell of the row, containing the feature details
-    $rows[$feature->nid]['data'][0] = '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : ' .  $feature->weight . '<br/> Type : ' . $feature->type . '</td>';
-
-    $children = array();
-    if ($feature_array['children']) {
-      $children = get_feature_rows($feature_array['children'], $compareds, $implementations, $fastedit_status);
-    }
-    
-dpm($compareds, 'compareds');
-    //Adding one cell for each implementation, which contain the details of the cells
-    foreach ($compareds as $compared) {
-
-      $implementation = $implementations[$feature->nid][$compared];
-
-      $through_feature_childs = array();
-      foreach ($children as $child) {
-        $through_feature_childs[$child->nid] = $child;
-      }
-
-      $implementation = wikicompare_compute_percent($implementation, $through_feature_childs);
-      //TODO call the function to compute percent and css_class for this implementation from the percent and weight children
-
-      //Create the image link to go to the node page
-      $img = theme('image', array(
-        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to implementation ') . $implementation->nid,
-        'height' => '100%',
-      ));
-      //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
-      if ($fastedit_status == 1) {
-        $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
-      }
-
-      $rows[$feature->nid]['data'][$compared] = '<td id="implementation_' . $implementation->nid . '" class="implementation_cell ' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature->nid . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation->feature_id . '<br/>Compared : ' . $implementation->compared_id . '<br/>' . $implementation->percent . '%</td>';
-
-    }
-
-    foreach ($children as $child) {
-      $child['no-direct-child'] = True;
-      $rows[$child['id']] = $child;
-    }
-
-
-  }
-
-  return $rows;
-
-}
 
 
 /*
@@ -743,52 +634,52 @@ dpm($_POST);
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
-  //Since in javascript we use an associative array for storing the selected_feature_ids, we need to remove the [0] in the array
-  $selected_feature_ids = array();
-  foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
-    $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
-  }
+    //Since in javascript we use an associative array for storing the selected_feature_ids, we need to remove the [0] in the array
+    $selected_feature_ids = array();
+    foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
+      $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
+    }
 
-  //If empty, javascript return a null string and not an empty array. So we need to assign it in a variable and manage the null case.
-  $compared_columns_ids = array();
-  if ($_POST['compared_column_ids']) {
-    $compared_columns_ids = $_POST['compared_column_ids'];
-  }
+    //If empty, javascript return a null string and not an empty array. So we need to assign it in a variable and manage the null case.
+    $compared_columns_ids = array();
+    if ($_POST['compared_column_ids']) {
+      $compared_columns_ids = $_POST['compared_column_ids'];
+    }
 
 
-  $feature_array = array();
+    $feature_array = array();
 
-  if ($selected_feature_ids) {
-    $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
-  }
+    if ($selected_feature_ids) {
+      $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
+    }
 
 dpm($feature_array);
 
-  $implementations = array();
-  if (!empty($feature_array['ids']) && !empty($compared_columns_ids)) {
+    $implementations = array();
+    if (!empty($feature_array['ids']) && !empty($compared_columns_ids)) {
 
-    //Recover the implementation needed for the cells
-    $query = db_select('cache_implementation', 'i');
-    $query->addField('i', 'nid', 'nid');
-    $query->addField('i', 'feature_id', 'feature_id');
-    $query->addField('i', 'compared_id', 'compared_id');
-    $query->addField('ctc', 'percent', 'percent');
-    $query->addField('ctc', 'css_class', 'css_class');
+      //Recover the implementation needed for the cells
+      $query = db_select('cache_implementation', 'i');
+      $query->addField('i', 'nid', 'nid');
+      $query->addField('i', 'feature_id', 'feature_id');
+      $query->addField('i', 'compared_id', 'compared_id');
+      $query->addField('ctc', 'percent', 'percent');
+      $query->addField('ctc', 'css_class', 'css_class');
 //    $query->addField('r', 'uid', 'uid'); TODO
-    $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
+      $query->leftjoin('cache_comparative_table', 'ctc', 'i.nid = ctc.nid');
 //    $query->leftjoin('node_revision', 'r', 'i.nid = r.nid');
 
-    $query->condition("i.compared_id", $compared_columns_ids, 'in');
-    $query->condition("i.feature_id", $feature_array['ids'], 'in');
-    $result = $query->execute();
+      $query->condition("i.compared_id", $compared_columns_ids, 'in');
+      $query->condition("i.feature_id", $feature_array['ids'], 'in');
+      $result = $query->execute();
 
   
 
 
-    //Insert the implementations in an array with their compared as key so we can then add them in the feature array
+      //Insert the implementations in an array with their compared as key so we can then add them in the feature array
 
-    foreach ($result as $record) {
-      $implementations[$record->feature_id][$record->compared_id] = $record;
+      foreach ($result as $record) {
+        $implementations[$record->feature_id][$record->compared_id] = $record;
 /*    $implementations[$record->feature_id][$record->compared_id]['feature_id'] = $record->feature_id;
     $implementations[$record->feature_id][$record->compared_id]['compared_id'] = $record->compared_id;
     $implementations[$record->feature_id][$record->compared_id]['percent'] = $record->percent;
@@ -797,27 +688,32 @@ dpm($feature_array);
 /*    if ($GLOBALS['user']->uid != $record->uid) {
       $implementations[$record->feature_id][$record->compared_id]['no-edit'] = True;
     }*/
-    }
+      }
   //Insert the implementations in the feature array, using the compared as key. Note that the compared order must be kept because it's the order of the column in the table
 /*  foreach ($features_array['ids'] as $key => $feature) {
     foreach ($_POST['compared_column_ids'] as $compared_id) {
       $features_array['tree'][$key]['implementations'][] = $implementations[$key][$compared_id];
     }
   }*/
-  } 
+    } 
 
-  $fastedit_status = 0;
-  if (!empty($_POST['fastedit_status'])) {
-    $fastedit_status = $_POST['fastedit_status'];
-  }
+    $fastedit_status = 0;
+    if (!empty($_POST['fastedit_status'])) {
+      $fastedit_status = $_POST['fastedit_status'];
+    }
   
-dpm($feature_array);
 dpm($compared_columns_ids);
-dpm($implementations);
-  //Building the data for the table row
-  $feature_row_data = get_feature_rows($feature_array['tree'], $compared_columns_ids, $implementations, $fastedit_status);
+    $output = render_comparative_table($feature_array['tree'], $compared_columns_ids, $implementations, $fastedit_status, 1);
 
-dpm($feature_row_data);
+
+
+dpm($output);
+    //Preparing the ajax commands to return to javascript
+    $commands = array();
+    $commands[] = ajax_command_replace('#comparative_table', $output);
+//    $commands[] = ajax_command_invoke('#comparative_table', 'replace', array($output));
+    $page = array('#type' => 'ajax', '#commands' => $commands);
+    return $page;
 
   //If javascript isn't enabled, we redirect to an error page.
   } else {
@@ -872,6 +768,167 @@ function build_feature_tree($feature_ids, $features_array){
   }
   
   return $features_array;
+
+}
+
+
+function render_comparative_table($features, $compareds, $implementations, $fastedit_status, $precomputed){
+
+  $feature_row_data = get_rows_data($features, $compareds, $implementations);
+dpm($feature_row_data);
+  //Building the table
+  $output = '<table id="comparative_table"';
+  if ($precomputed) {
+    $output .= ' class="computed"';
+  }
+  $output .= '><thead>';
+  $output .= '<tr id="comparative_table_header">';
+  $output .= '<th>' . t('Features') . '</th>';
+  $output .= '</tr>';
+  $output .= '</thead>';
+  $output .= '<tbody>';
+
+
+
+  //Add a row for each feature children
+  foreach ($feature_row_data as $fid => $feature_array) {
+dpm($feature_array);
+    $feature = $feature_array['data'];
+
+    $output .= '<tr id="feature_row_'. $fid . '" class="feature_row';
+    if ($feature->parent_id) {
+        $output .= ' feature_children_' . $feature->parent_id;
+    }
+    $output .= '"';
+    if (!isset($feature_array['root'])) {
+      $output .= ' style="display:none;"';
+    }
+    $output .= '>';
+
+    //Create the image link to go to the node page
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to feature ') . $fid,
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_node = l($img, 'node/' . $fid, array('attributes' => array('id' => 'feature_node_link_' . $fid, 'class' => array('feature_node_link')), 'html' => True));
+    if ($fastedit_status == 1) {
+      $img_link_to_node .= add_fastedit_items('feature', $feature); 
+    }
+
+    //If the feature has children, the feature name will become a link calling the callback function to display his children
+    if ($feature->has_children == 1){
+      $title_link = array(
+        '#type' => 'link',
+        '#title' => $feature->title . ' ' . $fid,
+        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the feature_id for recovering his children and if we have to display or hide them
+        '#href' => 'get_feature_ajax_callback/nojs/',
+        '#id' => 'feature_link_' . $fid,
+        '#attributes' => array(
+          'class' => array('feature_link'),
+        ),
+      );
+      $title = drupal_render($title_link);
+    } else {
+      $title = $feature->title . ' ' . $fid;
+    }
+
+    //Creating the first cell of the row, containing the feature details
+    $output .= '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : ' .  $feature->weight . '<br/> Type : ' . $feature->type . '</td>';
+
+    //Add a column for each column in the table
+    foreach ($feature_array['implementations'] as $implementation) {
+      //Create the image link to go to the node page
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to implementation ') . $implementation->nid,
+        'height' => '100%',
+      ));
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
+      if ($fastedit_status == 1) {
+        $img_link_to_node .= add_fastedit_items('implementation', $implementation); 
+      }
+
+      $output .= '<td id="implementation_' . $implementation->nid . '" class="implementation_cell ' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature->nid . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation->feature_id . '<br/>Compared : ' . $implementation->compared_id . '<br/>' . $implementation->percent . '%</td>';
+    }
+    $output .= '</tr>';
+  }
+  $output .= '</tbody>';
+  $output .= '</table>';
+
+  return $output;
+
+
+}
+
+/*
+ * Function which will build the features row. Used in table initial building and in feature ajax callback
+ */
+function get_rows_data($features, $compareds, $implementations){
+//dpm($implementations);
+  $rows = array();
+  foreach ($features as $fid => $feature){
+    $rows[$fid]['data'] = $feature['data'];
+
+    if ($feature['data']->parent_id) {
+      $rows[$fid]['direct-child'] = True;
+    } else {
+      $rows[$fid]['root'] = True;
+    }
+
+    $children = array();
+    if ($feature['children']) {
+      $children = get_rows_data($feature['children'], $compareds, $implementations, $fastedit_status);
+    }
+
+    $direct_children = array();
+    foreach ($children as $key => $child) {
+      if (isset($child['direct-child'])) {
+        $direct_children[$key] = $child;
+        unset($children[$key]['direct-child']);
+      }
+      
+    }
+dpm($direct_children, 'direct_children');    
+//dpm($compareds, 'compareds');
+
+    $rows[$fid]['implementations'] = array();
+    //Adding one cell for each implementation, which contain the details of the cells
+    foreach ($compareds as $compared) {
+//dpm($compared, 'compared');
+
+      $implementation = $implementations[$fid][$compared];
+      //The type will be used in the wikicompare_compute_percent function
+      $implementation->type = $feature['data']->type;
+      //The weight will be used in the parent wikicompare_compute_percent function
+      $implementation->weight = $feature['data']->weight;
+//dpm($implementation, 'implementation');
+
+      $through_feature_childs = array();
+      foreach ($direct_children as $child) {
+        $child_implementation = $child['implementations'][$compared];
+        $through_feature_childs[$child_implementation->feature_id] = $child_implementation;
+      }
+//dpm($through_feature_childs, '$through_feature_childs');
+dpm($implementation, 'before implementation');
+      if ($feature->has_children) {
+        $implementation = wikicompare_compute_percent($implementation, $through_feature_childs);
+      }
+dpm($implementation, 'implementation');
+      $rows[$fid]['implementations'][$compared] = $implementation;
+//dpm($rows, 'rows');
+    }
+
+    foreach ($children as $key=> $child) {
+      $rows[$key] = $child;
+    }
+
+
+  }
+
+  return $rows;
 
 }
 

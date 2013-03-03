@@ -72,7 +72,22 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var link_id = $(this).attr('id');
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children');
+      if ($('#comparative_table').hasClass('computed')) {
+        $('#' + link_id).click(function() {
+          var patt = /[0-9]+/g;
+          var node_id = patt.exec(link_id);
+          if (!$('#' + link_id).hasClass('displayed')) {
+            $('.feature_children_' + node_id).show();
+            $('#' + link_id).addClass('displayed');
+          } else {
+            remove_feature_children_row(node_id);
+            $('#' + link_id).removeClass('displayed');
+          }
+          return false;
+        });
+      } else {
+        Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children');
+      }
     });
 
 
@@ -548,4 +563,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODOfaire un submit sur les select_multi_dialog, qui vont ensuite refresh l'arbo selectionné sur la page principale. 
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
 //TODO Centraliser toutes les requetes SQL dans une même fonction
+//TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
 })(jQuery);
