@@ -80,7 +80,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('.feature_children_' + node_id).show();
             $('#' + link_id).addClass('displayed');
           } else {
-            remove_feature_children_row(node_id);
+            remove_feature_children_row(node_id, true);
             $('#' + link_id).removeClass('displayed');
           }
           return false;
@@ -270,6 +270,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         options.data.fastedit_status = fastedit_status;
         
         manage_displayed_flag = false;
+        send_computed_status = false;
         send_compareds = false;
         send_compareds_columns = false;
         send_features = false;
@@ -289,6 +290,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         if (action == 'toogle_compared_checkbox') {
+          send_computed_status = true;
           manage_displayed_flag = true;
           send_features = true;
         }
@@ -342,6 +344,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.action = 'display';
           }
         }
+
+        if (send_computed_status == true) {
+          if ($('#comparative_table').hasClass('computed')) {
+            options.data.computed = 1;
+          } else {
+            options.data.computed = 0;
+          }
+        }
         
         if (send_compareds == true) {
           //Recover all compared columns displayed in the table to send their id to drupal
@@ -378,7 +388,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.feature_row').each(function (key, value) {
             var row_id = $('#' + $(this).attr('id'));
             var patt = /[0-9]+/g;
-            feature_ids[i] = patt.exec($(this).attr('id'));
+            feature_ids[i] = patt.exec($(this).attr('id'))[0];
             i = i + 1;
           });
           //Add them in the ajax call variables
@@ -485,7 +495,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
             if (action == 'expand_row_children') {
               //Hide the children with slide animation
-              remove_feature_children_row(node_id);
+              remove_feature_children_row(node_id, false);
               //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
               $('.feature_children_' + node_id).addClass('to_remove');
             }
@@ -520,14 +530,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
     }
     
     
-    function remove_feature_children_row(feature_id) {
+    function remove_feature_children_row(feature_id, computed) {
       $('.feature_children_' + feature_id).each(function(index) {
         var patt = /[0-9]+/g;
         var feature_child_id = patt.exec($(this).attr('id'));
-        remove_feature_children_row(feature_child_id);
+        remove_feature_children_row(feature_child_id, computed);
       });
       //TODO replace with a slideUp()
       $('.feature_children_' + feature_id).hide();
+      //We need to remove the class when the row isn't deleted, especially when the table is computed
+      $('.feature_link_children_' + feature_id).removeClass('displayed');
+      if (!computed == true) {
+        $('.feature_children_' + feature_id).addClass('to_remove');
+      }
     }
     
     function clean_fastedit_forms() {
@@ -564,4 +579,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
 //TODO Centraliser toutes les requetes SQL dans une même fonction
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
+//TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 })(jQuery);

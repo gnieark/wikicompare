@@ -430,6 +430,8 @@ if ($node->type == 'parent-weighted-average') {
 
 function wikicompare_compute_percent($node, $through_feature_childs) {
 
+dpm($node, 'node');
+dpm($through_feature_childs,'through');
     if ($node->type == 'parent-weighted-average') {
 
       $total = 0;
@@ -468,7 +470,7 @@ function wikicompare_compute_percent($node, $through_feature_childs) {
       }
       $node->css_class = find_css_class($node->percent);
     }
-
+dpm($node);
     return $node;
 }
 
@@ -675,7 +677,7 @@ function wikicompare_flush_caches() {
   $implementations = array();
   foreach($result as $record) {
 
-    if ($record->support == "Supported") {
+    if ($record->support == 1) {
       $support = 1;
     } else {
       $support = 0;
