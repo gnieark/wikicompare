@@ -121,6 +121,16 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table.inc',
   );
 
+  $items['submit_dialog_callback'] = array(
+    'page callback' => 'submit_dialog_response',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'page arguments' => array(),
+    'type' => MENU_CALLBACK,
+    'file' => 'wikicompare_comparative_table.inc',
+    'delivery callback' => 'ajax_deliver',
+  );
+
   $items['compute_comparative_table_callback'] = array(
     'page callback' => 'compute_comparative_table_response',
     'access callback' => 'user_access',

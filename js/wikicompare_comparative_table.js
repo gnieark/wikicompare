@@ -24,9 +24,25 @@ Drupal.behaviors.WikicompareComparativeTable = {
         subaction = 'select_multi_dialog';
       }
 
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, subaction);
+      if ($(this).hasClass('computed')) {
+        $(this).click(function() {
+          var patt = /[0-9]+/g;
+          var node_id = patt.exec(link_id);
+          if (!$(this).hasClass('displayed')) {
+            $('.feature_children_computed_' + node_id).show();
+            $(this).addClass('displayed');
+          } else {
+            $('.feature_children_computed_' + node_id).hide();
+            $(this).removeClass('displayed');
+          }
+          return false;
+        });
+      } else {
+        Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, subaction);
+      }
     });
+
+//TODO make the hide recursive
 
     //Dynamize the checkbox so it add the item in the return and mark the parent with css class
     $('.checkbox_dialog:not(.event_set)').addClass('event_set').each(function () {
@@ -37,14 +53,36 @@ Drupal.behaviors.WikicompareComparativeTable = {
       $('#' + $(this).attr('id')).click(function() {
         
         if ($(this).attr('checked')) {
-          selected_feature_ids[node_id] = node_id;
+          selected_feature_dialog_ids[node_id] = node_id;
         } else {
-          delete selected_feature_ids[node_id];
+          delete selected_feature_dialog_ids[node_id];
         }
       });
     });
 //TODO Add has_selected_children to parent class thanks to a recursive function
-//TODO add all parent in the selected_feature_ids
+//TODO Set dialog as checked if already existing
+
+    $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
+        selected_feature_dialog_ids = selected_feature_ids;
+alert(selected_feature_dialog_ids.toSource());
+    });
+    
+    $('#submit_dialog_button:not(.event_set)').addClass('event_set').each(function () {
+      $('#' + $(this).attr('id')).click(function() {
+        $('#submit_dialog_link').click();
+        return false;
+      });
+    });
+
+    $('#submit_dialog_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_dialog');
+    });
+
 
     $('#compute_table_button:not(.event_set)').addClass('event_set').each(function () {
       $('#' + $(this).attr('id')).click(function() {
@@ -126,6 +164,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Set global variable
       fastedit_status = 0;
       selected_feature_ids = {};
+
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit');
@@ -263,13 +302,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
         
-        if ((action != 'toogle_fastedit') && (action != 'compute_table')) {
-          //Add the clicked node in argument
-          options.data.node_id = node_id[0];
-        }
+
         options.data.fastedit_status = fastedit_status;
         
         manage_displayed_flag = false;
+        send_node_id = false;
         send_computed_status = false;
         send_compareds = false;
         send_compareds_columns = false;
@@ -277,7 +314,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_implementations = false;
         send_selected_features = false;
         
-        if ('expand_list_children') {
+        if (action == 'expand_list_children') {
+          send_node_id = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
           options.data.type = type;
@@ -285,16 +323,23 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         if (action == 'expand_row_children') {
+          send_node_id = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
         }
         
         if (action == 'toogle_compared_checkbox') {
+          send_node_id = true;
           send_computed_status = true;
           manage_displayed_flag = true;
           send_features = true;
         }
 
+        if (action == 'submit_dialog') {
+          selected_feature_ids = selected_feature_dialog_ids;
+          send_selected_features = true;
+        }
+  
         if (action == 'compute_table') {
           send_compareds_columns = true;
           send_selected_features = true;
@@ -309,13 +354,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         
         if (action == 'show_fastedit_form') {
+          send_node_id = true;
           manage_displayed_flag = true;
           
           options.data.type = type;
           options.data.fastaction = subaction;
         }
-        
+     
         if (action == 'submit_fastedit_form') {
+          send_node_id = true;
           options.data.type = type;
           options.data.fastaction = subaction;
           
@@ -343,6 +390,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (!$('#' + link_id).hasClass('displayed')) {
             options.data.action = 'display';
           }
+        }
+
+        if (send_node_id == true) {
+          //Add the clicked node in argument
+          options.data.node_id = node_id[0];
         }
 
         if (send_computed_status == true) {
@@ -580,4 +632,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Centraliser toutes les requetes SQL dans une même fonction
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
+
 })(jQuery);
