@@ -143,7 +143,7 @@ function theme_wikicompare_comparative_table($variables) {
   //Prepare the array to use as argument for the table row building function.
   $features = array();
   //element_children is used to avoid the children beginning by # which are inserted by drupal in $form
-dpm($form);
+//dpm($form);
 /*  foreach (element_children($form['feature_items']) as $fid) {
     $features[$fid] = array(
       'nid' => $fid,
@@ -180,12 +180,15 @@ dpm($form);
  */
 function get_item_list_children_response($method = 'ajax') {
 
+dpm($_POST);
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
   $subaction = $_POST['subaction'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
+
+
 
     //If we want to displayed the children
     if ($_POST['action'] == 'display') {
@@ -210,7 +213,7 @@ function get_item_list_children_response($method = 'ajax') {
           //If already displayed in the table, we check it by default
           if (!empty($_POST['compared_column_ids'])) {
             if (in_array($record->nid, $_POST['compared_column_ids'])) {
-              $nodes[$record->nid]['displayed'] = True;
+              $nodes[$record->nid]['data']->displayed = True;
             }
           }
           //For fastedit, If the node was created by or have some revision from other users, current user will not be able to edit it
@@ -221,8 +224,21 @@ function get_item_list_children_response($method = 'ajax') {
             $fastedit_status = $_POST['fastedit_status'];
           }
         }
-      }
 
+        if ($subaction == 'select_multi_dialog') {
+
+          //Since in javascript we use an associative array for storing the selected_feature_ids, we need to remove the [0] in the array
+          $selected_feature_ids = array();
+          foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
+            $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
+          }
+
+          if (in_array($record->nid, $selected_feature_ids)) {
+            $nodes[$record->nid]['data']->displayed = True;
+          }
+        }
+      }
+dpm($nodes);
 
       //Building the data for the item list
       $item_list_data = get_item_list($nodes, $type, $subaction, $fastedit_status, 0);
@@ -259,7 +275,7 @@ function get_item_list_children_response($method = 'ajax') {
  */
 function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node){
 
-dpm($nodes);
+//dpm($nodes);
   $items = array();
   foreach ($nodes as $nid => $node_array){
 
@@ -342,6 +358,9 @@ dpm($nodes);
             'class' => array('checkbox_dialog'),
           ),
         ));
+        if (isset($node->displayed)) {
+          $checkbox_settings['element']['#checked'] = True;
+        }
         $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
       }
     }
@@ -418,7 +437,7 @@ function get_select_feature_dialog_response(){
 
 function submit_dialog_response($method = 'ajax'){
 
-dpm($_POST);
+//dpm($_POST);
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -435,14 +454,14 @@ dpm($_POST);
       $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
     }
 
-dpm($feature_array);
+//dpm($feature_array);
 
     //Building the data for the item list
     $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0);
-dpm($item_list_data);
+//dpm($item_list_data);
     //Render the item list
     $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
-dpm($output);
+//dpm($output);
 
     $commands = array();
     $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
@@ -703,7 +722,7 @@ function toggle_compared_checkbox_ajax_response($type='ajax'){
 
 function compute_comparative_table_response($method = 'ajax') {
 
-dpm($_POST);
+//dpm($_POST);
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -1042,7 +1061,7 @@ function render_implementation($implementation, $fastedit_status) {
 function get_rows_data($features, $compareds, $implementations, $computed){
 //dpm($implementations);
   $rows = array();
-dpm($features);
+//dpm($features);
   foreach ($features as $fid => $feature){
     $rows[$fid]['data'] = $feature['data'];
 

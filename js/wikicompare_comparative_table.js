@@ -31,9 +31,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (!$(this).hasClass('displayed')) {
             $('.feature_children_computed_' + node_id).show();
             $(this).addClass('displayed');
-          } else {
-            $('.feature_children_computed_' + node_id).hide();
-            $(this).removeClass('displayed');
+          } else { 
+            remove_children_tree(node_id, '#feature_link_', '.feature_children_computed_', false);
           }
           return false;
         });
@@ -41,8 +40,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, subaction);
       }
     });
-
-//TODO make the hide recursive
 
     //Dynamize the checkbox so it add the item in the return and mark the parent with css class
     $('.checkbox_dialog:not(.event_set)').addClass('event_set').each(function () {
@@ -59,12 +56,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
       });
     });
-//TODO Add has_selected_children to parent class thanks to a recursive function
-//TODO Set dialog as checked if already existing
 
     $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
         selected_feature_dialog_ids = selected_feature_ids;
-alert(selected_feature_dialog_ids.toSource());
     });
     
     $('#submit_dialog_button:not(.event_set)').addClass('event_set').each(function () {
@@ -320,6 +314,9 @@ alert(selected_feature_dialog_ids.toSource());
           send_compareds_columns = true;
           options.data.type = type;
           options.data.subaction = subaction;
+          if (subaction == 'select_multi_dialog') {
+            options.data.selected_feature_ids = selected_feature_dialog_ids;
+          }
         }
         
         if (action == 'expand_row_children') {
@@ -547,7 +544,7 @@ alert(selected_feature_dialog_ids.toSource());
           
             if (action == 'expand_row_children') {
               //Hide the children with slide animation
-              remove_feature_children_row(node_id, false);
+              remove_children_tree(node_id, '.feature_link_children_', '.feature_children_', false);
               //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
               $('.feature_children_' + node_id).addClass('to_remove');
             }
@@ -582,18 +579,18 @@ alert(selected_feature_dialog_ids.toSource());
     }
     
     
-    function remove_feature_children_row(feature_id, computed) {
-      $('.feature_children_' + feature_id).each(function(index) {
+    function remove_children_tree(node_id, link_prefix, children_prefix, computed) {
+      $(children_prefix + node_id).each(function(index) {
         var patt = /[0-9]+/g;
-        var feature_child_id = patt.exec($(this).attr('id'));
-        remove_feature_children_row(feature_child_id, computed);
+        var node_child_id = patt.exec($(this).attr('id'));
+        remove_children_tree(node_child_id, link_prefix, children_prefix, computed);
       });
       //TODO replace with a slideUp()
-      $('.feature_children_' + feature_id).hide();
+      $(children_prefix + node_id).hide();
       //We need to remove the class when the row isn't deleted, especially when the table is computed
-      $('.feature_link_children_' + feature_id).removeClass('displayed');
+      $(link_prefix + node_id).removeClass('displayed');
       if (!computed == true) {
-        $('.feature_children_' + feature_id).addClass('to_remove');
+        $(children_prefix + node_id).addClass('to_remove');
       }
     }
     
