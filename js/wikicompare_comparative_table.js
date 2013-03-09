@@ -606,13 +606,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 };
 
 
-//TODO enlever les ajax dans les ajax_response et ajax_callback
 //TODO dans edit et remove, centraliser les controles dans une function
 //TODO faire une fonction qui va recharger les fastedit items et les pourcentages / nom compared feature, données bref tout le tableau.
 //TODO If a form is open, expand un compared clean les fastedit items
-//TODO regrouper autant que possible les fonctions
 //TODO remplacer les if action par des case
-//TODO Remplacer type variable par method pour ajax / nojs
 //TODO mettre les securité dans la fonction submit pour edit et remove
 //TODO ajuster les colspan automatiquement pour les line_fastedit
 //TODO remplacer drupal_render par render
@@ -621,13 +618,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO rajouter un champ sequence dans compared et feature pour les classe. Pas de drag&drop sur la V1 du projet
 //TODO Rajouter un champ ajax qui fera apparaitre un popup sur le champ parent compared/feature. Ce code sera réutilisé dans les page d'édition.
 //TODO Rajouter sur le bouton calculer l'affichage des feature new/incomplete/obsolete
-//TODO Afficher un popup pour selectionner manuellement les feature qui nous interesse, et recalculer le tableau au clic sur "calculer"
 //TODO bouger l'initialisation des variables globales dans un endroit plus sur
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
 //TODO isoler le test ajax dans une fonction a part
-//TODOfaire un submit sur les select_multi_dialog, qui vont ensuite refresh l'arbo selectionné sur la page principale. 
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
-//TODO Centraliser toutes les requetes SQL dans une même fonction
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel

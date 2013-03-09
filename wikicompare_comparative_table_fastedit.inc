@@ -6,10 +6,10 @@
 /*
  * Ajax callback function called by javascript to add or remove the fastedit items in the comparative table.
  */
-function toggle_fastedit_response($type='ajax'){
+function toggle_fastedit_response($method = 'ajax'){
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($type == 'ajax') {
+  if ($method == 'ajax') {
 
     //If we want to displayed the fastedit items
     if ($_POST['fastedit_status'] == false) {
@@ -160,7 +160,7 @@ function add_fastedit_items($type, $node_array){
 /*
  * Ajax callback cunction called by javascript to display the fastedit form
  */
-function get_fastedit_form_response($method='ajax'){
+function get_fastedit_form_response($method = 'ajax'){
 
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
@@ -393,7 +393,7 @@ function get_fastedit_form_response($method='ajax'){
 /*
  * Ajax callback function called by javascript when we submit one of the fastedit form.
  */
-function submit_fastedit_form_response($method='ajax'){
+function submit_fastedit_form_response($method = 'ajax'){
 
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];

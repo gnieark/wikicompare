@@ -204,12 +204,12 @@ dpm($_POST);
 /*
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
-function get_feature_response($type = 'ajax') {
+function get_feature_response($method = 'ajax') {
 
   $fid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($type == 'ajax') {
+  if ($method == 'ajax') {
 
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
@@ -275,12 +275,12 @@ function get_feature_response($type = 'ajax') {
 /*
  * Ajax callback cunction called by javascript to add or remove a column in the comparative table
  */
-function toggle_compared_checkbox_response($type='ajax'){
+function toggle_compared_checkbox_response($method = 'ajax'){
 
   $cid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($type == 'ajax') {
+  if ($method == 'ajax') {
 
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
