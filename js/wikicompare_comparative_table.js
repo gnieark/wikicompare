@@ -105,14 +105,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Active the code
       if ($('#comparative_table').hasClass('computed')) {
-        $('#' + link_id).click(function() {
+        $(this).click(function() {
+
           var patt = /[0-9]+/g;
           var node_id = patt.exec(link_id);
           if (!$('#' + link_id).hasClass('displayed')) {
             $('.feature_children_' + node_id).show();
             $('#' + link_id).addClass('displayed');
           } else {
-            remove_feature_children_row(node_id, true);
+            remove_children_tree(node_id, '.feature_link_children_', '.feature_children_', true);;
             $('#' + link_id).removeClass('displayed');
           }
           return false;
@@ -629,5 +630,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Centraliser toutes les requetes SQL dans une même fonction
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
+//TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
 
 })(jQuery);
