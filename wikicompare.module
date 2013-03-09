@@ -111,6 +111,26 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table.inc',
     'delivery callback' => 'ajax_deliver',
   );
+
+  $items['get_feature_ajax_callback'] = array(
+    'page callback' => 'get_feature_ajax_response',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'page arguments' => array(),
+    'type' => MENU_CALLBACK,
+    'file' => 'wikicompare_comparative_table.inc',
+    'delivery callback' => 'ajax_deliver',
+  );
+
+  $items['toogle_compared_checkbox_ajax_callback'] = array(
+    'page callback' => 'toggle_compared_checkbox_ajax_response',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'page arguments' => array(),
+    'type' => MENU_CALLBACK,
+    'file' => 'wikicompare_comparative_table.inc',
+    'delivery callback' => 'ajax_deliver',
+  );
   
   $items['get_select_feature_dialog_callback'] = array(
     'page callback' => 'get_select_feature_dialog_response',
@@ -141,33 +161,13 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['get_feature_ajax_callback'] = array(
-    'page callback' => 'get_feature_ajax_response',
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
-    'page arguments' => array(),
-    'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table.inc',
-    'delivery callback' => 'ajax_deliver',
-  );
-
-  $items['toogle_compared_checkbox_ajax_callback'] = array(
-    'page callback' => 'toggle_compared_checkbox_ajax_response',
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
-    'page arguments' => array(),
-    'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table.inc',
-    'delivery callback' => 'ajax_deliver',
-  );
-
   $items['toogle_fastedit_callback'] = array(
     'page callback' => 'toggle_fastedit_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
     'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table.inc',
+    'file' => 'wikicompare_comparative_table_fastedit.inc',
     'delivery callback' => 'ajax_deliver',
   );
 
@@ -177,7 +177,7 @@ function wikicompare_menu() {
     'access arguments' => array('access content'),
     'page arguments' => array(),
     'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table.inc',
+    'file' => 'wikicompare_comparative_table_fastedit.inc',
     'delivery callback' => 'ajax_deliver',
   );
   
@@ -187,20 +187,10 @@ function wikicompare_menu() {
     'access arguments' => array('access content'),
     'page arguments' => array(),
     'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table.inc',
+    'file' => 'wikicompare_comparative_table_fastedit.inc',
     'delivery callback' => 'ajax_deliver',
   );
   
-  $items['dummy_ajax_function_callback'] = array(
-    'page callback' => 'dummy_ajax_function_response',
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
-    'page arguments' => array(),
-    'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table.inc',
-    'delivery callback' => 'ajax_deliver',
-  );
-
   return $items;
 }
 

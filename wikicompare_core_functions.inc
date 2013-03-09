@@ -743,5 +743,72 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
 }
 
 
+function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $compareds=NULL, $features=NULL) {
+
+  $res = array();
+
+  $query = db_select('cache_' . $type, 'n');
+  $query->addField('n', 'nid', 'nid');
+  if ($type != 'implementation') {
+    $query->addField('n', 'title', 'title');
+    $query->addField('n', 'has_children', 'has_children');
+    $query->addField('n', 'parent_' . $type . '_id', 'parent_id');
+    if ($type_nid == 'parent') {
+      $query->condition('n.parent_'. $type . '_id', $nids);
+    } else {
+      $query->condition('n.nid', $nids, 'in');
+    }
+  } else {
+    $query->addField('n', 'feature_id', 'feature_id');
+    $query->addField('n', 'compared_id', 'compared_id');
+    $query->addField('ctc', 'percent', 'percent');
+    $query->addField('ctc', 'css_class', 'css_class');
+    $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
+    $query->condition("n.compared_id", $compareds, 'in');
+    $query->condition("n.feature_id", $features, 'in');
+  }
+
+  if ($type == 'feature') {
+    $query->addField('n', 'type', 'type');
+    $query->addField('n', 'weight', 'weight');
+    $query->condition('n.state', 'Published', '=');
+  }
+
+  if ($fastedit_status == 1) {
+    $query->addField('r', 'uid', 'uid');
+    $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
+  }
+
+  $result = $query->execute();
+
+  foreach ($result as $record) {
+
+
+    if ($type != 'implementation') {
+      $res[$record->nid]['data'] = $record;
+      $res[$record->nid]['children'] = array();
+    } else {
+      $res[$record->feature_id][$record->compared_id]['data'] = $record;
+    }
+
+    if ($fastedit_status == 1) {
+      //If the node was created by or have some revision from other users, current user will not be able to fastedit it
+      if ($GLOBALS['user']->uid != $record->uid) {
+        if ($type != 'implementation') {
+          $res[$record->nid]['no-edit'] = True;
+        } else {
+          $res[$record->feature_id][$record->compared_id]['no-edit'] = True;
+        }
+      }
+    }
+
+
+  }
+
+  return $res;
+
+
+}
+
 
 ?>
