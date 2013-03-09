@@ -195,6 +195,8 @@ function get_fastedit_form_response($method = 'ajax'){
     
           $node = node_load($nid);
           
+        } else {
+          $output .= '<span id="parent_id" style="display:none;">' . $nid . '</span>';
         }
       
         if ($type != 'implementation') {
@@ -210,6 +212,35 @@ function get_fastedit_form_response($method = 'ajax'){
             $name_field['#value'] = $node->title;
           }
           $output .= drupal_render($name_field);
+
+
+          if ($fastaction == 'edit') {
+
+            if ($type == 'feature') {
+              $parent_id = $node->feature_parent_feature['und'][0]['target_id'];
+            } elseif ($type == 'compared') {
+              $parent_id = $node->compared_parent_compared['und'][0]['target_id'];
+            }
+
+            $query = db_select('node', 'n');
+            $query->addField('n', 'title', 'title');
+            $query->condition("n.nid", $parent_id);
+            $result = $query->execute();
+            foreach ($result as $record) {
+              $parent_name = $record->title;
+            }
+
+            //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
+            //Add the link to open the select feature popup
+            $select_parent_link = array(
+              'text' => 'Select parent',
+              'title' => 'Select parent',
+              'selector' => 'dialog-content',
+              'path' => 'get_dialog_callback/select_simple_dialog/' . $type,
+            );
+            $output .= '<p><span id="parent_title">' . $parent_name . '</span><span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . '</p>';
+
+          }
 
         }
       
@@ -412,16 +443,6 @@ function submit_fastedit_form_response($method = 'ajax'){
           $node = new stdClass();
           $node->type = $type;
           $node->language = LANGUAGE_NONE;
-          switch ($type) {
-            case 'compared':
-              $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['node_id'];
-              $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
-              break;
-            case 'feature':
-              $node->feature_parent_feature[$node->language][0]['target_id'] = $_POST['node_id'];
-              $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
-              break;
-          }
           break;
         case 'edit':
           $node = node_load($_POST['node_id']);
@@ -431,6 +452,18 @@ function submit_fastedit_form_response($method = 'ajax'){
     
       if ($type != 'implementation') {
         $node->title = $_POST['title'];
+
+        switch ($type) {
+          case 'compared':
+            $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['parent_id'];
+            $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+            break;
+          case 'feature':
+            $node->feature_parent_feature[$node->language][0]['target_id'] = $_POST['parent_id'];
+            $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
+            break;
+        }
+
       }
 
         

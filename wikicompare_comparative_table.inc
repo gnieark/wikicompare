@@ -60,7 +60,7 @@ function theme_wikicompare_comparative_table($variables) {
   //element_children is used to avoid the children beginning by # which are inserted by drupal in $form
 
   //Building the data for the item list
-  $item_list_data = get_item_list($form['#compared_items'], 'compared', 'compared_main_table', 0, 0);
+  $item_list_data = get_item_list($form['#compared_items'], 'compared', 'compared_main_table', 0, 0, 0);
 
 
   //Render the item list
@@ -73,7 +73,7 @@ function theme_wikicompare_comparative_table($variables) {
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_select_feature_dialog_callback',
+    'path' => 'get_dialog_callback/select_multi_dialog/feature',
     'id' => 'select_feature_link',
 
   );
@@ -121,7 +121,7 @@ function theme_wikicompare_comparative_table($variables) {
  */
 function get_item_list_children_response($method = 'ajax') {
 
-dpm($_POST);
+
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
   $subaction = $_POST['subaction'];
@@ -170,15 +170,24 @@ dpm($_POST);
         }
       }
 
+      $dialog = 0;
+      $dialog_text = '';
+      if (isset($_POST['dialog'])) {
+        $dialog = 1;
+        $dialog_text = 'dialog_';
+      }
 
       //Building the data for the item list
-      $item_list_data = get_item_list($nodes, $type, $subaction, $fastedit_status, 0);
+      $item_list_data = get_item_list($nodes, $type, $subaction, $fastedit_status, 0, $dialog);
+
       //Rendering the item list
       $output = theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
+
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
-      $commands[] = ajax_command_html('#'. $type . '_children_' . $nid, $output);
+
+      $commands[] = ajax_command_html('#'. $type . '_children_' . $dialog_text . $nid, $output);
       $page = array('#type' => 'ajax', '#commands' => $commands);
 
       return $page;
@@ -363,20 +372,20 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 }
 
 
-function get_select_feature_dialog_response(){
+function get_dialog_response($action, $type){
 
 
   $output = t("<div id='dialog-content'>");
 
 
   //Find all the features on the first level of the tree
-  $features = request_db('feature');
+  $nodes = request_db($type);
 
   $output .= '<div id="initialize_selected_feature_dialog_ids"/>';
 
 
   //Building the data for the item list
-  $item_list_data = get_item_list($features, 'feature', 'select_multi_dialog', 0, 0);
+  $item_list_data = get_item_list($nodes, $type, $action, 0, 0, 1);
 
   $output .= theme_item_list(array('items' => $item_list_data, 'type' => 'ul', 'attributes' => array()));
 
@@ -395,6 +404,37 @@ function get_select_feature_dialog_response(){
 
   $output .= t("</div>");
   return $output;
+
+}
+
+
+function select_dialog_response($method = 'ajax'){
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($method == 'ajax') {
+
+
+    $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'title', 'title');
+    $query->condition("n.nid", $_POST['node_id']);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $nid = $record->nid;
+      $title = $record->title;
+    }
+
+    $commands = array();
+    $commands[] = ajax_command_replace('#parent_title', '<span id="parent_title">' . $title . '</span>');
+    $commands[] = ajax_command_replace('#parent_id', '<span id="parent_id" style="display:none;">' . $nid . '</span>');
+    $page = array('#type' => 'ajax', '#commands' => $commands);
+    return $page;
+
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
 
 }
 
@@ -420,7 +460,7 @@ function submit_dialog_response($method = 'ajax'){
 
 
     //Building the data for the item list
-    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0);
+    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, 0);
 
     //Render the item list
     $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
@@ -505,8 +545,12 @@ function compute_comparative_table_response($method = 'ajax') {
 /*
  * Function which will build the item list. Used in table initial building, in compared ajax callback and in modal dialog
  */
-function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node){
+function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node, $dialog){
 
+  $dialog_text = '';
+  if ($dialog) {
+    $dialog_text = 'dialog_';
+  }
 
   $items = array();
   foreach ($nodes as $nid => $node_array){
@@ -520,11 +564,14 @@ function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node){
         '#title' => $node->title,
         //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the node_id for recovering his children and if we have to display or hide them
         '#href' => 'get_item_list_children_callback/nojs/',
-        '#id' => $type . '_link_' . $nid,
+        '#id' => $type . '_link_' . $dialog_text . $nid,
         '#attributes' => array(
           'class' => array('list_item_link ', $action, $type),
         ),
       );
+      if ($dialog) {
+        $title_settings['#attributes']['class'][] = 'dialog';
+      }
       if ($action == 'feature_list_computed') {
         $title_settings['#attributes']['class'][] = 'computed';
       }
@@ -596,8 +643,22 @@ function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node){
         $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
       }
     }
+
+    if ($action == 'select_simple_dialog') {
+
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Select ') . $type . ' ' . $nid,
+        'height' => '100%',
+      ));
+
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link = l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $nid, 'class' => array('select_simple_dialog')), 'html' => True));
+      $checkbox_area = $img_link . ' ';
+    }
+
     
-    $items[$nid]['id'] = $type . '_item_' . $nid;
+    $items[$nid]['id'] = $type . '_item_' . $dialog_text . $nid;
     $items[$nid]['data'] = $checkbox_area . $title . $img_link_to_node;
     $items[$nid]['class'] = array($type . '_item list_item');
     if ($parent_node != 0) {
@@ -607,10 +668,10 @@ function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node){
 
 
     if ($action == 'feature_list_computed') {
-       $items[$nid]['children'] = get_item_list($node_array['children'], $type, $action, $fastedit_status, $nid);
+       $items[$nid]['children'] = get_item_list($node_array['children'], $type, $action, $fastedit_status, $nid, $dialog);
     } else {
       //After the compared, we add the div which will contain the children
-      $items[$nid]['data'] .= '<div id="' . $type . '_children_' . $nid . '"  style="display:none;"></div>';
+      $items[$nid]['data'] .= '<div id="' . $type . '_children_' . $dialog_text . $nid . '"  style="display:none;"></div>';
     }
 
 

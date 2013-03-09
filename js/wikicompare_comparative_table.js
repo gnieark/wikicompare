@@ -22,6 +22,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         subaction = 'compared_main_table';
       } else if ($(this).hasClass('select_multi_dialog')) {
         subaction = 'select_multi_dialog';
+      } else if ($(this).hasClass('select_simple_dialog')) {
+        subaction = 'select_simple_dialog';
       }
 
       if ($(this).hasClass('computed')) {
@@ -59,6 +61,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
         selected_feature_dialog_ids = selected_feature_ids;
+    });
+
+
+    $('.select_simple_dialog:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'select_dialog');
     });
     
     $('#submit_dialog_button:not(.event_set)').addClass('event_set').each(function () {
@@ -278,6 +290,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Recover the node_id by using a regular expression on the link_id
       var patt = /[0-9]+/g;
       var node_id = patt.exec(link_id);
+
+
     
       //Configure the ajax event
       var element_settings = {};
@@ -318,6 +332,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (subaction == 'select_multi_dialog') {
             options.data.selected_feature_ids = selected_feature_dialog_ids;
           }
+          if ($('#' + link_id).hasClass('dialog')) {
+            options.data.dialog = true;
+          }
         }
         
         if (action == 'expand_row_children') {
@@ -331,6 +348,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_computed_status = true;
           manage_displayed_flag = true;
           send_features = true;
+        }
+
+        if (action == 'select_dialog') {
+           send_node_id = true;
         }
 
         if (action == 'submit_dialog') {
@@ -366,6 +387,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
           if (type != 'implementation') {
             options.data.title = $('#form_' + type + '_fast' + subaction + '_title_' + node_id).val();
+            options.data.parent_id = $('#parent_id').text();
           }
           options.data.description = $('#form_' + type + '_fast' + subaction + '_description_' + node_id).val();
           
@@ -477,6 +499,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
         this.old_success(response, status);
 
         to_clean = false;
+
+        dialog_text = '';
+        if ($('#' + link_id).hasClass('dialog')) {
+          dialog_text = 'dialog_';
+        }
         
         if (action == 'toogle_fastedit') {
           if (fastedit_status == 0) {
@@ -504,7 +531,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('#' + link_id).addClass('displayed');
   
             if (action == 'expand_list_children') {
-              $('#' + type + '_children_' + node_id).slideDown();
+              $('#' + type + '_children_' + dialog_text + node_id).slideDown();
             }
   
             if (action == 'expand_row_children') {
@@ -540,7 +567,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('#' + link_id).removeClass('displayed');
           
             if (action == 'expand_list_children') {
-              $('#' + type + '_children_' + node_id).slideUp();
+              $('#' + type + '_children_' + dialog_text + node_id).slideUp();
             }
           
             if (action == 'expand_row_children') {
@@ -625,5 +652,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
+//TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 
 })(jQuery);
