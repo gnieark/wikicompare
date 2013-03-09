@@ -204,7 +204,7 @@ dpm($_POST);
 /*
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
-function get_feature_ajax_response($type = 'ajax') {
+function get_feature_response($type = 'ajax') {
 
   $fid = $_POST['node_id'];
 
@@ -275,7 +275,7 @@ function get_feature_ajax_response($type = 'ajax') {
 /*
  * Ajax callback cunction called by javascript to add or remove a column in the comparative table
  */
-function toggle_compared_checkbox_ajax_response($type='ajax'){
+function toggle_compared_checkbox_response($type='ajax'){
 
   $cid = $_POST['node_id'];
 
@@ -550,7 +550,7 @@ function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node){
           '#type' => 'link',
           '#title' => 'toggle',
           //The link for the callback function which will display or hide the column in the table
-          '#href' => 'toogle_compared_checkbox_ajax_callback/nojs/',
+          '#href' => 'toogle_compared_checkbox_callback/nojs/',
           '#id' => 'compared_checkbox_link_' . $nid,
           '#attributes' => array(
             'class' => array('compared_checkbox_link' => 'compared_checkbox_link', 'hidden' => 'hidden'),
@@ -807,7 +807,7 @@ function render_rows($feature_row_data, $fastedit_status) {
         '#type' => 'link',
         '#title' => $feature->title . ' ' . $fid,
         //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the feature_id for recovering his children and if we have to display or hide them
-        '#href' => 'get_feature_ajax_callback/nojs/',
+        '#href' => 'get_feature_callback/nojs/',
         '#id' => 'feature_link_' . $fid,
         '#attributes' => array(
           'class' => array('feature_link feature_link_children_' . $fid),
