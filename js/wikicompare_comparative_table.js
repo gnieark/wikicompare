@@ -41,6 +41,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
       } else {
         Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, subaction);
       }
+
+
+
     });
 
     //Dynamize the checkbox so it add the item in the return and mark the parent with css class
@@ -106,6 +109,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_table');
+    });
+
+    //Ajaxify the compute table link
+    $('#make_cleaning_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'make_cleaning');
     });
 
 
@@ -363,7 +376,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_compareds_columns = true;
           send_selected_features = true;
         }
-        
+
+     
         if (action == 'toogle_fastedit') {
           manage_displayed_flag = true;
           send_compareds = true;
@@ -402,6 +416,76 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.support = $('#form_' + type + '_fast' + fastaction + '_support_' + node_id).val();
           }
           options.data.revision = $('#form_' + type + '_fast' + subaction + '_revision_' + node_id).val();
+        }
+
+
+        if (action == 'make_cleaning') {
+          send_computed_status = true;
+          send_compareds_columns = true;
+          send_implementations = true;
+          send_selected_features = true;
+
+          var compared_ids = new Array();
+          var i = 0;
+          $('.compared_item').each(function (key, value) {
+            var patt = /[0-9]+/g;
+            compared_ids[i] = new Array();
+            compared_id = patt.exec($(this).attr('id'));
+            //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
+            compared_ids[i][0] = compared_id[0];
+            if ($(this).parent().parent().parent().hasClass('compared_children')) {
+              parent = $(this).parent().parent().parent().attr('id');
+              compared_ids[i][1] = patt.exec(parent)[0];
+            }
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.compared_ids = compared_ids;
+
+          var compared_displayed_ids = new Array();
+          var i = 0;
+          $('.compared_main_table').each(function (key, value) {
+            if ($(this).hasClass('displayed')) {
+              var patt = /[0-9]+/g;
+              compared_displayed_ids[i] = patt.exec($(this).attr('id'))[0]
+              i = i + 1;
+            }
+          });
+          //Add them in the ajax call variables
+          options.data.compared_displayed_ids = compared_displayed_ids;
+
+          var feature_ids = new Array();
+          var i = 0;
+          $('.feature_row').each(function (key, value) {
+            var patt = /[0-9]+/g;
+            feature_ids[i] = new Array();
+            feature_id = patt.exec($(this).attr('id'));
+            //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
+            feature_ids[i][0] = feature_id[0];
+            //The only numeric value in feature row class is the parent id
+            if (patt.test($(this).attr('class'))) {
+              //I don't know why, but I need to remake the patt, the patt.exec will otherwise not work  
+              var patt = /[0-9]+/g;
+              parent_id = patt.exec($(this).attr('class'));
+              feature_ids[i][1] = parent_id[0];
+            }
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.feature_ids = feature_ids;
+
+          var feature_displayed_ids = new Array();
+          var i = 0;
+          $('.feature_link').each(function (key, value) {
+            if ($(this).hasClass('displayed')) {
+              var patt = /[0-9]+/g;
+              feature_displayed_ids[i] = patt.exec($(this).attr('id'))[0]
+              i = i + 1;
+            }
+          });
+          //Add them in the ajax call variables
+          options.data.feature_displayed_ids = feature_displayed_ids;
+
         }
         
         if (manage_displayed_flag == true) {
@@ -497,6 +581,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.success = function (response, status) {
         //First launch regular success function
         this.old_success(response, status);
+//alert(response.toSource());
+//alert(status.toSource());
 
         to_clean = false;
 
@@ -522,6 +608,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('.feature_remove_link').remove();
             $('.implementation_edit_link').remove();
           }
+        }
+
+        if (action == 'make_cleaning') {
+          
         }
         
         if (manage_displayed_flag == true) {
@@ -621,6 +711,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         $(children_prefix + node_id).addClass('to_remove');
       }
     }
+
     
     function clean_fastedit_forms() {
       $('.form_compared_fastadd').remove();

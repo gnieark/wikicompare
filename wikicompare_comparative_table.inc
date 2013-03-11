@@ -92,7 +92,21 @@ function theme_wikicompare_comparative_table($variables) {
     ),
   );
   $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/>' . drupal_render($compute_link) . '</p>';
-  
+ 
+
+  //Add the link to go on FastEdit mode
+  $cleaning_link = array(
+    '#type' => 'link',
+    '#title' => 'Clean',
+    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
+    '#href' => 'make_cleaning_callback/nojs',
+    '#id' => 'make_cleaning_link',
+
+  );
+
+  $output .= '<p>' . drupal_render($cleaning_link) . '</p>';
+
+ 
   //Prepare the array to use as argument for the table row building function.
   $features = array();
   
@@ -313,7 +327,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
 
       //Add the header of the new column, with the compared detail
-      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;">' . $compared->title . ' ' . $cid . '</th>';
+      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;"><span class="compared_title_' . $cid . '">' . $compared->title . '</span> ' . $cid . '</th>';
 
       //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
@@ -540,7 +554,112 @@ function compute_comparative_table_response($method = 'ajax') {
 
 }
 
+function make_cleaning_response($method = 'ajax') {
 
+dpm($_POST);
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($method == 'ajax') {
+
+    $commands = array();
+
+    $compared_ids = $_POST['compared_column_ids'];
+    foreach ($_POST['compared_ids'] as $compared) {
+      $compared_ids[$compared[0]] = $compared[0];
+    }
+
+    $compareds = array();
+    if (!empty($compared_ids) {
+      $compareds = request_db('compared', 0, 'nids', $compared_ids);
+    }
+    
+    foreach ($_POST['compared_ids'] as $compared) {
+      if ($compared[1] != $compareds[$compared[0]]['data']->parent_id) {
+        if (in_array($compared[1], $_POST['compared_displayed_ids'])) {
+          $commands[] = ajax_command_invoke('#compared_link_' . $compared[1], 'click', array());
+        }
+        if (in_array($compareds[$compared[0]]['data']->parent_id, $_POST['compared_displayed_ids'])) {
+          $commands[] = ajax_command_invoke('#compared_link_' . $compareds[$compared[0]]['data']->parent_id, 'click', array());
+        }
+      }
+    }
+
+    foreach($compareds as $cid => $compared) {
+      $commands[] = ajax_command_invoke('.compared_title_' . $cid, 'html', array($compared['data']->title));
+    }
+
+    if ($_POST('computed')) {
+      $feature_ids = array();
+      foreach ($_POST['feature_ids'] as $feature) {
+        $feature_ids[$feature[0]] = $feature[0];
+      }
+
+      $features = array();
+      if (!empty($feature_ids) {
+        $features = request_db('feature', 0, 'nids', $feature_ids);
+      }
+    
+      $update_selected_feature = false;
+      foreach ($_POST['feature_ids'] as $feature) {
+        if ($feature[1] != $features[$feature[0]]['data']->parent_id) {
+          $update_selected_feature = true;
+          if (in_array($feature[1], $_POST['feature_displayed_ids'])) {
+            $commands[] = ajax_command_invoke('#feature_link_' . $feature[1], 'click', array());
+          }
+          if (in_array($features[$feature[0]]['data']->parent_id, $_POST['feature_displayed_ids'])) {
+            $commands[] = ajax_command_invoke('#feature_link_' . $features[$feature[0]]['data']->parent_id, 'click', array());
+          }
+        }
+      }
+
+      foreach($features as $fid => $feature) {
+        $commands[] = ajax_command_invoke('.feature_title_' . $fid, 'html', array($feature['data']->title));
+        $commands[] = ajax_command_invoke('.feature_weight_' . $fid, 'html', array($feature['data']->weight));
+        $commands[] = ajax_command_invoke('.feature_type_' . $fid, 'html', array($feature['data']->type));
+      }
+
+      $implementations = array();
+      if (!empty($_POST['compared_columns_ids']) && !empty($feature_ids)) {
+        $implementations = request_db('implementation', $_POST['fastedit_status'], 'parent', NULL, $_POST['compared_columns_ids'], $feature_ids);
+      }
+
+      foreach($implementations as $nid => $implementation) {
+        $commands[] = ajax_command_replace('#implementation_' . $nid, render_implementation($implementation, $_POST['fastedit_status']));
+      }
+
+
+      if ($update_selected_feature) {
+        $selected_feature_ids = array();
+        foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
+        $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
+        }
+        $feature_array = array();
+        if ($selected_feature_ids) {
+          $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
+        }
+        //Building the data for the item list
+        $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, 0);
+        //Render the item list
+        $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+        $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
+      }
+
+    }
+
+    //Preparing the ajax commands to return to javascript
+
+    $commands[] = ajax_command_invoke('.form_fastedit', 'remove', array());
+    $page = array('#type' => 'ajax', '#commands' => $commands, '#arguments' => array('test'));
+dpm($page);
+    return $page;
+
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
+
+}
 
 /*
  * Function which will build the item list. Used in table initial building, in compared ajax callback and in modal dialog
@@ -557,27 +676,20 @@ function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node, $
 
     $node = $node_array['data'];
 
+    $title_title = '<span class="' . $type . '_title_' . $nid . '">' . $node->title . '</span>';
     //If the node has children, the node name will become a link calling the callback function to display his children
     if ($node->has_children == 1){
-      $title_settings = array(
-        '#type' => 'link',
-        '#title' => $node->title,
-        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the node_id for recovering his children and if we have to display or hide them
-        '#href' => 'get_item_list_children_callback/nojs/',
-        '#id' => $type . '_link_' . $dialog_text . $nid,
-        '#attributes' => array(
-          'class' => array('list_item_link ', $action, $type),
-        ),
-      );
+      $class = array('list_item_link ', $action, $type);
+
       if ($dialog) {
-        $title_settings['#attributes']['class'][] = 'dialog';
+        $class[] = 'dialog';
       }
       if ($action == 'feature_list_computed') {
-        $title_settings['#attributes']['class'][] = 'computed';
+        $class[] = 'computed';
       }
-      $title = drupal_render($title_settings);
+      $title = l($title_title, 'get_item_list_children_callback/nojs/',  array('attributes' => array('id' => $type . '_link_' . $dialog_text . $nid, 'class' => $class), 'html' => True));
     } else {
-      $title = $node->title;
+      $title = $title_title;
     }
 
     //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
@@ -671,7 +783,7 @@ function get_item_list($nodes, $type, $action, $fastedit_status, $parent_node, $
        $items[$nid]['children'] = get_item_list($node_array['children'], $type, $action, $fastedit_status, $nid, $dialog);
     } else {
       //After the compared, we add the div which will contain the children
-      $items[$nid]['data'] .= '<div id="' . $type . '_children_' . $dialog_text . $nid . '"  style="display:none;"></div>';
+      $items[$nid]['data'] .= '<div id="' . $type . '_children_' . $dialog_text . $nid . '" class="'. $type . '_children" style="display:none;"></div>';
     }
 
 
@@ -862,25 +974,16 @@ function render_rows($feature_row_data, $fastedit_status) {
       $img_link_to_node .= add_fastedit_items('feature', $feature_array); 
     }
 
+    $title_title = '<span class="feature_title_' . $fid . '">' . $feature->title . '</span>';
     //If the feature has children, the feature name will become a link calling the callback function to display his children
     if ($feature->has_children == 1){
-      $title_link = array(
-        '#type' => 'link',
-        '#title' => $feature->title . ' ' . $fid,
-        //The callback link, /nojs is automatically replace for /ajax by drupal. The second and third argument indicate the feature_id for recovering his children and if we have to display or hide them
-        '#href' => 'get_feature_callback/nojs/',
-        '#id' => 'feature_link_' . $fid,
-        '#attributes' => array(
-          'class' => array('feature_link feature_link_children_' . $fid),
-        ),
-      );
-      $title = drupal_render($title_link);
+      $title = l($title_title . ' ' . $fid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => 'feature_link_' . $fid, 'class' => array('feature_link feature_link_children_' . $fid)), 'html' => True));
     } else {
-      $title = $feature->title . ' ' . $fid;
+      $title = $title_title;
     }
 
     //Creating the first cell of the row, containing the feature details
-    $output .= '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : ' .  $feature->weight . '<br/> Type : ' . $feature->type . '</td>';
+    $output .= '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="feature_weight_' . $fid . '">' .  $feature->weight . '</span><br/> Type : <span class="feature_type_' . $fid . '">' .  $feature->type . '</span></td>';
 
     //Add a column for each column in the table
     foreach ($feature_array['implementations'] as $implementation) {
