@@ -581,10 +581,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.success = function (response, status) {
         //First launch regular success function
         this.old_success(response, status);
-//alert(response.toSource());
-//alert(status.toSource());
 
-        to_clean = false;
+
 
         dialog_text = '';
         if ($('#' + link_id).hasClass('dialog')) {
@@ -610,9 +608,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
         }
 
-        if (action == 'make_cleaning') {
-          
-        }
         
         if (manage_displayed_flag == true) {
         
@@ -676,20 +671,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('.implementation_compared_' + node_id).addClass('to_remove');
             }
           
-            if (action == 'show_fastedit_form') {
-              to_clean = true;
-            }
+
           }
           
         }
         
         
-        if (action == 'submit_fastedit_form') {
-          to_clean = true;
-        }
-        
-        if (to_clean == true) {
-          clean_fastedit_forms();
+
+        if (action != 'make_cleaning' && (action != 'show_fastedit_form' || !$('#' + link_id).hasClass('displayed'))) {
+          $('#make_cleaning_link').click();
         }
       }
 
@@ -712,14 +702,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
       }
     }
 
-    
+/*    
     function clean_fastedit_forms() {
       $('.form_compared_fastadd').remove();
-      
+     
+//TODOTODO 
       $('.compared_add_link:.displayed').each(function () {
         $('#' + $(this).attr('id')).removeClass('displayed');
       });
-    }
+    }*/
   }
 };
 

@@ -94,17 +94,7 @@ function theme_wikicompare_comparative_table($variables) {
   $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/>' . drupal_render($compute_link) . '</p>';
  
 
-  //Add the link to go on FastEdit mode
-  $cleaning_link = array(
-    '#type' => 'link',
-    '#title' => 'Clean',
-    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'make_cleaning_callback/nojs',
-    '#id' => 'make_cleaning_link',
 
-  );
-
-  $output .= '<p>' . drupal_render($cleaning_link) . '</p>';
 
  
   //Prepare the array to use as argument for the table row building function.
@@ -125,6 +115,22 @@ function theme_wikicompare_comparative_table($variables) {
   );
 
   $output .= '<p>' . drupal_render($toogle_link) . '</p>';
+
+
+  //Add the link to go on FastEdit mode
+  $cleaning_link = array(
+    '#type' => 'link',
+    '#title' => 'Clean',
+    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
+    '#href' => 'make_cleaning_callback/nojs',
+    '#id' => 'make_cleaning_link',
+    '#attributes' => array(
+      'style' => 'display:none',
+    ),
+
+  );
+
+  $output .= '<p>' . drupal_render($cleaning_link) . '</p>';
 
   return $output;
 }
@@ -569,7 +575,7 @@ dpm($_POST);
     }
 
     $compareds = array();
-    if (!empty($compared_ids) {
+    if (!empty($compared_ids)) {
       $compareds = request_db('compared', 0, 'nids', $compared_ids);
     }
     
@@ -588,14 +594,14 @@ dpm($_POST);
       $commands[] = ajax_command_invoke('.compared_title_' . $cid, 'html', array($compared['data']->title));
     }
 
-    if ($_POST('computed')) {
+    if (!$_POST['computed']) {
       $feature_ids = array();
       foreach ($_POST['feature_ids'] as $feature) {
         $feature_ids[$feature[0]] = $feature[0];
       }
 
       $features = array();
-      if (!empty($feature_ids) {
+      if (!empty($feature_ids)) {
         $features = request_db('feature', 0, 'nids', $feature_ids);
       }
     
