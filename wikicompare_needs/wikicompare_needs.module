@@ -1,0 +1,118 @@
+<?php
+
+
+require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparative_table.inc';
+
+/**
+ * Implements hook_node_info().
+ * This function create the new node type we need for the module
+ */
+function wikicompare_needs_node_info() {
+  return array(
+    'need' => array(
+      'name' => t('Need'),
+      'base' => 'need',
+      'description' => t('TODO : Need description'),
+      'help' => t('TODO : Need submission guidelines'),
+      'title_label' => t('Title'),
+    ),
+
+  );
+}
+
+
+/**
+ * Implements hook_form().
+ * We need it to display the title in the node form
+ */
+function need_form($node, $form_state) {
+  return node_content_form($node, $form_state);
+}
+
+function wikicompare_needs_form_alter(&$form, &$form_state, $form_id) {
+dpm($form);
+
+dpm($form_id);
+}
+
+function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
+dpm($form);
+dpm($form_state['node']->need_features['und']);
+
+  $selected_feature_ids = array();
+  foreach ($form_state['node']->need_features['und'] as $array) {
+    $id = $array['target_id'];
+    $selected_feature_ids[$id] = array($id);
+  }
+
+  $form['#attached']['js'][] = '/misc/ajax.js';
+  $form['#attached']['js'][] = '/misc/progress.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
+  $form['#attached']['js'][] = array(
+    'type' => 'setting',
+    'data' => array(
+      'wikicompare_needs' => array(
+        'fastedit_status' => 0,
+        'selected_feature_ids' => $selected_feature_ids
+      )
+    )
+  );
+
+  //hide($form['need_features']);
+
+  $select_feature_link = array(
+    'text' => 'Select features',
+    'title' => 'Select features',
+    'selector' => 'dialog-content',
+    'path' => 'get_dialog_callback/select_multi_dialog/feature',
+    'id' => 'select_feature_link',
+
+  );
+  $form['container_selected_feature'] = array(
+    '#type' => 'container',
+    '#id' => 'selected_feature_itemlist',
+    '#weight' => -2,
+    '#suffix' => '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>'
+  
+  );
+
+
+}
+
+
+/*
+function need_node_submit($node, $form, &$form_state) {
+
+dpm('test');
+
+}
+
+function wikicompare_needs_node_submit($node, $form, &$form_state) {
+
+dpm($node);
+dpm($form);
+//dpm($form_state);
+dpm(drupal_get_js());
+
+}*/
+
+/**
+* Implements hook_theme().
+*/
+/*
+function wikicompare_needs_theme($existing, $type, $theme, $path) {
+
+  return array(
+    'need_node_form' => array(
+      'render element' => 'form',
+      'template' => 'need-node-form',
+      // this will set to module/theme path by default:
+      'path' => drupal_get_path('module', 'wikicompare_needs'),
+    ),
+  );
+}
+*/
+
+
+
+?>

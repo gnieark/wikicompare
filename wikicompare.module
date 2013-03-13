@@ -278,7 +278,6 @@ function compared_form($node, $form_state) {
 }
 
 
-
 /**
  * Implements hook_theme().
  */

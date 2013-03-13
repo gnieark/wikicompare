@@ -1,0 +1,187 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the wikicompare module.
+ */
+
+
+
+
+/**
+ * Implements hook_install().
+ * This function is called only once at the module installation
+ */
+function wikicompare_needs_install() {
+
+  $t = get_t();
+
+  // Ensure that new node type is available.
+  node_types_rebuild();
+  
+  //Assign body field to the new node types
+  $types = node_type_get_types();
+  node_add_body_field( $types[ 'need' ] , $t('Description'));
+
+
+
+
+ /*
+  * Need type related
+  */
+  
+  //Set Need variables
+  variable_set('node_options_feature', array('status','revision','revision_moderation'));
+  variable_set('node_submitted_feature', '0');
+  
+  
+  
+    //Create parent need field
+
+    $field = array(
+      'field_name' => 'need_parent_need',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('need')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'need_parent_need',
+      'entity_type' => 'node',
+      'bundle' => 'need',
+      'label' => 'Parent Need',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('need')),
+      ),
+    );
+    field_create_instance($instance);
+
+
+    //Create features field
+
+    $field = array(
+      'field_name' => 'need_features',
+      'type' => 'entityreference',
+      'cardinality' => -1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('feature')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'need_features',
+      'entity_type' => 'node',
+      'bundle' => 'need',
+      'label' => 'Features',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('feature')),
+      ),
+    );
+    field_create_instance($instance);
+
+
+    //Create state field
+
+    $field = array(
+      'field_name' => 'need_state',
+      'type' => 'list_text',
+      'cardinality' => 1,
+      'settings' => array(
+        'allowed_values' => array(
+          'Published' => 'Published',
+          'Disactivated' => 'Disactivated',
+        ),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'need_state',
+      'entity_type' => 'node',
+      'bundle' => 'need',
+      'label' => 'State',
+      'description' => 'TODO : State of the need',
+      'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 'Disactivated',
+        ),
+      ),
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+/**
+ * Implements hook_uninstall().
+ * This function is called at the module uninstallation
+ */
+function wikicompare_needs_uninstall() {
+
+
+
+  //Delete all nodes of need type.
+
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'need'));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  node_delete_multiple($nids);
+
+
+  //Delete all variable of feature type.
+
+  variable_del('node_options_need');
+  variable_del('node_submitted_need');
+
+  //Delete feature content type.
+
+  field_delete_field('need_parent_need');
+  field_delete_field('need_features');
+  field_delete_field('feature_state');
+
+  
+  node_type_delete('need');
+
+
+  // Purge all field information
+  // api.drupal.org/api/function/field_purge_batch/7
+
+  field_purge_batch(1000);
+
+}
+
+?>

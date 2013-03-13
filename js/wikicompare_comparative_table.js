@@ -1,10 +1,23 @@
 (function ($) {
 
+
+      //Set global variable
+      fastedit_status = 0;
+      selected_feature_ids = {};
+
+  
+
 //Drupal.behaviors is the equivalent for Drupal of ready()
 Drupal.behaviors.WikicompareComparativeTable = {
   attach: function (context, settings) {
 
-  
+
+    $('#edit-need-state:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+      fastedit_status = settings['wikicompare_needs']['fastedit_status'];
+      selected_feature_ids = settings['wikicompare_needs']['selected_feature_ids'];
+    });
+
+
     //Ajaxify the compared link
     $('.list_item_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
@@ -63,6 +76,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
+alert(selected_feature_ids.toSource());
         selected_feature_dialog_ids = selected_feature_ids;
     });
 
@@ -182,8 +196,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var link_id = $(this).attr('id');
       
       //Set global variable
-      fastedit_status = 0;
-      selected_feature_ids = {};
+//      fastedit_status = 0;
+//      selected_feature_ids = {};
 
 
       //Active the code
@@ -304,7 +318,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var patt = /[0-9]+/g;
       var node_id = patt.exec(link_id);
 
-
     
       //Configure the ajax event
       var element_settings = {};
@@ -324,7 +337,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
         
-
         options.data.fastedit_status = fastedit_status;
         
         manage_displayed_flag = false;
