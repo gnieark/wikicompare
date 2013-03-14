@@ -780,9 +780,9 @@ function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $
   }
 
   $result = $query->execute();
-
+//dpm($result);
   foreach ($result as $record) {
-
+//dpm($record);
 
     if ($type != 'implementation') {
       $res[$record->nid]['data'] = $record;

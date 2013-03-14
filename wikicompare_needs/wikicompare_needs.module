@@ -29,20 +29,17 @@ function need_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
-function wikicompare_needs_form_alter(&$form, &$form_state, $form_id) {
-dpm($form);
-
-dpm($form_id);
-}
 
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
 dpm($form);
-dpm($form_state['node']->need_features['und']);
+dpm($form_state['node']);
 
   $selected_feature_ids = array();
-  foreach ($form_state['node']->need_features['und'] as $array) {
-    $id = $array['target_id'];
-    $selected_feature_ids[$id] = array($id);
+  if (isset($form_state['node']->need_features['und'])) {
+    foreach ($form_state['node']->need_features['und'] as $array) {
+      $id = $array['target_id'];
+      $selected_feature_ids[$id] = array($id);
+    }
   }
 
   $form['#attached']['js'][] = '/misc/ajax.js';
@@ -78,6 +75,270 @@ dpm($form_state['node']->need_features['und']);
 
 
 }
+
+
+function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output) {
+
+  $needs = array();
+
+  $query = db_select('cache_need', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'title', 'title');
+  $query->addField('n', 'has_children', 'has_children');
+  $query->addField('n', 'parent_need_id', 'parent_id');
+  $query->condition('n.parent_need_id', NULL);
+  $result = $query->execute();
+
+  foreach ($result as $record) {
+    $needs[$record->nid]['data'] = $record;
+  }
+
+  $item_list_data = get_item_list($needs, 'need', 'select_multi_dialog', 0, 0, 0);
+
+  $output .= theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
+
+  $output .= 'test';
+
+}
+
+function need_insert($node) {
+
+
+  //Create the new need in the cache table
+  $need_parent_need = NULL;
+  if (isset($node->need_parent_need['und'][0])) {
+    $need_parent_need = $node->need_parent_need['und'][0]['target_id'];
+    //Making sure that the parent know it has children
+    db_update('cache_need')
+      ->fields(array(
+        'has_children' => 1,
+      ))
+      ->condition('nid', $need_parent_need)
+      ->execute();
+  }
+  db_insert('cache_need')
+    ->fields(array(
+      'nid' => $node->nid,
+      'vid' => $node->vid,
+      'title' => $node->title,
+      'parent_need_id' => $need_parent_need,
+      'state' => $node->need_state['und'][0]['value'],
+      'has_children' => 0,
+    ))
+    ->execute();
+dpm($node);
+
+  $feature_m2m = array();
+  foreach ($node->need_features['und'] as $feature) {
+
+    $feature_m2m[] = array(
+      'need_nid' => $node->nid,
+      'feature_nid' => $feature['target_id'],
+    );
+  }
+
+  $header = array('need_nid', 'feature_nid');
+
+  //Update the cache_implementation table before the compare tree computation
+  if (!empty($feature_m2m)) {
+    $query = db_insert('cache_need_feature_rel')->fields($header);
+    foreach ($feature_m2m as $record) {
+      $query->values($record);
+    }
+    $query->execute();
+  }
+
+//TODO update many2many table
+}
+
+
+function need_delete($node) {
+
+
+  //Delete the feature in the feature cache
+  db_delete('cache_need')
+    ->condition('nid', $node->nid)
+    ->execute();
+
+  //Update cache so all children need are now without parent
+  db_update('cache_need')
+    ->fields(array(
+      'parent_need_id' => NULL,
+    ))
+    ->condition('parent_need_id', $node->nid)
+    ->execute();
+
+  if (isset($node->need_parent_need['und'][0])) {
+    $query = db_select('cache_need', 'f');
+    $query->addField('f', 'nid', 'nid');
+    $query->condition('f.parent_need_id', $node->need_parent_need['und'][0], '=');
+    $result = $query->execute();
+
+    $childs = array();
+    foreach ($result as $record) {
+      $childs[$record->nid] = $record->nid;
+    }
+
+    //If the parent feature has no children anymore, we update his children flag
+    if (empty($childs)) {
+      db_update('cache_need')
+        ->fields(array(
+          'has_children' => 0,
+        ))
+        ->condition('nid', $node->need_parent_need['und'][0])
+        ->execute();
+    }
+  }
+
+
+  db_delete('cache_need_feature_rel')
+    ->condition('need_nid', $node->nid)
+    ->execute();
+
+}
+
+
+
+
+function wikicompare_needs_revisionapi($op, $node_revision) {
+
+  /*
+   * Action to do before a node is published
+   */
+  if ($op == 'pre publish') {
+
+
+    /*
+     * If the node changed is a compared node
+     */
+    if ($node_revision->type == 'need') {
+
+      //$node_revision contain the new value, with this load we recover the old value. This way we will be able to know which value was changed, and so know what to do. If a compared node is updated but no critical value is changed, then no update on the compare tree will be done.
+      $current_node = node_load($node_revision->nid);
+
+      if ($node_revision->need_parent_need) {
+        $node_revision_parent = $node_revision->need_parent_need['und'][0]['target_id'];
+      } else {
+        $node_revision_parent = NULL;
+      }
+
+      if ($current_node->need_parent_need) {
+        $current_node_parent = $current_node->need_parent_need['und'][0]['target_id'];
+      } else {
+        $current_node_parent = NULL;
+      }
+
+      //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis after the leave of the compared child.
+      if ($node_revision_parent != $current_node_parent) {
+
+        //Updating the has_children in parent compared.
+
+        //Making sure that the parent know it has children
+        if ($node_revision_parent != NULL) {
+          db_update('cache_need')
+            ->fields(array(
+              'has_children' => 1,
+            ))
+            ->condition('nid', $node_revision_parent)
+            ->execute();
+        }
+
+        //If the old parent compared has no children anymore, we update his children flag
+        if ($current_node_parent != NULL) {
+          $query = db_select('cache_need', 'c');
+          $query->addField('c', 'nid', 'nid');
+          $query->condition('c.parent_need_id', $current_node_parent, '=');
+          $result = $query->execute();
+          $childs = array();
+          foreach ($result as $record) {
+            $childs[$record->nid] = $record->nid;
+          }
+          if (empty($childs)) {
+            db_update('cache_need')
+              ->fields(array(
+                'has_children' => 0,
+              ))
+              ->condition('nid', $current_node_parent)
+              ->execute();
+          }
+        }
+      }
+    }
+
+  }
+
+  /*
+   * Action to do after a node is published
+   */
+  if ($op == 'post publish') {
+
+    //Update the cache tables with the new values
+    if ($node_revision->type == 'need') {
+        $need_parent_need = NULL;
+        if (isset($node_revision->need_parent_need['und'][0])) {
+          $need_parent_need = $node_revision->need_parent_need['und'][0]['target_id'];
+        }
+        db_update('cache_need')
+            ->fields(array(
+              'vid' => $node_revision->vid,
+              'title' => $node_revision->title,
+              'parent_need_id' => $need_parent_need,
+              'state' => $node_revision->need_state['und'][0]['value'],
+            ))
+            ->condition('nid', $node_revision->nid)
+            ->execute();
+
+        $query = db_select('cache_need_feature_rel', 'f');
+        $query->addField('f', 'feature_nid', 'feature_nid');
+        $query->condition('f.need_nid', $node_revision->nid);
+        $result = $query->execute();
+
+        $new_feature_ids = array();
+        if (isset($node_revision->need_features['und'])) {
+          foreach ($node_revision->need_features['und'] as $feature) {
+            $new_feature_ids[$feature['target_id']] = $feature['target_id'];
+          }
+        }
+
+        $old_feature_ids = array();
+        $to_delete = array();
+        foreach ($result as $record) {
+          $old_feature_ids[$record->feature_nid] = $record->feature_nid;
+          if (!in_array($record->feature_nid, $new_feature_ids)) {
+            $to_delete[$record->feature_nid] = $record->feature_nid;
+          }
+        }
+
+        $to_create = array();
+        foreach ($new_feature_ids as $feature_id) {
+          if (!in_array($feature_id, $old_feature_ids)) {
+            $to_create[$feature_id] = array(
+              'need_nid' => $node_revision->nid,
+              'feature_nid' => $feature_id,
+            );
+          }
+        }
+
+
+        $header = array('need_nid', 'feature_nid');
+        if (!empty($to_create)) {
+          $query = db_insert('cache_need_feature_rel')->fields($header);
+          foreach ($to_create as $record) {
+            $query->values($record);
+          }
+          $query->execute();
+        }
+
+        db_delete('cache_need_feature_rel')
+          ->condition('need_nid', $node_revision->nid)
+          ->condition('feature_nid', $to_delete, 'in')
+          ->execute();
+
+    }
+
+  }
+}
+
 
 
 /*

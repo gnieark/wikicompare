@@ -27,8 +27,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       if ($(this).hasClass('feature')) {
         type = 'feature';
-      } else {
+      } else if ($(this).hasClass('compared')) {
         type = 'compared';
+      } else if ($(this).hasClass('need')) {
+        type = 'need';
       }
 
       if ($(this).hasClass('compared_main_table')) {
@@ -76,7 +78,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
-alert(selected_feature_ids.toSource());
         selected_feature_dialog_ids = selected_feature_ids;
     });
 
@@ -354,11 +355,12 @@ alert(selected_feature_ids.toSource());
           send_compareds_columns = true;
           options.data.type = type;
           options.data.subaction = subaction;
-          if (subaction == 'select_multi_dialog') {
-            options.data.selected_feature_ids = selected_feature_dialog_ids;
-          }
+
           if ($('#' + link_id).hasClass('dialog')) {
             options.data.dialog = true;
+            if (subaction == 'select_multi_dialog') {
+              options.data.selected_feature_ids = selected_feature_dialog_ids;
+            }
           }
         }
         

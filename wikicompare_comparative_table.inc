@@ -80,6 +80,13 @@ function theme_wikicompare_comparative_table($variables) {
   $output .= '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
   
 
+  //Allow others modules to modify the output
+  foreach (module_implements('wikicompare_comparative_table_before_compute') as $module) {
+    $function = $module . '_wikicompare_comparative_table_before_compute';
+    $function($output);
+  }
+
+
   //Add the compute button
   $compute_link = array(
     '#type' => 'link',
@@ -141,7 +148,7 @@ function theme_wikicompare_comparative_table($variables) {
  */
 function get_item_list_children_response($method = 'ajax') {
 
-
+dpm($_POST);
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
   $subaction = $_POST['subaction'];
@@ -160,7 +167,7 @@ function get_item_list_children_response($method = 'ajax') {
         $fastedit_status = $_POST['fastedit_status'];
       }
       $nodes = request_db($type, $fastedit_status, 'parent', array($nid));
-
+//dpm($nodes);
 
       //Prepare the array to use as argument for the item list building function
 
@@ -562,7 +569,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
 function make_cleaning_response($method = 'ajax') {
 
-dpm($_POST);
+//dpm($_POST);
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
@@ -656,7 +663,7 @@ dpm($_POST);
 
     $commands[] = ajax_command_invoke('.form_fastedit', 'remove', array());
     $page = array('#type' => 'ajax', '#commands' => $commands, '#arguments' => array('test'));
-dpm($page);
+//dpm($page);
     return $page;
 
   //If javascript isn't enabled, we redirect to an error page.

@@ -6,7 +6,114 @@
  */
 
 
+function wikicompare_needs_schema() {
 
+
+dpm('test');
+  $schema['cache_need'] = array(
+
+    'description' => 'Cache table for need. Used so the percentage of comparative table are computed faster.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The nid of the need node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'vid' => array(
+        'description' => 'The active vid of the need node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'The title of the need node',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ),
+      'parent_need_id' => array(
+        'description' => 'The parent id of the need node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+      'state' => array(
+        'description' => 'The state of the need node',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'has_children' => array(
+        'description' => "Boolean indicated if this node has children. This allow us to know this need has children without making each time a big sql query.",
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'unique keys' => array(
+      'nid' => array('nid'),
+    ),
+    'indexes' => array(
+      'parent_need_id' => array('parent_need_id'),
+      'state' => array('state'),
+    ),
+    'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'node_revision' => array(
+        'table' => 'node_revision',
+        'columns' => array('vid' => 'vid'),
+      ),
+      'node_parent' => array(
+        'table' => 'node',
+        'columns' => array('parent_node_id' => 'nid'),
+      ),
+    )
+
+  ); 
+
+
+  $schema['cache_need_feature_rel'] = array(
+
+    'description' => 'Cache table storing the link between need and feature. Used so the percentage of comparative table are computed faster.',
+    'fields' => array(
+      'need_nid' => array(
+        'description' => 'The nid of the need node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+      'feature_nid' => array(
+        'description' => 'The nid of the feature node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'need_nid' => array('need_nid'),
+      'feature_nid' => array('feature_nid'),
+    ),
+    'foreign keys' => array(
+      'need_nid' => array(
+        'table' => 'node',
+        'columns' => array('need_nid' => 'nid'),
+      ),
+      'feature_nid' => array(
+        'table' => 'node_revision',
+        'columns' => array('feature_nid' => 'nid'),
+      ),
+    )
+
+  ); 
+
+  return $schema;
+
+}
 
 /**
  * Implements hook_install().
@@ -31,8 +138,8 @@ function wikicompare_needs_install() {
   */
   
   //Set Need variables
-  variable_set('node_options_feature', array('status','revision','revision_moderation'));
-  variable_set('node_submitted_feature', '0');
+  variable_set('node_options_need', array('status','revision','revision_moderation'));
+  variable_set('node_submitted_need', '0');
   
   
   
@@ -171,7 +278,7 @@ function wikicompare_needs_uninstall() {
 
   field_delete_field('need_parent_need');
   field_delete_field('need_features');
-  field_delete_field('feature_state');
+  field_delete_field('need_state');
 
   
   node_type_delete('need');
