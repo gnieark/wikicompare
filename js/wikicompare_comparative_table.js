@@ -4,6 +4,7 @@
       //Set global variable
       fastedit_status = 0;
       selected_feature_ids = {};
+      selected_need_ids = {};
 
   
 
@@ -68,11 +69,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var node_id = patt.exec($(this).attr('id'));
       //Set the onclick event
       $('#' + $(this).attr('id')).click(function() {
-        
-        if ($(this).attr('checked')) {
-          selected_feature_dialog_ids[node_id] = node_id;
+       
+        if ($(this).hasClass('need')) {
+          if ($(this).attr('checked')) {
+            selected_need_ids[node_id] = node_id;
+          } else {
+            delete selected_need_ids[node_id];
+          }
         } else {
-          delete selected_feature_dialog_ids[node_id];
+          if ($(this).attr('checked')) {
+            selected_feature_dialog_ids[node_id] = node_id;
+          } else {
+            delete selected_feature_dialog_ids[node_id];
+          }
         }
       });
     });
@@ -348,6 +357,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_features = false;
         send_implementations = false;
         send_selected_features = false;
+        send_selected_needs = false;
         
         if (action == 'expand_list_children') {
           send_node_id = true;
@@ -360,7 +370,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.dialog = true;
             if (subaction == 'select_multi_dialog') {
               options.data.selected_feature_ids = selected_feature_dialog_ids;
-            }
+            } 
+          }
+
+          if ($('#' + link_id).hasClass('need')) {
+            send_selected_needs = true;
           }
         }
         
@@ -389,6 +403,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'compute_table') {
           send_compareds_columns = true;
           send_selected_features = true;
+          send_selected_needs = true;
         }
 
      
@@ -584,6 +599,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Add them in the ajax call variables
           options.data.selected_feature_ids = selected_feature_ids;
         }
+
+        if (send_selected_needs == true) {
+          options.data.selected_need_ids = selected_need_ids;
+        }
         
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
@@ -749,5 +768,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
 //TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
-
+//TODO Remplacer les status par le module workflow, pour mieux controler la revision.
 })(jQuery);

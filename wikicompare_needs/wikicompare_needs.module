@@ -97,9 +97,69 @@ function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output
 
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
-  $output .= 'test';
+}
+
+function wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, &$nodes, $_POST) {
+
+  if (!empty($_POST['selected_need_ids'])) {
+
+    $selected_need_ids = array();
+    foreach ($_POST['selected_need_ids'] as $selected_need_id) {
+      $selected_need_ids[$selected_need_id[0]] = $selected_need_id[0];
+    }
+
+    if (in_array($key, $selected_need_ids)) {
+      $nodes[$key]['data']->displayed = True;
+    }
+
+  }
 
 }
+
+function wikicompare_needs_wikicompare_comparative_table_prepare_compute(&$selected_feature_ids, $_POST) {
+
+  if (!empty($_POST['selected_need_ids'])) {
+
+    $feature_ids = recover_features($_POST['selected_need_ids']);
+    foreach ($feature_ids as $feature_id) {
+      $selected_feature_ids[$feature_id] = $feature_id;
+    }
+
+  }
+
+}
+
+
+function recover_features($need_ids) {
+
+  $feature_ids = array();
+
+  $query = db_select('cache_need', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'parent_need_id', 'parent_id');
+  $query->addField('f', 'feature_nid', 'feature_id');
+  $query->leftjoin('cache_need_feature_rel', 'f', 'n.nid = f.need_nid');
+  $query->condition('n.nid', $need_ids, 'in');
+  $result = $query->execute();  
+
+  $need_parent_ids = array();
+  foreach ($result as $record) {
+    $feature_ids[$record->feature_id] = $record->feature_id;
+    $need_parent_ids[$record->parent_id] = $record->parent_id;
+  }
+//TODO Block if parent is disactivated
+  if (!empty($need_parent_ids)) {
+    $feature_from_parent_ids = recover_features($need_parent_ids);
+    foreach ($feature_from_parent_ids as $feature_id) {
+      $feature_ids[$feature_id] = $feature_id;
+    }
+  }
+
+  return $feature_ids;
+
+}
+
+
 
 function need_insert($node) {
 
@@ -329,10 +389,12 @@ function wikicompare_needs_revisionapi($op, $node_revision) {
           $query->execute();
         }
 
-        db_delete('cache_need_feature_rel')
-          ->condition('need_nid', $node_revision->nid)
-          ->condition('feature_nid', $to_delete, 'in')
-          ->execute();
+        if (!empty($to_delete)) {
+          db_delete('cache_need_feature_rel')
+            ->condition('need_nid', $node_revision->nid)
+            ->condition('feature_nid', $to_delete, 'in')
+            ->execute();
+        }
 
     }
 
