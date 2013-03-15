@@ -63,7 +63,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     //Dynamize the checkbox so it add the item in the return and mark the parent with css class
-    $('.checkbox_dialog:not(.event_set)').addClass('event_set').each(function () {
+    $('.itemlist_checkbox:not(.event_set)').addClass('event_set').each(function () {
       //Recover the node_id
       var patt = /[0-9]+/g;
       var node_id = patt.exec($(this).attr('id'));
