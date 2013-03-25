@@ -96,8 +96,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
+      type = $('#dialog_type').text();
+
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'select_dialog');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'select_dialog', type);
     });
     
     $('#submit_dialog_button:not(.event_set)').addClass('event_set').each(function () {
@@ -114,6 +116,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_dialog');
+    });
+
+    $('.clear_link:not(.event_set)').addClass('event_set').each(function () {
+      $(this).click(function() {
+        $('#selected_parent').empty();
+        $('#edit-need-parent-need').html('<input type="text" size="60" value="" name="need_parent_need[und][0][target_id]">');
+        return false;
+      });
     });
 
 
@@ -351,6 +361,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         manage_displayed_flag = false;
         send_node_id = false;
+        send_type = false;
         send_computed_status = false;
         send_compareds = false;
         send_compareds_columns = false;
@@ -358,11 +369,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_implementations = false;
         send_selected_features = false;
         send_selected_needs = false;
+        send_forbidden_nid = false;
         
         if (action == 'expand_list_children') {
           send_node_id = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
+          send_forbidden_nid = true;
           options.data.type = type;
           options.data.subaction = subaction;
 
@@ -393,6 +406,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         if (action == 'select_dialog') {
            send_node_id = true;
+           send_type = true;
         }
 
         if (action == 'submit_dialog') {
@@ -419,13 +433,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_node_id = true;
           manage_displayed_flag = true;
           
-          options.data.type = type;
+          send_type = true;
           options.data.fastaction = subaction;
         }
      
         if (action == 'submit_fastedit_form') {
           send_node_id = true;
-          options.data.type = type;
+          send_type = true;
           options.data.fastaction = subaction;
           
           if (type != 'implementation') {
@@ -530,6 +544,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.node_id = node_id[0];
         }
 
+        if (send_type == true) {
+          options.data.type = type;
+        }
+
         if (send_computed_status == true) {
           if ($('#comparative_table').hasClass('computed')) {
             options.data.computed = 1;
@@ -602,6 +620,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         if (send_selected_needs == true) {
           options.data.selected_need_ids = selected_need_ids;
+        }
+
+        if (send_forbidden_nid == true) {
+          forbidden_nid = $('#forbidden_nid').text();
+          options.data.forbidden_nid = forbidden_nid;
         }
         
         //Launch regular beforeSerialize function

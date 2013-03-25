@@ -42,6 +42,11 @@ dpm($form_state['node']);
     }
   }
 
+  $nid = 0;
+  if (isset($form_state['node']->nid)) {
+    $nid = $form_state['node']->nid;
+  }
+
   $form['#attached']['js'][] = '/misc/ajax.js';
   $form['#attached']['js'][] = '/misc/progress.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
@@ -60,13 +65,14 @@ dpm($form_state['node']);
     'text' => 'Select parent',
     'title' => 'Select parent',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_simple_dialog/need',
+    'path' => 'get_dialog_callback/select_simple_dialog/need/' . $nid,
   );
+  $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
   $form['container_selected_parent'] = array(
     '#type' => 'container',
     '#id' => 'selected_parent',
     '#weight' => -3,
-    '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . '</p>'
+    '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
   );
 
@@ -76,10 +82,11 @@ dpm($form_state['node']);
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_multi_dialog/feature',
+    'path' => 'get_dialog_callback/select_multi_dialog/feature/0',
     'id' => 'select_feature_link',
 
   );
+  
   $form['container_selected_feature'] = array(
     '#type' => 'container',
     '#id' => 'selected_feature_itemlist',

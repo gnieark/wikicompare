@@ -249,6 +249,10 @@ dpm($_POST);
 
       }
 
+      if (isset($_POST['forbidden_nid'])) {
+        $itemlist_settings['forbidden_nid'] = $_POST['forbidden_nid'];
+      }
+
       $dialog = 0;
       $dialog_text = '';
       if (isset($_POST['dialog'])) {
@@ -450,7 +454,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 }
 
 
-function get_dialog_response($action, $type){
+function get_dialog_response($action, $type, $nid){
 
 
   $output = t("<div id='dialog-content'>");
@@ -460,6 +464,9 @@ function get_dialog_response($action, $type){
   $nodes = request_db($type);
 
   $output .= '<div id="initialize_selected_feature_dialog_ids"/>';
+  $output .= '<div id="dialog_type" style="display:none;">' . $type . '</div>';
+
+
 
   $itemlist_settings = initialize_itemlist_settings($action);
 /*  $itemlist_settings = array(
@@ -482,6 +489,11 @@ function get_dialog_response($action, $type){
     }*/
 
   $itemlist_settings['dialog'] = 1;
+
+  if ($nid != 0) {
+    $output .= '<div id="forbidden_nid" style="display:none;">' . $nid . '</div>';
+    $itemlist_settings['forbidden_nid'] = $nid;
+  }
 
   //Building the data for the item list
   $item_list_data = get_item_list($nodes, $type, $action, 0, $itemlist_settings);
@@ -512,7 +524,7 @@ function select_dialog_response($method = 'ajax'){
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
-
+/*
     $query = db_select('node', 'n');
     $query->addField('n', 'nid', 'nid');
     $query->addField('n', 'title', 'title');
@@ -521,12 +533,24 @@ function select_dialog_response($method = 'ajax'){
     foreach ($result as $record) {
       $nid = $record->nid;
       $title = $record->title;
+    }*/
+dpm($_POST, 'post');
+    $res = get_recursive_data($_POST['type'], array($_POST['node_id']));
+
+    $parent = $res['data'][$_POST['node_id']]['data'];
+dpm($parent);
+    $hidden = '';
+    if ($parent) {
+      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="need_parent_need[und][0][target_id]">';
     }
 
     $commands = array();
-    $commands[] = ajax_command_replace('#parent_title', '<span id="parent_title">' . $title . '</span>');
-    $commands[] = ajax_command_replace('#parent_id', '<span id="parent_id" style="display:none;">' . $nid . '</span>');
+    $commands[] = ajax_command_html('#selected_parent', $parent->fulltitle);
+    $commands[] = ajax_command_html('#edit-need-parent-need', $hidden);
+    $commands[] = ajax_command_replace('#parent_title', '<span id="parent_title">' . $parent->title . '</span>');
+    $commands[] = ajax_command_replace('#parent_id', '<span id="parent_id" style="display:none;">' . $parent->nid . '</span>');
     $page = array('#type' => 'ajax', '#commands' => $commands);
+dpm($page, 'page');
     return $page;
 
   //If javascript isn't enabled, we redirect to an error page.
@@ -550,14 +574,14 @@ function submit_dialog_response($method = 'ajax'){
       $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
     }
 
-dpm($selected_feature_ids);
+
 
     $feature_array = array();
 
     if ($selected_feature_ids) {
       $feature_array = get_recursive_data('feature', $selected_feature_ids);
     }
-dpm($feature_array);
+
   $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
 /*
     $itemlist_settings = array(
@@ -577,7 +601,7 @@ dpm($feature_array);
     $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
 
 //    $features = request_db('feature', 0, 'nids', $selected_feature_ids);
-dpm($features);
+
     $hidden = '';
 //TODO compter le nombre d'enregistrement retourné par dialog pour savoir si on doit multi ou pas
     if (True == True) {
@@ -597,7 +621,7 @@ dpm($features);
         </td></tr>
         </tbody>';
     }
-dpm($hidden);
+
     $commands = array();
     $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
     $commands[] = ajax_command_html('#need-features-values', $hidden);
@@ -801,6 +825,10 @@ dpm($itemlist_settings);
   $items = array();
   foreach ($nodes as $nid => $node_array){
 
+    if ($nid == $itemlist_settings['forbidden_nid']) {
+      continue;
+    }
+
     $node = $node_array['data'];
 
     $title_title = '<span class="' . $type . '_title_' . $nid . '">' . $node->title . '</span>';
@@ -932,6 +960,11 @@ dpm($itemlist_settings);
     }
 
 
+  }
+
+  //This case happen when the only children of the clicked node is the forbidden node.
+  if (empty($items)) {
+    $items[]['data'] = "You can't select this node as parent of himself.";
   }
 
   return $items;
@@ -1203,6 +1236,7 @@ function initialize_itemlist_settings($subaction) {
   $itemlist_settings = array(
     'fastedit_status' => 0,
     'dialog' => 0,
+    'forbidden_nid' => 0,
     'node_link' => 0,
     'checkbox_parent' => 0,
     'checkbox_children' => 0,
