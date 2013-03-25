@@ -78,7 +78,7 @@ function wikicompare_inherit_schema() {
  */
 function wikicompare_inherit_tree_schema_alter(&$schema) {
   
-  $schema['cache_feature']['fields']['inherit_feature_id'] = array(
+  $schema['cache_feature']['fields']['inherit_tree_id'] = array(
       'description' => 'The feature id at the top of the inherited tree',
       'type' => 'int',
       'unsigned' => TRUE,
@@ -89,18 +89,9 @@ function wikicompare_inherit_tree_schema_alter(&$schema) {
     'columns' => array('inherit_tree_id' => 'nid'),
   );
 
-/*
-  $schema['cache_implementation']['fields']['use_from_inherit'] = array(
-      'description' => "Boolean indicated if we should use the data from the inherited compared",
-      'type' => 'int',
-      'size' => 'tiny',
-      'not null' => TRUE,
-      'default' => 1,
-  );
-*/
 
 }
-*/
+
 
 
 /**
@@ -205,7 +196,7 @@ function wikicompare_inherit_tree_install() {
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'implementation_compared',
+    'field_name' => 'implementation_compared_support',
     'entity_type' => 'node',
     'bundle' => 'implementation',
     'label' => 'Use value of the compared :',
@@ -221,22 +212,6 @@ function wikicompare_inherit_tree_install() {
   field_create_instance($instance);
 
 
-  //Set use_from_inherit of old implementation to 1
-/*  $implementations = db_query("SELECT nid FROM node WHERE type = 'implementation'");
-
-  foreach($implementations as $item) {
-    $node = node_load($item->nid);
-    $node->implementation_use_from_inherit[LANGUAGE_NONE][0]['value'] = 1;
-    node_save($node);
-  }
-
-  //Update cache
-  db_update('cache_implementation')
-    ->fields(array(
-      'use_from_inherit' => 1,
-    ))
-    ->execute();
-*/
 
 
 }
@@ -251,10 +226,8 @@ function wikicompare_inherit_tree_uninstall() {
   db_drop_field('cache_feature', 'inherit_tree_id');
   db_drop_index('cache_feature', 'inherit_tree_id');
   field_delete_field('feature_inherit_tree');
-/*
-  db_drop_field('cache_implementation', 'use_from_inherit');
-  field_delete_field('implementation_use_from_inherit');
-*/
+  field_delete_field('feature_inherit_tree_top_compared');
+  field_delete_field('implementation_compared_support');
 
 
   // Purge all field information

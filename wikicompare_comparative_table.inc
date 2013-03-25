@@ -551,14 +551,14 @@ function submit_dialog_response($method = 'ajax'){
       $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
     }
 
-
+dpm($selected_feature_ids);
 
     $feature_array = array();
 
     if ($selected_feature_ids) {
       $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
     }
-
+dpm($feature_array);
   $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
 /*
     $itemlist_settings = array(
@@ -577,9 +577,31 @@ function submit_dialog_response($method = 'ajax'){
     //Render the item list
     $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
 
-
+//    $features = request_db('feature', 0, 'nids', $selected_feature_ids);
+dpm($features);
+    $hidden = '';
+//TODO compter le nombre d'enregistrement retourné par dialog pour savoir si on doit multi ou pas
+    if (True == True) {
+      $hidden = '<tbody>';
+      $i = 0;
+      foreach ($feature_array['res'] as $feature) {
+        //We remove the feature if it's a parent feature. This case can happen if we add the feature to the need when it has no children, and then it become a parent.
+        if (!$feature['data']->has_children) {
+            $hidden .= '<tr><td>
+              <input type="text" size="60" value="&quot;' . $feature['data']->title . ' (' . $feature['data']->nid . ')&quot;" name="need_features[und][' . $i . '][target_id]">
+              </td></tr>';
+            $i += 1;
+        }
+      }
+      $hidden .= '<tr><td>
+        <input type="text" size="60" value="" name="need_features[und][' . $i . '][target_id]" >
+        </td></tr>
+        </tbody>';
+    }
+dpm($hidden);
     $commands = array();
     $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
+    $commands[] = ajax_command_html('#need-features-values', $hidden);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -936,6 +958,7 @@ function build_feature_tree($feature_ids, $features_array, $fastedit_status=0){
 
     //Build a list of all id, parent and children, to use them in implementation sql request
     $features_array['ids'][$fid] = $fid;
+    $features_array['res'][$fid] = $feature;
 
     //If the node has parent, assign him in the parent array and tell the recursive function to find the parent next time. Else, set the node at the root of the array.
     if ($feature['data']->parent_id) {
@@ -1146,7 +1169,7 @@ function render_implementation($implementation_array, $fastedit_status) {
 function initialize_itemlist_settings($subaction) {
 
   $itemlist_settings = array(
-    'fastedit_status' => $_POST['fastedit_status'],
+    'fastedit_status' => 0,
     'dialog' => 0,
     'node_link' => 0,
     'checkbox_parent' => 0,

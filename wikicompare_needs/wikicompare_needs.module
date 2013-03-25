@@ -55,6 +55,21 @@ dpm($form_state['node']);
     )
   );
 
+
+  $select_parent_link = array(
+    'text' => 'Select parent',
+    'title' => 'Select parent',
+    'selector' => 'dialog-content',
+    'path' => 'get_dialog_callback/select_simple_dialog/need',
+  );
+  $form['container_selected_parent'] = array(
+    '#type' => 'container',
+    '#id' => 'selected_parent',
+    '#weight' => -3,
+    '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . '</p>'
+  
+  );
+
   //hide($form['need_features']);
 
   $select_feature_link = array(
@@ -73,6 +88,14 @@ dpm($form_state['node']);
   
   );
 
+/*  $form['container_selected_feature_hidden'] = array(
+    '#type' => 'container',
+    '#id' => 'selected_feature_hidden',
+    '#weight' => -2,
+//    '#attributes' => array(
+//      'style' => 'display:none',
+//    )  
+  );*/
 
 }
 
