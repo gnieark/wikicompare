@@ -400,8 +400,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
         $implementations = request_db('implementation', $fastedit_status, 'parent', NULL, array($cid), $_POST['feature_ids']);
 
         if ($_POST['computed']) {
-          $features_array = array();
-          $features_array = build_feature_tree($_POST['feature_ids'], $features_array, $fastedit_status);
+          $features_array = get_recursive_data('feature', $_POST['feature_ids'], $fastedit_status);
           $features_ids = $features_array['tree'];
         } else {
           foreach ($_POST['feature_ids'] as $feature_id) {
@@ -556,7 +555,7 @@ dpm($selected_feature_ids);
     $feature_array = array();
 
     if ($selected_feature_ids) {
-      $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
+      $feature_array = get_recursive_data('feature', $selected_feature_ids);
     }
 dpm($feature_array);
   $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
@@ -584,7 +583,7 @@ dpm($features);
     if (True == True) {
       $hidden = '<tbody>';
       $i = 0;
-      foreach ($feature_array['res'] as $feature) {
+      foreach ($feature_array['data'] as $feature) {
         //We remove the feature if it's a parent feature. This case can happen if we add the feature to the need when it has no children, and then it become a parent.
         if (!$feature['data']->has_children) {
             $hidden .= '<tr><td>
@@ -642,7 +641,7 @@ function compute_comparative_table_response($method = 'ajax') {
     $feature_array = array();
 
     if ($selected_feature_ids) {
-      $feature_array = build_feature_tree($selected_feature_ids, $feature_array, $fastedit_status);
+      $feature_array = get_recursive_data('feature', $selected_feature_ids, $fastedit_status);
     }
 
 
@@ -761,7 +760,7 @@ function make_cleaning_response($method = 'ajax') {
         }
         $feature_array = array();
         if ($selected_feature_ids) {
-          $feature_array = build_feature_tree($selected_feature_ids, $feature_array);
+          $feature_array = get_recursive_data('feature', $selected_feature_ids);
         }
         //Building the data for the item list
         $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, 0);
@@ -939,42 +938,75 @@ dpm($itemlist_settings);
 
 }
 
+function get_recursive_data($type, $ids, $fastedit_status=0){
 
-function build_feature_tree($feature_ids, $features_array, $fastedit_status=0){
+  $res = array();
+  $res = build_recursive_tree($type, $ids, $res, $fastedit_status);
+
+  $res = build_fulltitle($res, $res['tree'], '');
+
+  return $res;
+
+}
+
+function build_fulltitle($res, $tree, $parent_path) {
+
+  foreach ($tree as $nid => $node) {
+
+    if ($parent_path) {
+      $fulltitle = $parent_path . ' / ' . $node['data']->title;
+    } else {
+      $fulltitle = $node['data']->title;
+    }
+dpm($fulltitle);
+    $res['data'][$nid]['data']->fulltitle = $fulltitle;
+    if (!empty($node['children'])) {
+      $res = build_fulltitle($res, $node['children'], $fulltitle);
+    }
+
+  }
+
+  return $res;
+
+}
+
+
+function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
 
   $parent_ids = array();
 
   //No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
 
-  $features = request_db('feature', $fastedit_status, 'nid', $feature_ids);
+  $nodes = request_db($type, $fastedit_status, 'nid', $ids);
 
-  foreach ($features as $fid => $feature) {
+  foreach ($nodes as $nid => $node) {
     //Check if some children of this node launched the recursive function to find this node as their parent. Then assign them as children of this node and unset the node in the array.
-
-    if (isset($features_array['parent_ressource'][$fid]['children'])) {
-      $feature['children'] = $features_array['parent_ressource'][$fid]['children'];
-      unset($features_array['parent_ressource'][$fid]);
+    if (isset($res['parent_ressource'][$nid]['children'])) {
+      $node['children'] = $res['parent_ressource'][$nid]['children'];
+      unset($res['parent_ressource'][$nid]);
     }
 
     //Build a list of all id, parent and children, to use them in implementation sql request
-    $features_array['ids'][$fid] = $fid;
-    $features_array['res'][$fid] = $feature;
+    $res['ids'][$nid] = $nid;
+    $res['data'][$nid] = $node;
 
     //If the node has parent, assign him in the parent array and tell the recursive function to find the parent next time. Else, set the node at the root of the array.
-    if ($feature['data']->parent_id) {
-      $features_array['parent_ressource'][$feature['data']->parent_id]['children'][$fid] = $feature;
-      $parent_ids[$feature['data']->parent_id] = $feature['data']->parent_id;
+    if ($node['data']->parent_id) {
+      $res['parent_ressource'][$node['data']->parent_id]['children'][$nid] = $node;
+      $parent_ids[$node['data']->parent_id] = $node['data']->parent_id;
     } else {
-      $features_array['tree'][$fid] = $feature;
+      $res['tree'][$nid] = $node;
     }
   }
 
   //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
   if ($parent_ids){
-    $features_array = build_feature_tree($parent_ids, $features_array, $fastedit_status);
+    $res = build_recursive_tree($type, $parent_ids, $res, $fastedit_status);
+  } else {
+    unset($res['parent_ressource']);
   }
   
-  return $features_array;
+  return $res;
 
 }
 
