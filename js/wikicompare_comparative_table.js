@@ -120,7 +120,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('.clear_link:not(.event_set)').addClass('event_set').each(function () {
       $(this).click(function() {
-        $('#selected_parent').empty();
+        $('#selected_parent').html('No parent');
         $('#edit-need-parent-need').html('<input type="text" size="60" value="" name="need_parent_need[und][0][target_id]">');
         return false;
       });

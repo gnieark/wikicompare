@@ -582,7 +582,7 @@ function submit_dialog_response($method = 'ajax'){
       $feature_array = get_recursive_data('feature', $selected_feature_ids);
     }
 
-  $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
+    $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
 /*
     $itemlist_settings = array(
       'fastedit_status' => 0,
@@ -952,7 +952,7 @@ dpm($itemlist_settings);
     }
 
 
-    if ($itemlist_settings['computed']) {
+    if ($itemlist_settings['computed'] && $node->has_children) {
        $items[$nid]['children'] = get_item_list($node_array['children'], $type, $action, $nid, $itemlist_settings);
     } else {
       //After the compared, we add the div which will contain the children

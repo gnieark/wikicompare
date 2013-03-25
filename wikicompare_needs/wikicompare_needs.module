@@ -60,6 +60,12 @@ dpm($form_state['node']);
     )
   );
 
+  $title = 'No parent';
+  if (isset($form_state['node']->need_parent_need['und'])) {
+    $parent_nid = $form_state['node']->need_parent_need['und'][0]['target_id'];
+    $res = get_recursive_data('need', array($parent_nid));
+    $title = $res['data'][$parent_nid]['data']->fulltitle;
+  }
 
   $select_parent_link = array(
     'text' => 'Select parent',
@@ -69,6 +75,7 @@ dpm($form_state['node']);
   );
   $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
   $form['container_selected_parent'] = array(
+    'title' => array('#markup' => $title),
     '#type' => 'container',
     '#id' => 'selected_parent',
     '#weight' => -3,
@@ -77,6 +84,20 @@ dpm($form_state['node']);
   );
 
   //hide($form['need_features']);
+
+  $selected_feature_itemlist = '';
+  $feature_array = array();
+  if ($selected_feature_ids) {
+    $feature_array = get_recursive_data('feature', $selected_feature_ids);
+  
+dpm($feature_array, 'feature_array');
+    $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
+    //Building the data for the item list
+    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, $itemlist_settings);
+    //Render the item list
+    $selected_feature_itemlist = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+  }
+
 
   $select_feature_link = array(
     'text' => 'Select features',
@@ -88,6 +109,7 @@ dpm($form_state['node']);
   );
   
   $form['container_selected_feature'] = array(
+    'itemlist' => array('#markup' => $selected_feature_itemlist),
     '#type' => 'container',
     '#id' => 'selected_feature_itemlist',
     '#weight' => -2,
