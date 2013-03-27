@@ -730,7 +730,7 @@ function make_cleaning_response($method = 'ajax') {
   if ($method == 'ajax') {
 
     $commands = array();
-
+dpm($_POST, 'post cleaning');
     $compared_ids = $_POST['compared_column_ids'];
     foreach ($_POST['compared_ids'] as $compared) {
       $compared_ids[$compared[0]] = $compared[0];
@@ -754,6 +754,12 @@ function make_cleaning_response($method = 'ajax') {
 
     foreach($compareds as $cid => $compared) {
       $commands[] = ajax_command_invoke('.compared_title_' . $cid, 'html', array($compared['data']->title));
+    }
+
+    //Allow others modules to modify the output
+    foreach (module_implements('wikicompare_comparative_table_cleaning') as $module) {
+      $function = $module . '_wikicompare_comparative_table_cleaning';
+      $function($commands, $_POST);
     }
 
     if (!$_POST['computed']) {
@@ -818,7 +824,7 @@ function make_cleaning_response($method = 'ajax') {
 
     $commands[] = ajax_command_invoke('.form_fastedit', 'remove', array());
     $page = array('#type' => 'ajax', '#commands' => $commands, '#arguments' => array('test'));
-//dpm($page);
+dpm($page);
     return $page;
 
   //If javascript isn't enabled, we redirect to an error page.

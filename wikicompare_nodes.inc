@@ -467,7 +467,9 @@ function wikicompare_revisionapi($op, $node_revision) {
             $result = $query->execute();
             $childs = array();
             foreach ($result as $record) {
-              $childs[$record->nid] = $record->nid;
+              if ($node_revision->nid != $record->nid) {
+                $childs[$record->nid] = $record->nid;
+              }
             }
             if (empty($childs)) {
               db_update('cache_feature')
@@ -534,7 +536,9 @@ function wikicompare_revisionapi($op, $node_revision) {
           $result = $query->execute();
           $childs = array();
           foreach ($result as $record) {
-            $childs[$record->nid] = $record->nid;
+            if ($node_revision->nid != $record->nid) {
+              $childs[$record->nid] = $record->nid;
+            }
           }
           if (empty($childs)) {
             db_update('cache_compared')

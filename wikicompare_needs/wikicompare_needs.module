@@ -331,8 +331,39 @@ dpm($_POST, 'post2');
       $need_features[] = $array;
     }
     $node->need_features[$node->language] = $need_features;
+    $node->need_parent_need[$node->language][0]['target_id'] = $_POST['parent_id'];
+    $node->need_parent_need[$node->language][0]['target_type'] = "node";
     $node->need_state[$node->language][0]['value'] = $_POST['state'];
 dpm($node, 'node2');
+  }
+
+}
+
+function wikicompare_needs_wikicompare_comparative_table_cleaning(&$commands, $_POST) {
+
+
+  $need_ids = array();
+  foreach ($_POST['need_ids'] as $need) {
+    $need_ids[$need[0]] = $need[0];
+  }
+  $needs = array();
+  if (!empty($need_ids)) {
+    $needs = request_db('need', 0, 'nids', $need_ids);
+  }
+    
+  foreach ($_POST['need_ids'] as $need) {
+    if ($need[1] != $needs[$need[0]]['data']->parent_id) {
+      if (in_array($need[1], $_POST['need_displayed_ids'])) {
+        $commands[] = ajax_command_invoke('#need_link_' . $need[1], 'click', array());
+      }
+      if (in_array($needs[$need[0]]['data']->parent_id, $_POST['need_displayed_ids'])) {
+        $commands[] = ajax_command_invoke('#need_link_' . $needs[$need[0]]['data']->parent_id, 'click', array());
+      }
+    }
+  }
+dpm($needs);
+  foreach($needs as $nid => $need) {
+    $commands[] = ajax_command_invoke('.need_title_' . $nid, 'html', array($need['data']->title));
   }
 
 }
@@ -518,7 +549,9 @@ function wikicompare_needs_revisionapi($op, $node_revision) {
           $result = $query->execute();
           $childs = array();
           foreach ($result as $record) {
-            $childs[$record->nid] = $record->nid;
+            if ($node_revision->nid != $record->nid) {
+              $childs[$record->nid] = $record->nid;
+            }
           }
           if (empty($childs)) {
             db_update('cache_need')

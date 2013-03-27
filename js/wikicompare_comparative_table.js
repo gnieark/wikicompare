@@ -67,20 +67,20 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.itemlist_checkbox:not(.event_set)').addClass('event_set').each(function () {
       //Recover the node_id
       var patt = /[0-9]+/g;
-      var node_id = patt.exec($(this).attr('id'));
+      var node_id = patt.exec($(this).attr('id'))[0];
       //Set the onclick event
       $('#' + $(this).attr('id')).click(function() {
        
         if ($(this).hasClass('need')) {
           if ($(this).attr('checked')) {
-            selected_need_ids[node_id] = node_id[0];
-alert(selected_need_ids.toSource());
+            selected_need_ids[node_id] = node_id;
+
           } else {
             delete selected_need_ids[node_id];
           }
         } else {
           if ($(this).attr('checked')) {
-            selected_feature_dialog_ids[node_id] = node_id[0];
+            selected_feature_dialog_ids[node_id] = node_id;
           } else {
             delete selected_feature_dialog_ids[node_id];
           }
@@ -89,14 +89,14 @@ alert(selected_need_ids.toSource());
     });
 
     $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
-alert(selected_feature_ids.toSource());
+
         if ($(this).text() == 'manual') {
           selected_feature_dialog_ids = manual_selected_feature_ids;
         } else {
-alert('in else');
+
           selected_feature_dialog_ids = selected_feature_ids;
         }
-alert(selected_feature_dialog_ids.toSource());
+
     });
 
 
@@ -551,9 +551,9 @@ alert(selected_feature_dialog_ids.toSource());
           $('.compared_item').each(function (key, value) {
             var patt = /[0-9]+/g;
             compared_ids[i] = new Array();
-            compared_id = patt.exec($(this).attr('id'));
+            compared_id = patt.exec($(this).attr('id'))[0];
             //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-            compared_ids[i][0] = compared_id[0];
+            compared_ids[i][0] = compared_id;
             if ($(this).parent().parent().parent().hasClass('compared_children')) {
               parent = $(this).parent().parent().parent().attr('id');
               compared_ids[i][1] = patt.exec(parent)[0];
@@ -580,9 +580,9 @@ alert(selected_feature_dialog_ids.toSource());
           $('.feature_row').each(function (key, value) {
             var patt = /[0-9]+/g;
             feature_ids[i] = new Array();
-            feature_id = patt.exec($(this).attr('id'));
+            feature_id = patt.exec($(this).attr('id'))[0];
             //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-            feature_ids[i][0] = feature_id[0];
+            feature_ids[i][0] = feature_id;
             //The only numeric value in feature row class is the parent id
             if (patt.test($(this).attr('class'))) {
               //I don't know why, but I need to remake the patt, the patt.exec will otherwise not work  
@@ -606,6 +606,36 @@ alert(selected_feature_dialog_ids.toSource());
           });
           //Add them in the ajax call variables
           options.data.feature_displayed_ids = feature_displayed_ids;
+
+          var need_ids = new Array();
+          var i = 0;
+          $('.need_item').each(function (key, value) {
+            var patt = /[0-9]+/g;
+            need_ids[i] = new Array();
+            need_id = patt.exec($(this).attr('id'))[0];
+            //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
+            need_ids[i][0] = need_id;
+            if ($(this).parent().parent().parent().hasClass('need_children')) {
+              parent = $(this).parent().parent().parent().attr('id');
+              need_ids[i][1] = patt.exec(parent)[0];
+            }
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.need_ids = need_ids;
+
+          var need_displayed_ids = new Array();
+          var i = 0;
+          $('.list_item_link:.need').each(function (key, value) {
+            if ($(this).hasClass('displayed')) {
+              var patt = /[0-9]+/g;
+              need_displayed_ids[i] = patt.exec($(this).attr('id'))[0]
+              i = i + 1;
+            }
+          });
+          //Add them in the ajax call variables
+          options.data.need_displayed_ids = need_displayed_ids;
+
 
         }
         
@@ -641,7 +671,7 @@ alert(selected_feature_dialog_ids.toSource());
           $('.compared_item').each(function (key, value) {
             var column_id = $('#' + $(this).attr('id'));
             var patt = /[0-9]+/g;
-            compared_ids[i] = patt.exec($(this).attr('id'));
+            compared_ids[i] = patt.exec($(this).attr('id'))[0];
             i = i + 1;
           });
           //Add them in the ajax call variables
@@ -683,7 +713,7 @@ alert(selected_feature_dialog_ids.toSource());
           $('.implementation_cell').each(function (key, value) {
             var cell_id = $('#' + $(this).attr('id'));
             var patt = /[0-9]+/g;
-            implementation_ids[i] = patt.exec($(this).attr('id'));
+            implementation_ids[i] = patt.exec($(this).attr('id'))[0];
             i = i + 1;
           });
           //Add them in the ajax call variables
@@ -696,7 +726,7 @@ alert(selected_feature_dialog_ids.toSource());
           $('.need_item').each(function (key, value) {
             var need_id = $('#' + $(this).attr('id'));
             var patt = /[0-9]+/g;
-            need_ids[i] = patt.exec($(this).attr('id'));
+            need_ids[i] = patt.exec($(this).attr('id'))[0];
             i = i + 1;
           });
           //Add them in the ajax call variables
@@ -706,7 +736,7 @@ alert(selected_feature_dialog_ids.toSource());
         if (send_manual_selected_features == true) {
           //Recover all manually selected feature to send their id to drupal
           //Add them in the ajax call variables
-alert(manual_selected_feature_ids.toSource());
+
           options.data.selected_feature_ids = manual_selected_feature_ids;
         }
 
@@ -914,4 +944,5 @@ alert(manual_selected_feature_ids.toSource());
 //TODO Dans les fastaction, separer les class en type et action
 //TODO remplacer event_set par listener_set
 //TODO un clic ultra rapide sur les checkbox courtcircuite l'ajax. Voir si on peut pas temporairement readonly la checkbox
+//TODO Voir si on peut simplifier les champ (feature_parent_feature en parent_id par exemple), ça aiderai vachement pour la fusion des functions. Gros refactoring.
 })(jQuery);
