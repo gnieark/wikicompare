@@ -31,14 +31,13 @@ function need_form($node, $form_state) {
 
 
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
-dpm($form);
-dpm($form_state['node']);
+
 
   $selected_feature_ids = array();
   if (isset($form_state['node']->need_features['und'])) {
     foreach ($form_state['node']->need_features['und'] as $array) {
       $id = $array['target_id'];
-      $selected_feature_ids[$id] = array($id);
+      $selected_feature_ids[$id] = $id;
     }
   }
 
@@ -71,26 +70,26 @@ dpm($form_state['node']);
     'text' => 'Select parent',
     'title' => 'Select parent',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_simple_dialog/need/' . $nid,
+    'path' => 'get_dialog_callback/select_simple_dialog/need/form_selected_parent/' . $nid,
   );
   $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
   $form['container_selected_parent'] = array(
     'title' => array('#markup' => $title),
     '#type' => 'container',
-    '#id' => 'selected_parent',
+    '#id' => 'form_selected_parent',
     '#weight' => -3,
     '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
   );
 
   //hide($form['need_features']);
-
+dpm($selected_feature_ids, 'selected_feature');
   $selected_feature_itemlist = '';
   $feature_array = array();
   if ($selected_feature_ids) {
     $feature_array = get_recursive_data('feature', $selected_feature_ids);
   
-dpm($feature_array, 'feature_array');
+
     $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
     //Building the data for the item list
     $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, $itemlist_settings);
@@ -103,7 +102,7 @@ dpm($feature_array, 'feature_array');
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_multi_dialog/feature/0',
+    'path' => 'get_dialog_callback/select_multi_dialog/feature/form_selected_features/0',
     'id' => 'select_feature_link',
 
   );
@@ -111,7 +110,7 @@ dpm($feature_array, 'feature_array');
   $form['container_selected_feature'] = array(
     'itemlist' => array('#markup' => $selected_feature_itemlist),
     '#type' => 'container',
-    '#id' => 'selected_feature_itemlist',
+    '#id' => 'form_selected_features',
     '#weight' => -2,
     '#suffix' => '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>'
   
@@ -141,11 +140,15 @@ function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output
   $query->condition('n.parent_need_id', NULL);
   $result = $query->execute();
 
+  $needs = request_db('need');
+/*
   foreach ($result as $record) {
     $needs[$record->nid]['data'] = $record;
-  }
+  }*/
 
-  $item_list_data = get_item_list($needs, 'need', 'select_multi_dialog', 0, 0, 0);
+  $itemlist_settings = initialize_itemlist_settings('select_multi_dialog');
+
+  $item_list_data = get_item_list($needs, 'need', 'select_multi_dialog', 0, $itemlist_settings);
 
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
@@ -181,6 +184,158 @@ function wikicompare_needs_wikicompare_comparative_table_prepare_compute(&$selec
 
 }
 
+
+function wikicompare_needs_wikicompare_comparative_table_toogle_fastedit(&$commands, $_POST) {
+
+  $needs = array();
+  if (!empty($_POST['need_ids'])) {
+    $needs = request_db('need', 1, 'nids', $_POST['need_ids']);
+  }
+
+  foreach($needs as $nid =>$need) {
+    $output = add_fastedit_items('need', $need);
+    //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
+    $commands[] = ajax_command_invoke('#need_node_link_' . $nid, 'after', array($output));
+  }
+
+}
+
+/*
+function wikicompare_needs_wikicompare_comparative_table_fastedit_displaytype(&$display_type, $type) {
+
+  if ($type == 'need') {
+    $display_type = 'itemlist';
+  }
+
+}*/
+
+function wikicompare_needs_wikicompare_comparative_table_fastedit_parent(&$parent_id, $type, $node) {
+
+  if ($type == 'need') {
+    $parent_id = $node->need_parent_need['und'][0]['target_id'];
+  }
+
+}
+
+function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$output, $type, $node, $fastaction, $nid) {
+
+  if ($type == 'need') {
+
+dpm($node, 'node_specific');    
+    $selected_feature_itemlist = '';
+    $selected_feature_hidden = '';
+    if ($fastaction == 'edit') {
+      $selected_feature_ids = array();
+      if (isset($node->need_features['und'])) {
+        foreach ($node->need_features['und'] as $array) {
+          $id = $array['target_id'];
+          $selected_feature_ids[] = $id;
+        }
+      }
+
+      
+      $feature_array = array();
+      if ($selected_feature_ids) {
+        $feature_array = get_recursive_data('feature', $selected_feature_ids);
+  
+        $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
+        //Building the data for the item list
+        $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, $itemlist_settings);
+        //Render the item list
+        $selected_feature_itemlist = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+
+        
+        foreach ($selected_feature_ids as $feature_id) {
+          $selected_feature_hidden .= '<div class="need_feature">' . $feature_id . '</div>';
+        }
+        
+
+      }
+
+      
+
+    }
+
+
+    $select_feature_link = array(
+      'text' => 'Select features',
+      'title' => 'Select features',
+      'selector' => 'dialog-content',
+      'path' => 'get_dialog_callback/select_multi_dialog/feature/form_selected_features/0',
+      'id' => 'select_feature_link',
+    );
+    $output .= '<div id="form_selected_features">';
+    $output .= $selected_feature_itemlist;
+    $output .= '</div><div id="need-features">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
+
+    $state_field = array(
+      '#type' => 'select',
+      '#title' => t('State'),
+      '#options' => array(
+        'New' => 'New',
+        'Incomplete' => 'Incomplete',
+        'Published' => 'Published',
+        'Disactivated' => 'Disactivated',
+      ),
+      '#id' => 'form_' . $type . '_fast' . $fastaction . '_state_' . $nid,
+        '#attributes' => array(
+        'class' => array('form_' . $type . '_fast' . $fastaction . '_state'),
+      )
+    );
+    if ($fastaction == 'edit') {
+      $state_field['#value'] = $node->need_state['und'][0]['value'];
+    }
+    $output .= drupal_render($state_field);
+
+/*TODO    $support_field = array(
+      '#type' => 'select',
+      '#title' => t('Support'),
+      '#options' => array(
+        0 => 'Unsupported',
+        1 => 'Supported',
+      ),
+      '#id' => 'form_' . $type . '_fast' . $fastaction . '_support_' . $nid,
+      '#attributes' => array(
+        'class' => array('form_' . $type . '_fast' . $fastaction . '_support'),
+      )
+    );
+    if ($fastaction == 'edit') {
+      $support_field['#value'] = $node->feature_support['und'][0]['value'];
+    }
+    $output .= drupal_render($support_field);*/
+  }
+
+}
+
+function wikicompare_needs_wikicompare_comparative_table_fastedit_command(&$commands, $type, $nid, $output) {
+
+
+  if ($type == 'need') {
+    $commands[] = ajax_command_invoke('#need_children_' . $nid, 'before', array($output));
+  }
+
+}
+
+
+function wikicompare_needs_wikicompare_comparative_table_fastedit_submit(&$node, $type, $_POST) {
+
+
+
+  if ($type == 'need') {
+dpm($_POST, 'post2');
+    $need_features = array();
+    foreach ($_POST['need_feature_ids'] as $feature_id) {
+      $array = array();
+      $array['target_id'] = $feature_id;
+      $array['target_type'] = "node";
+      $need_features[] = $array;
+    }
+    $node->need_features[$node->language] = $need_features;
+    $node->need_state[$node->language][0]['value'] = $_POST['state'];
+dpm($node, 'node2');
+  }
+
+}
 
 function recover_features($need_ids) {
 
@@ -238,7 +393,7 @@ function need_insert($node) {
       'has_children' => 0,
     ))
     ->execute();
-dpm($node);
+
 
   $feature_m2m = array();
   foreach ($node->need_features['und'] as $feature) {

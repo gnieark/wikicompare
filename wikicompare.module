@@ -132,11 +132,11 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
   
-  $items['get_dialog_callback/%/%/%'] = array(
+  $items['get_dialog_callback/%/%/%/%'] = array(
     'page callback' => 'get_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
-    'page arguments' => array(1,2,3),
+    'page arguments' => array(1,2,3,4),
     'type' => MENU_CALLBACK,
     'file' => 'wikicompare_comparative_table.inc',
   );

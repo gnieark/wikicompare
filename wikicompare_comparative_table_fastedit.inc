@@ -75,9 +75,17 @@ function toggle_fastedit_response($method = 'ajax'){
         $commands[] = ajax_command_invoke('#implementation_node_link_' . $nid, 'after', array($output));
 
       }
+      
+
+      //Allow others modules to modify the output
+      foreach (module_implements('wikicompare_comparative_table_toogle_fastedit') as $module) {
+        $function = $module . '_wikicompare_comparative_table_toogle_fastedit';
+        $function($commands, $_POST);
+      }
+
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
-      
+
       $page = array('#type' => 'ajax', '#commands' => $commands);
 
       return $page;
@@ -166,13 +174,28 @@ function get_fastedit_form_response($method = 'ajax'){
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
+dpm($_POST);
+
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
-      if ($type != 'compared') {
+      $display_type = 'itemlist';
+      if (in_array($type, array('feature','implementation'))) {
+        $display_type = 'row_table';
+      } 
+/*
+      //Allow others modules to modify the output
+      foreach (module_implements('wikicompare_comparative_table_fastedit_displaytype') as $module) {
+        $function = $module . '_wikicompare_comparative_table_fastedit_displaytype';
+        $function($display_type, $type);
+      }*/
+
+
+      if ($display_type == 'row_table') {
         $output .= '<tr id="line_form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="line_form_fastedit form_'. $type . '_fast' . $fastaction . '"><td>';
       }
       
@@ -198,7 +221,7 @@ function get_fastedit_form_response($method = 'ajax'){
         } else {
           $output .= '<span id="parent_id" style="display:none;">' . $nid . '</span>';
         }
-      
+dpm($node);      
         if ($type != 'implementation') {
           $name_field = array(
             '#type' => 'textfield',
@@ -216,19 +239,29 @@ function get_fastedit_form_response($method = 'ajax'){
 
           if ($fastaction == 'edit') {
 
+            $parent = 0;
             if ($type == 'feature') {
               $parent_id = $node->feature_parent_feature['und'][0]['target_id'];
             } elseif ($type == 'compared') {
               $parent_id = $node->compared_parent_compared['und'][0]['target_id'];
             }
 
+            //Allow others modules to modify the output
+            foreach (module_implements('wikicompare_comparative_table_fastedit_parent') as $module) {
+              $function = $module . '_wikicompare_comparative_table_fastedit_parent';
+              $function($parent_id, $type, $node);
+            }
+/*
             $query = db_select('node', 'n');
             $query->addField('n', 'title', 'title');
             $query->condition("n.nid", $parent_id);
             $result = $query->execute();
             foreach ($result as $record) {
               $parent_name = $record->title;
-            }
+            }*/
+
+            $res = get_recursive_data($type, array($parent_id));
+            $parent_name = $res['data'][$parent_id]['data']->fulltitle;
 
             //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
             //Add the link to open the select feature popup
@@ -236,9 +269,10 @@ function get_fastedit_form_response($method = 'ajax'){
               'text' => 'Select parent',
               'title' => 'Select parent',
               'selector' => 'dialog-content',
-              'path' => 'get_dialog_callback/select_simple_dialog/' . $type,
+              'path' => 'get_dialog_callback/select_simple_dialog/' . $type . '/form_selected_parent/' . $nid,
             );
-            $output .= '<p><span id="parent_title">' . $parent_name . '</span><span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . '</p>';
+
+            $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span><span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . '</p>';
 
           }
 
@@ -347,6 +381,11 @@ function get_fastedit_form_response($method = 'ajax'){
         
         }
         
+        //Allow others modules to modify the output
+        foreach (module_implements('wikicompare_comparative_table_fastedit_specific') as $module) {
+          $function = $module . '_wikicompare_comparative_table_fastedit_specific';
+          $function($output, $type, $node, $fastaction, $nid);
+        }
         
         $revision_field = array(
           '#type' => 'textarea',
@@ -374,12 +413,14 @@ function get_fastedit_form_response($method = 'ajax'){
         )
       );
       $output .= drupal_render($submit_link);
-      $output .= '<input id="form_' . $type . '_fast' . $fastaction . '_cancel_'. $nid . '" type="button" value="Cancel" class="form_' . $type . '_fast' . fastaction . '_cancel button"/>';
+      $output .= '<input id="form_' . $type . '_fast' . $fastaction . '_cancel_'. $nid . '" type="button" value="Cancel" class="fastform_cancel_button button"/>';
       $output .= '</form>';
       
-      if ($type == 'feature') {
+      if ($display_type == 'row_table') {
         $output .= '</td></tr>';
       }
+
+      
 
       //Preparing the ajax commands to return to javascript
       $commands = array();
@@ -394,6 +435,12 @@ function get_fastedit_form_response($method = 'ajax'){
         case ('implementation'):
           $commands[] = ajax_command_invoke('#feature_row_' . $node->implementation_feature['und'][0]['target_id'], 'after', array($output));
           break;
+      }
+
+      //Allow others modules to modify the output
+      foreach (module_implements('wikicompare_comparative_table_fastedit_command') as $module) {
+        $function = $module . '_wikicompare_comparative_table_fastedit_command';
+        $function($commands, $type, $nid, $output);
       }
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
@@ -487,9 +534,14 @@ function submit_fastedit_form_response($method = 'ajax'){
       if ($type == 'implementation') {
         $node->implementation_support[$node->language][0]['value'] = $_POST['support'];
       }
+
+      foreach (module_implements('wikicompare_comparative_table_fastedit_submit') as $module) {
+        $function = $module . '_wikicompare_comparative_table_fastedit_submit';
+        $function($node, $type, $_POST);
+      }
       
       $node->log = $_POST['revision'];
- 
+dpm($node, 'presave'); 
       node_save($node);
     
       _revisioning_publish_latest_revision($node);

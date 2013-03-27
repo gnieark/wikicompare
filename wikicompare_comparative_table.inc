@@ -12,6 +12,9 @@
  * @return
  *   A form array set for theming
  */
+
+require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparative_table_fastedit.inc';
+
 function wikicompare_comparative_table($form_state) {
 
   //Add the javascript files used in the comparative_table
@@ -81,14 +84,14 @@ function theme_wikicompare_comparative_table($variables) {
   //Render the item list
   $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
 
-  $output .= '<div id="selected_feature_itemlist"></div>';
+  $output .= '<div id="manual_selected_features"></div>';
 
   //Add the link to open the select feature popup
   $select_feature_link = array(
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_multi_dialog/feature',
+    'path' => 'get_dialog_callback/select_multi_dialog/feature/manual_selected_features/0',
     'id' => 'select_feature_link',
 
   );
@@ -163,7 +166,7 @@ function theme_wikicompare_comparative_table($variables) {
  */
 function get_item_list_children_response($method = 'ajax') {
 
-dpm($_POST);
+dpm($_POST, 'post_itemlist');
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
   $subaction = $_POST['subaction'];
@@ -207,9 +210,8 @@ dpm($_POST);
       }*/
 
 
-      $fastedit_status = 0;
       if (!empty($_POST['fastedit_status'])) {
-        $fastedit_status = $_POST['fastedit_status'];
+        $itemlist_settings['fastedit_status'] = $_POST['fastedit_status'];
       }
       $nodes = request_db($type, $fastedit_status, 'parent', array($nid));
 //dpm($nodes);
@@ -229,13 +231,14 @@ dpm($_POST);
         }
 
         if ($subaction == 'select_multi_dialog') {
-
+/*
           //Since in javascript we use an associative array for storing the selected_feature_ids, we need to remove the [0] in the array
           $selected_feature_ids = array();
           foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
-            $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
-          }
+            $selected_feature_ids[$selected_feature_id] = $selected_feature_id;
+          }*/
 
+          $selected_feature_ids = $_POST['selected_feature_ids'];
           if (in_array($key, $selected_feature_ids)) {
             $nodes[$key]['data']->displayed = True;
           }
@@ -257,9 +260,10 @@ dpm($_POST);
       $dialog_text = '';
       if (isset($_POST['dialog'])) {
         $itemlist_settings['dialog'] = 1;
+        $itemlist_settings['node_link'] = 0;
         $dialog_text = 'dialog_';
       }
-
+dpm($nodes, 'nodes');
       //Building the data for the item list
       $item_list_data = get_item_list($nodes, $type, $subaction, 0, $itemlist_settings);
 
@@ -454,7 +458,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 }
 
 
-function get_dialog_response($action, $type, $nid){
+function get_dialog_response($action, $type, $container, $nid){
 
 
   $output = t("<div id='dialog-content'>");
@@ -463,10 +467,16 @@ function get_dialog_response($action, $type, $nid){
   //Find all the features on the first level of the tree
   $nodes = request_db($type);
 
-  $output .= '<div id="initialize_selected_feature_dialog_ids"/>';
+  $output .= '<div id="initialize_selected_feature_dialog_ids">';
+  if ($container == 'manual_selected_features') {
+    $output .= 'manual';
+  } else {
+   $output .= 'form';
+  }
+  $output .= '</div>';
   $output .= '<div id="dialog_type" style="display:none;">' . $type . '</div>';
-
-
+  $output .= '<div id="select_container" style="display:none;">' . $container . '</div>';
+  
 
   $itemlist_settings = initialize_itemlist_settings($action);
 /*  $itemlist_settings = array(
@@ -479,16 +489,19 @@ function get_dialog_response($action, $type, $nid){
     'computed' => 0,
   );
 
-  switch ($action) {
-    case 'select_multi_dialog':
+  switch ($container) {
+    case 'manual_select_features':
       $itemlist_settings['checkbox_children'] = 1;
       break;
-    case 'select_simple_dialog':
+    case 'form_select_features':
       $itemlist_settings['select_link'] = 1;
       break;
+    case 'form_selected_parent':
+
     }*/
 
   $itemlist_settings['dialog'] = 1;
+  $itemlist_settings['node_link'] = 0;
 
   if ($nid != 0) {
     $output .= '<div id="forbidden_nid" style="display:none;">' . $nid . '</div>';
@@ -545,9 +558,9 @@ dpm($parent);
     }
 
     $commands = array();
-    $commands[] = ajax_command_html('#selected_parent', $parent->fulltitle);
+    $commands[] = ajax_command_html('#' . $_POST['container'], $parent->fulltitle);
     $commands[] = ajax_command_html('#edit-need-parent-need', $hidden);
-    $commands[] = ajax_command_replace('#parent_title', '<span id="parent_title">' . $parent->title . '</span>');
+//    $commands[] = ajax_command_replace('#parent_title', '<span id="parent_title">' . $parent->title . '</span>');
     $commands[] = ajax_command_replace('#parent_id', '<span id="parent_id" style="display:none;">' . $parent->nid . '</span>');
     $page = array('#type' => 'ajax', '#commands' => $commands);
 dpm($page, 'page');
@@ -563,18 +576,18 @@ dpm($page, 'page');
 
 
 function submit_dialog_response($method = 'ajax'){
-
+dpm($_POST, 'post');
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
-
+/*
     //Since in javascript we use an associative array for storing the selected_feature_ids, we need to remove the [0] in the array
     $selected_feature_ids = array();
     foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
       $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
-    }
+    }*/
 
-
+    $selected_feature_ids = $_POST['selected_feature_ids'];
 
     $feature_array = array();
 
@@ -593,6 +606,7 @@ function submit_dialog_response($method = 'ajax'){
       'compared_link' => 0,
       'computed' => 0,
     );*/
+dpm($itemlist_settings, 'settings');
 
     //Building the data for the item list
     $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, $itemlist_settings);
@@ -602,29 +616,32 @@ function submit_dialog_response($method = 'ajax'){
 
 //    $features = request_db('feature', 0, 'nids', $selected_feature_ids);
 
-    $hidden = '';
-//TODO compter le nombre d'enregistrement retourné par dialog pour savoir si on doit multi ou pas
-    if (True == True) {
-      $hidden = '<tbody>';
-      $i = 0;
-      foreach ($feature_array['data'] as $feature) {
-        //We remove the feature if it's a parent feature. This case can happen if we add the feature to the need when it has no children, and then it become a parent.
-        if (!$feature['data']->has_children) {
-            $hidden .= '<tr><td>
-              <input type="text" size="60" value="&quot;' . $feature['data']->title . ' (' . $feature['data']->nid . ')&quot;" name="need_features[und][' . $i . '][target_id]">
-              </td></tr>';
-            $i += 1;
-        }
+    $hidden = '<tbody>';
+    $i = 0;
+    foreach ($feature_array['data'] as $feature) {
+      //We remove the feature if it's a parent feature. This case can happen if we add the feature to the need when it has no children, and then it become a parent.
+      if (!$feature['data']->has_children) {
+        $hidden .= '<tr><td>
+        <input type="text" size="60" value="&quot;' . $feature['data']->title . ' (' . $feature['data']->nid . ')&quot;" name="need_features[und][' . $i . '][target_id]">
+        </td></tr>';
+        $i += 1;
       }
+      
       $hidden .= '<tr><td>
         <input type="text" size="60" value="" name="need_features[und][' . $i . '][target_id]" >
         </td></tr>
         </tbody>';
     }
 
+    $hidden_fastedit = '';
+    foreach ($selected_feature_ids as $feature_id) {
+      $hidden_fastedit .= '<div class="need_feature">' . $feature_id . '</div>';
+    }
+
     $commands = array();
-    $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
+    $commands[] = ajax_command_html('#' . $_POST['container'], $output);
     $commands[] = ajax_command_html('#need-features-values', $hidden);
+    $commands[] = ajax_command_html('#need-features', $hidden_fastedit);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -644,10 +661,12 @@ function compute_comparative_table_response($method = 'ajax') {
   if ($method == 'ajax') {
 
     //Since in javascript we use an associative array for storing the selected_feature_ids, we need to remove the [0] in the array
-    $selected_feature_ids = array();
+/*    $selected_feature_ids = array();
     foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
       $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
-    }
+    }*/
+
+    $selected_feature_ids = $_POST['selected_feature_ids'];
 
     //Allow others modules to modify the output
     foreach (module_implements('wikicompare_comparative_table_prepare_compute') as $module) {
@@ -873,7 +892,7 @@ dpm($itemlist_settings);
 //TODO Pas le bon lien          $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
         }
 
-        $checkbox_area = theme_checkbox($checkbox_settings);
+        $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
 
         if ($itemlist_settings['compared_link']) {
 
@@ -892,7 +911,7 @@ dpm($itemlist_settings);
             )
           );
 
-          $checkbox_area .= ' ' . drupal_render($checkbox_link);
+          $checkbox_area .= drupal_render($checkbox_link);
         }
       }
     }
@@ -906,10 +925,10 @@ dpm($itemlist_settings);
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_node = ' ' . l($img, 'node/' . $nid, array('attributes' => array('id' => 'compared_node_link_' . $nid, 'class' => array('compared_node_link')), 'html' => True));
+      $img_link_to_node = ' ' . l($img, 'node/' . $nid, array('attributes' => array('id' => $type . '_node_link_' . $nid, 'class' => array($type . '_node_link')), 'html' => True));
 
       if ($itemlist_settings['fastedit_status'] == 1) {
-        $img_link_to_node .= add_fastedit_items('compared', $node_array);
+        $img_link_to_node .= add_fastedit_items($type, $node_array);
       }
     }
 /*
@@ -1259,6 +1278,7 @@ function initialize_itemlist_settings($subaction) {
       break;
     case 'select_multi_dialog':
       $itemlist_settings['checkbox_children'] = 1;
+      $itemlist_settings['node_link'] = 1;
       break;
     case 'select_simple_dialog':
       $itemlist_settings['select_link'] = 1;

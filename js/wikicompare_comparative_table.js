@@ -3,6 +3,7 @@
 
       //Set global variable
       fastedit_status = 0;
+      manual_selected_feature_ids = {};
       selected_feature_ids = {};
       selected_need_ids = {};
 
@@ -72,13 +73,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
        
         if ($(this).hasClass('need')) {
           if ($(this).attr('checked')) {
-            selected_need_ids[node_id] = node_id;
+            selected_need_ids[node_id] = node_id[0];
+alert(selected_need_ids.toSource());
           } else {
             delete selected_need_ids[node_id];
           }
         } else {
           if ($(this).attr('checked')) {
-            selected_feature_dialog_ids[node_id] = node_id;
+            selected_feature_dialog_ids[node_id] = node_id[0];
           } else {
             delete selected_feature_dialog_ids[node_id];
           }
@@ -87,7 +89,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
-        selected_feature_dialog_ids = selected_feature_ids;
+alert(selected_feature_ids.toSource());
+        if ($(this).text() == 'manual') {
+          selected_feature_dialog_ids = manual_selected_feature_ids;
+        } else {
+alert('in else');
+          selected_feature_dialog_ids = selected_feature_ids;
+        }
+alert(selected_feature_dialog_ids.toSource());
     });
 
 
@@ -253,7 +262,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
       } else if ($(this).hasClass('implementation_edit_link')) {
         type = 'implementation';
         subaction = 'edit';
+      } else if ($(this).hasClass('need_add_link')) {
+        type = 'need';
+        subaction = 'add';
+      } else if ($(this).hasClass('need_edit_link')) {
+        type = 'need';
+        subaction = 'edit';
+      } else if ($(this).hasClass('need_remove_link')) {
+        type = 'need';
+        subaction = 'remove';
       }
+
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, subaction);
@@ -285,16 +304,29 @@ Drupal.behaviors.WikicompareComparativeTable = {
       } else if ($(this).hasClass('form_implementation_fastedit')) {
         type = 'implementation';
         subaction = 'edit';
+      } else if ($(this).hasClass('form_need_fastadd')) {
+        type = 'need';
+        subaction = 'add';
+      } else if ($(this).hasClass('form_need_fastedit')) {
+        type = 'need';
+        subaction = 'edit';
+      } else if ($(this).hasClass('form_need_fastremove')) {
+        type = 'need';
+        subaction = 'remove';
       }
       
       $('#form_' + type + '_fast' + subaction + '_submit_link_' + node_id).click();
       //Block the page loading
       return false;
     });
-        
-    $('.form_compared_fastadd_cancel').click(function () {
-      clean_fastedit_forms();
-    });
+       
+
+    $('.fastform_cancel_button:not(.event_set)').addClass('event_set').each(function () {
+      $(this).click(function() {
+        $('#make_cleaning_link').click();
+        return false;
+      });
+    }); 
     
     
     
@@ -325,6 +357,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
       } else if ($(this).hasClass('form_implementation_fastedit_submit_link')) {
         type = 'implementation';
         subaction = 'edit';
+      } else if ($(this).hasClass('form_need_fastadd_submit_link')) {
+        type = 'need';
+        subaction = 'add';
+      } else if ($(this).hasClass('form_need_fastedit_submit_link')) {
+        type = 'need';
+        subaction = 'edit';
+      } else if ($(this).hasClass('form_need_fastremove_submit_link')) {
+        type = 'need';
+        subaction = 'remove';
       }
       
       //Active the code
@@ -367,9 +408,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_compareds_columns = false;
         send_features = false;
         send_implementations = false;
-        send_selected_features = false;
+        send_needs = false;
+        send_manual_selected_features = false;
         send_selected_needs = false;
         send_forbidden_nid = false;
+        send_container = false;
+        make_cleaning = false;
         
         if (action == 'expand_list_children') {
           send_node_id = true;
@@ -384,6 +428,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
             if (subaction == 'select_multi_dialog') {
               options.data.selected_feature_ids = selected_feature_dialog_ids;
             } 
+          } else {
+            make_cleaning = true;
           }
 
           if ($('#' + link_id).hasClass('need')) {
@@ -395,6 +441,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_node_id = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
+          make_cleaning = true;
         }
         
         if (action == 'toogle_compared_checkbox') {
@@ -402,22 +449,31 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_computed_status = true;
           manage_displayed_flag = true;
           send_features = true;
+          make_cleaning = true;
         }
 
         if (action == 'select_dialog') {
            send_node_id = true;
            send_type = true;
+           send_container = true;
         }
 
         if (action == 'submit_dialog') {
-          selected_feature_ids = selected_feature_dialog_ids;
-          send_selected_features = true;
+          if ($('#initialize_selected_feature_dialog_ids').text() == 'manual') {
+            manual_selected_feature_ids = selected_feature_dialog_ids;
+            send_manual_selected_features = true;
+          } else {
+            selected_feature_ids = selected_feature_dialog_ids;
+            options.data.selected_feature_ids = selected_feature_dialog_ids;
+          }
+          send_container = true;
         }
   
         if (action == 'compute_table') {
           send_compareds_columns = true;
-          send_selected_features = true;
+          send_manual_selected_features = true;
           send_selected_needs = true;
+          make_cleaning = true;
         }
 
      
@@ -426,12 +482,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_compareds = true;
           send_features = true;
           send_implementations = true;
+          send_needs = true;
+          make_cleaning = true;
         }
         
         
         if (action == 'show_fastedit_form') {
           send_node_id = true;
           manage_displayed_flag = true;
+
+          if ($('#' + link_id).hasClass('displayed')) {
+            make_cleaning = true;
+          }
           
           send_type = true;
           options.data.fastaction = subaction;
@@ -440,6 +502,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'submit_fastedit_form') {
           send_node_id = true;
           send_type = true;
+          make_cleaning = true;
           options.data.fastaction = subaction;
           
           if (type != 'implementation') {
@@ -457,6 +520,21 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
           if (type == 'implementation') {
             options.data.support = $('#form_' + type + '_fast' + fastaction + '_support_' + node_id).val();
+          }
+
+          if (type == 'need') {
+            var need_feature_ids = {};
+            var i = 0;
+            $('.need_feature').each(function (key, value) {
+              //var need_feature_id = $('#' + $(this).attr('id'));
+              //var patt = /[0-9]+/g;
+              need_feature_ids[$(this).text()] = $(this).text();
+              i = i + 1;
+            });
+            //Add them in the ajax call variables
+            options.data.need_feature_ids = need_feature_ids;
+
+            options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
           }
           options.data.revision = $('#form_' + type + '_fast' + subaction + '_revision_' + node_id).val();
         }
@@ -612,10 +690,24 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.implementation_ids = implementation_ids;
         }
 
-        if (send_selected_features == true) {
+        if (send_needs == true) {
+          var need_ids = new Array();
+          var i = 0;
+          $('.need_item').each(function (key, value) {
+            var need_id = $('#' + $(this).attr('id'));
+            var patt = /[0-9]+/g;
+            need_ids[i] = patt.exec($(this).attr('id'));
+            i = i + 1;
+          });
+          //Add them in the ajax call variables
+          options.data.need_ids = need_ids;
+        }
+
+        if (send_manual_selected_features == true) {
           //Recover all manually selected feature to send their id to drupal
           //Add them in the ajax call variables
-          options.data.selected_feature_ids = selected_feature_ids;
+alert(manual_selected_feature_ids.toSource());
+          options.data.selected_feature_ids = manual_selected_feature_ids;
         }
 
         if (send_selected_needs == true) {
@@ -625,6 +717,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (send_forbidden_nid == true) {
           forbidden_nid = $('#forbidden_nid').text();
           options.data.forbidden_nid = forbidden_nid;
+        }
+
+        if (send_container == true) {
+          container = $('#select_container').text();
+          options.data.container = container;
         }
         
         //Launch regular beforeSerialize function
@@ -661,6 +758,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('.feature_edit_link').remove();
             $('.feature_remove_link').remove();
             $('.implementation_edit_link').remove();
+            $('.need_add_link').remove();
+            $('.need_edit_link').remove();
+            $('.need_remove_link').remove();
           }
         }
 
@@ -697,7 +797,24 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('.implementation_compared_' + node_id).fadeIn();
             }
             
+//TODO Repli des enfants, copier le fonctionnement sur les autres form ou supprimer la feature, le clean pourrait suffire
             if (action == 'show_fastedit_form') {
+              if (type == 'need') {
+                var need_feature_ids = {};
+                var i = 0;
+                $('.need_feature').each(function (key, value) {
+
+                  //var need_feature_id = $('#' + $(this).attr('id'));
+                  //var patt = /[0-9]+/g;
+                  feature = $(this).text();
+
+                  need_feature_ids[feature] = feature;
+                  i = i + 1;
+                });
+                //Add them in the ajax call variables
+                selected_feature_ids = need_feature_ids;
+
+              }
               if ($('#compared_link_' + node_id).hasClass('displayed')) {
                 $('#compared_link_' + node_id).click();
               }
@@ -733,8 +850,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         
-
-        if (action != 'make_cleaning' && (action != 'show_fastedit_form' || !$('#' + link_id).hasClass('displayed'))) {
+//alert(make_cleaning);
+//        if (action != 'make_cleaning' && (action != 'show_fastedit_form' || !$('#' + link_id).hasClass('displayed'))) {
+        if (make_cleaning == true) {
           $('#make_cleaning_link').click();
         }
       }
@@ -792,4 +910,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
 //TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 //TODO Remplacer les status par le module workflow, pour mieux controler la revision.
+//TODO remplacer display par un flag true, pour recuperer le keyword action
+//TODO Dans les fastaction, separer les class en type et action
+//TODO remplacer event_set par listener_set
+//TODO un clic ultra rapide sur les checkbox courtcircuite l'ajax. Voir si on peut pas temporairement readonly la checkbox
 })(jQuery);
