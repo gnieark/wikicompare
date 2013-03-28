@@ -271,8 +271,8 @@ dpm($node);
               'selector' => 'dialog-content',
               'path' => 'get_dialog_callback/select_simple_dialog/' . $type . '/form_selected_parent/' . $nid,
             );
-
-            $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span><span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . '</p>';
+            $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
+            $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span><span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
 
           }
 

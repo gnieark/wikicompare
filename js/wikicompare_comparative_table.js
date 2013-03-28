@@ -129,8 +129,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('.clear_link:not(.event_set)').addClass('event_set').each(function () {
       $(this).click(function() {
-        $('#selected_parent').html('No parent');
-        $('#edit-need-parent-need').html('<input type="text" size="60" value="" name="need_parent_need[und][0][target_id]">');
+        type = $(this).attr('type');
+        $('#form_selected_parent').html('No parent');
+        $('#edit-' + type + '-parent-' + type).html('<input type="text" size="60" value="" name="' + type + '_parent_' + type + '[und][0][target_id]">');
+        $('#parent_id').empty();
         return false;
       });
     });
@@ -945,4 +947,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer event_set par listener_set
 //TODO un clic ultra rapide sur les checkbox courtcircuite l'ajax. Voir si on peut pas temporairement readonly la checkbox
 //TODO Voir si on peut simplifier les champ (feature_parent_feature en parent_id par exemple), ça aiderai vachement pour la fusion des functions. Gros refactoring.
+//TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
 })(jQuery);

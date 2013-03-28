@@ -554,12 +554,12 @@ dpm($_POST, 'post');
 dpm($parent);
     $hidden = '';
     if ($parent) {
-      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="need_parent_need[und][0][target_id]">';
+      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="' . $_POST['type'] . '_parent_' . $_POST['type'] . '[und][0][target_id]">';
     }
 
     $commands = array();
     $commands[] = ajax_command_html('#' . $_POST['container'], $parent->fulltitle);
-    $commands[] = ajax_command_html('#edit-need-parent-need', $hidden);
+    $commands[] = ajax_command_html('#edit-' . $_POST['type'] . '-parent-' . $_POST['type'], $hidden);
 //    $commands[] = ajax_command_replace('#parent_title', '<span id="parent_title">' . $parent->title . '</span>');
     $commands[] = ajax_command_replace('#parent_id', '<span id="parent_id" style="display:none;">' . $parent->nid . '</span>');
     $page = array('#type' => 'ajax', '#commands' => $commands);

@@ -222,46 +222,47 @@ function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per
   $depth++;
   $nb_child = rand($child_min_per_level, $child_max_per_level);
   
+
   $i = 1;
   while ($i <= $nb_child) {
     $node = new stdClass();
     $node->type = 'feature';
+    $node->language = language_default('language');
     if ($parent_id != NULL) {
     $title = $prefix . '.' . $i;
     } else {
     $title = $prefix . $i;
     }
-    $node->language = LANGUAGE_NONE;
     $node->title = $title;
-    $node->feature_state[$node->language][0]['value'] = 'Published';
+    $node->feature_state['und'][0]['value'] = 'Published';
     if ($parent_id != NULL) {
-      $node->feature_parent_feature[$node->language][0]['target_id'] = $parent_id;
-      $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
+      $node->feature_parent_feature['und'][0]['target_id'] = $parent_id;
+      $node->feature_parent_feature['und'][0]['target_type'] = "node";
     }
 
     if ($parent_type == 'parent-weighted-average') {
-      $node->feature_weight[$node->language][0]['value'] = 100*rand($min_weight, $max_weight);
+      $node->feature_weight['und'][0]['value'] = 100*rand($min_weight, $max_weight);
     } elseif ($parent_type == 'parent-highest-percentage') {
-      $node->feature_weight[$node->language][0]['value'] = 100/rand($min_weight, $max_weight);
+      $node->feature_weight['und'][0]['value'] = 100/rand($min_weight, $max_weight);
     }
 
 
     if (rand(1, $feature_highest_chance) != $feature_highest_chance) {
-      $node->feature_type[$node->language][0]['value'] = 'parent-weighted-average';
+      $node->feature_type['und'][0]['value'] = 'parent-weighted-average';
       $parent_type = 'parent-weighted-average';
     } else {
-      $node->feature_type[$node->language][0]['value'] = 'parent-highest-percentage';
+      $node->feature_type['und'][0]['value'] = 'parent-highest-percentage';
       $parent_type = 'parent-highest-percentage';
     }
 
 
-    $node->feature_weight[$node->language][0]['value'] = rand($min_weight, $max_weight);
+    $node->feature_weight['und'][0]['value'] = rand($min_weight, $max_weight);
 
     if ((($depth <= $min_depth or (rand($min_depth, $max_depth) != $min_depth)) and ($depth <= $max_depth))) {
       node_save($node);
       create_feature_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $node->nid, $features_created, $parent_type);
     } else {
-      $node->feature_type[$node->language][0]['value'] = 'parent-weighted-average';
+      $node->feature_type['und'][0]['value'] = 'parent-weighted-average';
       node_save($node);
     }
 
@@ -279,10 +280,12 @@ function create_compared_children($min_depth, $max_depth, $prefix, $child_min_pe
   $depth++;
   $nb_child = rand($child_min_per_level, $child_max_per_level);
 
+
   $i = 1;
   while ($i <= $nb_child) {
     $node = new stdClass();
     $node->type = 'compared';
+    $node->language = language_default('language');
     if ($parent_id != NULL) {
     $title = $prefix . '.' . $i;
     } else {
@@ -290,9 +293,8 @@ function create_compared_children($min_depth, $max_depth, $prefix, $child_min_pe
     }
     $node->title = $title;
     if ($parent_id != NULL) {
-      $node->language = LANGUAGE_NONE;
-      $node->compared_parent_compared[$node->language][0]['target_id'] = $parent_id;
-      $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+      $node->compared_parent_compared['und'][0]['target_id'] = $parent_id;
+      $node->compared_parent_compared['und'][0]['target_type'] = "node";
     }
 
     node_save($node);

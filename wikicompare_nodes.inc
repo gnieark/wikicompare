@@ -13,6 +13,11 @@ function feature_insert($node) {
    * Create a new implementation for all compared node
    */
 
+dpm($node);
+
+  //TODO pareil ailleurs
+  if ($node->language == language_default('language')) {
+
   //Create the new feature in the cache table
   $feature_parent_feature = NULL;
   if (isset($node->feature_parent_feature['und'][0])) {
@@ -112,6 +117,8 @@ function feature_insert($node) {
 
   //Update the compare tree with the new data
   wikicompare_update_compare_tree('feature', array($node->nid));
+
+  }
 
 }
 
