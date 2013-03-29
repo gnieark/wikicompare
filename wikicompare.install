@@ -316,6 +316,7 @@ function wikicompare_install() {
   //Set Feature variables
   variable_set('node_options_feature', array('status','revision','revision_moderation'));
   variable_set('node_submitted_feature', '0');
+  variable_set('language_content_type_feature', '1');
   
   
   
@@ -519,6 +520,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   //Set Compared variables
   variable_set('node_options_compared', array('status','revision','revision_moderation'));
   variable_set('node_submitted_compared', '0');
+  variable_set('language_content_type_compared', '1');
   
   
   
@@ -582,6 +584,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   //Set Implementation variables
   variable_set('node_options_implementation', array('status','revision','revision_moderation'));
   variable_set('node_submitted_implementation', '0');
+  variable_set('language_content_type_implementation', '1');
   
   
   
@@ -769,6 +772,7 @@ function wikicompare_uninstall() {
 
   variable_del('node_options_feature');
   variable_del('node_submitted_feature');
+  variable_del('language_content_type_feature');
 
   //Delete feature content type.
 
@@ -803,6 +807,7 @@ function wikicompare_uninstall() {
 
   variable_del('node_options_compared');
   variable_del('node_submitted_compared');
+  variable_del('language_content_type_compared');
 
   //Delete compared content type.
 
@@ -833,6 +838,7 @@ function wikicompare_uninstall() {
 
   variable_del('node_options_implementation');
   variable_del('node_submitted_implementation');
+  variable_del('language_content_type_implementation');
 
   //Delete compared content type.
 

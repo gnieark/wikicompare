@@ -40,7 +40,7 @@ function wikicompare_admin() {
   $form['temp'] = array(
     '#markup' => 'test' . language_default('language'),
   );
-dpm(language_list());
+dpm(variable_get('language_content_type_feature', array()));
 //variable_set('language_default', object);
 
   //Display the select button for managing the compared parent update
@@ -84,9 +84,11 @@ Activate this feature can take some time, because the cache table need to be rec
 function submit_settings($form, $form_state) {
 
   if ($form_state['input']['wikicompare_main_language'] != language_default('language')) {
+//TODO Intervertir les translation_source entre les nodes, réassigner les champs perso et les implementation sur le nouveau node referent. Si node du nouveau language non existant, changer le langage du precedent.
     $languages = language_list();
     $key = $form_state['input']['wikicompare_main_language'];
     variable_set('language_default', $languages[$key]);
+
   }
 
   if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {

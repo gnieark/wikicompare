@@ -130,6 +130,8 @@ function wikicompare_needs_install() {
   $types = node_type_get_types();
   node_add_body_field( $types[ 'need' ] , $t('Description'));
 
+  variable_set('language_content_type_need', '1');
+
 
 
 
@@ -256,6 +258,7 @@ function wikicompare_needs_install() {
 function wikicompare_needs_uninstall() {
 
 
+  variable_del('language_content_type_need');
 
   //Delete all nodes of need type.
 
