@@ -10,7 +10,10 @@ function wikicompare_needs_schema() {
 
 
 dpm('test');
-  $schema['cache_need'] = array(
+  $schema['cache_need'] = wikicompare_node_schema('need');
+
+
+/*array(
 
     'description' => 'Cache table for need. Used so the percentage of comparative table are computed faster.',
     'fields' => array(
@@ -73,7 +76,7 @@ dpm('test');
       ),
     )
 
-  ); 
+  ); */
 
 
   $schema['cache_need_feature_rel'] = array(
@@ -128,6 +131,34 @@ function wikicompare_needs_install() {
   
   //Assign body field to the new node types
   $types = node_type_get_types();
+
+  $field = array(
+    'field_name' => 'need_features',
+    'type' => 'entityreference',
+    'cardinality' => -1,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array('target_bundles' => array('feature')),
+    ),
+  );
+  field_create_field($field);
+
+  $field = array(
+    'field_name' => 'need_state',
+    'type' => 'list_text',
+    'cardinality' => 1,
+    'settings' => array(
+      'allowed_values' => array(
+        'Published' => 'Published',
+        'Disactivated' => 'Disactivated',
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  wikicompare_node_install('need', $types);
+
+/*
   node_add_body_field( $types[ 'need' ] , $t('Description'));
 
   variable_set('language_content_type_need', '1');
@@ -135,16 +166,16 @@ function wikicompare_needs_install() {
 
 
 
- /*
+ *
   * Need type related
-  */
+  *
   
   //Set Need variables
   variable_set('node_options_need', array('status','revision','revision_moderation'));
   variable_set('node_submitted_need', '0');
+  */
   
-  
-  
+  /*
     //Create parent need field
 
     $field = array(
@@ -172,69 +203,19 @@ function wikicompare_needs_install() {
       ),
     );
     field_create_instance($instance);
-
+*/
 
     //Create features field
 
-    $field = array(
-      'field_name' => 'need_features',
-      'type' => 'entityreference',
-      'cardinality' => -1,
-      'settings' => array(
-        'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('feature')),
-      ),
-    );
-    field_create_field($field);
 
-    $instance = array(
-      'field_name' => 'need_features',
-      'entity_type' => 'node',
-      'bundle' => 'need',
-      'label' => 'Features',
-      'widget' => array(
-        'type' => 'entityreference_autocomplete',
-      ),
-      'settings' => array(
-        'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('feature')),
-      ),
-    );
-    field_create_instance($instance);
+
+
 
 
     //Create state field
 
-    $field = array(
-      'field_name' => 'need_state',
-      'type' => 'list_text',
-      'cardinality' => 1,
-      'settings' => array(
-        'allowed_values' => array(
-          'Published' => 'Published',
-          'Disactivated' => 'Disactivated',
-        ),
-      ),
-    );
-    field_create_field($field);
 
-    $instance = array(
-      'field_name' => 'need_state',
-      'entity_type' => 'node',
-      'bundle' => 'need',
-      'label' => 'State',
-      'description' => 'TODO : State of the need',
-      'required' => 1,
-      'default_value' => array(
-        0 => array(
-          'value' => 'Disactivated',
-        ),
-      ),
-      'widget' => array(
-        'type' => 'options_select',
-      ),
-    );
-    field_create_instance($instance);
+
 
 
 
@@ -258,7 +239,7 @@ function wikicompare_needs_install() {
 function wikicompare_needs_uninstall() {
 
 
-  variable_del('language_content_type_need');
+
 
   //Delete all nodes of need type.
 
@@ -276,11 +257,12 @@ function wikicompare_needs_uninstall() {
 
   variable_del('node_options_need');
   variable_del('node_submitted_need');
+  variable_del('language_content_type_need');
 
   //Delete feature content type.
 
-  field_delete_field('need_parent_need');
-  field_delete_field('need_features');
+  field_delete_instance('need_parent_need'); //TODO
+  field_delete_field('features');
   field_delete_field('need_state');
 
   

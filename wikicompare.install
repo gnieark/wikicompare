@@ -54,6 +54,15 @@ function wikicompare_schema() {
    * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
    * This will allow us to make far less join in sql query on comparative table computation.
    */
+
+//  foreach (array('compared', 'feature', 'implementation') as $type) {
+
+  $schema['cache_compared'] = wikicompare_node_schema('compared');
+  $schema['cache_feature'] = wikicompare_node_schema('feature');
+  $schema['cache_implementation'] = wikicompare_node_schema('implementation');
+
+//  }
+/*
   $schema['cache_feature'] = array(
 
     'description' => 'Cache table for feature. Used so the percentage of comparative table are computed faster.',
@@ -278,12 +287,134 @@ function wikicompare_schema() {
       ),
     )
 
-  ); 
+  ); */
   
   return $schema;
 
 }
 
+
+function wikicompare_node_schema($type) {
+
+  $schema = array();
+  $schema['description'] = 'Cache table for ' . $type . '. Used so the percentage of comparative table are computed faster.';
+  $schema['fields']['nid'] = array(
+    'description' => 'The nid of the node',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  $schema['unique keys']['nid'] = array('nid');
+  $schema['foreign keys']['node'] = array(
+    'table' => 'node',
+    'columns' => array('nid' => 'nid'),
+  );
+
+  $schema['fields']['vid'] = array(
+    'description' => 'The active vid of the node',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  $schema['foreign keys']['node_revision'] = array(
+    'table' => 'node',
+    'columns' => array('vid' => 'vid'),
+  );
+
+  if ($type != 'implementation') {
+    $schema['fields']['title'] = array(
+      'description' => 'The title of the node',
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE,
+    );
+    $schema['fields']['parent_id'] = array(
+      'description' => 'The parent id of the node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+    );
+    $schema['indexes']['parent_id'] = array('parent_id');
+    $schema['foreign keys']['node_parent'] = array(
+      'table' => 'node',
+      'columns' => array('parent_feature_id' => 'nid'),
+    );
+  } else {
+    $schema['fields']['feature_id'] = array(
+      'description' => 'The feature id of the implementation node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    );
+    $schema['fields']['compared_id'] = array(
+      'description' => 'The compared id of the implementation node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    );
+
+  }
+
+
+  switch ($type) {
+    case 'feature':
+      $schema['fields']['type'] = array(
+        'description' => 'The type of the feature node',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      );
+      $schema['indexes']['type'] = array('type');
+      $schema['fields']['weight'] = array(
+        'description' => 'The weight of the feature node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      );
+      $schema['fields']['state'] = array(
+        'description' => 'The state of the feature node',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      );
+      $schema['indexes']['state'] = array('state');
+      break;
+    case 'implementation':
+      $schema['fields']['support'] = array(
+        'description' => "Boolean indicated if this implementation is supported or not",
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      );
+      break;
+  }
+
+
+  foreach (module_implements('wikicompare_install_node_schema') as $module) {
+    $function = $module . '_wikicompare_install_node_schema';
+    $function($schema, $type);
+  }
+
+
+  $schema['fields']['has_children'] = array(
+    'description' => "Boolean indicated if this node has children. This allow us to know this feature has children without making each time a big sql query.",
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  $schema['fields']['to_update'] = array(
+    'description' => "Boolean indicated if this node should be updated as soon as possible",
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  $schema['indexes']['to_update'] = array('to_update');
+
+  return $schema;
+
+}
 
 
 /**
@@ -297,28 +428,199 @@ function wikicompare_install() {
   // Ensure that new node type is available.
   node_types_rebuild();
   
+
   //Assign body field to the new node types
   $types = node_type_get_types();
-  node_add_body_field( $types[ 'feature' ] , $t('Description'));
-  node_add_body_field( $types[ 'compared' ] , $t('Description'));
-  node_add_body_field( $types[ 'implementation' ] , $t('Description'));
+
+  $field = array(
+    'field_name' => 'wikicompare_parent_id',
+    'type' => 'entityreference',
+    'cardinality' => 1,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
+    ),
+  );
+dpm($field);
+  field_create_field($field);
+
+
+
+  $field = array(
+    'field_name' => 'wikicompare_feature_id',
+    'type' => 'entityreference',
+    'cardinality' => 1,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array('target_bundles' => array('feature')),
+    ),
+  );
+  field_create_field($field);
+
+
+  $field = array(
+    'field_name' => 'wikicompare_compared_id',
+    'type' => 'entityreference',
+    'cardinality' => 1,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array('target_bundles' => array('compared')),
+    ),
+  );
+  field_create_field($field);
+
+
+  //Create support field
+  $field = array(
+    'field_name' => 'wikicompare_support',
+    'type' => 'list_boolean',
+    'cardinality' => 1,
+    'settings' => array(
+      'allowed_values' => array(
+        0 => 'Unsupported',
+        1 => 'Supported',
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  //Create Proofs field
+  $field = array(
+    'field_name' => 'wikicompare_proofs',
+    'type' => 'text',
+    'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    'settings' => array(
+      'max_length' => '255',
+    ),
+  );
+  field_create_field($field);
+
+
+
+  $field = array(
+    'field_name' => 'wikicompare_type',
+    'type' => 'list_text',
+    'cardinality' => 1,
+    'settings' => array(
+      'allowed_values' => array(
+        'parent-weighted-average' => 'Parent Feature - Weighted Average',
+        'parent-highest-percentage' => 'Parent Feature - Highest Percentage',
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  //Create validation guidelines field
+  $field = array(
+    'field_name' => 'wikicompare_guidelines',
+    'type' => 'text_long',
+    'cardinality' => 1
+  );
+  field_create_field($field);
+
+  //Create weight field
+  $field = array(
+    'field_name' => 'wikicompare_weight',
+    'type' => 'number_integer',
+    'cardinality' => 1
+  );
+  field_create_field($field);
+
+  //Create state field
+  $field = array(
+    'field_name' => 'wikicompare_state',
+    'type' => 'list_text',
+    'cardinality' => 1,
+    'settings' => array(
+      'allowed_values' => array(
+        'New' => 'New',
+        'Incomplete' => 'Incomplete',
+        'Published' => 'Published',
+        'Disactivated' => 'Disactivated',
+      ),
+    ),
+  );
+  field_create_field($field);
+
+
+
+
+  wikicompare_node_install('compared', $types);
+  wikicompare_node_install('feature', $types);
+  wikicompare_node_install('implementation', $types);
 
 
   //Set module default settings
   variable_set('wikicompare_update_compared', 'no-update');
 
 
+/*
+  node_add_body_field( $types[ 'feature' ] , $t('Description'));
+  node_add_body_field( $types[ 'compared' ] , $t('Description'));
+  node_add_body_field( $types[ 'implementation' ] , $t('Description'));
+
+
+*/
+
+
 
   /*
   * Feature type related
   */
-  
+  /*
   //Set Feature variables
   variable_set('node_options_feature', array('status','revision','revision_moderation'));
   variable_set('node_submitted_feature', '0');
   variable_set('language_content_type_feature', '1');
   
-  
+  */
+
+//TEST 
+/*
+    $field = array(
+      'field_name' => 'parent_id',
+      'type' => 'entityreference',
+      'cardinality' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
+      ),
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'parent_id',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Parent',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
+      ),
+    );
+    field_create_instance($instance);
+
+    $instance = array(
+      'field_name' => 'parent_id',
+      'entity_type' => 'node',
+      'bundle' => 'compared',
+      'label' => 'Parent',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_instance($instance);
+
+
+
+
   
     //Create parent feature field
 
@@ -346,11 +648,11 @@ function wikicompare_install() {
         'handler_settings' => array('target_bundles' => array('feature')),
       ),
     );
-    field_create_instance($instance);
+    field_create_instance($instance);*/
 
 
     //Create type field
-
+/*
     $field = array(
       'field_name' => 'feature_type',
       'type' => 'list_text',
@@ -500,7 +802,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
 
 
-
+*/
 
 
 
@@ -516,7 +818,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   * Compared type related
   */
   
-
+/*
   //Set Compared variables
   variable_set('node_options_compared', array('status','revision','revision_moderation'));
   variable_set('node_submitted_compared', '0');
@@ -552,35 +854,14 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       ),
     );
     field_create_instance($instance);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+*/
 
 
 
  /*
   * Implementation type related
   */
-
+/*
   //Set Implementation variables
   variable_set('node_options_implementation', array('status','revision','revision_moderation'));
   variable_set('node_submitted_implementation', '0');
@@ -732,12 +1013,234 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
         'type' => 'text_textfield',
       ),
     );
-    field_create_instance($instance);
+    field_create_instance($instance); */
 
 
 }
 
 
+
+function wikicompare_node_install($type, $types) {
+
+  $t = get_t();
+
+  node_add_body_field( $types[$type] , $t('Description'));
+
+
+  //Set variables
+  variable_set('node_options_' . $type, array('status','revision','revision_moderation'));
+  variable_set('node_submitted_' . $type, '0');
+  variable_set('language_content_type_' . $type, '1');
+
+
+  if ($type != 'implementation') {
+    $instance = array(
+      'field_name' => 'wikicompare_parent_id',
+      'entity_type' => 'node',
+      'bundle' => $type,
+      'label' => 'Parent',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array($type)),
+      ),
+    );
+    field_create_instance($instance);
+  } else {
+
+    //Create feature field
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_feature_id',
+      'entity_type' => 'node',
+      'bundle' => 'implementation',
+      'label' => 'Feature',
+      'description' => 'TODO : La fonctionnalite supporte, je pense que ce sera la peine de laisser une description. Ce champ sera grise pour tous.',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'required' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('feature')),
+      ),
+    );
+    field_create_instance($instance);
+
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_compared_id',
+      'entity_type' => 'node',
+      'bundle' => 'implementation',
+      'label' => 'Compared',
+      'description' => 'TODO : Le software qui supporte la fonctionnalite. Pas la peine de laisser une description, le champ sera grise pour tous.',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'required' => 1,
+      'settings' => array(
+        'target_type' => 'node',
+        'handler_settings' => array('target_bundles' => array('compared')),
+      ),
+    );
+    field_create_instance($instance);
+
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_support',
+      'entity_type' => 'node',
+      'bundle' => 'implementation',
+      'label' => 'Support',
+      'description' => 'TODO : Ce champ n\'est visible que si la feature n\'est pas un parent feature',
+      'default_value' => array(
+        0 => array(
+          'value' => 0,
+        ),
+      ),
+      'required' => 1,
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_proofs',
+      'entity_type' => 'node',
+      'bundle' => 'implementation',
+      'label' => 'Proofs',
+      'description' => 'TODO : chaque texte sera une url qui pointera vers une video/screenshot prouvant le support de la fonctionnalité. Si le champ est vide, le code couleur sur la page sera différent et allégé. Les modérateurs seront encouragé dans cette description à supprimer les preuves non valables.',
+      'widget' => array(
+        'settings' => array(
+          'size' => '255',
+        ),
+        'type' => 'text_textfield',
+      ),
+    );
+    field_create_instance($instance);
+
+
+  }
+
+  if ($type == 'feature') {
+
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_type',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Type',
+      'description' => 'TODO : Type de validation
+
+Not a parent feature : Une feature qui n\'a pas d\'enfant. Retourne soit 0% soit 100%.
+Affichage : 
+Valeur du champ "texte à afficher dans cellule"
+Pourcentage retourné
+
+Parent Feature - Moyenne Pondérée : Parent le plus classique, retourne la moyenne des pourcentage enfant pondéré par le champ weight. 
+Affichage : 
+Valeur du champ "texte à afficher dans cellule"
+Pourcentage retourné
+Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants). Bon la formule est mauvaise, faut que je retrouve la vraie formule pour la moyenne pondérée.
+
+Parent Feature - Pourcentage le plus haut : Ce parent retourne le pourcentage le plus haut parmis les pourcentage retourné par ses enfants. Ce type de champ sert à indiquer qu\'on a fait un choix, et les enfants indiquent les différents choix possible qui peuvent servir à valider cette feature parent.
+Par contre tous les choix ne se valent pas forcément, du coup le champ weight pour ses direct child feature va prendre une autre signification : Il va indiquer la valeur du choix, sous forme de pourcentage.
+Pourcentage retourné sera alors : % du child feature * (weight / 100). On fait le calcul pour chaque enfant et on retourne la valeur la plus haute.
+Affichage : 
+Valeur du champ "texte à afficher dans cellule"
+Pourcentage retourné
+
+
+Link : Cette feature sert à établir un lien avec un autre software. Dans ce cas, les features enfants finale vont avoir une liste d\'entity reference pointant vers software au lieu de la liste "supporté - non supportée".
+Les feature parent  mais child de cette feature vont afficher le pourcentage pour chacun des software cité par un enfant. Cette feature se calculera forcément par moyenne pondérée, mais les parent child de cette feature peuvent être en highest percentage.
+Si pour un des logiciels, le pourcentage calculé pour tous les enfants est égal à 100%, alors le lien entre le software et le software lié est établie. 
+Dans ce cas, toutes les features du logiciel lié deviennent supportés par le software mais via un code couleur spécifique. (ex : violet).
+Affichage : 
+Lien fort : Nom des logiciels dont le lien est effectif
+Lien faible : Nom des logigiels cité dans les enfants mais dont le lien n\'est pas effectif, avec le pourcentage calculé
+Pourcentage retourné : Pourcentage du plus fort logiciel lié (Donc 100% si on a un lien effectif).
+
+
+
+Deprecated :
+Possibilities List : En fonction du choix de la retourne, retourne le pourcentage correspondant.
+Affichage : 
+Choix de la liste.
+Pourcentage retourné
+Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants) * (pourcentage du choix)',
+      'required' => 1,
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_guidelines',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Validation Guidelines',
+      'description' => 'TODO : Le texte decrivant  precisement dans quelles conditions on peut on non valider le support de la feature dans le logiciel.
+Ce texte doit s\'afficher dans le formulaire de la cellule quand on renseigne le support de la feature',
+      'required' => 1,
+      'widget' => array(
+        'type' => 'text_textarea',
+      ),
+    );
+    field_create_instance($instance);
+
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_weight',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'Weight',
+      'description' => 'TODO : Poids indiquant l\'importance de la fonctionnalite. J\'ai envisage un moment de faire un poids par fonctionnalite au niveau du secteur d\'activite mais c\'etait pas jouable. La contrepartie, c\'est que tout le monde, tous les secteurs, de tous les pays, devront s\'organiser suffisamment.
+Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf description de l\'autre champ',
+      'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 100,
+        ),
+      ),
+      'widget' => array(
+        'type' => 'number',
+      ),
+    );
+    field_create_instance($instance);
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_state',
+      'entity_type' => 'node',
+      'bundle' => 'feature',
+      'label' => 'State',
+      'description' => 'TODO : State of the feature',
+      'required' => 1,
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+
+  foreach (module_implements('wikicompare_install_node_install') as $module) {
+    $function = $module . '_wikicompare_install_node_install';
+    $function($type);
+  }
+
+}
 
 
 /**
@@ -762,30 +1265,6 @@ function wikicompare_uninstall() {
 
   node_delete_multiple($nids);
 
-  //Delete all fields of feature type.
-
-  //foreach (array_keys(_feature_installed_fields()) as $field) {
-  //  field_delete_field($field);
-  //}
-
-  //Delete all variable of feature type.
-
-  variable_del('node_options_feature');
-  variable_del('node_submitted_feature');
-  variable_del('language_content_type_feature');
-
-  //Delete feature content type.
-
-  field_delete_field('feature_parent_feature');
-  field_delete_field('feature_type');
-  field_delete_field('feature_validation_guidelines');
-  field_delete_field('feature_weight');
-  field_delete_field('feature_state');
-
-  
-  node_type_delete('feature');
-
-  
   //Delete all nodes of compared type.
 
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
@@ -796,25 +1275,6 @@ function wikicompare_uninstall() {
   }
 
   node_delete_multiple($nids);
-
-  //Delete all fields of compared type.
-
-  //foreach (array_keys(_feature_installed_fields()) as $field) {
-  //  field_delete_field($field);
-  //}
-
-  //Delete all variable of compared type.
-
-  variable_del('node_options_compared');
-  variable_del('node_submitted_compared');
-  variable_del('language_content_type_compared');
-
-  //Delete compared content type.
-
-  field_delete_field('compared_parent_compared');
-
-  node_type_delete('compared');
-
 
 
   //Delete all nodes of implementation type.
@@ -828,6 +1288,58 @@ function wikicompare_uninstall() {
 
   node_delete_multiple($nids);
 
+  //Delete all fields of feature type.
+
+  //foreach (array_keys(_feature_installed_fields()) as $field) {
+  //  field_delete_field($field);
+  //}
+
+  //Delete all variable of feature type.
+
+  foreach (array('compared', 'feature', 'implementation') as $type) {
+
+    variable_del('node_options_' . $type);
+    variable_del('node_submitted_' . $type);
+    variable_del('language_content_type_' . $type);
+
+  }
+
+  //Delete feature content type.
+
+  field_delete_field('wikicompare_parent_id');
+  field_delete_field('wikicompare_type');
+  field_delete_field('wikicompare_guidelines');
+  field_delete_field('wikicompare_weight');
+  field_delete_field('wikicompare_state');
+  field_delete_field('wikicompare_feature_id');
+  field_delete_field('wikicompare_compared_id'); 
+  field_delete_field('wikicompare_support');
+  field_delete_field('wikicompare_proofs');
+
+  
+  node_type_delete('feature');
+
+  
+
+
+/*
+
+  //Delete all variable of compared type.
+
+  variable_del('node_options_compared');
+  variable_del('node_submitted_compared');
+  variable_del('language_content_type_compared');
+
+  //Delete compared content type.
+
+  field_delete_field('compared_parent_compared');*/
+
+  node_type_delete('compared');
+
+
+
+
+
   //Delete all fields of implementation type.
 
   //foreach (array_keys(_feature_installed_fields()) as $field) {
@@ -835,18 +1347,14 @@ function wikicompare_uninstall() {
   //}
 
   //Delete all variable of compared type.
-
+/*
   variable_del('node_options_implementation');
   variable_del('node_submitted_implementation');
   variable_del('language_content_type_implementation');
-
+*/
   //Delete compared content type.
 
-  field_delete_field('implementation_feature');
-  field_delete_field('implementation_compared'); 
-  field_delete_field('implementation_label_cell');
-  field_delete_field('implementation_support');
-  field_delete_field('implementation_proofs');
+
 
 /* Don't know why, but this line trigger an error
   node_type_delete('implementation');

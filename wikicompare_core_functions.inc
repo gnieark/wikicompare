@@ -19,22 +19,22 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     $query->addField('fs', 'compared_id', 'cid');
     $query->addField('fs', 'support', 'support');	
     $query->addField('nf', 'type', 'type');
-    $query->addField('nf', 'parent_feature_id', 'parent_feature_id');
+    $query->addField('nf', 'parent_id', 'parent_id');
     $query->addField('nfpnf', 'nid', 'parent_fs_through_feature_nid');
 
     //Get parent implementation through feature axis
     $query->join('cache_feature', 'nf', 'fs.feature_id = nf.nid'); //Get feature node
-    $query->leftjoin('cache_implementation', 'nfpnf', 'nf.parent_feature_id = nfpnf.feature_id'); //Get implementation of the parent feature node
+    $query->leftjoin('cache_implementation', 'nfpnf', 'nf.parent_id = nfpnf.feature_id'); //Get implementation of the parent feature node
 
     $query->join('cache_compared', 'nc', 'fs.compared_id = nc.nid'); //Get compared node
 
     //Get parent implementation through compared axis, only if compared update is enabled
     if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update') {
-      $query->addField('nc', 'parent_compared_id', 'parent_compared_id');
+      $query->addField('nc', 'parent_id', 'parent_id');
       $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid');
-      $query->leftjoin('cache_implementation', 'ncpnc', 'nc.parent_compared_id = ncpnc.compared_id'); //Get implementation of the parent compared node
+      $query->leftjoin('cache_implementation', 'ncpnc', 'nc.parent_id = ncpnc.compared_id'); //Get implementation of the parent compared node
 
-      $query->where('ncpnc.feature_id = fs.feature_id OR nc.parent_compared_id IS NULL'); //We keep only the implementation of the parent compared node which has the same feature than the implementation. Which mean it's the parent implementation on the compared axis.
+      $query->where('ncpnc.feature_id = fs.feature_id OR nc.parent_id IS NULL'); //We keep only the implementation of the parent compared node which has the same feature than the implementation. Which mean it's the parent implementation on the compared axis.
 
     }
 
@@ -45,19 +45,19 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
         break;
       case "feature":
         //Recover children of implementation on compared axis, because we will only update implementation which has no children on compared axis
-        $query->leftjoin('cache_compared', 'ncc', 'fs.compared_id = ncc.parent_compared_id'); //Get compared node children
+        $query->leftjoin('cache_compared', 'ncc', 'fs.compared_id = ncc.parent_id'); //Get compared node children
         $query->where('ncc.nid IS NULL'); //Only the implementation without children on compared axis need to be updated, because they will update their parent on compared axis anyway
         $query->condition('fs.feature_id', $nids, 'IN');
         break;
       case "compared":
         //Recover children of implementation on feature axis, because we will only update implementation which has no children on feature axis
-        $query->leftjoin('cache_feature', 'nfc', 'fs.feature_id = nfc.parent_feature_id'); //Get feature node children
+        $query->leftjoin('cache_feature', 'nfc', 'fs.feature_id = nfc.parent_id'); //Get feature node children
         $query->where('nfc.nid IS NULL'); //Only the implementation without children on feature axis need to be updated, because they will update their parent on feature axis anyway
         $query->condition('fs.compared_id', $nids, 'IN');
         break;
     }
 
-    $query->where('nfpnf.compared_id = fs.compared_id OR nf.parent_feature_id IS NULL'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
+    $query->where('nfpnf.compared_id = fs.compared_id OR nf.parent_id IS NULL'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
 
     //Allow the others modules to update the query
     foreach (module_implements('wikicompare_update_main_query') as $module) {
@@ -97,7 +97,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       $query->addField('fs', 'nid', 'nid');
       $query->addField('fs', 'feature_id', 'fid');
       $query->addField('fs', 'compared_id', 'cid');
-      $query->addField('nf','parent_feature_id', 'parent_fid');
+      $query->addField('nf','parent_id', 'parent_fid');
       $query->addField('ctc', 'nid', 'cache_nid');
       $query->addField('ctc', 'percent', 'percent');
       $query->addField('nf', 'weight', 'weight');
@@ -111,10 +111,10 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       switch ($type) {
         case "implementation":
           //We keep only the implementation of the child feature node which has the same compared than the implementation. Which mean it's the children implementation on the feature axis.
-          $query->where('(nf.parent_feature_id, fs.compared_id) IN (' . $res_search_feature_children . ')');
+          $query->where('(nf.parent_id, fs.compared_id) IN (' . $res_search_feature_children . ')');
           break;
         case "feature":
-          $query->condition('nf.parent_feature_id', $nids, 'IN');
+          $query->condition('nf.parent_id', $nids, 'IN');
           break;
       }
 
@@ -141,7 +141,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       $query->addField('fs', 'nid', 'nid');
       $query->addField('fs', 'feature_id', 'fid');
       $query->addField('fs', 'compared_id', 'cid');
-      $query->addField('nc','parent_compared_id', 'parent_cid');
+      $query->addField('nc','parent_id', 'parent_cid');
       $query->addField('ctc', 'nid', 'cache_nid');
       $query->addField('ctc', 'percent', 'percent');
       $query->addField('ctc', 'css_class', 'css_class');
@@ -155,10 +155,10 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       switch ($type) {
         case "implementation":
           //We keep only the implementation of the child compared node which has the same feature than the implementation. Which mean it's the children implementation on the compared axis.
-          $query->where('(nc.parent_compared_id, fs.feature_id) IN (' . $res_search_compared_children . ')');
+          $query->where('(nc.parent_id, fs.feature_id) IN (' . $res_search_compared_children . ')');
           break;
         case "compared":
-          $query->condition('nc.parent_compared_id', $nids, 'IN');
+          $query->condition('nc.parent_id', $nids, 'IN');
           break;
       }
 
@@ -541,14 +541,14 @@ function wikicompare_flush_caches() {
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'vid', 'vid');
   $query->addField('n', 'title', 'title');
-  $query->addField('npf', 'feature_parent_feature_target_id', 'parent_feature_id');
-  $query->addField('nt', 'feature_type_value', 'type');
-  $query->addField('nw', 'feature_weight_value', 'weight');
-  $query->addField('ns', 'feature_state_value', 'state');
-  $query->leftjoin('field_revision_feature_parent_feature', 'npf', 'n.vid = npf.revision_id');
-  $query->leftjoin('field_revision_feature_type', 'nt', 'n.vid = nt.revision_id');
-  $query->leftjoin('field_revision_feature_weight', 'nw', 'n.vid = nw.revision_id');
-  $query->leftjoin('field_revision_feature_state', 'ns', 'n.vid = ns.revision_id');
+  $query->addField('npf', 'wikicompare_parent_id_target_id', 'parent_id');
+  $query->addField('nt', 'wikicompare_type_value', 'type');
+  $query->addField('nw', 'wikicompare_weight_value', 'weight');
+  $query->addField('ns', 'wikicompare_state_value', 'state');
+  $query->leftjoin('field_revision_wikicompare_parent_id', 'npf', 'n.vid = npf.revision_id');
+  $query->leftjoin('field_revision_wikicompare_type', 'nt', 'n.vid = nt.revision_id');
+  $query->leftjoin('field_revision_wikicompare_weight', 'nw', 'n.vid = nw.revision_id');
+  $query->leftjoin('field_revision_wikicompare_state', 'ns', 'n.vid = ns.revision_id');
   $query->condition('n.type', 'feature');
   $result = $query->execute();
 
@@ -559,15 +559,15 @@ function wikicompare_flush_caches() {
       'nid' => $record->nid,
       'vid' => $record->vid,
       'title' => $record->title,
-      'parent_feature_id' => $record->parent_feature_id,
+      'parent_id' => $record->parent_id,
       'type' => $record->type,
       'weight' => $record->weight,
       'state' => $record->state,
       'has_children' => 0,
     );
 
-    if ($record->parent_feature_id) {
-      $parent_array[$record->parent_feature_id][] = $record->nid;
+    if ($record->parent_id) {
+      $parent_array[$record->parent_id][] = $record->nid;
     }
 
     
@@ -588,7 +588,7 @@ function wikicompare_flush_caches() {
   }
 
 
-  $query = db_insert('cache_feature')->fields(array('nid', 'vid', 'title', 'parent_feature_id', 'type', 'weight', 'state', 'has_children'));
+  $query = db_insert('cache_feature')->fields(array('nid', 'vid', 'title', 'parent_id', 'type', 'weight', 'state', 'has_children'));
   foreach ($feature_to_insert as $feature) {
     $query->values($feature);
   }
@@ -600,8 +600,8 @@ function wikicompare_flush_caches() {
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'vid', 'vid');
   $query->addField('n', 'title', 'title');
-  $query->addField('npc', 'compared_parent_compared_target_id', 'parent_compared_id');
-  $query->leftjoin('field_revision_compared_parent_compared', 'npc', 'n.vid = npc.revision_id');
+  $query->addField('npc', 'wikicompare_parent_id_target_id', 'parent_id');
+  $query->leftjoin('field_revision_wikicompare_parent_id', 'npc', 'n.vid = npc.revision_id');
   $query->condition('n.type', 'compared');
 
   foreach (module_implements('wikicompare_select_compared') as $module) {
@@ -618,12 +618,12 @@ function wikicompare_flush_caches() {
       'nid' => $record->nid,
       'vid' => $record->vid,
       'title' => $record->title,
-      'parent_compared_id' => $record->parent_compared_id,
+      'parent_id' => $record->parent_id,
       'has_children' => 0,
     );
 
-    if ($record->parent_compared_id) {
-      $parent_array[$record->parent_compared_id][] = $record->nid;
+    if ($record->parent_id) {
+      $parent_array[$record->parent_id][] = $record->nid;
     }
 
     foreach (module_implements('wikicompare_flush_cache_compared') as $module) {
@@ -641,7 +641,7 @@ function wikicompare_flush_caches() {
   }
 
 
-  $header = array('nid', 'vid', 'title', 'parent_compared_id', 'has_children');
+  $header = array('nid', 'vid', 'title', 'parent_id', 'has_children');
   foreach (module_implements('wikicompare_cache_compared_fields_header') as $module) {
     $function = $module . '_wikicompare_cache_compared_fields_header';
     $function($header);
@@ -659,12 +659,12 @@ function wikicompare_flush_caches() {
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'vid', 'vid');
-  $query->addField('nf', 'implementation_feature_target_id', 'feature_id');
-  $query->addField('nc', 'implementation_compared_target_id', 'compared_id');
-  $query->addField('ns', 'implementation_support_value', 'support');
-  $query->leftjoin('field_revision_implementation_feature', 'nf', 'n.vid = nf.revision_id');
-  $query->leftjoin('field_revision_implementation_compared', 'nc', 'n.vid = nc.revision_id');
-  $query->leftjoin('field_revision_implementation_support', 'ns', 'n.vid = ns.revision_id');
+  $query->addField('nf', 'wikicompare_feature_id_target_id', 'feature_id');
+  $query->addField('nc', 'wikicompare_compared_id_target_id', 'compared_id');
+  $query->addField('ns', 'wikicompare_support_value', 'support');
+  $query->leftjoin('field_revision_wikicompare_feature_id', 'nf', 'n.vid = nf.revision_id');
+  $query->leftjoin('field_revision_wikicompare_compared_id', 'nc', 'n.vid = nc.revision_id');
+  $query->leftjoin('field_revision_wikicompare_support', 'ns', 'n.vid = ns.revision_id');
   $query->condition('n.type', 'implementation');
 
   foreach (module_implements('wikicompare_select_implementation') as $module) {
@@ -746,26 +746,31 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
 function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $compareds=NULL, $features=NULL) {
 
   $res = array();
-
+  $use_nids = true;
   $query = db_select('cache_' . $type, 'n');
   $query->addField('n', 'nid', 'nid');
   if ($type != 'implementation') {
     $query->addField('n', 'title', 'title');
     $query->addField('n', 'has_children', 'has_children');
-    $query->addField('n', 'parent_' . $type . '_id', 'parent_id');
+    $query->addField('n', 'parent_id', 'parent_id');
     if ($type_nid == 'parent') {
-      $query->condition('n.parent_'. $type . '_id', $nids);
-    } else {
-      $query->condition('n.nid', $nids, 'in');
-    }
+      $query->condition('n.parent_id', $nids);
+      $use_nids = false;
+    } 
   } else {
     $query->addField('n', 'feature_id', 'feature_id');
     $query->addField('n', 'compared_id', 'compared_id');
     $query->addField('ctc', 'percent', 'percent');
     $query->addField('ctc', 'css_class', 'css_class');
     $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
-    $query->condition("n.compared_id", $compareds, 'in');
-    $query->condition("n.feature_id", $features, 'in');
+    if ($nids == NULL) {
+      $query->condition("n.compared_id", $compareds, 'in');
+      $query->condition("n.feature_id", $features, 'in');
+      $use_nids = false;
+    }
+  }
+  if ($use_nids == true) {
+    $query->condition('n.nid', $nids, 'in');
   }
 
   if ($type == 'feature') {
@@ -784,7 +789,7 @@ function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $
   foreach ($result as $record) {
 //dpm($record);
 
-    if ($type != 'implementation') {
+    if ($type != 'implementation' || $nids != NULL) {
       $res[$record->nid]['data'] = $record;
       $res[$record->nid]['children'] = array();
     } else {
@@ -794,7 +799,7 @@ function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $
     if ($fastedit_status == 1) {
       //If the node was created by or have some revision from other users, current user will not be able to fastedit it
       if ($GLOBALS['user']->uid != $record->uid) {
-        if ($type != 'implementation') {
+        if ($type != 'implementation'|| $nids != NULL) {
           $res[$record->nid]['no-edit'] = True;
         } else {
           $res[$record->feature_id][$record->compared_id]['no-edit'] = True;

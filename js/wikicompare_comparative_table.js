@@ -521,7 +521,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           
           if (type == 'implementation') {
-            options.data.support = $('#form_' + type + '_fast' + fastaction + '_support_' + node_id).val();
+            options.data.support = $('#form_' + type + '_fast' + subaction + '_support_' + node_id).val();
           }
 
           if (type == 'need') {

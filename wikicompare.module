@@ -325,15 +325,15 @@ dpm($form_state['node']);
   $form['#attached']['js'][] = array(
     'type' => 'setting',
     'data' => array(
-      'wikicompare_needs' => array(
+      'wikicompare' => array(
         'fastedit_status' => 0,
       )
     )
   );
 
   $title = 'No parent';
-  if (isset($form_state['node']->compared_parent_compared['und'])) {
-    $parent_nid = $form_state['node']->compared_parent_compared['und'][0]['target_id'];
+  if (isset($form_state['node']->wikicompare_parent_id['und'])) {
+    $parent_nid = $form_state['node']->wikicompare_parent_id['und'][0]['target_id'];
     $res = get_recursive_data('compared', array($parent_nid));
     $title = $res['data'][$parent_nid]['data']->fulltitle;
   }
@@ -378,8 +378,8 @@ function wikicompare_form_feature_node_form_alter(&$form, &$form_state, $form_id
   );
 
   $title = 'No parent';
-  if (isset($form_state['node']->feature_parent_feature['und'])) {
-    $parent_nid = $form_state['node']->feature_parent_feature['und'][0]['target_id'];
+  if (isset($form_state['node']->wikicompare_parent_id['und'])) {
+    $parent_nid = $form_state['node']->wikicompare_parent_id['und'][0]['target_id'];
     $res = get_recursive_data('feature', array($parent_nid));
     $title = $res['data'][$parent_nid]['data']->fulltitle;
   }

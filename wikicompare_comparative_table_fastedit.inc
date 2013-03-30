@@ -51,30 +51,36 @@ function toggle_fastedit_response($method = 'ajax'){
       
       $implementations = array();
       if (!empty($_POST['implementation_ids'])) {
-
+dpm($_POST, 'postpost');
+/*
         $query = db_select('node_revision', 'r');
         $query->addField('r', 'nid', 'nid');
         $query->addField('r', 'uid', 'uid');
         $query->condition('r.nid', $_POST['implementation_ids'], 'in');
         $result = $query->execute();
+*/
+        $implementations = request_db('implementation', 1, 'nids', $_POST['implementation_ids']);
 
-        foreach ($result as $record) {
+/*        foreach ($result as $record) {
           $implementations[$record->nid]['nid'] = $record->nid;
           //If the node was created by or have some revision from other users, current user will not be able to edit it
           if ($GLOBALS['user']->uid != $record->uid) {
             $implementations[$record->nid]['no-edit'] = True;
           }
         }
+*/
+
+        foreach($implementations as $nid => $implementation) {
+dpm($implementation);
+
+          $output = add_fastedit_items('implementation', $implementation);
+          //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
+          $commands[] = ajax_command_invoke('#implementation_node_link_' . $nid, 'after', array($output));
+
+        }
 
       }
 
-      foreach($implementations as $nid => $implementation) {
-
-        $output = add_fastedit_items('implementation', $implementation);
-        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
-        $commands[] = ajax_command_invoke('#implementation_node_link_' . $nid, 'after', array($output));
-
-      }
       
 
       //Allow others modules to modify the output
@@ -241,9 +247,9 @@ dpm($node);
 
             $parent = 0;
             if ($type == 'feature') {
-              $parent_id = $node->feature_parent_feature['und'][0]['target_id'];
+              $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
             } elseif ($type == 'compared') {
-              $parent_id = $node->compared_parent_compared['und'][0]['target_id'];
+              $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
             }
 
             //Allow others modules to modify the output
@@ -307,7 +313,7 @@ dpm($node);
             )
           );
           if ($fastaction == 'edit') {
-            $type_field['#value'] = $node->feature_type['und'][0]['value'];
+            $type_field['#value'] = $node->wikicompare_type['und'][0]['value'];
           }
           $output .= drupal_render($type_field);
           
@@ -320,7 +326,7 @@ dpm($node);
             )
           );
           if ($fastaction == 'edit') {
-            $guidelines_field['#value'] = $node->feature_validation_guidelines['und'][0]['value'];
+            $guidelines_field['#value'] = $node->wikicompare_guidelines['und'][0]['value'];
           }
           $output .= drupal_render($guidelines_field);
           
@@ -335,7 +341,7 @@ dpm($node);
             )
           );
           if ($fastaction == 'edit') {
-            $weight_field['#value'] = $node->feature_weight['und'][0]['value'];
+            $weight_field['#value'] = $node->wikicompare_weight['und'][0]['value'];
           }
           $output .= drupal_render($weight_field);
           
@@ -354,7 +360,7 @@ dpm($node);
             )
           );
           if ($fastaction == 'edit') {
-            $state_field['#value'] = $node->feature_state['und'][0]['value'];
+            $state_field['#value'] = $node->wikicompare_state['und'][0]['value'];
           }
           $output .= drupal_render($state_field);
         }
@@ -374,7 +380,7 @@ dpm($node);
             )
           );
           if ($fastaction == 'edit') {
-            $support_field['#value'] = $node->feature_support['und'][0]['value'];
+            $support_field['#value'] = $node->wikicompare_support['und'][0]['value'];
           }
           $output .= drupal_render($support_field);
 
@@ -433,7 +439,7 @@ dpm($node);
           $commands[] = ajax_command_invoke('#feature_row_' . $nid, 'after', array($output));
           break;
         case ('implementation'):
-          $commands[] = ajax_command_invoke('#feature_row_' . $node->implementation_feature['und'][0]['target_id'], 'after', array($output));
+          $commands[] = ajax_command_invoke('#feature_row_' . $node->wikicompare_feature_id['und'][0]['target_id'], 'after', array($output));
           break;
       }
 
@@ -502,12 +508,12 @@ function submit_fastedit_form_response($method = 'ajax'){
 
         switch ($type) {
           case 'compared':
-            $node->compared_parent_compared[$node->language][0]['target_id'] = $_POST['parent_id'];
-            $node->compared_parent_compared[$node->language][0]['target_type'] = "node";
+            $node->wikicompare_parent_id[$node->language][0]['target_id'] = $_POST['parent_id'];
+            $node->wikicompare_parent_id[$node->language][0]['target_type'] = "node";
             break;
           case 'feature':
-            $node->feature_parent_feature[$node->language][0]['target_id'] = $_POST['parent_id'];
-            $node->feature_parent_feature[$node->language][0]['target_type'] = "node";
+            $node->wikicompare_parent_id[$node->language][0]['target_id'] = $_POST['parent_id'];
+            $node->wikicompare_parent_id[$node->language][0]['target_type'] = "node";
             break;
         }
 
@@ -520,19 +526,19 @@ function submit_fastedit_form_response($method = 'ajax'){
       );
       
       if ($type == 'feature') {
-        $node->feature_type[$node->language][0]['value'] = $_POST['feature_type'];
+        $node->wikicompare_type[$node->language][0]['value'] = $_POST['feature_type'];
         
-        $node->feature_validation_guidelines[$node->language][0]['value'] = $_POST['guidelines'];
-        $node->feature_validation_guidelines[$node->language][0]['format'] = 'full_html';
+        $node->wikicompare_guidelines[$node->language][0]['value'] = $_POST['guidelines'];
+        $node->wikicompare_guidelines[$node->language][0]['format'] = 'full_html';
         
-        $node->feature_weight[$node->language][0]['value'] = $_POST['weight'];        
+        $node->wikicompare_weight[$node->language][0]['value'] = $_POST['weight'];        
         
-        $node->feature_state[$node->language][0]['value'] = $_POST['state'];
+        $node->wikicompare_state[$node->language][0]['value'] = $_POST['state'];
         
       }
       
       if ($type == 'implementation') {
-        $node->implementation_support[$node->language][0]['value'] = $_POST['support'];
+        $node->wikicompare_support[$node->language][0]['value'] = $_POST['support'];
       }
 
       foreach (module_implements('wikicompare_comparative_table_fastedit_submit') as $module) {
