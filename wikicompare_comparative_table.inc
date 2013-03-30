@@ -213,7 +213,7 @@ dpm($_POST, 'post_itemlist');
       if (!empty($_POST['fastedit_status'])) {
         $itemlist_settings['fastedit_status'] = $_POST['fastedit_status'];
       }
-      $nodes = request_db($type, $fastedit_status, 'parent', array($nid));
+      $nodes = request_db($type, $itemlist_settings['fastedit_status'], 'parent', array($nid));
 //dpm($nodes);
 
       //Prepare the array to use as argument for the item list building function
@@ -680,6 +680,10 @@ function compute_comparative_table_response($method = 'ajax') {
       $compared_columns_ids = $_POST['compared_column_ids'];
     }
 
+    $fastedit_status = 0;
+    if (!empty($_POST['fastedit_status'])) {
+      $fastedit_status = $_POST['fastedit_status'];
+    }
 
     $feature_array = array();
 
@@ -689,10 +693,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
 
 
-    $fastedit_status = 0;
-    if (!empty($_POST['fastedit_status'])) {
-      $fastedit_status = $_POST['fastedit_status'];
-    }
+
 
     $implementations = array();
     if (!empty($feature_array['ids']) && !empty($compared_columns_ids)) {

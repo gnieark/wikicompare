@@ -30,7 +30,7 @@ function need_form($node, $form_state) {
 }
 
 
-
+/*
 function wikicompare_needs_wikicompare_install_node_schema(&$schema, $type) {
 
   if ($type == 'need') {
@@ -42,7 +42,7 @@ function wikicompare_needs_wikicompare_install_node_schema(&$schema, $type) {
     );
   }
 
-}
+} */
 
 function wikicompare_needs_wikicompare_install_node_install($type) {
 
@@ -457,7 +457,8 @@ function recover_features($need_ids) {
 
 function need_insert($node) {
 
-
+  wikicompare_insert_node('need', $node);
+/*
   //Create the new need in the cache table
   $need_parent_need = NULL;
   if (isset($node->need_parent_need['und'][0])) {
@@ -480,6 +481,7 @@ function need_insert($node) {
       'has_children' => 0,
     ))
     ->execute();
+*/
 
 
   $feature_m2m = array();
@@ -505,10 +507,19 @@ function need_insert($node) {
 //TODO update many2many table
 }
 
+/*
+function wikicompare_needs_wikicompare_comparative_table_insert_fields(&$fields, $type, $node) {
+
+  if ($type == 'need') {
+    $fields['state'] = $node->wikicompare_state['und'][0]['value'];
+  }
+
+}*/
 
 function need_delete($node) {
 
-
+  wikicompare_delete_node('need', $node);
+/*
   //Delete the feature in the feature cache
   db_delete('cache_need')
     ->condition('nid', $node->nid)
@@ -542,7 +553,7 @@ function need_delete($node) {
         ->condition('nid', $node->need_parent_need['und'][0])
         ->execute();
     }
-  }
+  }*/
 
 
   db_delete('cache_need_feature_rel')
@@ -552,19 +563,80 @@ function need_delete($node) {
 }
 
 
+function wikicompare_needs_wikicompare_node_types(&$array) {
 
+  $array[] = 'need';
+
+}
+
+function wikicompare_needs_wikicompare_cache_update_fields(&$fields, $node_revision) {
+
+  if ($type == 'need') {
+    $fields['state'] = $node_revision->need_state['und'][0]['value'];
+  }
+
+}
+
+function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node_revision) {
+
+  if ($type == 'need') {
+
+    $query = db_select('cache_need_feature_rel', 'f');
+    $query->addField('f', 'feature_nid', 'feature_nid');
+    $query->condition('f.need_nid', $node_revision->nid);
+    $result = $query->execute();
+
+    $new_feature_ids = array();
+    if (isset($node_revision->need_features['und'])) {
+      foreach ($node_revision->need_features['und'] as $feature) {
+        $new_feature_ids[$feature['target_id']] = $feature['target_id'];
+      }
+    }
+
+    $old_feature_ids = array();
+    $to_delete = array();
+    foreach ($result as $record) {
+      $old_feature_ids[$record->feature_nid] = $record->feature_nid;
+      if (!in_array($record->feature_nid, $new_feature_ids)) {
+        $to_delete[$record->feature_nid] = $record->feature_nid;
+      }
+    }
+
+    $to_create = array();
+    foreach ($new_feature_ids as $feature_id) {
+      if (!in_array($feature_id, $old_feature_ids)) {
+        $to_create[$feature_id] = array(
+          'need_nid' => $node_revision->nid,
+          'feature_nid' => $feature_id,
+        );
+      }
+    }
+
+    $header = array('need_nid', 'feature_nid');
+    if (!empty($to_create)) {
+      $query = db_insert('cache_need_feature_rel')->fields($header);
+      foreach ($to_create as $record) {
+        $query->values($record);
+      }
+      $query->execute();
+    }
+
+    if (!empty($to_delete)) {
+      db_delete('cache_need_feature_rel')
+        ->condition('need_nid', $node_revision->nid)
+        ->condition('feature_nid', $to_delete, 'in')
+        ->execute();
+    }
+
+  }
+
+}
+/*
 
 function wikicompare_needs_revisionapi($op, $node_revision) {
 
-  /*
-   * Action to do before a node is published
-   */
+
   if ($op == 'pre publish') {
-
-
-    /*
-     * If the node changed is a compared node
-     */
     if ($node_revision->type == 'need') {
 
       //$node_revision contain the new value, with this load we recover the old value. This way we will be able to know which value was changed, and so know what to do. If a compared node is updated but no critical value is changed, then no update on the compare tree will be done.
@@ -623,9 +695,7 @@ function wikicompare_needs_revisionapi($op, $node_revision) {
 
   }
 
-  /*
-   * Action to do after a node is published
-   */
+
   if ($op == 'post publish') {
 
     //Update the cache tables with the new values
@@ -697,7 +767,7 @@ function wikicompare_needs_revisionapi($op, $node_revision) {
   }
 }
 
-
+*/
 
 /*
 function need_node_submit($node, $form, &$form_state) {
