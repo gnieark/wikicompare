@@ -40,7 +40,7 @@ function wikicompare_admin() {
   $form['temp'] = array(
     '#markup' => 'test' . language_default('language'),
   );
-dpm(variable_get('language_content_type_feature', array()));
+
 //variable_set('language_default', object);
 
   //Display the select button for managing the compared parent update
@@ -309,98 +309,14 @@ function compared_form($node, $form_state) {
 
 
 function wikicompare_form_compared_node_form_alter(&$form, &$form_state, $form_id) {
-dpm($form);
-dpm($form_state['node']);
 
   wikicompare_build_form($form, $form_state);
-/*
-  $nid = 0;
-  if (isset($form_state['node']->nid)) {
-    $nid = $form_state['node']->nid;
-  }
-
-  $form['#attached']['js'][] = '/misc/ajax.js';
-  $form['#attached']['js'][] = '/misc/progress.js';
-  $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
-  $form['#attached']['js'][] = array(
-    'type' => 'setting',
-    'data' => array(
-      'wikicompare' => array(
-        'fastedit_status' => 0,
-      )
-    )
-  );
-
-  $title = 'No parent';
-  if (isset($form_state['node']->wikicompare_parent_id['und'])) {
-    $parent_nid = $form_state['node']->wikicompare_parent_id['und'][0]['target_id'];
-    $res = get_recursive_data('compared', array($parent_nid));
-    $title = $res['data'][$parent_nid]['data']->fulltitle;
-  }
-
-  $select_parent_link = array(
-    'text' => 'Select parent',
-    'title' => 'Select parent',
-    'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_simple_dialog/compared/form_selected_parent/' . $nid,
-  );
-  $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => 'compared')));
-  $form['container_selected_parent'] = array(
-    'title' => array('#markup' => $title),
-    '#type' => 'container',
-    '#id' => 'form_selected_parent',
-    '#weight' => -3,
-    '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
-  
-  );
-*/
 
 }
 
 function wikicompare_form_feature_node_form_alter(&$form, &$form_state, $form_id) {
 
   wikicompare_build_form($form, $form_state);
-/*
-  $nid = 0;
-  if (isset($form_state['node']->nid)) {
-    $nid = $form_state['node']->nid;
-  }
-
-  $form['#attached']['js'][] = '/misc/ajax.js';
-  $form['#attached']['js'][] = '/misc/progress.js';
-  $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
-  $form['#attached']['js'][] = array(
-    'type' => 'setting',
-    'data' => array(
-      'wikicompare_needs' => array(
-        'fastedit_status' => 0,
-      )
-    )
-  );
-
-  $title = 'No parent';
-  if (isset($form_state['node']->wikicompare_parent_id['und'])) {
-    $parent_nid = $form_state['node']->wikicompare_parent_id['und'][0]['target_id'];
-    $res = get_recursive_data('feature', array($parent_nid));
-    $title = $res['data'][$parent_nid]['data']->fulltitle;
-  }
-
-  $select_parent_link = array(
-    'text' => 'Select parent',
-    'title' => 'Select parent',
-    'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_simple_dialog/feature/form_selected_parent/' . $nid,
-  );
-  $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => 'feature')));
-  $form['container_selected_parent'] = array(
-    'title' => array('#markup' => $title),
-    '#type' => 'container',
-    '#id' => 'form_selected_parent',
-    '#weight' => -3,
-    '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
-  
-  );
-*/
 
 }
 
@@ -452,7 +368,6 @@ function wikicompare_build_form(&$form, $form_state) {
     '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
   );
-dpm($form, 'form');
 
 }
 

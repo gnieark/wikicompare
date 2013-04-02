@@ -9,74 +9,9 @@
 function wikicompare_needs_schema() {
 
 
-dpm('test');
+
   $schema['cache_need'] = wikicompare_node_schema('need');
 
-
-/*array(
-
-    'description' => 'Cache table for need. Used so the percentage of comparative table are computed faster.',
-    'fields' => array(
-      'nid' => array(
-        'description' => 'The nid of the need node',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'vid' => array(
-        'description' => 'The active vid of the need node',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'title' => array(
-        'description' => 'The title of the need node',
-        'type' => 'varchar',
-        'length' => 64,
-        'not null' => TRUE,
-      ),
-      'parent_need_id' => array(
-        'description' => 'The parent id of the need node',
-        'type' => 'int',
-        'unsigned' => TRUE,
-      ),
-      'state' => array(
-        'description' => 'The state of the need node',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-      ),
-      'has_children' => array(
-        'description' => "Boolean indicated if this node has children. This allow us to know this need has children without making each time a big sql query.",
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'unique keys' => array(
-      'nid' => array('nid'),
-    ),
-    'indexes' => array(
-      'parent_need_id' => array('parent_need_id'),
-      'state' => array('state'),
-    ),
-    'foreign keys' => array(
-      'node' => array(
-        'table' => 'node',
-        'columns' => array('nid' => 'nid'),
-      ),
-      'node_revision' => array(
-        'table' => 'node_revision',
-        'columns' => array('vid' => 'vid'),
-      ),
-      'node_parent' => array(
-        'table' => 'node',
-        'columns' => array('parent_node_id' => 'nid'),
-      ),
-    )
-
-  ); */
 
 
   $schema['cache_need_feature_rel'] = array(
@@ -157,72 +92,6 @@ function wikicompare_needs_install() {
   field_create_field($field);
 
   wikicompare_node_install('need', $types);
-
-/*
-  node_add_body_field( $types[ 'need' ] , $t('Description'));
-
-  variable_set('language_content_type_need', '1');
-
-
-
-
- *
-  * Need type related
-  *
-  
-  //Set Need variables
-  variable_set('node_options_need', array('status','revision','revision_moderation'));
-  variable_set('node_submitted_need', '0');
-  */
-  
-  /*
-    //Create parent need field
-
-    $field = array(
-      'field_name' => 'need_parent_need',
-      'type' => 'entityreference',
-      'cardinality' => 1,
-      'settings' => array(
-        'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('need')),
-      ),
-    );
-    field_create_field($field);
-
-    $instance = array(
-      'field_name' => 'need_parent_need',
-      'entity_type' => 'node',
-      'bundle' => 'need',
-      'label' => 'Parent Need',
-      'widget' => array(
-        'type' => 'entityreference_autocomplete',
-      ),
-      'settings' => array(
-        'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('need')),
-      ),
-    );
-    field_create_instance($instance);
-*/
-
-    //Create features field
-
-
-
-
-
-
-    //Create state field
-
-
-
-
-
-
-
-
-
-
 
 
 

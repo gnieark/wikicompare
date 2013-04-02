@@ -30,20 +30,6 @@ function need_form($node, $form_state) {
 }
 
 
-/*
-function wikicompare_needs_wikicompare_install_node_schema(&$schema, $type) {
-
-  if ($type == 'need') {
-    $schema['fields']['state'] = array(
-      'description' => 'The state of the need node',
-      'type' => 'varchar',
-      'length' => 32,
-      'not null' => TRUE,
-    );
-  }
-
-} */
-
 function wikicompare_needs_wikicompare_install_node_install($type) {
 
   if ($type == 'need') {
@@ -98,52 +84,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     }
   }
 
-//  $form['#attached']['js']['settings']['data']['selected_feature_ids'] = $selected_feature_ids;
-/*
-  $nid = 0;
-  if (isset($form_state['node']->nid)) {
-    $nid = $form_state['node']->nid;
-  }
-
-  $form['#attached']['js'][] = '/misc/ajax.js';
-  $form['#attached']['js'][] = '/misc/progress.js';
-  $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
-  $form['#attached']['js'][] = array(
-    'type' => 'setting',
-    'data' => array(
-      'wikicompare_needs' => array(
-        'fastedit_status' => 0,
-        'selected_feature_ids' => $selected_feature_ids
-      )
-    )
-  );
-
-  $title = 'No parent';
-  if (isset($form_state['node']->need_parent_need['und'])) {
-    $parent_nid = $form_state['node']->need_parent_need['und'][0]['target_id'];
-    $res = get_recursive_data('need', array($parent_nid));
-    $title = $res['data'][$parent_nid]['data']->fulltitle;
-  }
-
-  $select_parent_link = array(
-    'text' => 'Select parent',
-    'title' => 'Select parent',
-    'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_simple_dialog/need/form_selected_parent/' . $nid,
-  );
-  $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => 'need')));
-  $form['container_selected_parent'] = array(
-    'title' => array('#markup' => $title),
-    '#type' => 'container',
-    '#id' => 'form_selected_parent',
-    '#weight' => -3,
-    '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
-  
-  );
-*/
-
   //hide($form['need_features']);
-dpm($selected_feature_ids, 'selected_feature');
   $selected_feature_itemlist = '';
   $feature_array = array();
   if ($selected_feature_ids) {
@@ -175,15 +116,6 @@ dpm($selected_feature_ids, 'selected_feature');
     '#suffix' => '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>'
   
   );
-
-/*  $form['container_selected_feature_hidden'] = array(
-    '#type' => 'container',
-    '#id' => 'selected_feature_hidden',
-    '#weight' => -2,
-//    '#attributes' => array(
-//      'style' => 'display:none',
-//    )  
-  );*/
 
 }
 
@@ -219,10 +151,6 @@ function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output
   $result = $query->execute();
 
   $needs = request_db('need');
-/*
-  foreach ($result as $record) {
-    $needs[$record->nid]['data'] = $record;
-  }*/
 
   $itemlist_settings = initialize_itemlist_settings('select_multi_dialog');
 
@@ -278,15 +206,6 @@ function wikicompare_needs_wikicompare_comparative_table_toogle_fastedit(&$comma
 
 }
 
-/*
-function wikicompare_needs_wikicompare_comparative_table_fastedit_displaytype(&$display_type, $type) {
-
-  if ($type == 'need') {
-    $display_type = 'itemlist';
-  }
-
-}*/
-
 function wikicompare_needs_wikicompare_comparative_table_fastedit_parent(&$parent_id, $type, $node) {
 
   if ($type == 'need') {
@@ -299,7 +218,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$out
 
   if ($type == 'need') {
 
-dpm($node, 'node_specific');    
+
     $selected_feature_itemlist = '';
     $selected_feature_hidden = '';
     if ($fastaction == 'edit') {
@@ -400,7 +319,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_submit(&$node,
 
 
   if ($type == 'need') {
-dpm($_POST, 'post2');
+
     $need_features = array();
     foreach ($_POST['need_feature_ids'] as $feature_id) {
       $array = array();
@@ -412,7 +331,7 @@ dpm($_POST, 'post2');
     $node->need_parent_need[$node->language][0]['target_id'] = $_POST['parent_id'];
     $node->need_parent_need[$node->language][0]['target_type'] = "node";
     $node->need_state[$node->language][0]['value'] = $_POST['state'];
-dpm($node, 'node2');
+
   }
 
 }
@@ -439,7 +358,7 @@ function wikicompare_needs_wikicompare_comparative_table_cleaning(&$commands, $_
       }
     }
   }
-dpm($needs);
+
   foreach($needs as $nid => $need) {
     $commands[] = ajax_command_invoke('.need_title_' . $nid, 'html', array($need['data']->title));
   }
@@ -480,30 +399,6 @@ function recover_features($need_ids) {
 function need_insert($node) {
 
   wikicompare_insert_node('need', $node);
-/*
-  //Create the new need in the cache table
-  $need_parent_need = NULL;
-  if (isset($node->need_parent_need['und'][0])) {
-    $need_parent_need = $node->need_parent_need['und'][0]['target_id'];
-    //Making sure that the parent know it has children
-    db_update('cache_need')
-      ->fields(array(
-        'has_children' => 1,
-      ))
-      ->condition('nid', $need_parent_need)
-      ->execute();
-  }
-  db_insert('cache_need')
-    ->fields(array(
-      'nid' => $node->nid,
-      'vid' => $node->vid,
-      'title' => $node->title,
-      'parent_id' => $need_parent_need,
-      'state' => $node->need_state['und'][0]['value'],
-      'has_children' => 0,
-    ))
-    ->execute();
-*/
 
 
   $feature_m2m = array();
@@ -529,53 +424,9 @@ function need_insert($node) {
 //TODO update many2many table
 }
 
-/*
-function wikicompare_needs_wikicompare_comparative_table_insert_fields(&$fields, $type, $node) {
-
-  if ($type == 'need') {
-    $fields['state'] = $node->wikicompare_state['und'][0]['value'];
-  }
-
-}*/
-
 function need_delete($node) {
 
   wikicompare_delete_node('need', $node);
-/*
-  //Delete the feature in the feature cache
-  db_delete('cache_need')
-    ->condition('nid', $node->nid)
-    ->execute();
-
-  //Update cache so all children need are now without parent
-  db_update('cache_need')
-    ->fields(array(
-      'parent_id' => NULL,
-    ))
-    ->condition('parent_id', $node->nid)
-    ->execute();
-
-  if (isset($node->need_parent_need['und'][0])) {
-    $query = db_select('cache_need', 'f');
-    $query->addField('f', 'nid', 'nid');
-    $query->condition('f.parent_id', $node->need_parent_need['und'][0], '=');
-    $result = $query->execute();
-
-    $childs = array();
-    foreach ($result as $record) {
-      $childs[$record->nid] = $record->nid;
-    }
-
-    //If the parent feature has no children anymore, we update his children flag
-    if (empty($childs)) {
-      db_update('cache_need')
-        ->fields(array(
-          'has_children' => 0,
-        ))
-        ->condition('nid', $node->need_parent_need['und'][0])
-        ->execute();
-    }
-  }*/
 
 
   db_delete('cache_need_feature_rel')
@@ -653,177 +504,6 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
   }
 
 }
-/*
-
-function wikicompare_needs_revisionapi($op, $node_revision) {
-
-
-  if ($op == 'pre publish') {
-    if ($node_revision->type == 'need') {
-
-      //$node_revision contain the new value, with this load we recover the old value. This way we will be able to know which value was changed, and so know what to do. If a compared node is updated but no critical value is changed, then no update on the compare tree will be done.
-      $current_node = node_load($node_revision->nid);
-
-      if ($node_revision->need_parent_need) {
-        $node_revision_parent = $node_revision->need_parent_need['und'][0]['target_id'];
-      } else {
-        $node_revision_parent = NULL;
-      }
-
-      if ($current_node->need_parent_need) {
-        $current_node_parent = $current_node->need_parent_need['und'][0]['target_id'];
-      } else {
-        $current_node_parent = NULL;
-      }
-
-      //If the field parent of the feature was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the feature axis after the leave of the compared child.
-      if ($node_revision_parent != $current_node_parent) {
-
-        //Updating the has_children in parent compared.
-
-        //Making sure that the parent know it has children
-        if ($node_revision_parent != NULL) {
-          db_update('cache_need')
-            ->fields(array(
-              'has_children' => 1,
-            ))
-            ->condition('nid', $node_revision_parent)
-            ->execute();
-        }
-
-        //If the old parent compared has no children anymore, we update his children flag
-        if ($current_node_parent != NULL) {
-          $query = db_select('cache_need', 'c');
-          $query->addField('c', 'nid', 'nid');
-          $query->condition('c.parent_id', $current_node_parent, '=');
-          $result = $query->execute();
-          $childs = array();
-          foreach ($result as $record) {
-            if ($node_revision->nid != $record->nid) {
-              $childs[$record->nid] = $record->nid;
-            }
-          }
-          if (empty($childs)) {
-            db_update('cache_need')
-              ->fields(array(
-                'has_children' => 0,
-              ))
-              ->condition('nid', $current_node_parent)
-              ->execute();
-          }
-        }
-      }
-    }
-
-  }
-
-
-  if ($op == 'post publish') {
-
-    //Update the cache tables with the new values
-    if ($node_revision->type == 'need') {
-        $need_parent_need = NULL;
-        if (isset($node_revision->need_parent_need['und'][0])) {
-          $need_parent_need = $node_revision->need_parent_need['und'][0]['target_id'];
-        }
-        db_update('cache_need')
-            ->fields(array(
-              'vid' => $node_revision->vid,
-              'title' => $node_revision->title,
-              'parent_id' => $need_parent_need,
-              'state' => $node_revision->need_state['und'][0]['value'],
-            ))
-            ->condition('nid', $node_revision->nid)
-            ->execute();
-
-        $query = db_select('cache_need_feature_rel', 'f');
-        $query->addField('f', 'feature_nid', 'feature_nid');
-        $query->condition('f.need_nid', $node_revision->nid);
-        $result = $query->execute();
-
-        $new_feature_ids = array();
-        if (isset($node_revision->need_features['und'])) {
-          foreach ($node_revision->need_features['und'] as $feature) {
-            $new_feature_ids[$feature['target_id']] = $feature['target_id'];
-          }
-        }
-
-        $old_feature_ids = array();
-        $to_delete = array();
-        foreach ($result as $record) {
-          $old_feature_ids[$record->feature_nid] = $record->feature_nid;
-          if (!in_array($record->feature_nid, $new_feature_ids)) {
-            $to_delete[$record->feature_nid] = $record->feature_nid;
-          }
-        }
-
-        $to_create = array();
-        foreach ($new_feature_ids as $feature_id) {
-          if (!in_array($feature_id, $old_feature_ids)) {
-            $to_create[$feature_id] = array(
-              'need_nid' => $node_revision->nid,
-              'feature_nid' => $feature_id,
-            );
-          }
-        }
-
-
-        $header = array('need_nid', 'feature_nid');
-        if (!empty($to_create)) {
-          $query = db_insert('cache_need_feature_rel')->fields($header);
-          foreach ($to_create as $record) {
-            $query->values($record);
-          }
-          $query->execute();
-        }
-
-        if (!empty($to_delete)) {
-          db_delete('cache_need_feature_rel')
-            ->condition('need_nid', $node_revision->nid)
-            ->condition('feature_nid', $to_delete, 'in')
-            ->execute();
-        }
-
-    }
-
-  }
-}
-
-*/
-
-/*
-function need_node_submit($node, $form, &$form_state) {
-
-dpm('test');
-
-}
-
-function wikicompare_needs_node_submit($node, $form, &$form_state) {
-
-dpm($node);
-dpm($form);
-//dpm($form_state);
-dpm(drupal_get_js());
-
-}*/
-
-/**
-* Implements hook_theme().
-*/
-/*
-function wikicompare_needs_theme($existing, $type, $theme, $path) {
-
-  return array(
-    'need_node_form' => array(
-      'render element' => 'form',
-      'template' => 'need-node-form',
-      // this will set to module/theme path by default:
-      'path' => drupal_get_path('module', 'wikicompare_needs'),
-    ),
-  );
-}
-*/
-
 
 
 ?>

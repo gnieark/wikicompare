@@ -51,27 +51,11 @@ function toggle_fastedit_response($method = 'ajax'){
       
       $implementations = array();
       if (!empty($_POST['implementation_ids'])) {
-dpm($_POST, 'postpost');
-/*
-        $query = db_select('node_revision', 'r');
-        $query->addField('r', 'nid', 'nid');
-        $query->addField('r', 'uid', 'uid');
-        $query->condition('r.nid', $_POST['implementation_ids'], 'in');
-        $result = $query->execute();
-*/
+
         $implementations = request_db('implementation', 1, 'nids', $_POST['implementation_ids']);
 
-/*        foreach ($result as $record) {
-          $implementations[$record->nid]['nid'] = $record->nid;
-          //If the node was created by or have some revision from other users, current user will not be able to edit it
-          if ($GLOBALS['user']->uid != $record->uid) {
-            $implementations[$record->nid]['no-edit'] = True;
-          }
-        }
-*/
 
         foreach($implementations as $nid => $implementation) {
-dpm($implementation);
 
           $output = add_fastedit_items('implementation', $implementation);
           //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
@@ -180,8 +164,6 @@ function get_fastedit_form_response($method = 'ajax'){
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
-dpm($_POST);
-
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
@@ -193,13 +175,6 @@ dpm($_POST);
       if (in_array($type, array('feature','implementation'))) {
         $display_type = 'row_table';
       } 
-/*
-      //Allow others modules to modify the output
-      foreach (module_implements('wikicompare_comparative_table_fastedit_displaytype') as $module) {
-        $function = $module . '_wikicompare_comparative_table_fastedit_displaytype';
-        $function($display_type, $type);
-      }*/
-
 
       if ($display_type == 'row_table') {
         $output .= '<tr id="line_form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '"><td>';
@@ -227,7 +202,7 @@ dpm($_POST);
         } else {
           $output .= '<span id="parent_id" style="display:none;">' . $nid . '</span>';
         }
-dpm($node);      
+    
         if ($type != 'implementation') {
           $name_field = array(
             '#type' => 'textfield',
@@ -257,14 +232,6 @@ dpm($node);
               $function = $module . '_wikicompare_comparative_table_fastedit_parent';
               $function($parent_id, $type, $node);
             }
-/*
-            $query = db_select('node', 'n');
-            $query->addField('n', 'title', 'title');
-            $query->condition("n.nid", $parent_id);
-            $result = $query->execute();
-            foreach ($result as $record) {
-              $parent_name = $record->title;
-            }*/
 
             $res = get_recursive_data($type, array($parent_id));
             $parent_name = $res['data'][$parent_id]['data']->fulltitle;
@@ -547,7 +514,7 @@ function submit_fastedit_form_response($method = 'ajax'){
       }
       
       $node->log = $_POST['revision'];
-dpm($node, 'presave'); 
+
       node_save($node);
     
       _revisioning_publish_latest_revision($node);

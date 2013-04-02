@@ -225,10 +225,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
-      
-      //Set global variable
-//      fastedit_status = 0;
-//      selected_feature_ids = {};
+
 
 
       //Active the code
@@ -881,9 +878,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
         }
         
-        
-//alert(make_cleaning);
-//        if (action != 'make_cleaning' && (action != 'show_fastedit_form' || !$('#' + link_id).hasClass('displayed'))) {
         if (make_cleaning == true) {
           $('#make_cleaning_link').click();
         }
@@ -908,15 +902,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       }
     }
 
-/*    
-    function clean_fastedit_forms() {
-      $('.form_compared_fastadd').remove();
-     
-//TODOTODO 
-      $('.compared_add_link:.displayed').each(function () {
-        $('#' + $(this).attr('id')).removeClass('displayed');
-      });
-    }*/
+
   }
 };
 
