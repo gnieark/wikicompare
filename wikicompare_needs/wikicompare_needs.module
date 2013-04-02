@@ -88,6 +88,7 @@ function wikicompare_needs_wikicompare_install_node_install($type) {
 
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
 
+  wikicompare_build_form($form, $form_state);
 
   $selected_feature_ids = array();
   if (isset($form_state['node']->need_features['und'])) {
@@ -97,6 +98,8 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     }
   }
 
+//  $form['#attached']['js']['settings']['data']['selected_feature_ids'] = $selected_feature_ids;
+/*
   $nid = 0;
   if (isset($form_state['node']->nid)) {
     $nid = $form_state['node']->nid;
@@ -137,6 +140,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
   );
+*/
 
   //hide($form['need_features']);
 dpm($selected_feature_ids, 'selected_feature');
@@ -180,6 +184,24 @@ dpm($selected_feature_ids, 'selected_feature');
 //      'style' => 'display:none',
 //    )  
   );*/
+
+}
+
+function wikicompare_needs_wikicompare_build_form_settings(&$settings, $form_state) {
+
+
+  if ($form_state['node']->type == 'need') {
+      $selected_feature_ids = array();
+      if (isset($form_state['node']->need_features['und'])) {
+        foreach ($form_state['node']->need_features['und'] as $array) {
+          $id = $array['target_id'];
+          $selected_feature_ids[$id] = $id;
+        }
+      }
+
+      $settings['wikicompare_needs']['selected_feature_ids'] = $selected_feature_ids;
+
+  }
 
 }
 
