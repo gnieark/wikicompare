@@ -471,6 +471,8 @@ function find_css_class($percent) {
 
 function wikicompare_flush_caches() {
 
+/* TO REPAIR
+
   //We put the site in maintenance
   $was_in_maintenance = FALSE;
   if (variable_get('maintenance_mode', 0) == 1) {
@@ -679,7 +681,7 @@ function wikicompare_flush_caches() {
   if ($was_in_maintenance == FALSE) {
     variable_set('maintenance_mode', 0);
   }
-
+*/
 }
 
 

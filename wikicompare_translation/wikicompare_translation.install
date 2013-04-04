@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the wikicompare module.
+ */
+
+/**
+ * Implements hook_install().
+ * This function is called only once at the module installation
+ */
+function wikicompare_translation_install() {
+
+  foreach (array('compared', 'feature', 'implementation') as $type) {
+    variable_set('language_content_type_' . $type, 2);
+  }
+
+  if (module_exists('wikicompare_needs')) {
+    variable_set('language_content_type_need', 2);
+  }
+
+
+}
+
+
+
+
+/**
+ * Implements hook_uninstall().
+ * This function is called at the module uninstallation
+ */
+function wikicompare_needs_uninstall() {
+
+  foreach (array('compared', 'feature', 'implementation') as $type) {
+    variable_set('language_content_type_' . $type, 0);
+  }
+
+  if (module_exists('wikicompare_needs')) {
+    variable_set('language_content_type_need', 0);
+  }
+
+
+}
+
+?>

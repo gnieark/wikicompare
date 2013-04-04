@@ -340,7 +340,7 @@ function wikicompare_node_install($type, $types) {
   //Set variables
   variable_set('node_options_' . $type, array('status','revision','revision_moderation'));
   variable_set('node_submitted_' . $type, '0');
-  variable_set('language_content_type_' . $type, '1');
+  variable_set('language_content_type_' . $type, 0);
 
 
   if ($type != 'implementation') {

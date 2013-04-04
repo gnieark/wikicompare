@@ -93,7 +93,9 @@ function wikicompare_needs_install() {
 
   wikicompare_node_install('need', $types);
 
-
+  if module_exists('wikicompare_translation') {
+    variable_set('language_content_type_need', 2);
+  }
 
 
 }

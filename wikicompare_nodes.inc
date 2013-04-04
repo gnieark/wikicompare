@@ -14,13 +14,11 @@ function feature_insert($node) {
    */
 
 
-/*
-  //TODO pareil ailleurs
-  if ($node->language != language_default('language')) {
-    return;
-  }*/
+
 
   wikicompare_insert_node('feature', $node);
+
+dpm($node, 'node_insert');
   
 
 }
@@ -40,6 +38,10 @@ function compared_insert($node) {
 
 function wikicompare_insert_node($type, $node) {
 
+  if ($node->language != language_default('language')) {
+    return;
+  }
+dpm($node, 'insert test, pas bon si traduction');
   $countertype = '';
   if ($type == 'compared') {
     $countertype = 'feature';
@@ -96,7 +98,8 @@ function wikicompare_insert_node($type, $node) {
     $query->addField('n', 'nid', 'nid');
     $query->addField('fp', 'wikicompare_parent_id_target_id', 'parent_id');
     $query->leftjoin('field_revision_wikicompare_parent_id', 'fp', 'n.vid = fp.revision_id');
-    $query->condition('n.type', $countertype, '=');
+    $query->condition('n.type', $countertype);
+    $query->condition('n.language', language_default('language'));
     $result = $query->execute();
 
     $nids = array();
@@ -113,18 +116,19 @@ function wikicompare_insert_node($type, $node) {
       $node_implementation->type = 'implementation';
       // Add default parameters
       node_object_prepare($node_implementation);
-      $node_implementation->language = LANGUAGE_NONE;
+
+      $node_implementation->language = language_default('language');
       //Filling entity reference field
       if ($type == 'compared') {
-        $node_implementation->wikicompare_feature_id[$node_implementation->language][0]['target_id'] = $counternode->nid;
-        $node_implementation->wikicompare_feature_id[$node_implementation->language][0]['target_type'] = "node";
-        $node_implementation->wikicompare_compared_id[$node_implementation->language][0]['target_id'] = $node->nid;
-        $node_implementation->wikicompare_compared_id[$node_implementation->language][0]['target_type'] = "node";
+        $node_implementation->wikicompare_feature_id['und'][0]['target_id'] = $counternode->nid;
+        $node_implementation->wikicompare_feature_id['und'][0]['target_type'] = "node";
+        $node_implementation->wikicompare_compared_id['und'][0]['target_id'] = $node->nid;
+        $node_implementation->wikicompare_compared_id['und'][0]['target_type'] = "node";
       } else {
-        $node_implementation->wikicompare_compared_id[$node_implementation->language][0]['target_id'] = $counternode->nid;
-        $node_implementation->wikicompare_compared_id[$node_implementation->language][0]['target_type'] = "node";
-        $node_implementation->wikicompare_feature_id[$node_implementation->language][0]['target_id'] = $node->nid;
-        $node_implementation->wikicompare_feature_id[$node_implementation->language][0]['target_type'] = "node";
+        $node_implementation->wikicompare_compared_id['und'][0]['target_id'] = $counternode->nid;
+        $node_implementation->wikicompare_compared_id['und'][0]['target_type'] = "node";
+        $node_implementation->wikicompare_feature_id['und'][0]['target_id'] = $node->nid;
+        $node_implementation->wikicompare_feature_id['und'][0]['target_type'] = "node";
       }
 
       //Allow others modules to modify the implrmentation to insert
@@ -201,11 +205,21 @@ function compared_delete($node) {
   wikicompare_delete_node('compared', $node);
 }
 
+function implementation_delete($node) {
+
+  foreach (module_implements('wikicompare_delete_after') as $module) {
+    $function = $module . '_wikicompare_delete_after';
+    $function($node);
+  }
+}
+
 function wikicompare_delete_node($type, $node) {
 
   /*
    * Delete all implementation linked to the node
    */
+
+dpm('test');
 
   if (in_array($type, array('compared', 'feature'))) {
     // Find all implementation node. We can use field_data* field because this field should not be modified so nor have revision. We don't use cache table because field_data* is more reliable.
@@ -281,6 +295,10 @@ function wikicompare_delete_node($type, $node) {
     }
   }
 
+  foreach (module_implements('wikicompare_delete_after') as $module) {
+    $function = $module . '_wikicompare_delete_after';
+    $function($node);
+  }
 
 }
 
@@ -350,7 +368,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
           //If the old parent has no children anymore, we update his children flag
           if ($current_node_parent != NULL) {
-            $query = db_select('cache_' . $type, 'c');
+            $query = db_select('cache_' . $node_revision->type, 'c');
             $query->addField('c', 'nid', 'nid');
             $query->condition('c.parent_id', $current_node_parent, '=');
             $result = $query->execute();

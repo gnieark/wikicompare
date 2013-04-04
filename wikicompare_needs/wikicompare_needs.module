@@ -119,7 +119,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
 
 }
 
-function wikicompare_needs_wikicompare_build_form_settings(&$settings, $form_state) {
+function wikicompare_needs_wikicompare_build_form_settings(&$settings, &$node, &$nid, $form, $form_state) {
 
 
   if ($form_state['node']->type == 'need') {
@@ -501,6 +501,15 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
         ->execute();
     }
 
+  }
+
+}
+
+function wikicompare_needs_wikicompare_translation_form(&$form, &$form_state, $node) {
+
+  if (isset($form['need_features'])) {
+//    $form['need_features'] = array('#markup' => $node->wikicompare_support['und'][0]['value']);
+    unset($form_state['node']->need_features);
   }
 
 }
