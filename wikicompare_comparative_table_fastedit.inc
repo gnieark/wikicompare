@@ -17,7 +17,7 @@ function toggle_fastedit_response($method = 'ajax'){
       $compareds = array();
       if (!empty($_POST['compared_ids'])) {
 
-        $compareds = request_db('compared', 1, 'nids', $_POST['compared_ids']);
+        $compareds = request_db('compared', array('fastedit_status' => 1, 'can_be_translated' => 1), 'nids', $_POST['compared_ids']);
 
       }
 
@@ -37,7 +37,7 @@ function toggle_fastedit_response($method = 'ajax'){
       if (!empty($_POST['feature_ids'])) {
 
 
-        $features = request_db('feature', 1, 'nids', $_POST['feature_ids']);
+        $features = request_db('feature', array('fastedit_status' => 1, 'can_be_translated' => 1), 'nids', $_POST['feature_ids']);
 
       }
 
@@ -52,7 +52,7 @@ function toggle_fastedit_response($method = 'ajax'){
       $implementations = array();
       if (!empty($_POST['implementation_ids'])) {
 
-        $implementations = request_db('implementation', 1, 'nids', $_POST['implementation_ids']);
+        $implementations = request_db('implementation', array('fastedit_status' => 1, 'can_be_translated' => 1), 'nids', $_POST['implementation_ids']);
 
 
         foreach($implementations as $nid => $implementation) {
@@ -128,7 +128,19 @@ function add_fastedit_items($type, $node_array){
     $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_add_link')), 'html' => True));
     $output .= $img_link_to_add;
 
-    if (!isset($node_array['no-edit'])) {
+dpm($node_array, 'node_array');
+    $test = False;
+    if (isset($node_array['no-edit'])) {
+      $test = True;
+    }
+dpm($test, 'test1' . $nid);
+    foreach (module_implements('wikicompare_fastedit_items_test') as $module) {
+      $function = $module . '_wikicompare_fastedit_items_test';
+      $function($test, $node_array);
+    }
+
+dpm($test, 'test2' . $nid);
+    if ($test == False) {
       //Create the image link to edit the node
       $img = theme('image', array(
         'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
@@ -139,15 +151,17 @@ function add_fastedit_items($type, $node_array){
       $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_edit_link')), 'html' => True));
       $output .= $img_link_to_edit;
 
-      //Create the image link to remove the node
-      $img = theme('image', array(
-        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to remove ') . $type . ' ' . $nid,
-        'height' => '100%',
-      ));
-      //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_remove = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_remove_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_remove_link')), 'html' => True));
-      $output .= $img_link_to_remove;
+      if (!isset($node_array['no-remove'])) {
+        //Create the image link to remove the node
+        $img = theme('image', array(
+          'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+          'alt' => t('Link to remove ') . $type . ' ' . $nid,
+          'height' => '100%',
+        ));
+        //Create the link. The html = True indicate that the title of the link contain html.
+        $img_link_to_remove = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_remove_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_remove_link')), 'html' => True));
+        $output .= $img_link_to_remove;
+      }
     }
   }
 
@@ -198,6 +212,25 @@ function get_fastedit_form_response($method = 'ajax'){
         if ($fastaction == 'edit') {
     
           $node = node_load($nid);
+
+          $readonly = False;
+          $query = db_select('node_revision', 'n');
+          $query->addField('n', 'nid', 'nid');
+          $query->addField('n', 'uid', 'uid');
+          $query->condition('n.nid', $nid);
+          $result = $query->execute();
+          foreach ($result as $record) {
+            if ($GLOBALS['user']->uid != $record->uid) {
+              $readonly = True;
+            }
+          }
+
+          $tnode = new stdClass;
+          $readonly_translation = False;
+          foreach (module_implements('wikicompare_fastedit_get_tnode') as $module) {
+            $function = $module . '_wikicompare_fastedit_get_tnode';
+            $function($tnode, $readonly_translation, $node);
+          }
           
         } else {
           $output .= '<span id="parent_id" style="display:none;">' . $nid . '</span>';
@@ -215,8 +248,16 @@ function get_fastedit_form_response($method = 'ajax'){
           if ($fastaction == 'edit') {
             $name_field['#value'] = $node->title;
           }
+          $name_field_clone = $name_field;
+          if ($readonly == True) {
+            $name_field['#attributes']['disabled'] = True;
+          }
           $output .= drupal_render($name_field);
 
+          foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
+            $function = $module . '_wikicompare_fastedit_add_element';
+            $function($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
+          }
 
           if ($fastaction == 'edit') {
 
@@ -245,7 +286,10 @@ function get_fastedit_form_response($method = 'ajax'){
               'path' => 'get_dialog_callback/select_simple_dialog/' . $type . '/form_selected_parent/' . $nid,
             );
             $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
-            $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span><span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
+            $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span>';
+            if ($readonly != True) {
+              $output .= '<span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
+            }
 
           }
 
@@ -262,9 +306,16 @@ function get_fastedit_form_response($method = 'ajax'){
         if ($fastaction == 'edit') {
           $description_field['#value'] = $node->body['und'][0]['value'];
         }
+        $description_field_clone = $description_field;
+        if ($readonly == True) {
+          $description_field['#attributes']['disabled'] = True;
+        }
         $output .= drupal_render($description_field);
       
-
+        foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
+          $function = $module . '_wikicompare_fastedit_add_element';
+          $function($output, $tnode, $description_field_clone, 'body', $readonly_translation, $fastaction);
+        }
       
         if ($type == 'feature') {
           $type_field = array(
@@ -282,6 +333,9 @@ function get_fastedit_form_response($method = 'ajax'){
           if ($fastaction == 'edit') {
             $type_field['#value'] = $node->wikicompare_type['und'][0]['value'];
           }
+          if ($readonly == True) {
+            $type_field['#attributes']['disabled'] = True;
+          }
           $output .= drupal_render($type_field);
           
           $guidelines_field = array(
@@ -295,7 +349,16 @@ function get_fastedit_form_response($method = 'ajax'){
           if ($fastaction == 'edit') {
             $guidelines_field['#value'] = $node->wikicompare_guidelines['und'][0]['value'];
           }
+          $guidelines_field_clone = $guidelines_field;
+          if ($readonly == True) {
+            $guidelines_field['#attributes']['disabled'] = True;
+          }
           $output .= drupal_render($guidelines_field);
+
+          foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
+            $function = $module . '_wikicompare_fastedit_add_element';
+            $function($output, $tnode, $guidelines_field_clone, 'wikicompare_guidelines', $readonly_translation, $fastaction);
+          }
           
           $weight_field = array(
             '#type' => 'textfield',
@@ -309,6 +372,9 @@ function get_fastedit_form_response($method = 'ajax'){
           );
           if ($fastaction == 'edit') {
             $weight_field['#value'] = $node->wikicompare_weight['und'][0]['value'];
+          }
+          if ($readonly == True) {
+            $weight_field['#attributes']['disabled'] = True;
           }
           $output .= drupal_render($weight_field);
           
@@ -328,6 +394,9 @@ function get_fastedit_form_response($method = 'ajax'){
           );
           if ($fastaction == 'edit') {
             $state_field['#value'] = $node->wikicompare_state['und'][0]['value'];
+          }
+          if ($readonly == True) {
+            $state_field['#attributes']['disabled'] = True;
           }
           $output .= drupal_render($state_field);
         }
@@ -349,6 +418,9 @@ function get_fastedit_form_response($method = 'ajax'){
           if ($fastaction == 'edit') {
             $support_field['#value'] = $node->wikicompare_support['und'][0]['value'];
           }
+          if ($readonly == True) {
+            $support_field['#attributes']['disabled'] = True;
+          }
           $output .= drupal_render($support_field);
 
         
@@ -369,6 +441,12 @@ function get_fastedit_form_response($method = 'ajax'){
           )
         );
         $output .= drupal_render($revision_field);
+
+        //Allow others modules to modify the output
+        foreach (module_implements('wikicompare_fastedit_specific_after') as $module) {
+          $function = $module . '_wikicompare_fastedit_specific_after';
+          $function($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
+        }
       
       }
       
@@ -461,59 +539,88 @@ function submit_fastedit_form_response($method = 'ajax'){
       switch ($fastaction) {
         case 'add':
           $node = new stdClass();
+          $node->uid = $GLOBALS['user']->uid;
           $node->type = $type;
-          $node->language = LANGUAGE_NONE;
+          $node->language = language_default('language');
           break;
         case 'edit':
           $node = node_load($_POST['node_id']);
           $node->revision = 1;
           break;
       }
-    
+
+      $tnode = new stdClass();
+      foreach (module_implements('wikicompare_fastedit_submit_init_tnode') as $module) {
+        $function = $module . '_wikicompare_fastedit_submit_init_tnode';
+        $function($tnode, $_POST, $fastaction);
+      }    
+
       if ($type != 'implementation') {
         $node->title = $_POST['title'];
 
+        foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
+          $function = $module . '_wikicompare_fastedit_submit_element';
+          $function($tnode, $_POST, 'title', 'title');
+        }
+
         switch ($type) {
           case 'compared':
-            $node->wikicompare_parent_id[$node->language][0]['target_id'] = $_POST['parent_id'];
-            $node->wikicompare_parent_id[$node->language][0]['target_type'] = "node";
+            $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
+            $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
             break;
           case 'feature':
-            $node->wikicompare_parent_id[$node->language][0]['target_id'] = $_POST['parent_id'];
-            $node->wikicompare_parent_id[$node->language][0]['target_type'] = "node";
+            $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
+            $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
             break;
         }
 
       }
 
         
-      $node->body[$node->language][0] = array(
+      $node->body['und'][0] = array(
         'value' => $_POST['description'],
         'format' => 'full_html',
       );
+
+      foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
+        $function = $module . '_wikicompare_fastedit_submit_element';
+        $function($tnode, $_POST, 'body', 'description');
+      }
       
       if ($type == 'feature') {
-        $node->wikicompare_type[$node->language][0]['value'] = $_POST['feature_type'];
+        $node->wikicompare_type['und'][0]['value'] = $_POST['feature_type'];
         
-        $node->wikicompare_guidelines[$node->language][0]['value'] = $_POST['guidelines'];
-        $node->wikicompare_guidelines[$node->language][0]['format'] = 'full_html';
+        $node->wikicompare_guidelines['und'][0]['value'] = $_POST['guidelines'];
+        $node->wikicompare_guidelines['und'][0]['format'] = 'full_html';
+        foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
+          $function = $module . '_wikicompare_fastedit_submit_element';
+          $function($tnode, $_POST, 'wikicompare_guidelines', 'guidelines');
+        }
         
-        $node->wikicompare_weight[$node->language][0]['value'] = $_POST['weight'];        
+        $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];        
         
-        $node->wikicompare_state[$node->language][0]['value'] = $_POST['state'];
+        $node->wikicompare_state['und'][0]['value'] = $_POST['state'];
         
       }
       
       if ($type == 'implementation') {
-        $node->wikicompare_support[$node->language][0]['value'] = $_POST['support'];
+        $node->wikicompare_support['und'][0]['value'] = $_POST['support'];
       }
 
       foreach (module_implements('wikicompare_comparative_table_fastedit_submit') as $module) {
         $function = $module . '_wikicompare_comparative_table_fastedit_submit';
         $function($node, $type, $_POST);
       }
+
+      foreach (module_implements('wikicompare_fastedit_submit_after') as $module) {
+        $function = $module . '_wikicompare_fastedit_submit_after';
+        $function($node, $tnode, $_POST);
+      }
       
       $node->log = $_POST['revision'];
+
+dpm($node, 'node final');
+
 
       node_save($node);
     

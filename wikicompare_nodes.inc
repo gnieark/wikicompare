@@ -219,7 +219,9 @@ function wikicompare_delete_node($type, $node) {
    * Delete all implementation linked to the node
    */
 
-dpm('test');
+  if ($node->language != language_default('language')) {
+    return;
+  }
 
   if (in_array($type, array('compared', 'feature'))) {
     // Find all implementation node. We can use field_data* field because this field should not be modified so nor have revision. We don't use cache table because field_data* is more reliable.
@@ -309,6 +311,10 @@ dpm('test');
  * We'll use this hook to update the compare tree when some value is changed in feature, compared of implementation note
  */
 function wikicompare_revisionapi($op, $node_revision) {
+
+  if ($node->language != language_default('language')) {
+    return;
+  }
 
   /*
    * Action to do before a node is published

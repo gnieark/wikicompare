@@ -506,13 +506,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
           if (type != 'implementation') {
             options.data.title = $('#form_' + type + '_fast' + subaction + '_title_' + node_id).val();
+            options.data.title_translation = $('#form_' + type + '_fast' + subaction + '_title_' + node_id + '_translation').val();
             options.data.parent_id = $('#parent_id').text();
           }
           options.data.description = $('#form_' + type + '_fast' + subaction + '_description_' + node_id).val();
+          options.data.description_translation = $('#form_' + type + '_fast' + subaction + '_description_' + node_id + '_translation').val();
           
           if (type == 'feature') {
             options.data.feature_type = $('#form_' + type + '_fast' + subaction + '_type_' + node_id).val();
             options.data.guidelines = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id).val();
+            options.data.guidelines_translation = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id + '_translation').val();
             options.data.weight = $('#form_' + type + '_fast' + subaction + '_weight_' + node_id).val();
             options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
           }
@@ -536,6 +539,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
           }
           options.data.revision = $('#form_' + type + '_fast' + subaction + '_revision_' + node_id).val();
+          options.data.selectnode = $('#form_' + type + '_fast' + subaction + '_selectnode_' + node_id).val();
         }
 
 

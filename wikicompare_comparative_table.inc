@@ -23,14 +23,14 @@ function wikicompare_comparative_table($form_state) {
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
 
   //Find all the compared on the first level of the tree
-  $res = request_db('compared');
+  $res = request_db('compared', array('can_be_translated' => 1));
 
   $form['#compared_items'] = $res;
 
 
 
   //Find all the features on the first level of the tree
-  $res = request_db('feature');
+  $res = request_db('feature', array('can_be_translated' => 1));
 
   $form['#feature_items'] = $res;
 
@@ -172,7 +172,7 @@ function get_item_list_children_response($method = 'ajax') {
       if (!empty($_POST['fastedit_status'])) {
         $itemlist_settings['fastedit_status'] = $_POST['fastedit_status'];
       }
-      $nodes = request_db($type, $itemlist_settings['fastedit_status'], 'parent', array($nid));
+      $nodes = request_db($type, array('fastedit_status' => $itemlist_settings['fastedit_status'], 'can_be_translated' => 1), 'parent', array($nid));
 
 
       //Prepare the array to use as argument for the item list building function
@@ -270,7 +270,7 @@ function get_feature_response($method = 'ajax') {
         $fastedit_status = $_POST['fastedit_status'];
       }
 
-      $features = request_db('feature', $fastedit_status, 'parent', array($fid));
+      $features = request_db('feature', array('fastedit_status' => $fastedit_status, 'can_be_translated' => 1), 'parent', array($fid));
 
       $features_ids = array();
       foreach ($features as $key => $feature) {
@@ -280,9 +280,10 @@ function get_feature_response($method = 'ajax') {
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_column_ids'])) {
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', $fastedit_status, 'parent', NULL, $_POST['compared_column_ids'], $features_ids);
+        $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, $_POST['compared_column_ids'], $features_ids);
       }
       //Building the data for the table row
+
 
       $feature_row_data = get_rows_data($features, $_POST['compared_column_ids'], $implementations, 0);
 
@@ -339,7 +340,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       if (!empty($_POST['fastedit_status'])) {
         $fastedit_status = $_POST['fastedit_status'];
       }
-    
+/*    
       //Recover the detail of the compared we want to add
       $query = db_select('cache_compared', 's');
       $query->addField('s', 'nid', 'nid');
@@ -348,17 +349,19 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       $result = $query->execute();
       foreach ($result as $record) {
         $compared = $record;
-      }
+      }*/
 
+      //Recover the detail of the compared we want to add
+      $compared = request_db('compared', array('can_be_translated' => 1), 'nids', array($cid));
 
 
       //Add the header of the new column, with the compared detail
-      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;"><span class="compared_title_' . $cid . '">' . $compared->title . '</span> ' . $cid . '</th>';
+      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;"><span class="compared_title_' . $cid . '">' . $compared[0]->title . '</span> ' . $cid . '</th>';
 
       //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', $fastedit_status, 'parent', NULL, array($cid), $_POST['feature_ids']);
+        $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
 
         if ($_POST['computed']) {
           $features_array = get_recursive_data('feature', $_POST['feature_ids'], $fastedit_status);
@@ -593,7 +596,7 @@ function compute_comparative_table_response($method = 'ajax') {
     $implementations = array();
     if (!empty($feature_array['ids']) && !empty($compared_columns_ids)) {
 
-      $implementations = request_db('implementation', $fastedit_status, 'parent', NULL, $compared_columns_ids, $feature_array['ids']);
+      $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, $compared_columns_ids, $feature_array['ids']);
 
     } 
 
@@ -631,7 +634,7 @@ function make_cleaning_response($method = 'ajax') {
 
     $compareds = array();
     if (!empty($compared_ids)) {
-      $compareds = request_db('compared', 0, 'nids', $compared_ids);
+      $compareds = request_db('compared', array('can_be_translated' => 1), 'nids', $compared_ids);
     }
     
     foreach ($_POST['compared_ids'] as $compared) {
@@ -663,7 +666,7 @@ function make_cleaning_response($method = 'ajax') {
 
       $features = array();
       if (!empty($feature_ids)) {
-        $features = request_db('feature', 0, 'nids', $feature_ids);
+        $features = request_db('feature', array('can_be_translated' => 1), 'nids', $feature_ids);
       }
     
       $update_selected_feature = false;
@@ -687,7 +690,7 @@ function make_cleaning_response($method = 'ajax') {
 
       $implementations = array();
       if (!empty($_POST['compared_columns_ids']) && !empty($feature_ids)) {
-        $implementations = request_db('implementation', $_POST['fastedit_status'], 'parent', NULL, $_POST['compared_columns_ids'], $feature_ids);
+        $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_columns_ids'], $feature_ids);
       }
 
       foreach($implementations as $nid => $implementation) {
@@ -815,7 +818,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_node = ' ' . l($img, 'node/' . $nid, array('attributes' => array('id' => $type . '_node_link_' . $nid, 'class' => array($type . '_node_link')), 'html' => True));
+      $img_link_to_node = ' ' . l($img, 'node/' . $node->tnid, array('attributes' => array('id' => $type . '_node_link_' . $nid, 'class' => array($type . '_node_link')), 'html' => True));
 
       if ($itemlist_settings['fastedit_status'] == 1) {
         $img_link_to_node .= add_fastedit_items($type, $node_array);
@@ -903,7 +906,7 @@ function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
 
   //No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
 
-  $nodes = request_db($type, $fastedit_status, 'nid', $ids);
+  $nodes = request_db($type, array('fastedit_status' => $fastedit_status, 'can_be_translated' => 1), 'nid', $ids);
 
   foreach ($nodes as $nid => $node) {
     //Check if some children of this node launched the recursive function to find this node as their parent. Then assign them as children of this node and unset the node in the array.
@@ -944,6 +947,9 @@ function get_rows_data($features, $compareds, $implementations, $computed){
   $rows = array();
 
   foreach ($features as $fid => $feature){
+
+    $rows[$fid] = $feature;
+
     $rows[$fid]['data'] = $feature['data'];
 
     if ($feature['data']->parent_id) {
@@ -1074,9 +1080,11 @@ function render_rows($feature_row_data, $fastedit_status) {
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $fid, array('attributes' => array('id' => 'feature_node_link_' . $fid, 'class' => array('feature_node_link')), 'html' => True));
+    $img_link_to_node = l($img, 'node/' . $feature->tnid, array('attributes' => array('id' => 'feature_node_link_' . $fid, 'class' => array('feature_node_link')), 'html' => True));
     if ($fastedit_status == 1) {
+
       $img_link_to_node .= add_fastedit_items('feature', $feature_array); 
+
     }
 
     $title_title = '<span class="feature_title_' . $fid . '">' . $feature->title . '</span>';

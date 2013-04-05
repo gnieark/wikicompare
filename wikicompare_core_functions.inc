@@ -703,12 +703,14 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
 }
 
 
-function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $compareds=NULL, $features=NULL) {
+function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $compareds=NULL, $features=NULL) {
+
 
   $res = array();
   $use_nids = true;
   $query = db_select('cache_' . $type, 'n');
   $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'nid', 'tnid');
   if ($type != 'implementation') {
     $query->addField('n', 'title', 'title');
     $query->addField('n', 'has_children', 'has_children');
@@ -739,15 +741,26 @@ function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $
     $query->condition('n.state', 'Published', '=');
   }
 
-  if ($fastedit_status == 1) {
-    $query->addField('r', 'uid', 'uid');
-    $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
+  if (isset($settings['fastedit_status'])) {
+    if ($settings['fastedit_status'] == 1) {
+      $query->addField('r', 'uid', 'uid');
+      $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
+    }
+  }
+
+  foreach (module_implements('wikicompare_request_db') as $module) {
+    $function = $module . '_wikicompare_request_db';
+    $function($query, $type, $settings);
   }
 
   $result = $query->execute();
-
+//dpm($result);
   foreach ($result as $record) {
 
+//if ($record->nid == 47) {
+//dpm($settings);
+dpm($record, 'record');
+//}
     if ($type != 'implementation' || $nids != NULL) {
       $res[$record->nid]['data'] = $record;
       $res[$record->nid]['children'] = array();
@@ -755,15 +768,28 @@ function request_db($type, $fastedit_status=0, $type_nid='parent', $nids=NULL, $
       $res[$record->feature_id][$record->compared_id]['data'] = $record;
     }
 
-    if ($fastedit_status == 1) {
-      //If the node was created by or have some revision from other users, current user will not be able to fastedit it
-      if ($GLOBALS['user']->uid != $record->uid) {
-        if ($type != 'implementation'|| $nids != NULL) {
-          $res[$record->nid]['no-edit'] = True;
-        } else {
-          $res[$record->feature_id][$record->compared_id]['no-edit'] = True;
+    if (isset($settings['fastedit_status'])) {
+      if ($settings['fastedit_status'] == 1) {
+        //If the node was created by or have some revision from other users, current user will not be able to fastedit it
+        if ($GLOBALS['user']->uid != $record->uid) {
+          if ($type != 'implementation' || $nids != NULL) {
+            $res[$record->nid]['no-edit'] = True;
+            $res[$record->nid]['no-remove'] = True;
+          } else {
+            $res[$record->feature_id][$record->compared_id]['no-edit'] = True;
+            $res[$record->feature_id][$record->compared_id]['no-remove'] = True;
+          }
+        }
+        foreach (module_implements('wikicompare_request_db_fastedit') as $module) {
+          $function = $module . '_wikicompare_request_db_fastedit';
+          $function($res, $record, $type, $nids);
         }
       }
+    }
+
+    foreach (module_implements('wikicompare_request_db_build') as $module) {
+      $function = $module . '_wikicompare_request_db_build';
+      $function($res, $record);
     }
 
 

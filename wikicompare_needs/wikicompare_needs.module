@@ -195,7 +195,7 @@ function wikicompare_needs_wikicompare_comparative_table_toogle_fastedit(&$comma
 
   $needs = array();
   if (!empty($_POST['need_ids'])) {
-    $needs = request_db('need', 1, 'nids', $_POST['need_ids']);
+    $needs = request_db('need', array('fastedit_status' => 1), 'nids', $_POST['need_ids']);
   }
 
   foreach($needs as $nid =>$need) {
@@ -345,7 +345,7 @@ function wikicompare_needs_wikicompare_comparative_table_cleaning(&$commands, $_
   }
   $needs = array();
   if (!empty($need_ids)) {
-    $needs = request_db('need', 0, 'nids', $need_ids);
+    $needs = request_db('need', array(), 'nids', $need_ids);
   }
     
   foreach ($_POST['need_ids'] as $need) {
