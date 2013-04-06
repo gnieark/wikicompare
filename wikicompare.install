@@ -37,9 +37,7 @@ function wikicompare_schema() {
         'default' => '',
       ),
     ),
-    'unique keys' => array(
-      'nid' => array('nid'),
-    ),
+    'primary key' =>  array('nid'),
     'foreign keys' => array(
       'node' => array(
         'table' => 'node',
@@ -60,6 +58,40 @@ function wikicompare_schema() {
     $schema['cache_' . $type] = wikicompare_node_schema($type);
 
   }
+
+  $schema['cache_wikicompare_users'] = array(
+
+    'description' => 'Cache table for the access to node to users',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The nid of the node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The uid of the user',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'index_nid' => array('nid'),
+      'index_uid' => array('uid'),
+    ),
+    'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'user' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    )
+
+  );
   
   return $schema;
 
@@ -76,7 +108,7 @@ function wikicompare_node_schema($type) {
     'unsigned' => TRUE,
     'not null' => TRUE,
   );
-  $schema['unique keys']['nid'] = array('nid');
+  $schema['primary key'] = array('nid');
   $schema['foreign keys']['node'] = array(
     'table' => 'node',
     'columns' => array('nid' => 'nid'),
@@ -199,7 +231,11 @@ function wikicompare_install() {
 
   // Ensure that new node type is available.
   node_types_rebuild();
-  
+
+ 
+
+
+
 
   //Assign body field to the new node types
   $types = node_type_get_types();
@@ -255,6 +291,20 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
+  //Create protected field
+  $field = array(
+    'field_name' => 'wikicompare_protected',
+    'type' => 'list_boolean',
+    'cardinality' => 1,
+    'settings' => array(
+      'allowed_values' => array(
+        0 => 'Unprotected',
+        1 => 'Protected',
+      ),
+    ),
+  );
+  field_create_field($field);
+
   //Create Proofs field
   $field = array(
     'field_name' => 'wikicompare_proofs',
@@ -297,6 +347,18 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
+
+  $field = array(
+    'field_name' => 'wikicompare_user_ids',
+    'type' => 'entityreference',
+    'cardinality' => -1,
+    'settings' => array(
+      'target_type' => 'user',
+//      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
+    ),
+  );
+  field_create_field($field);
+
   //Create state field
   $field = array(
     'field_name' => 'wikicompare_state',
@@ -323,6 +385,62 @@ function wikicompare_install() {
 
   //Set module default settings
   variable_set('wikicompare_update_compared', 'no-update');
+
+
+  foreach (array('wikicompare_admin', 'moderator') as $name) {
+
+    $role = new stdClass();
+    $role->name = $name;
+    user_role_save($role);
+
+  }
+
+
+  foreach (array('wikicompare_admin', 'moderator', 'authenticated user') as $role_name) {
+
+    $permissions = array(
+      'access content' => TRUE,
+      'view revisions' => TRUE,
+      'revert revisions' => TRUE,
+      'create feature content' => TRUE,
+      'edit any feature content' => TRUE,
+      'delete own feature content' => TRUE,
+      'create compared content' => TRUE,
+      'edit any compared content' => TRUE,
+      'delete own compared content' => TRUE,
+      'view revisions of any feature content' => TRUE,
+      'publish revisions of any feature content' => TRUE,
+      'view revisions of any compared content' => TRUE,
+      'publish revisions of any compared content' => TRUE,
+      'view revisions of any implementation content' => TRUE,
+      'publish revisions of any implementation content' => TRUE,
+      'access user profiles' => TRUE,
+      'change own username' => TRUE,
+      'cancel account' => TRUE,
+    );
+
+    if ($role_name != 'authenticated user') {
+      $permissions = array_merge($permissions, array(
+        'delete revisions' => TRUE,
+        'delete any feature content' => TRUE,
+        'delete any compared content' => TRUE,
+        'access site in maintenance mode' => TRUE,
+        'administer users' => TRUE,
+      ));
+    }
+
+    $role = user_role_load_by_name($role_name);
+    $rid = $role->rid;
+    user_role_change_permissions($rid, $permissions);
+
+  }
+
+
+
+  foreach (module_implements('wikicompare_install_node_install') as $module) {
+    $function = $module . '_wikicompare_install_node_install';
+    $function($type);
+  }
 
 
 
@@ -358,6 +476,22 @@ function wikicompare_node_install($type, $types) {
       ),
     );
     field_create_instance($instance);
+
+    $instance = array(
+      'field_name' => 'wikicompare_user_ids',
+      'entity_type' => 'node',
+      'bundle' => $type,
+      'label' => 'Power users',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'user',
+//        'handler_settings' => array('target_bundles' => array($type)),
+      ),
+    );
+    field_create_instance($instance);
+
   } else {
 
     //Create feature field
@@ -407,6 +541,24 @@ function wikicompare_node_install($type, $types) {
       'bundle' => 'implementation',
       'label' => 'Support',
       'description' => 'TODO : Ce champ n\'est visible que si la feature n\'est pas un parent feature',
+      'default_value' => array(
+        0 => array(
+          'value' => 0,
+        ),
+      ),
+      'required' => 1,
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+
+    $instance = array(
+      'field_name' => 'wikicompare_protected',
+      'entity_type' => 'node',
+      'bundle' => 'implementation',
+      'label' => 'Protected?',
+      'description' => 'TODO',
       'default_value' => array(
         0 => array(
           'value' => 0,
@@ -545,10 +697,6 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
   }
 
 
-  foreach (module_implements('wikicompare_install_node_install') as $module) {
-    $function = $module . '_wikicompare_install_node_install';
-    $function($type);
-  }
 
 }
 
@@ -562,6 +710,9 @@ function wikicompare_uninstall() {
 
   //Delete module settings variable
   variable_del('wikicompare_update_compared');
+
+  user_role_delete('wikicompare_admin');
+  user_role_delete('moderator');
 
 
   //Delete all nodes of feature type.
@@ -617,6 +768,7 @@ function wikicompare_uninstall() {
   //Delete feature content type.
 
   field_delete_field('wikicompare_parent_id');
+  field_delete_field('wikicompare_user_ids');
   field_delete_field('wikicompare_type');
   field_delete_field('wikicompare_guidelines');
   field_delete_field('wikicompare_weight');
@@ -624,6 +776,7 @@ function wikicompare_uninstall() {
   field_delete_field('wikicompare_feature_id');
   field_delete_field('wikicompare_compared_id'); 
   field_delete_field('wikicompare_support');
+  field_delete_field('wikicompare_protected');
   field_delete_field('wikicompare_proofs');
 
   

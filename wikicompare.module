@@ -475,5 +475,28 @@ function wikicompare_theme() {
   );
 }
 
+/**
+ * Implements hook_revisioning_access_node().
+ * Check _revisioning_access_node_revision and revisioning_user_node_access in revisioning.module for more information
+ * We need to add :
+ * $node_op = module_invoke_all('revisioning_access_node', $node_op, $revision_op, $node);
+ * foreach ($tests as $test) {
+ *   if ($test == False) {
+ *     $node_op = False;
+ *   }
+ * }
+ * after
+ * $node_op = revisioning_user_node_access($revision_op, $node);
+ * in revisioning.module. Make some lobbying to integrate this hook in revisioning module.
+ */ 
+
+function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
+
+dpm($revision_op, 'revision_op');
+dpm($node, 'node');
+
+}
+
+
 
 ?>

@@ -64,6 +64,9 @@ dpm($node, 'insert test, pas bon si traduction');
       ))
       ->condition('nid', $parent_id)
       ->execute();
+
+    wikicompare_update_cache_users($node->nid, $parent_id);
+
   }
 
   $fields = array(
@@ -183,6 +186,9 @@ dpm($node, 'insert test, pas bon si traduction');
 
 }
 
+
+
+
 /**
  * Implements hook_delete().
  * Executed each time a node is deleted.
@@ -222,6 +228,8 @@ function wikicompare_delete_node($type, $node) {
   if ($node->language != language_default('language')) {
     return;
   }
+
+  wikicompare_update_cache_users($node->nid, NULL);
 
   if (in_array($type, array('compared', 'feature'))) {
     // Find all implementation node. We can use field_data* field because this field should not be modified so nor have revision. We don't use cache table because field_data* is more reliable.
@@ -312,7 +320,7 @@ function wikicompare_delete_node($type, $node) {
  */
 function wikicompare_revisionapi($op, $node_revision) {
 
-  if ($node->language != language_default('language')) {
+  if ($node_revision->language != language_default('language')) {
     return;
   }
 
@@ -469,10 +477,15 @@ function wikicompare_revisionapi($op, $node_revision) {
       if ($node_revision->type != 'implementation') {
         $fields['title'] = $node_revision->title;
         $parent_id = NULL;
+
+
         if (isset($node_revision->wikicompare_parent_id['und'][0])) {
           $parent_id = $node_revision->wikicompare_parent_id['und'][0]['target_id'];
         }
         $fields['parent_id'] = $parent_id;
+
+        wikicompare_update_cache_users($node_revision->nid, $parent_id);
+
       } else {
         $fields['support']= $node_revision->wikicompare_support['und'][0]['value'];
 
@@ -533,6 +546,68 @@ function wikicompare_revisionapi($op, $node_revision) {
       $function($fields, $node_revision);
     }
   }
+}
+
+function wikicompare_update_cache_users($nid, $parent_id) {
+
+/*
+  db_delete('cache_wikicompare_users')
+    ->condition('nid', $nid)
+    ->execute();
+*/
+  if ($parent_id != NULL) {
+    $users = array();
+    $query = db_select('cache_wikicompare_users', 'u');
+    $query->addField('u', 'uid', 'uid');
+    $query->condition('u.nid', $parent_id);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $users[$record->uid] = array(
+        'nid' => $nid,
+        'uid' => $record->uid,
+      );
+    }
+dpm($users, 'users2');
+    $query = db_select('node', 'n');
+    $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
+    $query->leftjoin('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
+    $query->condition('n.nid', $parent_id);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      if ($record->uid != NULL) {
+        $users[$record->uid] = array(
+          'nid' => $nid,
+          'uid' => $record->uid,
+        );
+      }
+    }
+dpm($users, 'users1');
+    if (!empty($users)) {
+/*      $res = db_insert('cache_wikicompare_users')
+        ->fields($users)
+        ->execute();
+*/
+      $query = db_insert('cache_wikicompare_users')->fields(array('nid', 'uid'));
+      foreach ($users as $user) {
+        $query->values($user);
+      }
+      $res = $query->execute();
+dpm($res, 'res');
+    }
+  }
+
+  
+  $query = db_select('node', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->leftjoin('field_revision_wikicompare_parent_id', 'f', 'n.vid = f.revision_id');
+  $query->condition('f.wikicompare_parent_id_target_id', $nid);
+  $result = $query->execute();
+  foreach ($result as $record) {
+    wikicompare_update_cache_users($record->nid, $nid);
+  } 
+
+
+
 }
 
 ?>

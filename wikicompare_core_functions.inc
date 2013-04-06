@@ -754,13 +754,9 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   }
 
   $result = $query->execute();
-//dpm($result);
+
   foreach ($result as $record) {
 
-//if ($record->nid == 47) {
-//dpm($settings);
-dpm($record, 'record');
-//}
     if ($type != 'implementation' || $nids != NULL) {
       $res[$record->nid]['data'] = $record;
       $res[$record->nid]['children'] = array();

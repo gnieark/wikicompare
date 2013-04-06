@@ -362,17 +362,17 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       if (!empty($_POST['feature_ids'])) {
         //Recover the implementation needed for the cells
         $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
-
+/*
         if ($_POST['computed']) {
           $features_array = get_recursive_data('feature', $_POST['feature_ids'], $fastedit_status);
-          $features_ids = $features_array['tree'];
+dpm($features_array, 'init feature array');
+          $features = $features_array['tree'];
         } else {
-          foreach ($_POST['feature_ids'] as $feature_id) {
-            $features_ids[$feature_id] = $feature_id;
-          }
+          $features = request_db('feature', array(), 'nids', $_POST['feature_ids']);
+
         }
 
-        $feature_row_data = get_rows_data($features_ids, array($cid), $implementations, $_POST['computed']);
+        $feature_row_data = get_rows_data($features, array($cid), $implementations, $_POST['computed']); */
 
         $cells = array();
         foreach ($_POST['feature_ids'] as $feature_id) {
@@ -944,11 +944,13 @@ function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
  */
 function get_rows_data($features, $compareds, $implementations, $computed){
 
+dpm('start get rows_data');
   $rows = array();
 
   foreach ($features as $fid => $feature){
 
-    $rows[$fid] = $feature;
+dpm($feature, 'feature');
+//    $rows[$fid] = $feature;
 
     $rows[$fid]['data'] = $feature['data'];
 
@@ -973,10 +975,11 @@ function get_rows_data($features, $compareds, $implementations, $computed){
     }
 
     $rows[$fid]['implementations'] = array();
+dpm($rows, 'before foreach');
     //Adding one cell for each implementation, which contain the details of the cells
     foreach ($compareds as $compared) {
 
-
+dpm($rows, 'in foreach');
       $implementation = $implementations[$fid][$compared];
 
       if ($computed) {
@@ -995,10 +998,14 @@ function get_rows_data($features, $compareds, $implementations, $computed){
           $implementation['data'] = wikicompare_compute_percent($implementation['data'], $through_feature_childs);
         }
       }
-
+dpm($fid, 'fid');
+dpm($compared, 'compared');
+dpm($implementation, 'implementation');
+dpm($rows[$fid]);
       $rows[$fid]['implementations'][$compared] = $implementation;
 
     }
+dpm('after foreach');
 
     foreach ($children as $key=> $child) {
       $rows[$key] = $child;

@@ -912,7 +912,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 //TODO dans edit et remove, centraliser les controles dans une function
-//TODO faire une fonction qui va recharger les fastedit items et les pourcentages / nom compared feature, données bref tout le tableau.
 //TODO If a form is open, expand un compared clean les fastedit items
 //TODO remplacer les if action par des case
 //TODO mettre les securité dans la fonction submit pour edit et remove
@@ -931,11 +930,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
 //TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
-//TODO Remplacer les status par le module workflow, pour mieux controler la revision.
 //TODO remplacer display par un flag true, pour recuperer le keyword action
 //TODO Dans les fastaction, separer les class en type et action
 //TODO remplacer event_set par listener_set
 //TODO un clic ultra rapide sur les checkbox courtcircuite l'ajax. Voir si on peut pas temporairement readonly la checkbox
-//TODO Voir si on peut simplifier les champ (feature_parent_feature en parent_id par exemple), ça aiderai vachement pour la fusion des functions. Gros refactoring.
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
 })(jQuery);
