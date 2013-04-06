@@ -492,8 +492,93 @@ function wikicompare_theme() {
 
 function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
+  if ($revision_op == 'publish revisions') {
+
+    $uid = $GLOBALS['user']->uid;
+
+
+    $test = wikicompare_test_access_node('test', $node->nid, $uid);
+/*
+    $query = db_select('cache_wikicompare_users', 'u');
+    $query->addField('u', 'nid', 'nid');
+    $query->condition('u.nid', $node->nid);
+    $query->condition('u.uid', $uid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $test = True;
+    }
+
+    $query = db_select('node', 'n');
+    $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
+    $query->leftjoin('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
+    $query->condition('n.nid', $node->nid);
+    $query->condition('f.wikicompare_user_ids_target_id', $uid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $test = True;
+    }*/
+
+    if (($test == False) && ($uid != 1)) {
+      return False;
+    }
+
+  }
+
+dpm($node_op, 'node_op');
 dpm($revision_op, 'revision_op');
 dpm($node, 'node');
+
+}
+
+function wikicompare_test_access_node($action, $nid, $uid=NULL) {
+
+    $test = False;
+    $users = array();
+
+    $query = db_select('cache_wikicompare_users', 'u');
+    $query->addField('u', 'uid', 'uid');
+    $query->condition('u.nid', $nid);
+    if ($action == 'test') {
+    $query->condition('u.uid', $uid);
+    }
+    $result = $query->execute();
+    foreach ($result as $record) {
+      if ($action == 'test') {
+        $test = True;
+      } else {
+        $users[$record->uid] = array(
+          'nid' => $nid,
+          'uid' => $record->uid,
+        );
+      }
+    }
+dpm($users, 'users1');
+    $query = db_select('node', 'n');
+    $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
+    $query->leftjoin('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
+    $query->condition('n.nid', $nid);
+    if ($action == 'test') {
+      $query->condition('f.wikicompare_user_ids_target_id', $uid);
+    }
+    $result = $query->execute();
+    foreach ($result as $record) {
+      if ($action == 'test') {
+        $test = True;
+      } else {
+        if ($record->uid != NULL) {
+          $users[$record->uid] = array(
+            'nid' => $nid,
+            'uid' => $record->uid,
+          );
+        }
+      }
+    }
+
+    if ($action == 'test') {
+      return $test;
+    } else {
+      return $users;
+    }
 
 }
 

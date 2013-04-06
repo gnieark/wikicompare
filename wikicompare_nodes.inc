@@ -550,12 +550,15 @@ function wikicompare_revisionapi($op, $node_revision) {
 
 function wikicompare_update_cache_users($nid, $parent_id) {
 
-/*
   db_delete('cache_wikicompare_users')
     ->condition('nid', $nid)
     ->execute();
-*/
+
   if ($parent_id != NULL) {
+
+    $users = wikicompare_test_access_node('get_users', $nid);
+dpm($users);
+/*
     $users = array();
     $query = db_select('cache_wikicompare_users', 'u');
     $query->addField('u', 'uid', 'uid');
@@ -567,7 +570,7 @@ function wikicompare_update_cache_users($nid, $parent_id) {
         'uid' => $record->uid,
       );
     }
-dpm($users, 'users2');
+
     $query = db_select('node', 'n');
     $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
     $query->leftjoin('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
@@ -580,19 +583,15 @@ dpm($users, 'users2');
           'uid' => $record->uid,
         );
       }
-    }
-dpm($users, 'users1');
+    } */
+
     if (!empty($users)) {
-/*      $res = db_insert('cache_wikicompare_users')
-        ->fields($users)
-        ->execute();
-*/
       $query = db_insert('cache_wikicompare_users')->fields(array('nid', 'uid'));
       foreach ($users as $user) {
         $query->values($user);
       }
-      $res = $query->execute();
-dpm($res, 'res');
+      $query->execute();
+
     }
   }
 
