@@ -77,8 +77,8 @@ function wikicompare_schema() {
       ),
     ),
     'indexes' => array(
-      'index_nid' => array('nid'),
-      'index_uid' => array('uid'),
+      'nid' => array('nid'),
+      'uid' => array('uid'),
     ),
     'foreign keys' => array(
       'node' => array(

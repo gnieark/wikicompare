@@ -250,6 +250,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
+
   $items['toogle_fastedit_callback'] = array(
     'page callback' => 'toggle_fastedit_response',
     'access callback' => 'user_access',
