@@ -365,12 +365,7 @@ function wikicompare_install() {
     'type' => 'list_text',
     'cardinality' => 1,
     'settings' => array(
-      'allowed_values' => array(
-        'New' => 'New',
-        'Incomplete' => 'Incomplete',
-        'Published' => 'Published',
-        'Disactivated' => 'Disactivated',
-      ),
+      'allowed_values' => unserialize(WIKICOMPARE_STATE_OPTIONS)
     ),
   );
   field_create_field($field);
@@ -689,6 +684,11 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'label' => 'State',
       'description' => 'TODO : State of the feature',
       'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 'new',
+        ),
+      ),
       'widget' => array(
         'type' => 'options_select',
       ),

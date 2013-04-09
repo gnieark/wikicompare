@@ -381,12 +381,7 @@ function get_fastedit_form_response($method = 'ajax'){
           $state_field = array(
             '#type' => 'select',
             '#title' => t('State'),
-            '#options' => array(
-              'New' => 'New',
-              'Incomplete' => 'Incomplete',
-              'Published' => 'Published',
-              'Disactivated' => 'Disactivated',
-            ),
+            '#options' => wikicompare_state_get_options($nid, 'new'),
             '#id' => 'form_' . $type . '_fast' . $fastaction . '_state_' . $nid,
             '#attributes' => array(
               'class' => array('form_' . $type . '_fast' . $fastaction . '_state'),
@@ -394,6 +389,7 @@ function get_fastedit_form_response($method = 'ajax'){
           );
           if ($fastaction == 'edit') {
             $state_field['#value'] = $node->wikicompare_state['und'][0]['value'];
+            $state_field['#options'] = wikicompare_state_get_options($nid, $state_field['#value']);
           }
           if ($readonly == True) {
             $state_field['#attributes']['disabled'] = True;

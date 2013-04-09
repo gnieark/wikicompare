@@ -5,6 +5,16 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_nodes.inc'
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_core_functions.inc';
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparative_table.inc';
 
+define('WIKICOMPARE_STATE_OPTIONS', serialize(array(
+        'new' => 'New',
+        'incomplete' => 'Incomplete',
+        'submitted' => 'Submitted for publication',
+        'published-incomplete' => 'Incomplete - Already published',
+        'published-submitted' => 'Submitted - Already published',
+        'published' => 'Published',
+        'rejected' => 'Rejected',
+        'disactivated' => 'Disactivated',
+      )));
 
 //The help page of the module
 function wikicompare_help($path, $arg) {
@@ -444,10 +454,69 @@ dpm($node);
 
   }
 
+  if (isset($form['wikicompare_state'])) {
+dpm($form);  
+    $current_state = 'new';  
+    if (isset($form['wikicompare_state']['und']['#default_value'][0])) {
+      $current_state = $form['wikicompare_state']['und']['#default_value'][0];
+    }
+    $form['wikicompare_state']['und']['#options'] = wikicompare_state_get_options($nid, $current_state);
+
+  }
+
   foreach (module_implements('wikicompare_build_form_after') as $module) {
     $function = $module . '_wikicompare_build_form_after';
     $function($form, $form_state, $node);
   }
+
+}
+
+function wikicompare_state_get_options($nid, $current_state) {
+
+  $user = $GLOBALS['user'];
+
+  $label_options = unserialize(WIKICOMPARE_STATE_OPTIONS);  
+
+  $has_right = False;
+  if (wikicompare_test_access_node('test', $nid, $user->uid)  || user_access('administer users', $user) || $user->uid == 1) {
+    $has_right = True;
+  }
+
+  $options = array();
+
+  if ($current_state == 'new') {
+    $options['new'] = $label_options['new'];
+  }
+
+  if (($current_state != 'incomplete') && (in_array($current_state, array('incomplete', 'submitted', 'disactivated')) || $has_right)) {
+    $options['incomplete'] = $label_options['incomplete'];
+  }
+
+  if (($current_state != 'submitted') && (in_array($current_state, array('new', 'incomplete', 'submitted', 'disactivated')) || $has_right)) {
+    $options['submitted'] = $label_options['submitted'];
+  }
+
+  if (($current_state != 'published-incomplete') && (in_array($current_state, array('published-incomplete', 'published-submitted', 'published')) || $has_right)) {
+    $options['published-incomplete'] = $label_options['published-incomplete'];
+  }
+
+
+  if (($current_state != 'published-submitted') && (in_array($current_state, array( 'published-incomplete', 'published-submitted', 'published')) || $has_right)) {
+    $options['published-submitted'] = $label_options['published-submitted'];
+  }
+
+  if (($current_state != 'published') && (in_array($current_state, array('published-incomplete', 'published-submitted', 'published')) || $has_right)) {
+    $options['published'] = $label_options['published'];
+  }
+
+  if ($has_right) {
+    $options['rejected'] = $label_options['rejected'];
+  }
+
+  $options['disactivated'] = $label_options['disactivated'];
+
+  return $options;
+
 
 }
 /*
@@ -535,6 +604,10 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
 
     $test = False;
     $users = array();
+
+    if ($nid == NULL) {
+      return False;
+    }
 
     $query = db_select('cache_wikicompare_users', 'u');
     $query->addField('u', 'uid', 'uid');
