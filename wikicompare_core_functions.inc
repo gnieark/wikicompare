@@ -738,7 +738,16 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   if ($type == 'feature') {
     $query->addField('n', 'type', 'type');
     $query->addField('n', 'weight', 'weight');
-    $query->condition('n.state', 'Published', '=');
+    $query->addField('n', 'state', 'state');
+    $state = array('published-incomplete', 'published-submitted', 'published');
+    if (isset($settings['states']['draft'])) {
+      $state = array_merge($state, array('new', 'incomplete', 'submitted'));
+    }
+    if (isset($settings['states']['closed'])) {
+      $state = array_merge($state, array('rejected', 'desactivated'));
+    }
+
+    $query->condition('n.state', $state, 'in');
   }
 
   if (isset($settings['fastedit_status'])) {

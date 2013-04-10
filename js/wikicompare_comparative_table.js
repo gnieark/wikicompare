@@ -138,6 +138,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
+
+    //Ajaxify the compute table link
+    $('#reset_table_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'reset_table');
+    });
+
+
     $('#compute_table_button:not(.event_set)').addClass('event_set').each(function () {
       $('#' + $(this).attr('id')).click(function() {
         $('#compute_table_link').click();
@@ -410,6 +422,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_needs = false;
         send_manual_selected_features = false;
         send_selected_needs = false;
+        send_states_to_display = false;
         send_forbidden_nid = false;
         send_container = false;
         make_cleaning = false;
@@ -440,6 +453,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_node_id = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
+          send_states_to_display = true;
           make_cleaning = true;
         }
         
@@ -472,9 +486,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_compareds_columns = true;
           send_manual_selected_features = true;
           send_selected_needs = true;
+          send_states_to_display = true;
           make_cleaning = true;
         }
 
+        if (action == 'reset_table') {
+          send_compareds_columns = true;
+          send_states_to_display = true;
+          options.data.reset = true;
+        }
      
         if (action == 'toogle_fastedit') {
           manage_displayed_flag = true;
@@ -548,6 +568,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_compareds_columns = true;
           send_implementations = true;
           send_selected_features = true;
+          send_states_to_display = true;
 
           var compared_ids = new Array();
           var i = 0;
@@ -745,6 +766,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         if (send_selected_needs == true) {
           options.data.selected_need_ids = selected_need_ids;
+        }
+
+        if (send_states_to_display == true) {
+          var states = {};
+          if ($('#checkbox-draft-items').attr('checked')) {
+            states['draft'] = 'draft';
+          }
+          if ($('#checkbox-closed-items').attr('checked')) {
+            states['closed'] = 'closed';
+          }
+          options.data.states = states;
+
         }
 
         if (send_forbidden_nid == true) {

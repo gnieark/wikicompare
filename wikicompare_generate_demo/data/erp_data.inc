@@ -111,7 +111,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Accounting';
-  $node->wikicompare_state['und'][0]['value'] = 'Published';
+  $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 1;
   node_save($node);
@@ -123,7 +123,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Invoicing';
-  $node->wikicompare_state['und'][0]['value'] = 'Published';
+  $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 1;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $feature['accounting'];
@@ -137,7 +137,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Due date management';
-  $node->wikicompare_state['und'][0]['value'] = 'Published';
+  $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-highest-percentage';
   $node->wikicompare_weight['und'][0]['value'] = 1;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $feature['invoicing'];
@@ -151,7 +151,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Writing the date in an invoice field';
-  $node->wikicompare_state['und'][0]['value'] = 'Published';
+  $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 1;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $feature['due-date'];
@@ -164,7 +164,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Create one account move for each due date, with different date';
-  $node->wikicompare_state['und'][0]['value'] = 'Published';
+  $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 4;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $feature['due-date'];
