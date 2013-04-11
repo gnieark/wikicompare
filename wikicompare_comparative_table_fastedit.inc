@@ -32,6 +32,12 @@ function toggle_fastedit_response($method = 'ajax'){
 
       }
 
+      $compared = array(
+        'data' => new stdClass(),
+      );
+      $compared['data']->nid = 0;
+      $commands[] = ajax_command_invoke('#add_compared_link', 'after', array(add_fastedit_items('compared' , $compared)));
+
 
       $features = array();
       if (!empty($_POST['feature_ids'])) {
@@ -48,6 +54,12 @@ function toggle_fastedit_response($method = 'ajax'){
         $commands[] = ajax_command_invoke('#feature_node_link_' . $nid, 'after', array($output));
 
       }
+
+      $feature = array(
+        'data' => new stdClass(),
+      );
+      $feature['data']->nid = 0;
+      $commands[] = ajax_command_invoke('#add_feature_link', 'after', array(add_fastedit_items('feature' , $compared)));
       
       $implementations = array();
       if (!empty($_POST['implementation_ids'])) {
@@ -128,18 +140,18 @@ function add_fastedit_items($type, $node_array){
     $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_add_link')), 'html' => True));
     $output .= $img_link_to_add;
 
-dpm($node_array, 'node_array');
+
     $test = False;
-    if (isset($node_array['no-edit'])) {
+    if (isset($node_array['no-edit']) || $nid == 0) {
       $test = True;
     }
-dpm($test, 'test1' . $nid);
+
     foreach (module_implements('wikicompare_fastedit_items_test') as $module) {
       $function = $module . '_wikicompare_fastedit_items_test';
       $function($test, $node_array);
     }
 
-dpm($test, 'test2' . $nid);
+
     if ($test == False) {
       //Create the image link to edit the node
       $img = theme('image', array(
@@ -178,7 +190,7 @@ function get_fastedit_form_response($method = 'ajax'){
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
-
+dpm($_POST, 'form fastedit');
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -559,15 +571,17 @@ function submit_fastedit_form_response($method = 'ajax'){
           $function($tnode, $_POST, 'title', 'title');
         }
 
-        switch ($type) {
-          case 'compared':
-            $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
-            $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-            break;
-          case 'feature':
-            $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
-            $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-            break;
+        if ($_POST['parent_id'] != 0) {
+//          switch ($type) {
+//            case 'compared':
+              $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
+              $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+//              break;
+//            case 'feature':
+//              $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
+//              $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+//              break;
+          
         }
 
       }

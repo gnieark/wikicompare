@@ -1239,6 +1239,18 @@ function wikicompare_table_render_compared($settings=array()) {
   $output ="<div id='comparative_table_main_compared'>";
   //Render the item list
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
+  $output .= '<p><a id="add_compared_link" href="node/add/compared">Add</a>';
+
+  
+  if ($itemlist_settings['fastedit_status']) {
+    $compared = array(
+      'data' => new stdClass(),
+    );
+    $compared['data']->nid = 0;
+    $output .= add_fastedit_items('compared' , $compared);
+  }
+  $output .= '</p>';
+  $output .= '<div id="compared_children_0"></div>';
   $output .="</div>";
 
   return $output;
@@ -1311,6 +1323,16 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
   $output .= '<tbody>';
 
   $output .= render_rows($feature_row_data, $fastedit_status);
+  $output .= '<tr id="feature_row_0"><td><a id="add_feature_link" href="node/add/feature">Add</a>';
+
+  if ($fastedit_status) {
+    $feature = array(
+      'data' => new stdClass(),
+    );
+    $feature['data']->nid = 0;
+    $output .= add_fastedit_items('feature' , $feature);
+  }
+  $output .= '</td><tr>';
   $output .= '</tbody>';
   $output .= '</table>';
 
