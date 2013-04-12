@@ -3,14 +3,21 @@ description = Make Drupal a powerfull social comparison tool.
 
 configure = admin/config/wikicompare
 
+dependencies[] = ckeditor
+dependencies[] = comment
 dependencies[] = diff
 dependencies[] = entityreference
 dependencies[] = help
+dependencies[] = imce
+dependencies[] = menu
 dependencies[] = number
 dependencies[] = list
 dependencies[] = locale
+dependencies[] = openid
 dependencies[] = revisioning
 dependencies[] = simple_dialog
+
+
 
 
 dependencies[] = devel

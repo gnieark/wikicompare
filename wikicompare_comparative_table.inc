@@ -18,6 +18,7 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 function wikicompare_comparative_table($form_state) {
 
 
+
   //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');

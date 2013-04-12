@@ -430,6 +430,131 @@ function wikicompare_install() {
 
   }
 
+  $wikicompare_text_format = array(
+    'format' => 'wikicompare_text_format',
+    'name' => 'Wikicompare text format',
+    'weight' => 10,
+    'filters' => array(
+
+      'filter_html' => array(
+        'weight' => 0,
+        'status' => 1,
+        'settings' => array(
+          'allowed_html' => '<a> <em> <strong> <u> <s> <img> <cite> <blockquote> <caption> <code> <ul> <ol> <li> <dl> <dt> <dd> <sub> <sup> <table> <tbody> <tr> <td> <hr>',
+          'filter_html_help' => 1,
+          'filter_html_nofollow' => 0,
+        ),
+      ),
+      // URL filter.
+      'filter_url' => array(
+        'weight' => 1,
+        'status' => 1,
+        'settings' => array(
+          'filter_url_length' => 72,
+        )
+      ),
+
+    ),
+  );
+  $wikicompare_text_format = (object) $wikicompare_text_format;
+  filter_format_save($wikicompare_text_format);
+
+  // Set the fallback format to plain text.
+  variable_set('filter_fallback_format', $wikicompare_text_format->format);
+
+
+  //INSTALL TIP : Install last full version of ckeditor in sites/all/libraries and in the modules/ckeditor/ckeditor.
+  db_insert('ckeditor_input_format')->fields(array("name" => "Wikicompare", "format" => $wikicompare_text_format->format))->execute();
+
+  //insert settings for default role
+  $arr = array();
+  $arr['filebrowser'] = 'none';
+  $arr['quickupload'] = 'f';
+
+  //security
+  $arr['ss'] = "2";
+  $arr['filters']['filter_html'] = 1;
+
+  //appearance
+  $arr['default'] = "t";
+  $arr['show_toggle'] = "f";
+  $arr['popup'] = variable_get('ckeditor_popup', 0) ? "t" : "f";
+  $arr['toolbar'] = "
+[
+    ['Source'],
+    ['PasteText','PasteFromWord','SpellChecker', 'Scayt'],
+    ['Undo','Redo','Find','Replace'],
+    ['Image','Media','Flash','Table','HorizontalRule','Smiley','SpecialChar'],
+    ['Maximize'],
+    '/',
+    ['Format', 'Styles', 'Font', 'FontSize', 'TextColor', 'BGColor'],
+    '/',
+    ['Bold','Italic','Underline','Strike','-','Subscript','Superscript'],
+    ['NumberedList','BulletedList','-','Outdent','Indent','Blockquote'],
+    ['JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'],
+    ['Link','Unlink','Anchor', 'Linkit']
+]
+    ";
+  $arr['expand'] = variable_get('ckeditor_toolbar_start_expanded', 1) ? "t" : "f";
+  $arr['width'] = variable_get("ckeditor_width", "100%");
+  $arr['lang'] = "en";
+  $arr['auto_lang'] = "t";
+  $arr['language_direction'] = "default";
+
+  //output
+  $arr['enter_mode'] = "p";
+  $arr['shift_enter_mode'] = "br";
+  $arr['font_format'] = 'p;div;pre;address;h1;h2;h3;h4;h5;h6';
+  $arr['format_source'] = "t";
+  $arr['format_output'] = "t";
+  $arr['custom_formatting'] = "f";
+  $arr['formatting']['custom_formatting_options'] = array('indent' => 'indent', 'breakBeforeOpen' => 'breakBeforeOpen', 'breakAfterOpen' => 'breakAfterOpen', 'breakAfterClose' => 'breakAfterClose');
+
+  //css
+  $arr['css_mode'] = "none";
+  $arr['css_path'] = variable_get("ckeditor_stylesheet", "");
+
+  //upload
+  //get permissions here like in _update_role_permissions
+  $arr['filebrowser'] = "imce";
+  $arr['user_choose'] = "f";
+  $arr['ckeditor_load_method'] = "ckeditor.js";
+  $arr['ckeditor_load_time_out'] = 0;
+  $arr['scayt_autoStartup'] = "f";
+
+  //advanced options
+  $arr['html_entities'] = "f";
+
+  db_insert('ckeditor_settings')->fields(array("name" => "Wikicompare", "settings" => serialize($arr)))->execute();
+
+
+  require_once drupal_get_path('module', 'imce') . '/inc/imce.core.profiles.inc';
+
+  $imce_profiles = variable_get('imce_profiles', array());
+  $imce_profiles['wikicompare_user'] = imce_construct_profile('Wikicompare User', 1, 1, 2, 0, 'gif png jpg jpeg', '1200x1200', 1, array(array('users/%uid', 1, 1, 1, 1, 1, 1), array('users', 1, 1, 0, 0, 0, 0)), array(array('Small', '90x90', 'small_', ''), array('Medium', '120x120', 'medium_', ''), array('Large', '180x180', 'large_', '')));
+  $imce_profiles['wikicompare_admin'] = imce_construct_profile('Wikicompare Admin', 1, 0, 0, 0, '*', '1200x1200', 10, array(array('users', 1, 1, 1, 1, 1, 1)), array(array('Small', '90x90', 'small_', ''), array('Medium', '120x120', 'medium_', ''), array('Large', '180x180', 'large_', '')));
+  variable_set('imce_profiles', $imce_profiles);
+
+  variable_set('imce_roles_profiles', array(
+    user_role_load_by_name('wikicompare_admin')->rid => array(
+      'weight' => 0,
+      'public_pid' => 'wikicompare_admin',
+    ),
+    user_role_load_by_name('moderator')->rid => array(
+      'weight' => 0,
+      'public_pid' => 'wikicompare_admin',
+    ),
+    2 => array(
+      'weight' => 11,
+      'public_pid' => 'wikicompare_user',
+    ),
+    1 => array(
+      'weight' => 12,
+      'public_pid' => 'wikicompare_user',
+    )));
+  variable_set('imce_settings_replace', 2);
+
+
 
 
   foreach (module_implements('wikicompare_install_node_install') as $module) {
@@ -711,8 +836,7 @@ function wikicompare_uninstall() {
   //Delete module settings variable
   variable_del('wikicompare_update_compared');
 
-  user_role_delete('wikicompare_admin');
-  user_role_delete('moderator');
+
 
 
   //Delete all nodes of feature type.
@@ -786,8 +910,32 @@ function wikicompare_uninstall() {
 
   node_type_delete('compared');
 
+  filter_format_disable('wikicompare_text_format');
+  
+  db_delete('filter')
+    ->condition('format', 'wikicompare_text_format')
+    ->execute();
+  db_delete('filter_format')
+    ->condition('format', 'wikicompare_text_format')
+    ->execute();
+
+  db_delete('ckeditor_input_format')
+    ->condition('name', 'Wikicompare')
+    ->execute();
+  db_delete('ckeditor_settings')
+    ->condition('name', 'Wikicompare')
+    ->execute();
 
 
+  $imce_profiles = variable_get('imce_profiles', array());
+  unset($imce_profiles['wikicompare_user']);
+  unset($imce_profiles['wikicompare_admin']);
+  variable_set('imce_profiles', $imce_profiles);
+   
+  variable_del('imce_roles_profiles');
+
+  user_role_delete('wikicompare_admin');
+  user_role_delete('moderator');
 
 /* Don't know why, but this line trigger an error
   node_type_delete('implementation');
@@ -797,6 +945,8 @@ function wikicompare_uninstall() {
   // api.drupal.org/api/function/field_purge_batch/7
 
   field_purge_batch(1000);
+
+  drupal_flush_all_caches();
 
 }
 

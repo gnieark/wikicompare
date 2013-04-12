@@ -1,0 +1,1 @@
+Rajouter une checkbox dans le tableau, si coché alors les features dont tous les compared affiché ont la même valeur sont masqués

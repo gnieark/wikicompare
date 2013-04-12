@@ -172,13 +172,21 @@ function wikicompare_menu() {
    );
 
   //Enable comparative table URL
-  $items['compare'] = array(
+  $items['main_menu/compare'] = array(
     'title' => 'Comparative Table',
     'description' => 'Comparative Table',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('wikicompare_comparative_table'),
     'access callback' => TRUE,
+//    'menu_name' => 'main-menu',
     'file' => 'wikicompare_comparative_table.inc',
+  );
+
+  $items['wikicompare-admin'] = array(
+    'title' => 'Administration',
+    'description' => 'Administration',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
   );
 
   $items['get_item_list_children_callback'] = array(
@@ -292,6 +300,15 @@ function wikicompare_menu() {
   );
   
   return $items;
+}
+
+
+function wikicompare_block_info_alter(&$blocks, $theme, $code_blocks) {
+
+
+  $blocks['system']['navigation']['region'] = -1;
+  $blocks['system']['management']['region'] = -1;
+
 }
 
 
