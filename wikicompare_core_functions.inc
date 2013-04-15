@@ -764,6 +764,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
 
   $result = $query->execute();
 
+
   foreach ($result as $record) {
 
     if ($type != 'implementation' || $nids != NULL) {

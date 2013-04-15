@@ -17,8 +17,6 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 
 function wikicompare_comparative_table($form_state) {
 
-
-
   //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
@@ -1276,9 +1274,12 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
     $db_settings['states'] = $settings['states'];
   }
 
+
   if (empty($features)) {
     //Find all the features on the first level of the tree
     $features = request_db('feature', $db_settings);
+
+dpm($features, 'features');
   }
 
   $feature_ids = array();

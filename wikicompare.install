@@ -59,6 +59,7 @@ function wikicompare_schema() {
 
   }
 
+/*
   $schema['cache_wikicompare_users'] = array(
 
     'description' => 'Cache table for the access to node to users',
@@ -92,7 +93,7 @@ function wikicompare_schema() {
     )
 
   );
-  
+*/  
   return $schema;
 
 }
@@ -359,6 +360,18 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
+  $field = array(
+    'field_name' => 'wikicompare_user_from_parent_ids',
+    'type' => 'entityreference',
+    'cardinality' => -1,
+    'settings' => array(
+      'target_type' => 'user',
+//      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
+    ),
+  );
+  field_create_field($field);
+
+
   //Create state field
   $field = array(
     'field_name' => 'wikicompare_state',
@@ -580,6 +593,14 @@ function wikicompare_node_install($type, $types) {
   variable_set('node_submitted_' . $type, '0');
   variable_set('language_content_type_' . $type, 0);
 
+  variable_set('comment_anonymous_' . $type, 0);
+  variable_set('comment_' . $type, 2);
+  variable_set('comment_default_mode_' . $type, 0);
+  variable_set('comment_default_per_page_' . $type, 10);
+  variable_set('comment_form_location_' . $type, 1);
+  variable_set('comment_preview_' . $type, 1);
+  variable_set('comment_subject_field_' . $type, 0);
+
 
   if ($type != 'implementation') {
     $instance = array(
@@ -611,6 +632,22 @@ function wikicompare_node_install($type, $types) {
       ),
     );
     field_create_instance($instance);
+
+    $instance = array(
+      'field_name' => 'wikicompare_user_from_parent_ids',
+      'entity_type' => 'node',
+      'bundle' => $type,
+      'label' => 'Power users from parents',
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+      'settings' => array(
+        'target_type' => 'user',
+//        'handler_settings' => array('target_bundles' => array($type)),
+      ),
+    );
+    field_create_instance($instance);
+
 
   } else {
 
@@ -887,12 +924,21 @@ function wikicompare_uninstall() {
     variable_del('node_submitted_' . $type);
     variable_del('language_content_type_' . $type);
 
+    variable_del('comment_anonymous_' . $type);
+    variable_del('comment_' . $type);
+    variable_del('comment_default_mode_' . $type);
+    variable_del('comment_default_per_page_' . $type);
+    variable_del('comment_form_location_' . $type);
+    variable_del('comment_preview_' . $type);
+    variable_del('comment_subject_field_' . $type);
+
   }
 
   //Delete feature content type.
 
   field_delete_field('wikicompare_parent_id');
   field_delete_field('wikicompare_user_ids');
+  field_delete_field('wikicompare_user_from_parent_ids');
   field_delete_field('wikicompare_type');
   field_delete_field('wikicompare_guidelines');
   field_delete_field('wikicompare_weight');

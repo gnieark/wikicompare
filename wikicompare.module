@@ -4,6 +4,7 @@
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_nodes.inc';
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_core_functions.inc';
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparative_table.inc';
+require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.views_default.inc';
 
 define('WIKICOMPARE_STATE_OPTIONS', serialize(array(
         'new' => 'New',
@@ -172,15 +173,35 @@ function wikicompare_menu() {
    );
 
   //Enable comparative table URL
-  $items['main_menu/compare'] = array(
+  $items['compare'] = array(
     'title' => 'Comparative Table',
     'description' => 'Comparative Table',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('wikicompare_comparative_table'),
     'access callback' => TRUE,
-//    'menu_name' => 'main-menu',
+    'menu_name' => 'main-menu',
+    'weight' => 0,
     'file' => 'wikicompare_comparative_table.inc',
   );
+  $items['main-menu/wikiadmin'] = array(
+    'title' => 'Administration',
+    'description' => 'Wikicompare Administration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wikicompare_admin'),
+    'access arguments' => TRUE,
+//    'menu_name' => 'main-menu',
+    'weight' => 10,
+  );
+/*
+  $items['main-menu/wikiadmin/wikiadmin'] = array(
+    'title' => 'Wikicompare Administration',
+    'description' => 'Wikicompare Administration',
+    'access arguments' => TRUE,
+//    'menu_name' => 'main-menu',
+    'weight' => 10,
+    'type' => MENU_NORMAL_ITEM,
+  );*/
+
 
   $items['wikicompare-admin'] = array(
     'title' => 'Administration',
@@ -505,24 +526,24 @@ function wikicompare_state_get_options($nid, $current_state) {
     $options['new'] = $label_options['new'];
   }
 
-  if (($current_state != 'incomplete') && (in_array($current_state, array('incomplete', 'submitted', 'disactivated')) || $has_right)) {
+  if ((in_array($current_state, array('incomplete', 'submitted', 'disactivated')) || $has_right)) {
     $options['incomplete'] = $label_options['incomplete'];
   }
 
-  if (($current_state != 'submitted') && (in_array($current_state, array('new', 'incomplete', 'submitted', 'disactivated')) || $has_right)) {
+  if ((in_array($current_state, array('new', 'incomplete', 'submitted', 'disactivated')) || $has_right)) {
     $options['submitted'] = $label_options['submitted'];
   }
 
-  if (($current_state != 'published-incomplete') && (in_array($current_state, array('published-incomplete', 'published-submitted', 'published')) || $has_right)) {
+  if ((in_array($current_state, array('published-incomplete', 'published-submitted', 'published')) || $has_right)) {
     $options['published-incomplete'] = $label_options['published-incomplete'];
   }
 
 
-  if (($current_state != 'published-submitted') && (in_array($current_state, array( 'published-incomplete', 'published-submitted', 'published')) || $has_right)) {
+  if ((in_array($current_state, array( 'published-incomplete', 'published-submitted', 'published')) || $has_right)) {
     $options['published-submitted'] = $label_options['published-submitted'];
   }
 
-  if (($current_state != 'published') && (in_array($current_state, array('published-incomplete', 'published-submitted', 'published')) || $has_right)) {
+  if ((in_array($current_state, array('published-incomplete', 'published-submitted', 'published')) || $has_right)) {
     $options['published'] = $label_options['published'];
   }
 
@@ -626,27 +647,36 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
       return False;
     }
 
-    $query = db_select('cache_wikicompare_users', 'u');
-    $query->addField('u', 'uid', 'uid');
-    $query->condition('u.nid', $nid);
+
+    $query = db_select('node', 'n');
+    $query->addField('f', 'wikicompare_user_from_parent_ids_target_id', 'uid');
+    $query->join('field_revision_wikicompare_user_from_parent_ids', 'f', 'n.vid = f.revision_id');
+    $query->condition('n.nid', $nid);
     if ($action == 'test') {
-    $query->condition('u.uid', $uid);
+      $query->condition('f.wikicompare_user_from_parent_ids_target_id', $uid);
     }
     $result = $query->execute();
     foreach ($result as $record) {
       if ($action == 'test') {
         $test = True;
       } else {
-        $users[$record->uid] = array(
-          'nid' => $nid,
-          'uid' => $record->uid,
-        );
+          $users[$record->uid] = array(
+            'entity_type' => 'node',
+            'bundle' => '',
+            'deleted' => 0,
+            'entity_id' => 0,
+            'revision_id' => 0,
+            'language' => 'und',
+            'delta' => 0,
+            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
+          );
       }
     }
-dpm($users, 'users1');
+
+
     $query = db_select('node', 'n');
     $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
-    $query->leftjoin('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
+    $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
     $query->condition('n.nid', $nid);
     if ($action == 'test') {
       $query->condition('f.wikicompare_user_ids_target_id', $uid);
@@ -656,12 +686,16 @@ dpm($users, 'users1');
       if ($action == 'test') {
         $test = True;
       } else {
-        if ($record->uid != NULL) {
           $users[$record->uid] = array(
-            'nid' => $nid,
-            'uid' => $record->uid,
+            'entity_type' => 'node',
+            'bundle' => '',
+            'deleted' => 0,
+            'entity_id' => 0,
+            'revision_id' => 0,
+            'language' => 'und',
+            'delta' => 0,
+            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
           );
-        }
       }
     }
 

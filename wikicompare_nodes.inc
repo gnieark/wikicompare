@@ -65,7 +65,7 @@ dpm($node, 'insert test, pas bon si traduction');
       ->condition('nid', $parent_id)
       ->execute();
 
-    wikicompare_update_cache_users($node->nid, $parent_id);
+    wikicompare_update_cache_users($node->nid, $parent_id, $type, $node->vid);
 
   }
 
@@ -229,7 +229,7 @@ function wikicompare_delete_node($type, $node) {
     return;
   }
 
-  wikicompare_update_cache_users($node->nid, NULL);
+  wikicompare_update_cache_users($node->nid);
 
   if (in_array($type, array('compared', 'feature'))) {
     // Find all implementation node. We can use field_data* field because this field should not be modified so nor have revision. We don't use cache table because field_data* is more reliable.
@@ -484,7 +484,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         }
         $fields['parent_id'] = $parent_id;
 
-        wikicompare_update_cache_users($node_revision->nid, $parent_id);
+        wikicompare_update_cache_users($node_revision->nid, $parent_id, $node_revision->type, $node_revision->vid);
 
       } else {
         $fields['support']= $node_revision->wikicompare_support['und'][0]['value'];
@@ -548,45 +548,38 @@ function wikicompare_revisionapi($op, $node_revision) {
   }
 }
 
-function wikicompare_update_cache_users($nid, $parent_id) {
+function wikicompare_update_cache_users($nid, $parent_id=NULL, $type=NULL, $vid=NULL) {
 
-  db_delete('cache_wikicompare_users')
-    ->condition('nid', $nid)
+  db_delete('field_data_wikicompare_user_from_parent_ids')
+    ->condition('entity_id', $nid)
+    ->execute();
+
+  db_delete('field_revision_wikicompare_user_from_parent_ids')
+    ->condition('entity_id', $nid)
     ->execute();
 
   if ($parent_id != NULL) {
 
-    $users = wikicompare_test_access_node('get_users', $nid);
-dpm($users);
-/*
-    $users = array();
-    $query = db_select('cache_wikicompare_users', 'u');
-    $query->addField('u', 'uid', 'uid');
-    $query->condition('u.nid', $parent_id);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $users[$record->uid] = array(
-        'nid' => $nid,
-        'uid' => $record->uid,
-      );
-    }
+    $users = wikicompare_test_access_node('get_users', $parent_id);
 
-    $query = db_select('node', 'n');
-    $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
-    $query->leftjoin('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
-    $query->condition('n.nid', $parent_id);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      if ($record->uid != NULL) {
-        $users[$record->uid] = array(
-          'nid' => $nid,
-          'uid' => $record->uid,
-        );
-      }
-    } */
+
 
     if (!empty($users)) {
-      $query = db_insert('cache_wikicompare_users')->fields(array('nid', 'uid'));
+
+      foreach ($users as $key => $user) {
+        $users[$key]['bundle'] = $type;
+        $users[$key]['entity_id'] = $nid;
+        $users[$key]['revision_id'] = $vid;
+      }
+
+
+      $query = db_insert('field_data_wikicompare_user_from_parent_ids')->fields(array('entity_type', 'bundle', 'deleted', 'entity_id', 'revision_id', 'language', 'delta', 'wikicompare_user_from_parent_ids_target_id'));
+      foreach ($users as $user) {
+        $query->values($user);
+      }
+      $query->execute();
+
+      $query = db_insert('field_revision_wikicompare_user_from_parent_ids')->fields(array('entity_type', 'bundle', 'deleted', 'entity_id', 'revision_id', 'language', 'delta', 'wikicompare_user_from_parent_ids_target_id'));
       foreach ($users as $user) {
         $query->values($user);
       }
@@ -598,11 +591,12 @@ dpm($users);
   
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'vid', 'vid');
   $query->leftjoin('field_revision_wikicompare_parent_id', 'f', 'n.vid = f.revision_id');
   $query->condition('f.wikicompare_parent_id_target_id', $nid);
   $result = $query->execute();
   foreach ($result as $record) {
-    wikicompare_update_cache_users($record->nid, $nid);
+    wikicompare_update_cache_users($record->nid, $nid, $type, $record->vid);
   } 
 
 

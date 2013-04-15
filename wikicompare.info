@@ -16,10 +16,11 @@ dependencies[] = locale
 dependencies[] = openid
 dependencies[] = revisioning
 dependencies[] = simple_dialog
+dependenvies[] = views
 
 
 
-
+dependencies[] = views_ui
 dependencies[] = devel
 dependencies[] = field_ui
 dependencies[] = admin_menu
