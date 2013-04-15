@@ -119,6 +119,7 @@ dpm($node, 'insert test, pas bon si traduction');
       $node_implementation->type = 'implementation';
       // Add default parameters
       node_object_prepare($node_implementation);
+      $node_implementation->title = 'Implementation';
 
       $node_implementation->language = language_default('language');
       //Filling entity reference field
