@@ -239,7 +239,17 @@ function wikicompare_install() {
 
 
   //Assign body field to the new node types
-  $types = node_type_get_types();
+//  $types = node_type_get_types();
+
+  $field = field_info_field('body');
+  if (empty($field)) {
+    $field = array(
+      'field_name' => 'body',
+      'type' => 'text_with_summary',
+      'entity_types' => array('node'),
+    );
+    field_create_field($field);
+  }
 
   $field = array(
     'field_name' => 'wikicompare_parent_id',
@@ -386,7 +396,7 @@ function wikicompare_install() {
 
   foreach (array('compared', 'feature', 'implementation') as $type) {
 
-    wikicompare_node_install($type, $types);
+    wikicompare_node_install($type);
 
   }
 
@@ -593,11 +603,12 @@ function wikicompare_install() {
 
 
 
-function wikicompare_node_install($type, $types) {
+function wikicompare_node_install($type) {
 
   $t = get_t();
 
-  node_add_body_field( $types[$type] , $t('Description'));
+//  node_add_body_field( $types[$type] , $t('Description'));
+
 
 
   //Set variables
@@ -613,6 +624,27 @@ function wikicompare_node_install($type, $types) {
   variable_set('comment_preview_' . $type, 1);
   variable_set('comment_subject_field_' . $type, 0);
 
+  //Create description field. Code from node_add_body_field() function, we can't use it because we want to disable summary.
+  $instance = array(
+    'field_name' => 'body',
+    'entity_type' => 'node',
+    'bundle' => $type,
+    'label' => 'Description',
+    'widget' => array('type' => 'text_textarea_with_summary'),
+    'settings' => array('display_summary' => FALSE),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'text_default',
+      ),
+      'teaser' => array(
+        'label' => 'hidden',
+        'type' => 'text_summary_or_trimmed',
+      ),
+    ),
+  );
+  field_create_instance($instance);
+  
 
   if ($type != 'implementation') {
     $instance = array(
@@ -968,6 +1000,10 @@ function wikicompare_uninstall() {
 
   node_type_delete('compared');
 
+/* Don't know why, but this line trigger an error*/
+  node_type_delete('implementation');
+
+
   filter_format_disable('wikicompare_text_format');
   
   db_delete('filter')
@@ -995,9 +1031,7 @@ function wikicompare_uninstall() {
   user_role_delete('wikicompare_admin');
   user_role_delete('moderator');
 
-/* Don't know why, but this line trigger an error
-  node_type_delete('implementation');
-*/
+
 
   // Purge all field information
   // api.drupal.org/api/function/field_purge_batch/7

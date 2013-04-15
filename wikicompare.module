@@ -310,7 +310,7 @@ function wikicompare_menu() {
 }
 
 function wikicompare_permission() {
-  $perms = array(
+  return array(
     'administer wikicompare' => array(
       'title' => t('Administer Wikicompare'),
       'restrict access' => TRUE,
@@ -423,8 +423,9 @@ function wikicompare_build_form(&$form, $form_state) {
 
   }
 
-  $form['#attached']['js'][] = '/misc/ajax.js';
-  $form['#attached']['js'][] = '/misc/progress.js';
+//TOREPAIR
+  //$form['#attached']['js'][] = '/misc/ajax.js';
+  //$form['#attached']['js'][] = '/misc/progress.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
 
   $settings = array(
