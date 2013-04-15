@@ -407,6 +407,10 @@ function wikicompare_install() {
   foreach (array('wikicompare_admin', 'moderator', 'authenticated user') as $role_name) {
 
     $permissions = array(
+      'access comments' => TRUE,
+      'post comments' => TRUE,
+      'skip comment approval' => TRUE,
+      'edit own comments' => TRUE,
       'access content' => TRUE,
       'view revisions' => TRUE,
       'revert revisions' => TRUE,
@@ -429,6 +433,7 @@ function wikicompare_install() {
 
     if ($role_name != 'authenticated user') {
       $permissions = array_merge($permissions, array(
+        'administer comments' => TRUE,
         'delete revisions' => TRUE,
         'delete any feature content' => TRUE,
         'delete any compared content' => TRUE,
@@ -436,6 +441,13 @@ function wikicompare_install() {
         'administer users' => TRUE,
       ));
     }
+
+    if ($role_name == 'wikicompare_admin') {
+      $permissions = array_merge($permissions, array(
+        'administer wikicompare' => TRUE,
+      ));
+    }
+
 
     $role = user_role_load_by_name($role_name);
     $rid = $role->rid;
@@ -446,7 +458,7 @@ function wikicompare_install() {
   $wikicompare_text_format = array(
     'format' => 'wikicompare_text_format',
     'name' => 'Wikicompare text format',
-    'weight' => 10,
+    'weight' => 8,
     'filters' => array(
 
       'filter_html' => array(

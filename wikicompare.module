@@ -122,7 +122,7 @@ function submit_settings($form, $form_state) {
       $old_ids[$record->nid] = $record->nid;
       $res[$record->nid] = $record;
     }
-dpm($res);
+
     //Allow others modules to update others implementations
     foreach (module_implements('wikicompare_settings_change_language') as $module) {
       $function = $module . '_wikicompare_settings_change_language';
@@ -168,7 +168,7 @@ function wikicompare_menu() {
     'description' => 'Wikicompare module settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('wikicompare_admin'),
-    'access arguments' => array('administer wikicompare settings'),
+    'access arguments' => array('administer wikicompare'),
     'type' => MENU_NORMAL_ITEM,
    );
 
@@ -183,32 +183,18 @@ function wikicompare_menu() {
     'weight' => 0,
     'file' => 'wikicompare_comparative_table.inc',
   );
-  $items['main-menu/wikiadmin'] = array(
+
+
+  $items['admin/config/wikicompare'] = array(
     'title' => 'Administration',
     'description' => 'Wikicompare Administration',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('wikicompare_admin'),
-    'access arguments' => TRUE,
-//    'menu_name' => 'main-menu',
-    'weight' => 10,
-  );
-/*
-  $items['main-menu/wikiadmin/wikiadmin'] = array(
-    'title' => 'Wikicompare Administration',
-    'description' => 'Wikicompare Administration',
-    'access arguments' => TRUE,
-//    'menu_name' => 'main-menu',
-    'weight' => 10,
-    'type' => MENU_NORMAL_ITEM,
-  );*/
-
-
-  $items['wikicompare-admin'] = array(
-    'title' => 'Administration',
-    'description' => 'Administration',
-    'access callback' => TRUE,
+    'access arguments' => array('administer wikicompare'),
     'menu_name' => 'main-menu',
-  );
+    'weight' => 10,
+  ); 
+
 
   $items['get_item_list_children_callback'] = array(
     'page callback' => 'get_item_list_children_response',
@@ -323,6 +309,15 @@ function wikicompare_menu() {
   return $items;
 }
 
+function wikicompare_permission() {
+  $perms = array(
+    'administer wikicompare' => array(
+      'title' => t('Administer Wikicompare'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
 
 function wikicompare_block_info_alter(&$blocks, $theme, $code_blocks) {
 
@@ -418,8 +413,6 @@ function wikicompare_form_implementation_node_form_alter(&$form, &$form_state, $
 
 function wikicompare_build_form(&$form, $form_state) {
 
-dpm($form);
-dpm($form_state);
   $node = new stdClass;
   $nid = 0;
   if (isset($form_state['node'])) {
@@ -428,7 +421,6 @@ dpm($form_state);
       $nid = $node->nid;
     }
 
-dpm($node);
   }
 
   $form['#attached']['js'][] = '/misc/ajax.js';
@@ -448,7 +440,7 @@ dpm($node);
     'type' => 'setting',
     'data' => $settings,
   );
-dpm($node);
+
 
 
   if ($node->type != 'implementation') {
@@ -493,7 +485,7 @@ dpm($node);
   }
 
   if (isset($form['wikicompare_state'])) {
-dpm($form);  
+
     $current_state = 'new';  
     if (isset($form['wikicompare_state']['und']['#default_value'][0])) {
       $current_state = $form['wikicompare_state']['und']['#default_value'][0];
@@ -557,18 +549,7 @@ function wikicompare_state_get_options($nid, $current_state) {
 
 
 }
-/*
-function wikicompare_node_presave($node) {
 
-dpm($node, 'node2');
-
-}
-
-function wikicompare_node_insert($node) {
-
-dpm($node, 'node_insert');
-
-}*/
 
 /**
  * Implements hook_theme().
@@ -632,9 +613,7 @@ function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
   }
 
-dpm($node_op, 'node_op');
-dpm($revision_op, 'revision_op');
-dpm($node, 'node');
+
 
 }
 
