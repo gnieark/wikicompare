@@ -345,10 +345,11 @@ function wikicompare_install() {
   //Create validation guidelines field
   $field = array(
     'field_name' => 'wikicompare_guidelines',
-    'type' => 'text_long',
+    'type' => 'text_with_summary',
     'cardinality' => 1
   );
   field_create_field($field);
+
 
   //Create weight field
   $field = array(
@@ -854,9 +855,20 @@ Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants) * (pou
       'label' => 'Validation Guidelines',
       'description' => 'TODO : Le texte decrivant  precisement dans quelles conditions on peut on non valider le support de la feature dans le logiciel.
 Ce texte doit s\'afficher dans le formulaire de la cellule quand on renseigne le support de la feature',
-      'required' => 1,
+      'widget' => array('type' => 'text_textarea_with_summary'),
+      'settings' => array('display_summary' => FALSE),
       'widget' => array(
         'type' => 'text_textarea',
+      ),
+      'display' => array(
+        'default' => array(
+          'label' => 'hidden',
+          'type' => 'text_default',
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'type' => 'text_summary_or_trimmed',
+        ),
       ),
     );
     field_create_instance($instance);

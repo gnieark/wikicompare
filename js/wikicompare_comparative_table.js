@@ -969,4 +969,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO un clic ultra rapide sur les checkbox courtcircuite l'ajax. Voir si on peut pas temporairement readonly la checkbox
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
 //TODO statut sur compared
+
 })(jQuery);

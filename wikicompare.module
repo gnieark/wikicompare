@@ -423,7 +423,6 @@ function wikicompare_build_form(&$form, $form_state) {
 
   }
 
-//TOREPAIR
   //$form['#attached']['js'][] = '/misc/ajax.js';
   //$form['#attached']['js'][] = '/misc/progress.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
@@ -467,21 +466,36 @@ function wikicompare_build_form(&$form, $form_state) {
       '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
     );
+    hide($form['wikicompare_parent_id']);
+
+dpm($form);
+    $form['wikicompare_user_ids']['#weight'] = 10;
+    unset($form['wikicompare_user_from_parent_ids']);
+
   } else {
 
     $query = db_select('cache_implementation', 'n');
     $query->addField('f', 'title', 'feature');
     $query->addField('c', 'title', 'compared');
+    $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines'); 
     $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
     $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('node', 'ng', 'n.feature_id = ng.nid');
+    $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'ng.vid = ngf.revision_id');
     $query->condition('n.nid', $nid);
     $result = $query->execute();
     foreach ($result as $record) {
       $res = $record;
     }
 
+    $form['wikicompare_guidelines'] = array(
+      '#markup' => $record->guidelines,
+      '#weight' => -2,
+    );
+
     $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
     $form['wikicompare_compared_id'] = array('#markup' => $res->compared);
+
 
   }
 
@@ -579,7 +593,6 @@ function wikicompare_theme() {
  * $node_op = revisioning_user_node_access($revision_op, $node);
  * in revisioning.module. Make some lobbying to integrate this hook in revisioning module.
  */ 
-
 function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
   if ($revision_op == 'publish revisions') {
@@ -588,25 +601,6 @@ function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
 
     $test = wikicompare_test_access_node('test', $node->nid, $uid);
-/*
-    $query = db_select('cache_wikicompare_users', 'u');
-    $query->addField('u', 'nid', 'nid');
-    $query->condition('u.nid', $node->nid);
-    $query->condition('u.uid', $uid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $test = True;
-    }
-
-    $query = db_select('node', 'n');
-    $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
-    $query->leftjoin('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
-    $query->condition('n.nid', $node->nid);
-    $query->condition('f.wikicompare_user_ids_target_id', $uid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $test = True;
-    }*/
 
     if (($test == False) && ($uid != 1)) {
       return False;
