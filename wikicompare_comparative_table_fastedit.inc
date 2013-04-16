@@ -252,6 +252,7 @@ dpm($_POST, 'form fastedit');
           $name_field = array(
             '#type' => 'textfield',
             '#title' => t('Title'),
+            '#required' => TRUE,
             '#id' => 'form_' . $type . '_fast' . $fastaction . '_title_' . $nid,
             '#attributes' => array(
               'class' => array('form_' . $type . '_fast' . $fastaction . '_title'),
@@ -371,11 +372,27 @@ dpm($_POST, 'form fastedit');
             $function = $module . '_wikicompare_fastedit_add_element';
             $function($output, $tnode, $guidelines_field_clone, 'wikicompare_guidelines', $readonly_translation, $fastaction);
           }
+
+          $weight_default = 1;
+          if ($nid != 0 && $fastaction != 'edit') {
+
+            $query = db_select('cache_feature', 'n');
+            $query->addField('n', 'nid', 'nid');
+            $query->addField('n', 'type', 'type');
+            $query->condition('n.nid', $nid);
+            $result = $query->execute();
+            foreach ($result as $record) {
+
+              if ($record->type == 'parent-highest-percentage') {
+                $weight_default = 100;
+              }
+            }
+          }
           
           $weight_field = array(
             '#type' => 'textfield',
             '#title' => t('Weight'),
-            '#default_value' => 100,
+            '#value' => $weight_default,
             '#element_validate' => array('element_validate_integer_positive_or_null'),
             '#id' => 'form_' . $type . '_fast' . $fastaction . '_weight_' . $nid,
             '#attributes' => array(

@@ -360,6 +360,7 @@ function wikicompare_install() {
   field_create_field($field);
 
 
+
   $field = array(
     'field_name' => 'wikicompare_user_ids',
     'type' => 'entityreference',
@@ -885,7 +886,7 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
       'required' => 1,
       'default_value' => array(
         0 => array(
-          'value' => 100,
+          'value' => 1,
         ),
       ),
       'widget' => array(
@@ -1005,15 +1006,12 @@ function wikicompare_uninstall() {
   field_delete_field('wikicompare_protected');
   field_delete_field('wikicompare_proofs');
 
-  
-  node_type_delete('feature');
-
-  
-
-  node_type_delete('compared');
-
-/* Don't know why, but this line trigger an error*/
-  node_type_delete('implementation');
+  field_delete_instance(field_read_instance('node', 'body', 'compared'));
+  field_delete_instance(field_read_instance('node', 'body', 'feature'));
+  field_delete_instance(field_read_instance('node', 'body', 'implementation'));
+  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_compared'));
+  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_feature'));
+  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_implementation'));
 
 
   filter_format_disable('wikicompare_text_format');

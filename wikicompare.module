@@ -500,6 +500,7 @@ dpm($form);
 
   }
 
+
   if (isset($form['wikicompare_state'])) {
 
     $current_state = 'new';  
