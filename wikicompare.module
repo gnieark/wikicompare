@@ -469,8 +469,20 @@ function wikicompare_build_form(&$form, $form_state) {
     hide($form['wikicompare_parent_id']);
 
 dpm($form);
+dpm($form_state);
     $form['wikicompare_user_ids']['#weight'] = 10;
+
+
+    if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
+      //Hide the field in the form. We can't unset it, otherwise it display an error.
+      hide($form['wikicompare_user_ids']);
+      //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+      unset($form_state['node']->wikicompare_user_ids);
+    }
+
+    //Hide the field in the form. We can't unset it, otherwise it display an error.
     hide($form['wikicompare_user_from_parent_ids']);
+    //We empty the field because only the published revision need to have the values. No security problem here since only the published revision is used, so no need to update form_state.
     $form['wikicompare_user_from_parent_ids']['und'][0]['target_id'] = NULL;
 
   } else {
@@ -497,6 +509,13 @@ dpm($form);
     $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
     $form['wikicompare_compared_id'] = array('#markup' => $res->compared);
 
+//TODO Replace with a test on power user
+    if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
+      //Hide the field in the form. We can't unset it, otherwise it display an error.
+      hide($form['wikicompare_protected']);
+      //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+      unset($form_state['node']->wikicompare_protected);
+    }
 
   }
 
@@ -585,7 +604,7 @@ function wikicompare_theme() {
  * Implements hook_revisioning_access_node().
  * Check _revisioning_access_node_revision and revisioning_user_node_access in revisioning.module for more information
  * We need to add :
- * $node_op = module_invoke_all('revisioning_access_node', $node_op, $revision_op, $node);
+ * $tests = module_invoke_all('revisioning_access_node', $node_op, $revision_op, $node);
  * foreach ($tests as $test) {
  *   if ($test == False) {
  *     $node_op = False;
@@ -606,6 +625,8 @@ function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
     if (($test == False) && ($uid != 1)) {
       return False;
+    } else {
+      return True;
     }
 
   }

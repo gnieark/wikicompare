@@ -970,5 +970,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
 //TODO statut sur compared
 //TODO Quand on valide un formulaire, si statut est != published, cocher les cases status pour que l'enregistrement s'affiche quand même après la validation
-//TODO Add security for field power users and protection
+//TODO valider automatiquement revisions quand on a les droits
+//TODO acceder directement à la derniere revision
 })(jQuery);
