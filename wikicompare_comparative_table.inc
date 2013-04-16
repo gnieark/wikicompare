@@ -460,6 +460,7 @@ dpm($feature, 'feature');
       foreach ($cells as $key => $cell) {
         $commands[] = ajax_command_append('#feature_row_' . $key, $cell);
       }
+      $commands[] = ajax_command_invoke('#compared_checkbox_' . $cid, 'removeAttr', array('disabled'));
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 
@@ -468,6 +469,7 @@ dpm($feature, 'feature');
 
       //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
+      $commands[] = ajax_command_invoke('#compared_checkbox_' . $cid, 'removeAttr', array('disabled'));
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 

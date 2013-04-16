@@ -227,6 +227,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var compared_id = patt.exec($(this).attr('id'));
       //Set the onclick event
       $('#' + $(this).attr('id')).click(function() {
+        $(this).attr('disabled', 'disabled');
         $('#compared_checkbox_link_' + compared_id).click();
       });
     });
@@ -966,10 +967,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer display par un flag true, pour recuperer le keyword action
 //TODO Dans les fastaction, separer les class en type et action
 //TODO remplacer event_set par listener_set
-//TODO un clic ultra rapide sur les checkbox courtcircuite l'ajax. Voir si on peut pas temporairement readonly la checkbox
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
 //TODO statut sur compared
 //TODO Quand on valide un formulaire, si statut est != published, cocher les cases status pour que l'enregistrement s'affiche quand même après la validation
-//TODO verifier que les commentaires sont ouvert quand on créé via form et via fastedit, avec tous les users
-//TODO Ajouter les required dans les fastedit
+//TODO verifier que les commentaires sont ouvert quand on créé via form et via fastedit, avec tous les users. C'est ok pour form, mais pas fastedit
+//TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
+//TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared
 })(jQuery);

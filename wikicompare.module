@@ -626,8 +626,10 @@ dpm($revision_op, 'revision_op');
 
     $uid = $GLOBALS['user']->uid;
 
-
-    $test = wikicompare_test_access_node('test', $node->nid, $uid);
+    $test = False;
+    if (isset($node->nid)) { //Manage case when we create the node
+      $test = wikicompare_test_access_node('test', $node->nid, $uid);
+    }
 
     if (($test == False) && ($uid != 1)) {
       return False;

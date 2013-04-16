@@ -848,6 +848,11 @@ Choix de la liste.
 Pourcentage retourné
 Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants) * (pourcentage du choix)',
       'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 'parent-weighted-average',
+        ),
+      ),
       'widget' => array(
         'type' => 'options_select',
       ),
