@@ -613,8 +613,14 @@ function wikicompare_theme() {
  * after
  * $node_op = revisioning_user_node_access($revision_op, $node);
  * in revisioning.module. Make some lobbying to integrate this hook in revisioning module.
+ *
+ * It would be better to implement this hook in revisioning_user_node_access, but this function is poorly designed. It return during the whole function, we suggest to move only one return at the end and insert the hook just before.
+ * Since auto-publish use directly revisioning_user_node_access, we can't alter his result. Therefore, we can't use the auto-publish feature for now because since everyone has the publish revision right, everyone will auto-publish even those who are not power users.
  */ 
 function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
+
+dpm($node_op, 'node_op');
+dpm($revision_op, 'revision_op');
 
   if ($revision_op == 'publish revisions') {
 

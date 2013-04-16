@@ -406,6 +406,7 @@ function wikicompare_install() {
   //Set module default settings
   variable_set('wikicompare_update_compared', 'no-update');
 
+  variable_set('revisioning_edit_callback', 1);
 
   foreach (array('wikicompare_admin', 'moderator') as $name) {
 
@@ -432,6 +433,7 @@ function wikicompare_install() {
       'create compared content' => TRUE,
       'edit any compared content' => TRUE,
       'delete own compared content' => TRUE,
+      'edit revisions' => TRUE,
       'view revisions of any feature content' => TRUE,
       'publish revisions of any feature content' => TRUE,
       'view revisions of any compared content' => TRUE,
@@ -617,6 +619,7 @@ function wikicompare_node_install($type) {
   variable_set('node_options_' . $type, array('status','revision','revision_moderation'));
   variable_set('node_submitted_' . $type, '0');
   variable_set('language_content_type_' . $type, 0);
+  variable_set('new_revisions_' . $type, 1);
 
   variable_set('comment_anonymous_' . $type, 0);
   variable_set('comment_' . $type, 2);
@@ -625,6 +628,10 @@ function wikicompare_node_install($type) {
   variable_set('comment_form_location_' . $type, 1);
   variable_set('comment_preview_' . $type, 1);
   variable_set('comment_subject_field_' . $type, 0);
+
+  /* We can't use this settings because of a missing hook in revisioning. See wikicompare.module for more explanation.
+  variable_set('revisioning_auto_publish_' . $type, 1);
+  */
 
   //Create description field. Code from node_add_body_field() function, we can't use it because we want to disable summary.
   $instance = array(
@@ -980,6 +987,7 @@ function wikicompare_uninstall() {
     variable_del('node_options_' . $type);
     variable_del('node_submitted_' . $type);
     variable_del('language_content_type_' . $type);
+    variable_del('new_revisions_' . $type);
 
     variable_del('comment_anonymous_' . $type);
     variable_del('comment_' . $type);
@@ -988,6 +996,10 @@ function wikicompare_uninstall() {
     variable_del('comment_form_location_' . $type);
     variable_del('comment_preview_' . $type);
     variable_del('comment_subject_field_' . $type);
+
+    /* We can't use this settings because of a missing hook in revisioning. See wikicompare.module for more explanation.
+    variable_del('revisioning_auto_publish_' . $type);
+    */
 
   }
 

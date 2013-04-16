@@ -17,6 +17,10 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 
 function wikicompare_comparative_table($form_state) {
 
+dpm(variable_get('revisioning_edit_callback'));
+dpm(variable_get('new_revisions_compared'));
+dpm(variable_get('new_revisions_feature'));
+
   //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
