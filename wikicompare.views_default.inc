@@ -181,11 +181,11 @@ $handler->display->display_options['fields']['last_comment_timestamp']['date_for
 $handler->display->display_options['fields']['wikicompare_state']['id'] = 'wikicompare_state';
 $handler->display->display_options['fields']['wikicompare_state']['table'] = 'field_data_wikicompare_state';
 $handler->display->display_options['fields']['wikicompare_state']['field'] = 'wikicompare_state';
-$handler->display->display_options['fields']['wikicompare_state']['label'] = 'Wikicompare State';
 /* Field: Content: State */
 $handler->display->display_options['fields']['state']['id'] = 'state';
 $handler->display->display_options['fields']['state']['table'] = 'node';
 $handler->display->display_options['fields']['state']['field'] = 'state';
+$handler->display->display_options['fields']['state']['label'] = 'Revision State';
 /* Sort criterion: Content: Updated/commented date */
 $handler->display->display_options['sorts']['last_updated']['id'] = 'last_updated';
 $handler->display->display_options['sorts']['last_updated']['table'] = 'node_comment_statistics';
@@ -236,6 +236,110 @@ $handler->display->display_options['filters']['type']['expose']['remember_roles'
   28 => 0,
 );
 $handler->display->display_options['filters']['type']['expose']['reduce'] = TRUE;
+/* Filter criterion: Content: Title */
+$handler->display->display_options['filters']['title_1']['id'] = 'title_1';
+$handler->display->display_options['filters']['title_1']['table'] = 'node';
+$handler->display->display_options['filters']['title_1']['field'] = 'title';
+$handler->display->display_options['filters']['title_1']['relationship'] = 'wikicompare_compared_id_target_id';
+$handler->display->display_options['filters']['title_1']['operator'] = 'contains';
+$handler->display->display_options['filters']['title_1']['group'] = 1;
+$handler->display->display_options['filters']['title_1']['exposed'] = TRUE;
+$handler->display->display_options['filters']['title_1']['expose']['operator_id'] = 'title_1_op';
+$handler->display->display_options['filters']['title_1']['expose']['label'] = 'Compared';
+$handler->display->display_options['filters']['title_1']['expose']['operator'] = 'title_1_op';
+$handler->display->display_options['filters']['title_1']['expose']['identifier'] = 'title_1';
+$handler->display->display_options['filters']['title_1']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  27 => 0,
+  28 => 0,
+);
+/* Filter criterion: Content: Title */
+$handler->display->display_options['filters']['title_2']['id'] = 'title_2';
+$handler->display->display_options['filters']['title_2']['table'] = 'node';
+$handler->display->display_options['filters']['title_2']['field'] = 'title';
+$handler->display->display_options['filters']['title_2']['relationship'] = 'wikicompare_feature_id_target_id';
+$handler->display->display_options['filters']['title_2']['operator'] = 'contains';
+$handler->display->display_options['filters']['title_2']['group'] = 1;
+$handler->display->display_options['filters']['title_2']['exposed'] = TRUE;
+$handler->display->display_options['filters']['title_2']['expose']['operator_id'] = 'title_2_op';
+$handler->display->display_options['filters']['title_2']['expose']['label'] = 'Feature';
+$handler->display->display_options['filters']['title_2']['expose']['operator'] = 'title_2_op';
+$handler->display->display_options['filters']['title_2']['expose']['identifier'] = 'title_2';
+$handler->display->display_options['filters']['title_2']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  27 => 0,
+  28 => 0,
+);
+/* Filter criterion: Content: Last comment time */
+$handler->display->display_options['filters']['last_comment_timestamp']['id'] = 'last_comment_timestamp';
+$handler->display->display_options['filters']['last_comment_timestamp']['table'] = 'node_comment_statistics';
+$handler->display->display_options['filters']['last_comment_timestamp']['field'] = 'last_comment_timestamp';
+$handler->display->display_options['filters']['last_comment_timestamp']['operator'] = 'between';
+$handler->display->display_options['filters']['last_comment_timestamp']['group'] = 1;
+$handler->display->display_options['filters']['last_comment_timestamp']['exposed'] = TRUE;
+$handler->display->display_options['filters']['last_comment_timestamp']['expose']['operator_id'] = 'last_comment_timestamp_op';
+$handler->display->display_options['filters']['last_comment_timestamp']['expose']['label'] = 'Last comment time';
+$handler->display->display_options['filters']['last_comment_timestamp']['expose']['operator'] = 'last_comment_timestamp_op';
+$handler->display->display_options['filters']['last_comment_timestamp']['expose']['identifier'] = 'last_comment_timestamp';
+$handler->display->display_options['filters']['last_comment_timestamp']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  27 => 0,
+  28 => 0,
+);
+/* Filter criterion: Content: Updated date */
+$handler->display->display_options['filters']['changed']['id'] = 'changed';
+$handler->display->display_options['filters']['changed']['table'] = 'node';
+$handler->display->display_options['filters']['changed']['field'] = 'changed';
+$handler->display->display_options['filters']['changed']['operator'] = 'between';
+$handler->display->display_options['filters']['changed']['group'] = 1;
+$handler->display->display_options['filters']['changed']['exposed'] = TRUE;
+$handler->display->display_options['filters']['changed']['expose']['operator_id'] = 'changed_op';
+$handler->display->display_options['filters']['changed']['expose']['label'] = 'Updated date';
+$handler->display->display_options['filters']['changed']['expose']['operator'] = 'changed_op';
+$handler->display->display_options['filters']['changed']['expose']['identifier'] = 'changed';
+$handler->display->display_options['filters']['changed']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  27 => 0,
+  28 => 0,
+);
+/* Filter criterion: Content: State (wikicompare_state) */
+$handler->display->display_options['filters']['wikicompare_state_value']['id'] = 'wikicompare_state_value';
+$handler->display->display_options['filters']['wikicompare_state_value']['table'] = 'field_data_wikicompare_state';
+$handler->display->display_options['filters']['wikicompare_state_value']['field'] = 'wikicompare_state_value';
+$handler->display->display_options['filters']['wikicompare_state_value']['group'] = 1;
+$handler->display->display_options['filters']['wikicompare_state_value']['exposed'] = TRUE;
+$handler->display->display_options['filters']['wikicompare_state_value']['expose']['operator_id'] = 'wikicompare_state_value_op';
+$handler->display->display_options['filters']['wikicompare_state_value']['expose']['label'] = 'State';
+$handler->display->display_options['filters']['wikicompare_state_value']['expose']['operator'] = 'wikicompare_state_value_op';
+$handler->display->display_options['filters']['wikicompare_state_value']['expose']['identifier'] = 'wikicompare_state_value';
+$handler->display->display_options['filters']['wikicompare_state_value']['expose']['multiple'] = TRUE;
+$handler->display->display_options['filters']['wikicompare_state_value']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  43 => 0,
+  44 => 0,
+);
+/* Filter criterion: Content: State */
+$handler->display->display_options['filters']['state']['id'] = 'state';
+$handler->display->display_options['filters']['state']['table'] = 'node';
+$handler->display->display_options['filters']['state']['field'] = 'state';
+$handler->display->display_options['filters']['state']['group'] = 1;
+$handler->display->display_options['filters']['state']['exposed'] = TRUE;
+$handler->display->display_options['filters']['state']['expose']['operator_id'] = 'state_op';
+$handler->display->display_options['filters']['state']['expose']['label'] = 'Revision State';
+$handler->display->display_options['filters']['state']['expose']['operator'] = 'state_op';
+$handler->display->display_options['filters']['state']['expose']['identifier'] = 'state';
+$handler->display->display_options['filters']['state']['expose']['multiple'] = TRUE;
+$handler->display->display_options['filters']['state']['expose']['remember_roles'] = array(
+  2 => '2',
+  1 => 0,
+  43 => 0,
+  44 => 0,
+);
 /* Filter criterion: Content: Power users (wikicompare_user_ids:delta) */
 $handler->display->display_options['filters']['delta']['id'] = 'delta';
 $handler->display->display_options['filters']['delta']['table'] = 'field_data_wikicompare_user_ids';
@@ -298,74 +402,6 @@ $handler->display->display_options['filters']['delta_1']['group_info']['group_it
     ),
   ),
 );
-/* Filter criterion: Content: Title */
-$handler->display->display_options['filters']['title_1']['id'] = 'title_1';
-$handler->display->display_options['filters']['title_1']['table'] = 'node';
-$handler->display->display_options['filters']['title_1']['field'] = 'title';
-$handler->display->display_options['filters']['title_1']['relationship'] = 'wikicompare_compared_id_target_id';
-$handler->display->display_options['filters']['title_1']['operator'] = 'contains';
-$handler->display->display_options['filters']['title_1']['group'] = 1;
-$handler->display->display_options['filters']['title_1']['exposed'] = TRUE;
-$handler->display->display_options['filters']['title_1']['expose']['operator_id'] = 'title_1_op';
-$handler->display->display_options['filters']['title_1']['expose']['label'] = 'Compared';
-$handler->display->display_options['filters']['title_1']['expose']['operator'] = 'title_1_op';
-$handler->display->display_options['filters']['title_1']['expose']['identifier'] = 'title_1';
-$handler->display->display_options['filters']['title_1']['expose']['remember_roles'] = array(
-  2 => '2',
-  1 => 0,
-  27 => 0,
-  28 => 0,
-);
-/* Filter criterion: Content: Title */
-$handler->display->display_options['filters']['title_2']['id'] = 'title_2';
-$handler->display->display_options['filters']['title_2']['table'] = 'node';
-$handler->display->display_options['filters']['title_2']['field'] = 'title';
-$handler->display->display_options['filters']['title_2']['relationship'] = 'wikicompare_feature_id_target_id';
-$handler->display->display_options['filters']['title_2']['operator'] = 'contains';
-$handler->display->display_options['filters']['title_2']['group'] = 1;
-$handler->display->display_options['filters']['title_2']['exposed'] = TRUE;
-$handler->display->display_options['filters']['title_2']['expose']['operator_id'] = 'title_2_op';
-$handler->display->display_options['filters']['title_2']['expose']['label'] = 'Feature';
-$handler->display->display_options['filters']['title_2']['expose']['operator'] = 'title_2_op';
-$handler->display->display_options['filters']['title_2']['expose']['identifier'] = 'title_2';
-$handler->display->display_options['filters']['title_2']['expose']['remember_roles'] = array(
-  2 => '2',
-  1 => 0,
-  27 => 0,
-  28 => 0,
-);
-/* Filter criterion: Content: Last comment time */
-$handler->display->display_options['filters']['last_comment_timestamp']['id'] = 'last_comment_timestamp';
-$handler->display->display_options['filters']['last_comment_timestamp']['table'] = 'node_comment_statistics';
-$handler->display->display_options['filters']['last_comment_timestamp']['field'] = 'last_comment_timestamp';
-$handler->display->display_options['filters']['last_comment_timestamp']['operator'] = 'between';
-$handler->display->display_options['filters']['last_comment_timestamp']['exposed'] = TRUE;
-$handler->display->display_options['filters']['last_comment_timestamp']['expose']['operator_id'] = 'last_comment_timestamp_op';
-$handler->display->display_options['filters']['last_comment_timestamp']['expose']['label'] = 'Last comment time';
-$handler->display->display_options['filters']['last_comment_timestamp']['expose']['operator'] = 'last_comment_timestamp_op';
-$handler->display->display_options['filters']['last_comment_timestamp']['expose']['identifier'] = 'last_comment_timestamp';
-$handler->display->display_options['filters']['last_comment_timestamp']['expose']['remember_roles'] = array(
-  2 => '2',
-  1 => 0,
-  27 => 0,
-  28 => 0,
-);
-/* Filter criterion: Content: Updated date */
-$handler->display->display_options['filters']['changed']['id'] = 'changed';
-$handler->display->display_options['filters']['changed']['table'] = 'node';
-$handler->display->display_options['filters']['changed']['field'] = 'changed';
-$handler->display->display_options['filters']['changed']['operator'] = 'between';
-$handler->display->display_options['filters']['changed']['exposed'] = TRUE;
-$handler->display->display_options['filters']['changed']['expose']['operator_id'] = 'changed_op';
-$handler->display->display_options['filters']['changed']['expose']['label'] = 'Updated date';
-$handler->display->display_options['filters']['changed']['expose']['operator'] = 'changed_op';
-$handler->display->display_options['filters']['changed']['expose']['identifier'] = 'changed';
-$handler->display->display_options['filters']['changed']['expose']['remember_roles'] = array(
-  2 => '2',
-  1 => 0,
-  27 => 0,
-  28 => 0,
-);
 
 /* Display: Page */
 $handler = $view->new_display('page', 'Page', 'page');
@@ -400,13 +436,14 @@ $translatables['wikicompare_dashboard'] = array(
   t('Updated date'),
   t('Last comment author'),
   t('Last comment time'),
-  t('Wikicompare State'),
   t('State'),
+  t('Revision State'),
   t('Updated/commented date'),
   t('Power users'),
   t('Power users from parents'),
   t('Page'),
 );
+
 
 $views[$view->name] = $view;
 return $views;

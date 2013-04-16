@@ -470,7 +470,8 @@ function wikicompare_build_form(&$form, $form_state) {
 
 dpm($form);
     $form['wikicompare_user_ids']['#weight'] = 10;
-    unset($form['wikicompare_user_from_parent_ids']);
+    hide($form['wikicompare_user_from_parent_ids']);
+    $form['wikicompare_user_from_parent_ids']['und'][0]['target_id'] = NULL;
 
   } else {
 
