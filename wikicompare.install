@@ -143,6 +143,13 @@ function wikicompare_node_schema($type) {
       'table' => 'node',
       'columns' => array('parent_feature_id' => 'nid'),
     );
+    $schema['fields']['sequence'] = array(
+      'description' => 'The sequence of the node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    );
+    $schema['indexes']['sequence'] = array('sequence');
   } else {
     $schema['fields']['feature_id'] = array(
       'description' => 'The feature id of the implementation node',
@@ -259,6 +266,13 @@ function wikicompare_install() {
       'target_type' => 'node',
       'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
     ),
+  );
+  field_create_field($field);
+
+  $field = array(
+    'field_name' => 'wikicompare_sequence',
+    'type' => 'number_integer',
+    'cardinality' => 1,
   );
   field_create_field($field);
 
@@ -667,6 +681,24 @@ function wikicompare_node_install($type) {
       'settings' => array(
         'target_type' => 'node',
         'handler_settings' => array('target_bundles' => array($type)),
+      ),
+    );
+    field_create_instance($instance);
+
+
+    $instance = array(
+      'field_name' => 'wikicompare_sequence',
+      'entity_type' => 'node',
+      'bundle' => $type,
+      'label' => 'Sequence',
+      'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 1,
+        ),
+      ),
+      'widget' => array(
+        'type' => 'number',
       ),
     );
     field_create_instance($instance);

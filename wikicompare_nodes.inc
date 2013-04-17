@@ -74,6 +74,7 @@ dpm($node, 'insert test, pas bon si traduction');
       'vid' => $node->vid,
       'title' => $node->title,
       'parent_id' => $parent_id,
+      'sequence' => $node->wikicompare_sequence['und'][0]['value'],
       'has_children' => 0,
   );
 
@@ -484,6 +485,7 @@ function wikicompare_revisionapi($op, $node_revision) {
           $parent_id = $node_revision->wikicompare_parent_id['und'][0]['target_id'];
         }
         $fields['parent_id'] = $parent_id;
+        $fields['sequence'] = $node_revision->wikicompare_sequence['und'][0]['value'];
 
         wikicompare_update_cache_users($node_revision->nid, $parent_id, $node_revision->type, $node_revision->vid);
 

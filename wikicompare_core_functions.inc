@@ -719,6 +719,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
       $query->condition('n.parent_id', $nids);
       $use_nids = false;
     } 
+    $query->orderby('n.sequence, n.title');
   } else {
     $query->addField('n', 'feature_id', 'feature_id');
     $query->addField('n', 'compared_id', 'compared_id');

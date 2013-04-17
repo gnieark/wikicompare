@@ -946,16 +946,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 //TODO dans edit et remove, centraliser les controles dans une function
-//TODO If a form is open, expand un compared clean les fastedit items
 //TODO remplacer les if action par des case
 //TODO mettre les securité dans la fonction submit pour edit et remove
 //TODO ajuster les colspan automatiquement pour les line_fastedit
 //TODO remplacer drupal_render par render
 //TODO il faudrait générer les element du formulaire avec l'equivalent editable de field_view_field
-//TODO faire un check pour afficher ou non le champ support si l'implementation est un enfant sur axe compared et feature
-//TODO rajouter un champ sequence dans compared et feature pour les classe. Pas de drag&drop sur la V1 du projet
-//TODO Rajouter un champ ajax qui fera apparaitre un popup sur le champ parent compared/feature. Ce code sera réutilisé dans les page d'édition.
-//TODO Rajouter sur le bouton calculer l'affichage des feature new/incomplete/obsolete
 //TODO bouger l'initialisation des variables globales dans un endroit plus sur
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
 //TODO isoler le test ajax dans une fonction a part
@@ -968,9 +963,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Dans les fastaction, separer les class en type et action
 //TODO remplacer event_set par listener_set
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
-//TODO statut sur compared
 //TODO Quand on valide un formulaire, si statut est != published, cocher les cases status pour que l'enregistrement s'affiche quand même après la validation
 //TODO verifier que les commentaires sont ouvert quand on créé via form et via fastedit, avec tous les users. C'est ok pour form, mais pas fastedit
 //TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
-//TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared
+//TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
+//TODO faire un check pour afficher ou non le champ support si l'implementation est un enfant sur axe compared et feature
+//TODO statut et power users sur compared
 })(jQuery);
