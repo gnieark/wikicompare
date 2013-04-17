@@ -395,164 +395,413 @@ function compared_form($node, $form_state) {
 
 function wikicompare_form_compared_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form($form, $form_state);
+  wikicompare_build_form('form', $form, $form_state);
 
 }
 
 function wikicompare_form_feature_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form($form, $form_state);
+  wikicompare_build_form('form', $form, $form_state);
 
 }
 
 function wikicompare_form_implementation_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form($form, $form_state);
+  wikicompare_build_form('form', $form, $form_state);
 
 }
 
-function wikicompare_build_form(&$form, $form_state) {
+function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$output=NULL, $nid=NULL, $type=NULL, $fastaction=NULL, $node=NULL, $readonly=NULL, $tnode=NULL, $readonly_translation=NULL) {
 
-  $node = new stdClass;
-  $nid = 0;
-  if (isset($form_state['node'])) {
-    $node = $form_state['node'];
-    if (isset($node->nid)) {
-      $nid = $node->nid;
+  if ($form_type == 'form') {
+
+    $node = new stdClass;
+    $nid = 0;
+    if (isset($form_state['node'])) {
+      $node = $form_state['node'];
+      if (isset($node->nid)) {
+        $nid = $node->nid;
+      }
+
     }
 
+    //$form['#attached']['js'][] = '/misc/ajax.js';
+    //$form['#attached']['js'][] = '/misc/progress.js';
+    $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
+
+    $settings = array(
+      'wikicompare' => array(
+        'fastedit_status' => 0,
+      )
+    );
+    foreach (module_implements('wikicompare_build_form_settings') as $module) {
+      $function = $module . '_wikicompare_build_form_settings';
+      $function($settings, $node, $nid, $form, $form_state);
+    }
+    $form['#attached']['js'][] = array(
+      'type' => 'setting',
+      'data' => $settings,
+    );
   }
-
-  //$form['#attached']['js'][] = '/misc/ajax.js';
-  //$form['#attached']['js'][] = '/misc/progress.js';
-  $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
-
-  $settings = array(
-    'wikicompare' => array(
-      'fastedit_status' => 0,
-    )
-  );
-  foreach (module_implements('wikicompare_build_form_settings') as $module) {
-    $function = $module . '_wikicompare_build_form_settings';
-    $function($settings, $node, $nid, $form, $form_state);
-  }
-  $form['#attached']['js'][] = array(
-    'type' => 'setting',
-    'data' => $settings,
-  );
-
 
 
   if ($node->type != 'implementation') {
-    $title = 'No parent';
-    if (isset($node->wikicompare_parent_id['und'])) {
-      $parent_nid = $node->wikicompare_parent_id['und'][0]['target_id'];
-      $res = get_recursive_data($node->type, array($parent_nid));
-      $title = $res['data'][$parent_nid]['data']->fulltitle;
+
+    if ($form_type == 'fastedit') { 
+      $name_field = array(
+        '#type' => 'textfield',
+        '#title' => t('Title'),
+        '#required' => TRUE,
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_title_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_title'),
+        )
+      );          
+      if ($fastaction == 'edit') {
+        $name_field['#value'] = $node->title;
+      }
+      $name_field_clone = $name_field;
+      if ($readonly == True) {
+        $name_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($name_field);
+
+      foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
+        $function = $module . '_wikicompare_fastedit_add_element';
+        $function($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
+      }
     }
 
-    $select_parent_link = array(
-      'text' => 'Select parent',
-      'title' => 'Select parent',
-      'selector' => 'dialog-content',
-      'path' => 'get_dialog_callback/select_simple_dialog/' . $node->type . '/form_selected_parent/' . $nid,
-    );
-    $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $node->type)));
-    $form['container_selected_parent'] = array(
-      'title' => array('#markup' => $title),
-      '#type' => 'container',
-      '#id' => 'form_selected_parent',
-      '#weight' => -3,
-      '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
+    if ($form_type == 'form') {
+      $title = 'No parent';
+      if (isset($node->wikicompare_parent_id['und'])) {
+        $parent_nid = $node->wikicompare_parent_id['und'][0]['target_id'];
+        $res = get_recursive_data($node->type, array($parent_nid));
+        $title = $res['data'][$parent_nid]['data']->fulltitle;
+      }
+
+      $select_parent_link = array(
+        'text' => 'Select parent',
+        'title' => 'Select parent',
+        'selector' => 'dialog-content',
+        'path' => 'get_dialog_callback/select_simple_dialog/' . $node->type . '/form_selected_parent/' . $nid,
+      );
+      $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $node->type)));
+      $form['container_selected_parent'] = array(
+        'title' => array('#markup' => $title),
+        '#type' => 'container',
+        '#id' => 'form_selected_parent',
+        '#weight' => -3,
+        '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
-    );
-    hide($form['wikicompare_parent_id']);
-
-dpm($form);
-dpm($form_state);
-    $form['wikicompare_user_ids']['#weight'] = 10;
-
-
-    if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
-      //Hide the field in the form. We can't unset it, otherwise it display an error.
-      hide($form['wikicompare_user_ids']);
-      //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
-      unset($form_state['node']->wikicompare_user_ids);
+      );
+      hide($form['wikicompare_parent_id']);
     }
 
-    //Hide the field in the form. We can't unset it, otherwise it display an error.
-    hide($form['wikicompare_user_from_parent_ids']);
-    //We empty the field because only the published revision need to have the values. No security problem here since only the published revision is used, so no need to update form_state.
-    $form['wikicompare_user_from_parent_ids']['und'][0]['target_id'] = NULL;
+    if ($form_type == 'fastedit') {
+
+      if ($fastaction == 'edit') {
+
+        $parent = 0;
+        if ($type == 'feature') {
+          $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
+        } elseif ($type == 'compared') {
+          $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
+        }
+
+        //Allow others modules to modify the output
+        foreach (module_implements('wikicompare_comparative_table_fastedit_parent') as $module) {
+          $function = $module . '_wikicompare_comparative_table_fastedit_parent';
+          $function($parent_id, $type, $node);
+        }
+
+        $res = get_recursive_data($type, array($parent_id));
+        $parent_name = $res['data'][$parent_id]['data']->fulltitle;
+
+        //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
+        //Add the link to open the select feature popup
+        $select_parent_link = array(
+          'text' => 'Select parent',
+          'title' => 'Select parent',
+          'selector' => 'dialog-content',
+          'path' => 'get_dialog_callback/select_simple_dialog/' . $type . '/form_selected_parent/' . $nid,
+        );
+        $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
+        $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span>';
+        if ($readonly != True) {
+          $output .= '<span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
+        }
+
+      }
+
+    }
+
+    if ($form_type == 'fastedit') {
+      $description_field = array(
+        '#type' => 'textarea',
+        '#title' => t('Description'),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_description_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_description'),
+        )
+      );
+      if ($fastaction == 'edit') {
+        $description_field['#value'] = $node->body['und'][0]['value'];
+      }
+      $description_field_clone = $description_field;
+      if ($readonly == True) {
+        $description_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($description_field);
+    
+      foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
+        $function = $module . '_wikicompare_fastedit_add_element';
+        $function($output, $tnode, $description_field_clone, 'body', $readonly_translation, $fastaction);
+      }
+    }
+
+    if ($form_type == 'form') {
+      $form['wikicompare_user_ids']['#weight'] = 10;
+
+
+      if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
+        //Hide the field in the form. We can't unset it, otherwise it display an error.
+        hide($form['wikicompare_user_ids']);
+        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+        unset($form_state['node']->wikicompare_user_ids);
+      }
+
+      //Hide the field in the form. We can't unset it, otherwise it display an error.
+      hide($form['wikicompare_user_from_parent_ids']);
+      //We empty the field because only the published revision need to have the values. No security problem here since only the published revision is used, so no need to update form_state.
+      $form['wikicompare_user_from_parent_ids']['und'][0]['target_id'] = NULL;
+    }
 
   } else {
 
-    $query = db_select('cache_implementation', 'n');
-    $query->addField('f', 'title', 'feature');
-    $query->addField('c', 'title', 'compared');
-    $query->addField('f', 'has_children', 'feature_has_children');
-    $query->addField('c', 'has_children', 'compared_has_children');
-    $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines'); 
-    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-    $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
-    $query->condition('n.nid', $nid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $res = $record;
-    }
-
-    $form['wikicompare_guidelines'] = array(
-      '#markup' => $record->guidelines,
-      '#weight' => -2,
-    );
-
-    $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
-    $form['wikicompare_compared_id'] = array('#markup' => $res->compared);
-
-    if (!$res->feature_has_children && !$res->compared_has_children) {
-      if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
-        //Hide the field in the form. We can't unset it, otherwise it display an error.
-        hide($form['wikicompare_protected']);
-        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
-        unset($form_state['node']->wikicompare_protected);
+    if ($form_type == 'form') {
+      $query = db_select('cache_implementation', 'n');
+      $query->addField('f', 'title', 'feature');
+      $query->addField('c', 'title', 'compared');
+      $query->addField('f', 'has_children', 'feature_has_children');
+      $query->addField('c', 'has_children', 'compared_has_children');
+      $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines'); 
+      $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
+      $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+      $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
+      $query->condition('n.nid', $nid);
+      $result = $query->execute();
+      foreach ($result as $record) {
+        $res = $record;
       }
-    } else {
-        //Hide the field in the form. We can't unset it, otherwise it display an error.
-        hide($form['wikicompare_support']);
-        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
-        unset($form_state['node']->wikicompare_support);
 
-        //Hide the field in the form. We can't unset it, otherwise it display an error.
-        hide($form['wikicompare_protected']);
-        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
-        unset($form_state['node']->wikicompare_protected);
+      $form['wikicompare_guidelines'] = array(
+        '#markup' => $record->guidelines,
+        '#weight' => -2,
+      );
 
-        //Hide the field in the form. We can't unset it, otherwise it display an error.
-        hide($form['wikicompare_proofs']);
-        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
-        unset($form_state['node']->wikicompare_proofs);
+      $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
+      $form['wikicompare_compared_id'] = array('#markup' => $res->compared);
+
+      if (!$res->feature_has_children && !$res->compared_has_children) {
+        if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
+          //Hide the field in the form. We can't unset it, otherwise it display an error.
+          hide($form['wikicompare_protected']);
+          //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+          unset($form_state['node']->wikicompare_protected);
+        }
+      } else {
+          //Hide the field in the form. We can't unset it, otherwise it display an error.
+          hide($form['wikicompare_support']);
+          //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+          unset($form_state['node']->wikicompare_support);
+
+          //Hide the field in the form. We can't unset it, otherwise it display an error.
+          hide($form['wikicompare_protected']);
+          //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+          unset($form_state['node']->wikicompare_protected);
+
+          //Hide the field in the form. We can't unset it, otherwise it display an error.
+          hide($form['wikicompare_proofs']);
+          //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+          unset($form_state['node']->wikicompare_proofs);
+      }
+    }
+
+    if ($form_type == 'fastedit') {
+      $support_field = array(
+        '#type' => 'select',
+        '#title' => t('Support'),
+        '#options' => array(
+          0 => 'Unsupported',
+          1 => 'Supported',
+        ),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_support_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_support'),
+        )
+      );
+      if ($fastaction == 'edit') {
+        $support_field['#value'] = $node->wikicompare_support['und'][0]['value'];
+      }
+      if ($readonly == True) {
+        $support_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($support_field);
     }
 
   }
 
 
-  if (isset($form['wikicompare_state'])) {
+  if ($form_type == 'fastedit') {
+    if ($type == 'feature') {
+      $type_field = array(
+        '#type' => 'select',
+        '#title' => t('Type'),
+        '#options' => array(
+          'parent-weighted-average' => 'Parent Feature - Weighted Average',
+          'parent-highest-percentage' => 'Parent Feature - Highest Percentage',
+        ),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_type_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_type'),
+        )
+      );
+      if ($fastaction == 'edit') {
+        $type_field['#value'] = $node->wikicompare_type['und'][0]['value'];
+      }
+      if ($readonly == True) {
+        $type_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($type_field);
+      
+      $guidelines_field = array(
+        '#type' => 'textarea',
+        '#title' => t('Validation guidelines'),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_guidelines_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_guidelines'),
+        )
+      );
+      if ($fastaction == 'edit') {
+        $guidelines_field['#value'] = $node->wikicompare_guidelines['und'][0]['value'];
+      }
+      $guidelines_field_clone = $guidelines_field;
+      if ($readonly == True) {
+        $guidelines_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($guidelines_field);
 
-    $current_state = 'new';  
-    if (isset($form['wikicompare_state']['und']['#default_value'][0])) {
-      $current_state = $form['wikicompare_state']['und']['#default_value'][0];
+      foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
+        $function = $module . '_wikicompare_fastedit_add_element';
+        $function($output, $tnode, $guidelines_field_clone, 'wikicompare_guidelines', $readonly_translation, $fastaction);
+      }
+
+      $weight_default = 1;
+      if ($nid != 0 && $fastaction != 'edit') {
+
+        $query = db_select('cache_feature', 'n');
+        $query->addField('n', 'nid', 'nid');
+        $query->addField('n', 'type', 'type');
+        $query->condition('n.nid', $nid);
+        $result = $query->execute();
+        foreach ($result as $record) {
+
+          if ($record->type == 'parent-highest-percentage') {
+            $weight_default = 100;
+          }
+        }
+      }
+      
+      $weight_field = array(
+        '#type' => 'textfield',
+        '#title' => t('Weight'),
+        '#value' => $weight_default,
+        '#element_validate' => array('element_validate_integer_positive_or_null'),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_weight_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_weight'),
+        )
+      );
+      if ($fastaction == 'edit') {
+        $weight_field['#value'] = $node->wikicompare_weight['und'][0]['value'];
+      }
+      if ($readonly == True) {
+        $weight_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($weight_field);
+      
+
     }
-    $form['wikicompare_state']['und']['#options'] = wikicompare_state_get_options($nid, $current_state);
+  }
+
+
+  if ($node->type != 'implementation') {
+    if ($form_type == 'form') {
+      $current_state = 'new';  
+      if (isset($form['wikicompare_state']['und']['#default_value'][0])) {
+        $current_state = $form['wikicompare_state']['und']['#default_value'][0];
+      }
+      $form['wikicompare_state']['und']['#options'] = wikicompare_state_get_options($nid, $current_state);
+    }
+
+    if ($form_type == 'fastedit') {
+      $state_field = array(
+        '#type' => 'select',
+        '#title' => t('State'),
+        '#options' => wikicompare_state_get_options($nid, 'new'),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_state_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_state'),
+        )
+      );
+      if ($fastaction == 'edit') {
+        $state_field['#value'] = $node->wikicompare_state['und'][0]['value'];
+        $state_field['#options'] = wikicompare_state_get_options($nid, $state_field['#value']);
+      }
+      if ($readonly == True) {
+        $state_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($state_field);
+    }
 
   }
 
-  foreach (module_implements('wikicompare_build_form_after') as $module) {
-    $function = $module . '_wikicompare_build_form_after';
-    $function($form, $form_state, $node);
+  if ($form_type == 'form') {
+    foreach (module_implements('wikicompare_build_form_after') as $module) {
+      $function = $module . '_wikicompare_build_form_after';
+      $function($form, $form_state, $node);
+    }
   }
 
+  if ($form_type == 'fastedit') {
+    //Allow others modules to modify the output
+    foreach (module_implements('wikicompare_comparative_table_fastedit_specific') as $module) {
+      $function = $module . '_wikicompare_comparative_table_fastedit_specific';
+      $function($output, $type, $node, $fastaction, $nid);
+    }
+    
+    $revision_field = array(
+      '#type' => 'textarea',
+      '#title' => t('Revision log message'),
+      '#id' => 'form_' . $type . '_fast' . $fastaction . '_revision_' . $nid,
+      '#attributes' => array(
+        'class' => array('form_' . $type . '_fast' . $fastaction . '_revision'),
+      )
+    );
+    $output .= drupal_render($revision_field);
+
+    //Allow others modules to modify the output
+    foreach (module_implements('wikicompare_fastedit_specific_after') as $module) {
+      $function = $module . '_wikicompare_fastedit_specific_after';
+      $function($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
+    }
+  }
 }
+
+
+
+
 
 function wikicompare_state_get_options($nid, $current_state) {
 

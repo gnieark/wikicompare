@@ -194,8 +194,12 @@ dpm($_POST, 'form fastedit');
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
+
+
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
+
+
 
       $display_type = 'itemlist';
       if (in_array($type, array('feature','implementation'))) {
@@ -220,6 +224,7 @@ dpm($_POST, 'form fastedit');
       
       } else {
       
+        
       
         if ($fastaction == 'edit') {
     
@@ -247,7 +252,11 @@ dpm($_POST, 'form fastedit');
         } else {
           $output .= '<span id="parent_id" style="display:none;">' . $nid . '</span>';
         }
-    
+
+        $form = array();
+        $form_state = array();
+        wikicompare_build_form('fastedit', $form, $form_state, $output, $nid, $type, $fastaction, $node, $readonly, $tnode, $readonly_translation);
+    /*
         if ($type != 'implementation') {
           $name_field = array(
             '#type' => 'textfield',
@@ -271,7 +280,8 @@ dpm($_POST, 'form fastedit');
             $function = $module . '_wikicompare_fastedit_add_element';
             $function($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
           }
-
+*/
+/*
           if ($fastaction == 'edit') {
 
             $parent = 0;
@@ -306,8 +316,8 @@ dpm($_POST, 'form fastedit');
 
           }
 
-        }
-      
+        } */
+      /*
         $description_field = array(
           '#type' => 'textarea',
           '#title' => t('Description'),
@@ -329,7 +339,8 @@ dpm($_POST, 'form fastedit');
           $function = $module . '_wikicompare_fastedit_add_element';
           $function($output, $tnode, $description_field_clone, 'body', $readonly_translation, $fastaction);
         }
-      
+      */
+/*
         if ($type == 'feature') {
           $type_field = array(
             '#type' => 'select',
@@ -472,7 +483,7 @@ dpm($_POST, 'form fastedit');
           $function = $module . '_wikicompare_fastedit_specific_after';
           $function($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
         }
-      
+      */
       }
       
 
