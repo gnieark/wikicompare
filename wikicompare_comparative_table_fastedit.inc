@@ -612,6 +612,9 @@ function submit_fastedit_form_response($method = 'ajax'){
           
         }
 
+        $node->wikicompare_sequence['und'][0]['value'] = $_POST['sequence'];  
+        $node->wikicompare_state['und'][0]['value'] = $_POST['state'];  
+
       }
 
         
@@ -637,7 +640,6 @@ function submit_fastedit_form_response($method = 'ajax'){
         
         $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];        
         
-        $node->wikicompare_state['und'][0]['value'] = $_POST['state'];
         
       }
       
@@ -668,6 +670,12 @@ dpm($node, 'node final');
 
     //We return nothing, everything is managed on the javascript side
     $commands = array();
+
+    if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
+      $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
+    } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {
+      $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
+    }
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
     

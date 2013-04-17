@@ -530,6 +530,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.title = $('#form_' + type + '_fast' + subaction + '_title_' + node_id).val();
             options.data.title_translation = $('#form_' + type + '_fast' + subaction + '_title_' + node_id + '_translation').val();
             options.data.parent_id = $('#parent_id').text();
+            options.data.sequence = $('#form_' + type + '_fast' + subaction + '_sequence_' + node_id).val();
+            options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
           }
           options.data.description = $('#form_' + type + '_fast' + subaction + '_description_' + node_id).val();
           options.data.description_translation = $('#form_' + type + '_fast' + subaction + '_description_' + node_id + '_translation').val();
@@ -539,7 +541,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.guidelines = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id).val();
             options.data.guidelines_translation = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id + '_translation').val();
             options.data.weight = $('#form_' + type + '_fast' + subaction + '_weight_' + node_id).val();
-            options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
           }
           
           if (type == 'implementation') {
@@ -951,7 +952,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO mettre les securité dans la fonction submit pour edit et remove
 //TODO ajuster les colspan automatiquement pour les line_fastedit
 //TODO remplacer drupal_render par render
-//TODO il faudrait générer les element du formulaire avec l'equivalent editable de field_view_field
 //TODO bouger l'initialisation des variables globales dans un endroit plus sur
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
 //TODO isoler le test ajax dans une fonction a part
@@ -969,7 +969,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO verifier que les commentaires sont ouvert quand on créé via form et via fastedit, avec tous les users. C'est ok pour form, mais pas fastedit
 //TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
-//TODO statut et power users sur compared
 //TODO Split the javascript file en deux
-//TODO Centraliser fonction form et fastedit
+
+//TODO Dans fastedit, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
 })(jQuery);

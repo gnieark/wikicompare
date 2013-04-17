@@ -726,7 +726,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
         $state = array_merge($state, array('new', 'incomplete', 'submitted'));
       }
       if (isset($settings['states']['closed'])) {
-        $state = array_merge($state, array('rejected', 'desactivated'));
+        $state = array_merge($state, array('rejected', 'disactivated'));
       }
       $query->condition('n.state', $state, 'in');
     } 

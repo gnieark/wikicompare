@@ -534,31 +534,56 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
       }
 
+
+      
+      $sequence_field = array(
+        '#type' => 'textfield',
+        '#title' => t('Sequence'),
+        '#value' => 1,
+        '#element_validate' => array('element_validate_integer'),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_sequence_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_sequence'),
+        )
+      );
+      if ($fastaction == 'edit') {
+        $sequence_field['#value'] = $node->wikicompare_sequence['und'][0]['value'];
+      }
+      if ($readonly == True) {
+        $sequence_field['#attributes']['disabled'] = True;
+      }
+      $output .= drupal_render($sequence_field);
+
     }
 
+/* TODO Not working, textarea work but not text_format.
     if ($form_type == 'fastedit') {
       $description_field = array(
-        '#type' => 'textarea',
+        '#type' => 'text_format',
         '#title' => t('Description'),
+        '#format' => 'wikicompare_text_format',
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_description_' . $nid,
         '#attributes' => array(
           'class' => array('form_' . $type . '_fast' . $fastaction . '_description'),
         )
       );
+
       if ($fastaction == 'edit') {
         $description_field['#value'] = $node->body['und'][0]['value'];
-      }
+      } 
       $description_field_clone = $description_field;
       if ($readonly == True) {
         $description_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($description_field);
+      dpm(render($description_field), 'description');
+
     
       foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
         $function = $module . '_wikicompare_fastedit_add_element';
         $function($output, $tnode, $description_field_clone, 'body', $readonly_translation, $fastaction);
       }
     }
+*/
 
     if ($form_type == 'form') {
       $form['wikicompare_user_ids']['#weight'] = 10;
@@ -675,6 +700,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       }
       $output .= drupal_render($type_field);
       
+/* TODO Not working, textarea work but not text_format.
       $guidelines_field = array(
         '#type' => 'textarea',
         '#title' => t('Validation guidelines'),
@@ -696,6 +722,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         $function = $module . '_wikicompare_fastedit_add_element';
         $function($output, $tnode, $guidelines_field_clone, 'wikicompare_guidelines', $readonly_translation, $fastaction);
       }
+*/
 
       $weight_default = 1;
       if ($nid != 0 && $fastaction != 'edit') {
