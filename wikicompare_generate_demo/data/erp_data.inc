@@ -11,6 +11,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'compared';
   $node->language = $lang;
   $node->title = 'OpenERP';
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-root'] = $node->nid;
 
@@ -21,6 +22,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-root'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v4'] = $node->nid;
 
@@ -30,6 +32,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-v4'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v4-official'] = $node->nid;
 
@@ -39,6 +42,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-v4'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v4-community'] = $node->nid;
 
@@ -50,6 +54,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-root'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v5'] = $node->nid;
 
@@ -59,6 +64,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-v5'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v5-official'] = $node->nid;
 
@@ -68,6 +74,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-v5'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v5-community'] = $node->nid;
 
@@ -79,6 +86,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-root'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v6'] = $node->nid;
 
@@ -89,6 +97,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-v6'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v6-official'] = $node->nid;
 
@@ -98,6 +107,7 @@ function wikicompare_generate_erp_data() {
   $node->language = $lang;
   $node->wikicompare_parent_id['und'][0]['target_id'] = $compared['openerp-v6'];
   $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   node_save($node);
   $compared['openerp-v6-community'] = $node->nid;
 
@@ -111,6 +121,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Accounting';
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 1;
@@ -123,6 +134,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Invoicing';
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 1;
@@ -137,6 +149,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Due date management';
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-highest-percentage';
   $node->wikicompare_weight['und'][0]['value'] = 1;
@@ -151,6 +164,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Writing the date in an invoice field';
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 1;
@@ -164,6 +178,7 @@ function wikicompare_generate_erp_data() {
   $node->type = 'feature';
   $node->language = $lang;
   $node->title = 'Create one account move for each due date, with different date';
+  $node->wikicompare_sequence['und'][0]['value'] = 1;
   $node->wikicompare_state['und'][0]['value'] = 'published';
   $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
   $node->wikicompare_weight['und'][0]['value'] = 4;

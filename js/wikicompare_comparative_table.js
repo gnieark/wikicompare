@@ -962,11 +962,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer display par un flag true, pour recuperer le keyword action
 //TODO Dans les fastaction, separer les class en type et action
 //TODO remplacer event_set par listener_set
+//TODO renommer toutes les fonctions en les demarrant par wikicompare
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
 //TODO Quand on valide un formulaire, si statut est != published, cocher les cases status pour que l'enregistrement s'affiche quand même après la validation
 //TODO verifier que les commentaires sont ouvert quand on créé via form et via fastedit, avec tous les users. C'est ok pour form, mais pas fastedit
 //TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
-//TODO faire un check pour afficher ou non le champ support si l'implementation est un enfant sur axe compared et feature
 //TODO statut et power users sur compared
+//TODO Split the javascript file en deux
+//TODO Centraliser fonction form et fastedit
 })(jQuery);

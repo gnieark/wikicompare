@@ -490,11 +490,12 @@ dpm($form_state);
     $query = db_select('cache_implementation', 'n');
     $query->addField('f', 'title', 'feature');
     $query->addField('c', 'title', 'compared');
+    $query->addField('f', 'has_children', 'feature_has_children');
+    $query->addField('c', 'has_children', 'compared_has_children');
     $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines'); 
     $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
     $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-    $query->leftjoin('node', 'ng', 'n.feature_id = ng.nid');
-    $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'ng.vid = ngf.revision_id');
+    $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
     $query->condition('n.nid', $nid);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -509,12 +510,28 @@ dpm($form_state);
     $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
     $form['wikicompare_compared_id'] = array('#markup' => $res->compared);
 
-//TODO Replace with a test on power user
-    if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
-      //Hide the field in the form. We can't unset it, otherwise it display an error.
-      hide($form['wikicompare_protected']);
-      //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
-      unset($form_state['node']->wikicompare_protected);
+    if (!$res->feature_has_children && !$res->compared_has_children) {
+      if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
+        //Hide the field in the form. We can't unset it, otherwise it display an error.
+        hide($form['wikicompare_protected']);
+        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+        unset($form_state['node']->wikicompare_protected);
+      }
+    } else {
+        //Hide the field in the form. We can't unset it, otherwise it display an error.
+        hide($form['wikicompare_support']);
+        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+        unset($form_state['node']->wikicompare_support);
+
+        //Hide the field in the form. We can't unset it, otherwise it display an error.
+        hide($form['wikicompare_protected']);
+        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+        unset($form_state['node']->wikicompare_protected);
+
+        //Hide the field in the form. We can't unset it, otherwise it display an error.
+        hide($form['wikicompare_proofs']);
+        //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
+        unset($form_state['node']->wikicompare_proofs);
     }
 
   }
