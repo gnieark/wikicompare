@@ -150,6 +150,13 @@ function wikicompare_node_schema($type) {
       'not null' => TRUE,
     );
     $schema['indexes']['sequence'] = array('sequence');
+    $schema['fields']['state'] = array(
+      'description' => 'The state of the node',
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+    );
+    $schema['indexes']['state'] = array('state');
   } else {
     $schema['fields']['feature_id'] = array(
       'description' => 'The feature id of the implementation node',
@@ -182,13 +189,6 @@ function wikicompare_node_schema($type) {
         'unsigned' => TRUE,
         'not null' => TRUE,
       );
-      $schema['fields']['state'] = array(
-        'description' => 'The state of the feature node',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-      );
-      $schema['indexes']['state'] = array('state');
       break;
     case 'implementation':
       $schema['fields']['support'] = array(
@@ -704,6 +704,24 @@ function wikicompare_node_install($type) {
     field_create_instance($instance);
 
     $instance = array(
+      'field_name' => 'wikicompare_state',
+      'entity_type' => 'node',
+      'bundle' => $type,
+      'label' => 'State',
+      'description' => 'TODO : State',
+      'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 'new',
+        ),
+      ),
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+
+    $instance = array(
       'field_name' => 'wikicompare_user_ids',
       'entity_type' => 'node',
       'bundle' => $type,
@@ -939,24 +957,6 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
     );
     field_create_instance($instance);
 
-
-    $instance = array(
-      'field_name' => 'wikicompare_state',
-      'entity_type' => 'node',
-      'bundle' => 'feature',
-      'label' => 'State',
-      'description' => 'TODO : State of the feature',
-      'required' => 1,
-      'default_value' => array(
-        0 => array(
-          'value' => 'new',
-        ),
-      ),
-      'widget' => array(
-        'type' => 'options_select',
-      ),
-    );
-    field_create_instance($instance);
   }
 
 
@@ -1048,6 +1048,7 @@ function wikicompare_uninstall() {
   field_delete_field('wikicompare_type');
   field_delete_field('wikicompare_guidelines');
   field_delete_field('wikicompare_weight');
+  field_delete_field('wikicompare_sequence');
   field_delete_field('wikicompare_state');
   field_delete_field('wikicompare_feature_id');
   field_delete_field('wikicompare_compared_id'); 

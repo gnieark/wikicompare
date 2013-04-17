@@ -432,6 +432,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_node_id = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
+          send_states_to_display = true;
           send_forbidden_nid = true;
           options.data.type = type;
           options.data.subaction = subaction;

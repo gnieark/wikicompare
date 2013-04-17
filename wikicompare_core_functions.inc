@@ -713,11 +713,22 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   $query->addField('n', 'nid', 'tnid');
   if ($type != 'implementation') {
     $query->addField('n', 'title', 'title');
+    $query->addField('n', 'sequence', 'sequence');
+    $query->addField('n', 'state', 'state');
     $query->addField('n', 'has_children', 'has_children');
     $query->addField('n', 'parent_id', 'parent_id');
     if ($type_nid == 'parent') {
       $query->condition('n.parent_id', $nids);
       $use_nids = false;
+      //We don't filter per state when we directly give the nids
+      $state = array('published-incomplete', 'published-submitted', 'published');
+      if (isset($settings['states']['draft'])) {
+        $state = array_merge($state, array('new', 'incomplete', 'submitted'));
+      }
+      if (isset($settings['states']['closed'])) {
+        $state = array_merge($state, array('rejected', 'desactivated'));
+      }
+      $query->condition('n.state', $state, 'in');
     } 
     $query->orderby('n.sequence, n.title');
   } else {
@@ -739,16 +750,6 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   if ($type == 'feature') {
     $query->addField('n', 'type', 'type');
     $query->addField('n', 'weight', 'weight');
-    $query->addField('n', 'state', 'state');
-    $state = array('published-incomplete', 'published-submitted', 'published');
-    if (isset($settings['states']['draft'])) {
-      $state = array_merge($state, array('new', 'incomplete', 'submitted'));
-    }
-    if (isset($settings['states']['closed'])) {
-      $state = array_merge($state, array('rejected', 'desactivated'));
-    }
-
-    $query->condition('n.state', $state, 'in');
   }
 
   if (isset($settings['fastedit_status'])) {

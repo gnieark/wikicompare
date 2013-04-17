@@ -237,7 +237,7 @@ function get_item_list_children_response($method = 'ajax') {
       if (!empty($_POST['fastedit_status'])) {
         $itemlist_settings['fastedit_status'] = $_POST['fastedit_status'];
       }
-      $nodes = request_db($type, array('fastedit_status' => $itemlist_settings['fastedit_status'], 'can_be_translated' => 1), 'parent', array($nid));
+      $nodes = request_db($type, array('fastedit_status' => $itemlist_settings['fastedit_status'], 'can_be_translated' => 1, 'states' => $_POST['states']), 'parent', array($nid));
 
 
       //Prepare the array to use as argument for the item list building function
@@ -491,7 +491,7 @@ function get_dialog_response($action, $type, $container, $nid){
 
 
   //Find all the features on the first level of the tree
-  $nodes = request_db($type);
+  $nodes = request_db($type, array('states' => array('draft' => 'draft', 'closed' => 'closed')));
 
   $output .= '<div id="initialize_selected_feature_dialog_ids">';
   if ($container == 'manual_selected_features') {
@@ -549,15 +549,16 @@ function select_dialog_response($method = 'ajax'){
 
     $hidden = '';
     if ($parent) {
-      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="' . $_POST['type'] . '_parent_' . $_POST['type'] . '[und][0][target_id]">';
+      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="wikicompare_parent_id[und][0][target_id]">';
     }
 
     $commands = array();
     $commands[] = ajax_command_html('#' . $_POST['container'], $parent->fulltitle);
-    $commands[] = ajax_command_html('#edit-' . $_POST['type'] . '-parent-' . $_POST['type'], $hidden);
+    $commands[] = ajax_command_html('#edit-wikicompare-parent-id', $hidden);
     $commands[] = ajax_command_replace('#parent_id', '<span id="parent_id" style="display:none;">' . $parent->nid . '</span>');
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
+dpm($page);
 
   //If javascript isn't enabled, we redirect to an error page.
   } else {
@@ -750,7 +751,7 @@ function make_cleaning_response($method = 'ajax') {
       $compareds = request_db('compared', array('can_be_translated' => 1), 'nids', $compared_ids);
     }
 
-    $in_db_compareds = request_db('compared');
+    $in_db_compareds = request_db('compared', array('states' => $_POST['states']));
     $in_db_compareds_ids = array();
     foreach ($in_db_compareds as $key => $compared) {
       $in_db_compareds_ids[$key] = $key;
@@ -777,6 +778,7 @@ function make_cleaning_response($method = 'ajax') {
           }
         }
       }
+
       if ((!in_array($compared[0], $in_db_compareds_ids)) && !isset($compared[1])) {
 
         $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
@@ -791,7 +793,7 @@ function make_cleaning_response($method = 'ajax') {
         $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
         break;
       }
-    }
+    } 
 
 
     foreach($compareds as $cid => $compared) {
@@ -813,7 +815,7 @@ function make_cleaning_response($method = 'ajax') {
 
       $features = array();
       if (!empty($feature_ids)) {
-        $features = request_db('feature', array('can_be_translated' => 1, 'states' => $_POST['states']), 'nids', $feature_ids);
+        $features = request_db('feature', array('can_be_translated' => 1), 'nids', $feature_ids);
       }
 
 
@@ -979,7 +981,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
     //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
     $checkbox_area = '';
     $img_link_to_node = '';
-    if ($itemlist_settings['checkbox_children']) {
+    if ($itemlist_settings['checkbox_children'] && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
       if ($itemlist_settings['checkbox_parent'] || ($node->has_children != 1)) {
         $checkbox_settings = array('element' => array(
           '#title' => $nid,
@@ -1228,8 +1230,13 @@ dpm($feature, 'feature');
 
 function wikicompare_table_render_compared($settings=array()) {
 
+  $db_settings = array('can_be_translated' => 1);
+  if (isset($settings['states'])) {
+    $db_settings['states'] = $settings['states'];
+  }
+
   //Find all the compared on the first level of the tree
-  $compareds = request_db('compared', array('can_be_translated' => 1));
+  $compareds = request_db('compared', $db_settings);
 
   
   $itemlist_settings = initialize_itemlist_settings('compared_main_table');

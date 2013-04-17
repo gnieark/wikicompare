@@ -75,13 +75,13 @@ dpm($node, 'insert test, pas bon si traduction');
       'title' => $node->title,
       'parent_id' => $parent_id,
       'sequence' => $node->wikicompare_sequence['und'][0]['value'],
+      'state' => $node->wikicompare_state['und'][0]['value'],
       'has_children' => 0,
   );
 
   if ($type == 'feature') {
     $fields['type'] = $node->wikicompare_type['und'][0]['value'];
     $fields['weight'] = $node->wikicompare_weight['und'][0]['value'];
-    $fields['state'] = $node->wikicompare_state['und'][0]['value'];
   }
 
   //Allow to insert other field from other modules. The $fields variable will be modified in other module by reference.
@@ -486,6 +486,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         }
         $fields['parent_id'] = $parent_id;
         $fields['sequence'] = $node_revision->wikicompare_sequence['und'][0]['value'];
+        $fields['state'] = $node_revision->wikicompare_state['und'][0]['value'];
 
         wikicompare_update_cache_users($node_revision->nid, $parent_id, $node_revision->type, $node_revision->vid);
 
@@ -503,7 +504,6 @@ function wikicompare_revisionapi($op, $node_revision) {
       if ($node_revision->type == 'feature') {
         $fields['type'] = $node_revision->wikicompare_type['und'][0]['value'];
         $fields['weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
-        $fields['state'] = $node_revision->wikicompare_state['und'][0]['value'];
       }
 
       //Update other fields from others modules
