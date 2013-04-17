@@ -656,12 +656,13 @@ dpm($_POST, 'post');
 
     $commands = array();
     $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared(array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'])));
-
+    $settings = array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
     if ($selected_feature_ids && !isset($_POST['reset'])) {
       $feature_array = get_recursive_data('feature', $selected_feature_ids, $fastedit_status);
-      $output = render_comparative_table($feature_array['tree'], $compared_columns_ids, array('fastedit_status' => $fastedit_status, 'computed' => 1, 'states' => $_POST['states']));
+      $settings['computed'] = 1;
+      $output = render_comparative_table($feature_array['tree'], $compared_columns_ids, $settings);
     } else {
-      $output = render_comparative_table(array(), $compared_columns_ids, array('fastedit_status' => $fastedit_status, 'states' => $_POST['states']));
+      $output = render_comparative_table(array(), $compared_columns_ids, $settings);
     }
 
 
@@ -1338,7 +1339,11 @@ dpm($features, 'features');
   $output .= '<tbody>';
 
   $output .= render_rows($feature_row_data, $fastedit_status);
-  $output .= '<tr id="feature_row_0"><td><a id="add_feature_link" href="?q=node/add/feature">Add</a>';
+  $colspan = '';
+  if (isset($settings['colspan'])) {
+    $colspan = 'colspan="' . $settings['colspan'] . '"';
+  }
+  $output .= '<tr id="feature_row_0"><td class="row_auto_colspan" ' . $colspan . '><a id="add_feature_link" href="?q=node/add/feature">Add</a>';
 
   if ($fastedit_status) {
     $feature = array(

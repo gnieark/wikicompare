@@ -207,7 +207,11 @@ dpm($_POST, 'form fastedit');
       } 
 
       if ($display_type == 'row_table') {
-        $output .= '<tr id="line_form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '"><td>';
+        $colspan = '';
+        if (isset($_POST['nb_compareds'])) {
+          $colspan = 'colspan="' . $_POST['nb_compareds'] . '"';
+        }
+        $output .= '<tr id="line_form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '"><td class="row_auto_colspan" ' . $colspan . '>';
       }
       
       $output .= '<form id="form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '">';

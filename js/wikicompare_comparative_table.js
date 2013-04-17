@@ -426,6 +426,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_states_to_display = false;
         send_forbidden_nid = false;
         send_container = false;
+        send_colspan = false;
+        auto_colspan = false;
         make_cleaning = false;
         
         if (action == 'expand_list_children') {
@@ -465,6 +467,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           manage_displayed_flag = true;
           send_features = true;
           make_cleaning = true;
+          auto_colspan = true;
         }
 
         if (action == 'select_dialog') {
@@ -489,12 +492,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_manual_selected_features = true;
           send_selected_needs = true;
           send_states_to_display = true;
+          send_colspan = true;
           make_cleaning = true;
         }
 
         if (action == 'reset_table') {
           send_compareds_columns = true;
           send_states_to_display = true;
+          send_colspan = true;
           options.data.reset = true;
         }
      
@@ -517,6 +522,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           
           send_type = true;
+          send_colspan = true;
           options.data.fastaction = subaction;
         }
      
@@ -733,6 +739,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.feature_ids = feature_ids;
         }
         
+        if (send_colspan == true) {
+          options.data.nb_compareds = $('.header_compared').length + 1;
+        }
+
         if (send_implementations == true) {
           //Recover all implementation displayed in the table to send their id to drupal
           var implementation_ids = new Array();
@@ -917,6 +927,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           
         }
+
+        if (auto_colspan == true) {
+          colspan = $('.header_compared').length + 1;
+          $('.row_auto_colspan').attr('colspan', colspan);
+        }
         
         if (make_cleaning == true) {
           $('#make_cleaning_link').click();
@@ -950,7 +965,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO dans edit et remove, centraliser les controles dans une function
 //TODO remplacer les if action par des case
 //TODO mettre les securité dans la fonction submit pour edit et remove
-//TODO ajuster les colspan automatiquement pour les line_fastedit
 //TODO remplacer drupal_render par render
 //TODO bouger l'initialisation des variables globales dans un endroit plus sur
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
@@ -965,7 +979,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer event_set par listener_set
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
-//TODO Quand on valide un formulaire, si statut est != published, cocher les cases status pour que l'enregistrement s'affiche quand même après la validation
 //TODO verifier que les commentaires sont ouvert quand on créé via form et via fastedit, avec tous les users. C'est ok pour form, mais pas fastedit
 //TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
