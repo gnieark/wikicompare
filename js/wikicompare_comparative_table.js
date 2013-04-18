@@ -981,7 +981,6 @@ alert('test');
 //TODO remplacer event_set par listener_set
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
-//TODO verifier que les commentaires sont ouvert quand on créé via form et via fastedit, avec tous les users. C'est ok pour form, mais pas fastedit
 //TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
 //TODO Split the javascript file en deux

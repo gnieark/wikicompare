@@ -359,13 +359,14 @@ function submit_fastedit_form_response($method = 'ajax'){
       switch ($fastaction) {
         case 'add':
           $node = new stdClass();
-          $node->uid = $GLOBALS['user']->uid;
           $node->type = $type;
           $node->language = language_default('language');
+          node_object_prepare($node);
           break;
         case 'edit':
           $node = node_load($_POST['node_id']);
           $node->revision = 1;
+          $node->comment = 2;
           break;
       }
 
