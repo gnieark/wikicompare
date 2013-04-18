@@ -330,8 +330,15 @@ function wikicompare_block_info_alter(&$blocks, $theme, $code_blocks) {
 
 function wikicompare_library() {
   $path = drupal_get_path('module', 'wikicompare');
+  $libraries['wikicompare_forms'] = array(
+    'title' => 'Wikicompare Forms',
+    'version' => '1.0',
+    'js' => array(
+       $path . "/js/wikicompare_forms.js" => array(),
+    ),
+  );
   $libraries['wikicompare_comparative_table'] = array(
-    'title' => 'Wikicompare',
+    'title' => 'Wikicompare Table',
     'version' => '1.0',
     'js' => array(
        $path . "/js/wikicompare_comparative_table.js" => array(),

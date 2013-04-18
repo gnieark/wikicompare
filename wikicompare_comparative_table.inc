@@ -25,6 +25,7 @@ dpm(variable_get('new_revisions_feature'));
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+  drupal_add_library('wikicompare', 'wikicompare_forms');
 /*
   //Find all the compared on the first level of the tree
   $res = request_db('compared', array('can_be_translated' => 1));
@@ -418,10 +419,10 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
       //Recover the detail of the compared we want to add
       $compared = request_db('compared', array('can_be_translated' => 1), 'nids', array($cid));
-
+dpm($compared, 'toggle test');
 
       //Add the header of the new column, with the compared detail
-      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;"><span class="compared_title_' . $cid . '">' . $compared[0]->title . '</span> ' . $cid . '</th>';
+      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;"><span class="compared_title_' . $cid . '">' . $compared[$cid]['data']->title . '</span> ' . $cid . '</th>';
 
       //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {

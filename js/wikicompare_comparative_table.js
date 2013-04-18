@@ -936,11 +936,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (make_cleaning == true) {
           $('#make_cleaning_link').click();
         }
+//test_override();
       }
 
       return ajax;
     }
-    
+
+    function test_override() {
+alert('test');
+    }    
     
     function remove_children_tree(node_id, link_prefix, children_prefix, computed) {
       $(children_prefix + node_id).each(function(index) {
