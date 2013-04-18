@@ -233,16 +233,40 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     //Dynamize the toogle fast edit link to display the elements add/edit/remove.
-    $('#toogle_fastedit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('#toogle_fastedit_link:not(.listener_set)').addClass('listener_set').each(function () {
+
+      $(this).click(function() {
+        if (fastedit_status == 0) {
+          //Set the global variable
+          fastedit_status = 1;
+        //If we are hidding the items
+        } else {
+          //Set the global variable
+          fastedit_status = 0;
+          $('.compared_add_link').remove();
+          $('.compared_edit_link').remove();
+          $('.compared_remove_link').remove();
+          $('.feature_add_link').remove();
+          $('.feature_edit_link').remove();
+          $('.feature_remove_link').remove();
+          $('.implementation_edit_link').remove();
+          $('.need_add_link').remove();
+          $('.need_edit_link').remove();
+          $('.need_remove_link').remove();
+        }
+        $('#make_cleaning_link').click();
+        return false;
+      });
 
 
+/*
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
 
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit'); */
 
     });
 
@@ -250,6 +274,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
     //Dynamize the compared add fastedit element.
     $('.fastedit_item:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
+
+
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 /*      
@@ -311,6 +337,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('.form_fastaction_cancel:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).click(function() {
+        $('.fastedit_item:.displayed').removeClass('displayed');
         $('#make_cleaning_link').click();
         //Block the page loading
         return false;
@@ -465,6 +492,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'show_fastedit_form') {
           send_node_id = true;
           manage_displayed_flag = true;
+
+          
+          $('.form_fastaction').remove();
 
           if ($('#' + link_id).hasClass('displayed')) {
             make_cleaning = true;
@@ -770,25 +800,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         if (action == 'toogle_fastedit') {
-          if (fastedit_status == 0) {
-            //Set the global variable
-            fastedit_status = 1;
-          //If we are hidding the items
-          } else {
-            //Set the global variable
-            fastedit_status = 0;
-            to_clean = true;
-            $('.compared_add_link').remove();
-            $('.compared_edit_link').remove();
-            $('.compared_remove_link').remove();
-            $('.feature_add_link').remove();
-            $('.feature_edit_link').remove();
-            $('.feature_remove_link').remove();
-            $('.implementation_edit_link').remove();
-            $('.need_add_link').remove();
-            $('.need_edit_link').remove();
-            $('.need_remove_link').remove();
-          }
+
         }
 
         
@@ -882,7 +894,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         if (make_cleaning == true) {
-          $('#make_cleaning_link').click();
+          //$('#make_cleaning_link').click();
         }
       }
 
@@ -914,14 +926,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO isoler le test ajax dans une fonction a part
 
 
+//TODO Finish moving toogle fastedit in cleaning function
 
 
-
-//TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
-//TODO Regenerate the fastedit item when cleaning
 //TODO In translation, mettre à jour le flag missing required field
 
-
+//TODO Remplacer fastedit par fastaction
 //TODO remplacer les if action par des case
 //TODO remplacer drupal_render par render
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
@@ -931,6 +941,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer display par un flag true, pour recuperer le keyword action
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
+//TODO Fastedit item ne sont plus des displayed, retirer toute mention
+
 
 //TODO Dans fastedit, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance

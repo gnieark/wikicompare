@@ -748,7 +748,7 @@ function make_cleaning_response($method = 'ajax') {
 
     $compareds = array();
     if (!empty($compared_ids)) {
-      $compareds = request_db('compared', array('can_be_translated' => 1), 'nids', $compared_ids);
+      $compareds = request_db('compared', array('fastedit_status' => $_POST['fastedit_status'], 'can_be_translated' => 1), 'nids', $compared_ids);
     }
 
     $in_db_compareds = request_db('compared', array('states' => $_POST['states']));
@@ -798,6 +798,17 @@ function make_cleaning_response($method = 'ajax') {
 
     foreach($compareds as $cid => $compared) {
       $commands[] = ajax_command_invoke('.compared_title_' . $cid, 'html', array($compared['data']->title));
+      if ($_POST['fastedit_status'] == 1) {
+        $commands[] = ajax_command_invoke('#fastaction_items_' . $cid, 'html', array(add_fastedit_items('compared' , $compared)));
+      }
+    }
+
+    if ($_POST['fastedit_status'] == 1) {
+      $compared = array(
+        'data' => new stdClass(),
+      );
+      $compared['data']->nid = 0;
+      $commands[] = ajax_command_invoke('#add_compared_link_fastaction', 'html', array(add_fastedit_items('compared' , $compared)));
     }
 
     //Allow others modules to modify the output
@@ -815,8 +826,9 @@ function make_cleaning_response($method = 'ajax') {
 
       $features = array();
       if (!empty($feature_ids)) {
-        $features = request_db('feature', array('can_be_translated' => 1), 'nids', $feature_ids);
+        $features = request_db('feature', array('fastedit_status' => $_POST['fastedit_status'], 'can_be_translated' => 1), 'nids', $feature_ids);
       }
+dpm($features, 'features_fastedit');
 
 
       $in_db_features = request_db('feature', array('states' => $_POST['states']));
@@ -870,15 +882,29 @@ function make_cleaning_response($method = 'ajax') {
         $commands[] = ajax_command_invoke('.feature_weight_' . $fid, 'html', array($feature['data']->weight));
         $commands[] = ajax_command_invoke('.feature_type_' . $fid, 'html', array($feature['data']->type));
         $commands[] = ajax_command_invoke('.feature_state_' . $fid, 'html', array($feature['data']->state));
+        if ($_POST['fastedit_status'] == 1) {
+          $commands[] = ajax_command_invoke('#fastaction_items_' . $fid, 'html', array(add_fastedit_items('feature' , $feature)));
+        }
+      }
+
+      if ($_POST['fastedit_status'] == 1) {
+        $feature = array(
+          'data' => new stdClass(),
+        );
+        $feature['data']->nid = 0;
+        $commands[] = ajax_command_invoke('#add_feature_link_fastaction', 'html', array(add_fastedit_items('feature' , $feature)));
       }
 
       $implementations = array();
-      if (!empty($_POST['compared_columns_ids']) && !empty($feature_ids)) {
-        $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_columns_ids'], $feature_ids);
+      if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
+        $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
       }
 
-      foreach($implementations as $nid => $implementation) {
-        $commands[] = ajax_command_replace('#implementation_' . $nid, render_implementation($implementation, $_POST['fastedit_status']));
+
+      foreach($implementations as $fid => $compareds_implementations) {
+        foreach ($compareds_implementations as $cid => $implementation) {
+          $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastedit_status']));
+        }
       }
 
 
@@ -903,6 +929,10 @@ function make_cleaning_response($method = 'ajax') {
     //Preparing the ajax commands to return to javascript
 
     $commands[] = ajax_command_invoke('.form_fastaction', 'remove', array());
+
+
+    //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+    $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -1033,9 +1063,11 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
       //Create the link. The html = True indicate that the title of the link contain html.
       $img_link_to_node = ' ' . l($img, 'node/' . $node->tnid, array('attributes' => array('id' => $type . '_node_link_' . $nid, 'class' => array($type . '_node_link')), 'html' => True));
 
+      $img_link_to_node .= '<span id="fastaction_items_' . $nid . '">';
       if ($itemlist_settings['fastedit_status'] == 1) {
-        $img_link_to_node .= add_fastedit_items($type, $node_array);
+        $img_link_to_node .=  add_fastedit_items($type, $node_array);
       }
+      $img_link_to_node .= '</span>';
     }
 
     if ($itemlist_settings['select_link']) {
@@ -1251,9 +1283,8 @@ function wikicompare_table_render_compared($settings=array()) {
   $output ="<div id='comparative_table_main_compared'>";
   //Render the item list
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
-  $output .= '<p><a id="add_compared_link" href="?q=node/add/compared">Add</a>';
-
-  
+  $output .= '<p><a id="add_compared_link" href="?q=node/add/compared">Add</a><span id="add_compared_link_fastaction">';
+ 
   if ($itemlist_settings['fastedit_status']) {
     $compared = array(
       'data' => new stdClass(),
@@ -1261,7 +1292,7 @@ function wikicompare_table_render_compared($settings=array()) {
     $compared['data']->nid = 0;
     $output .= add_fastedit_items('compared' , $compared);
   }
-  $output .= '</p>';
+  $output .= '</span></p>';
   $output .= '<div id="compared_children_0"></div>';
   $output .="</div>";
 
@@ -1342,7 +1373,7 @@ dpm($features, 'features');
   if (isset($settings['colspan'])) {
     $colspan = 'colspan="' . $settings['colspan'] . '"';
   }
-  $output .= '<tr id="feature_row_0"><td class="row_auto_colspan" ' . $colspan . '><a id="add_feature_link" href="?q=node/add/feature">Add</a>';
+  $output .= '<tr id="feature_row_0"><td class="row_auto_colspan" ' . $colspan . '><a id="add_feature_link" href="?q=node/add/feature">Add</a><span id="add_feature_link_fastaction">';
 
   if ($fastedit_status) {
     $feature = array(
@@ -1351,7 +1382,7 @@ dpm($features, 'features');
     $feature['data']->nid = 0;
     $output .= add_fastedit_items('feature' , $feature);
   }
-  $output .= '</td><tr>';
+  $output .= '</span></td><tr>';
   $output .= '</tbody>';
   $output .= '</table>';
 
@@ -1387,11 +1418,11 @@ function render_rows($feature_row_data, $fastedit_status) {
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $feature->tnid, array('attributes' => array('id' => 'feature_node_link_' . $fid, 'class' => array('feature_node_link')), 'html' => True));
+    $img_link_to_node .= '<span id="fastaction_items_' . $fid . '">';
     if ($fastedit_status == 1) {
-
       $img_link_to_node .= add_fastedit_items('feature', $feature_array); 
-
     }
+    $img_link_to_node .= '</span>';
 
     $title_title = '<span class="feature_title_' . $fid . '">' . $feature->title . '</span>';
     //If the feature has children, the feature name will become a link calling the callback function to display his children
@@ -1424,7 +1455,7 @@ function render_implementation($implementation_array, $feature_array, $fastedit_
 
   $implementation = $implementation_array['data'];
 
-  if (in_array($feature_array['data']->state, array('published-incomplete', 'published-submitted', 'published'))) {
+  if (in_array($feature_array['data']->state, array('published-incomplete', 'published-submitted', 'published')) || $feature_array == NULL) {
 
     //Create the image link to go to the node page
     $img = theme('image', array(
@@ -1434,9 +1465,12 @@ function render_implementation($implementation_array, $feature_array, $fastedit_
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
+    $img_link_to_node .= '<span id="fastaction_items_' . $implementation->nid . '">';
+dpm($fastedit_status, 'fastedit imple');
     if ($fastedit_status == 1) {
       $img_link_to_node .= add_fastedit_items('implementation', $implementation_array); 
     }
+    $img_link_to_node .= '</span>';
 
     $output = '<td id="implementation_' . $implementation->nid . '" class="implementation_cell ' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature->nid . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation->feature_id . '<br/>Compared : ' . $implementation->compared_id . '<br/>' . $implementation->percent . '%</td>';
 

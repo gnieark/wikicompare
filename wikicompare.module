@@ -275,7 +275,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-
+/*
   $items['toogle_fastedit_callback'] = array(
     'page callback' => 'toggle_fastedit_response',
     'access callback' => 'user_access',
@@ -285,7 +285,7 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table_fastedit.inc',
     'delivery callback' => 'ajax_deliver',
   );
-
+*/
   $items['get_fastedit_form_callback'] = array(
     'page callback' => 'get_fastedit_form_response',
     'access callback' => 'user_access',

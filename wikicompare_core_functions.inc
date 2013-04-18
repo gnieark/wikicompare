@@ -773,6 +773,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
       $res[$record->nid]['data'] = $record;
       $res[$record->nid]['children'] = array();
     } else {
+dpm($record, 'record imple');
       $res[$record->feature_id][$record->compared_id]['data'] = $record;
     }
 

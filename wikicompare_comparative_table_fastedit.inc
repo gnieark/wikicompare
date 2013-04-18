@@ -14,6 +14,7 @@ function toggle_fastedit_response($method = 'ajax'){
     //If we want to displayed the fastedit items
     if ($_POST['fastedit_status'] == false) {
 
+/*
       $compareds = array();
       if (!empty($_POST['compared_ids'])) {
 
@@ -25,20 +26,20 @@ function toggle_fastedit_response($method = 'ajax'){
       foreach($compareds as $nid => $compared) {
 
         $output = add_fastedit_items('compared' , $compared);
-        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
-        $commands[] = ajax_command_invoke('#compared_node_link_' . $nid, 'after', array($output));
+
+        $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array($output));
         //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
         $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
 
-      }
-
+      } */
+/*
       $compared = array(
         'data' => new stdClass(),
       );
       $compared['data']->nid = 0;
-      $commands[] = ajax_command_invoke('#add_compared_link', 'after', array(add_fastedit_items('compared' , $compared)));
-
-
+      $commands[] = ajax_command_invoke('#add_compared_link', 'after', array(add_fastedit_items('compared' , $compared))); 
+*/
+/*
       $features = array();
       if (!empty($_POST['feature_ids'])) {
 
@@ -51,16 +52,17 @@ function toggle_fastedit_response($method = 'ajax'){
 
         $output = add_fastedit_items('feature', $feature);
         //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
-        $commands[] = ajax_command_invoke('#feature_node_link_' . $nid, 'after', array($output));
+        $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array($output));
 
-      }
-
+      } */
+/*
       $feature = array(
         'data' => new stdClass(),
       );
       $feature['data']->nid = 0;
-      $commands[] = ajax_command_invoke('#add_feature_link', 'after', array(add_fastedit_items('feature' , $compared)));
-      
+      $commands[] = ajax_command_invoke('#add_feature_link', 'after', array(add_fastedit_items('feature' , $feature)));
+ */     
+/*
       $implementations = array();
       if (!empty($_POST['implementation_ids'])) {
 
@@ -71,12 +73,12 @@ function toggle_fastedit_response($method = 'ajax'){
 
           $output = add_fastedit_items('implementation', $implementation);
           //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
-          $commands[] = ajax_command_invoke('#implementation_node_link_' . $nid, 'after', array($output));
+          $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array($output));
 
         }
 
       }
-
+*/
       
 
       //Allow others modules to modify the output
@@ -484,6 +486,7 @@ function submit_fastedit_form_response($method = 'ajax'){
           $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
         }
 
+        $commands[] = ajax_command_invoke('.fastedit_item:.displayed', 'removeClass', array('displayed'));
         $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
 
       } else {
