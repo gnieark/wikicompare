@@ -64,7 +64,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     //Dynamize the checkbox so it add the item in the return and mark the parent with css class
-    $('.itemlist_checkbox:not(.event_set)').addClass('event_set').each(function () {
+    $('.itemlist_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
       //Recover the node_id
       var patt = /[0-9]+/g;
       var node_id = patt.exec($(this).attr('id'))[0];
@@ -88,7 +88,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       });
     });
 
-    $('#initialize_selected_feature_dialog_ids:not(.event_set)').addClass('event_set').each(function () {
+    $('#initialize_selected_feature_dialog_ids:not(.listener_set)').addClass('listener_set').each(function () {
 
         if ($(this).text() == 'manual') {
           selected_feature_dialog_ids = manual_selected_feature_ids;
@@ -111,7 +111,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'select_dialog', type);
     });
     
-    $('#submit_dialog_button:not(.event_set)').addClass('event_set').each(function () {
+    $('#submit_dialog_button:not(.listener_set)').addClass('listener_set').each(function () {
       $('#' + $(this).attr('id')).click(function() {
         $('#submit_dialog_link').click();
         return false;
@@ -127,7 +127,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_dialog');
     });
 
-    $('.clear_link:not(.event_set)').addClass('event_set').each(function () {
+    $('.clear_link:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).click(function() {
         type = $(this).attr('type');
         $('#form_selected_parent').html('No parent');
@@ -150,7 +150,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
-    $('#compute_table_button:not(.event_set)').addClass('event_set').each(function () {
+    $('#compute_table_button:not(.listener_set)').addClass('listener_set').each(function () {
       $('#' + $(this).attr('id')).click(function() {
         $('#compute_table_link').click();
         return false;
@@ -221,7 +221,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     //Dynamize the compared checkbox so it call the compared checkbox link on click
-    $('.compared_checkbox:not(.event_set)').addClass('event_set').each(function () {
+    $('.compared_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
       //Recover the compared_id to find later the checkbox_link id
       var patt = /[0-9]+/g;
       var compared_id = patt.exec($(this).attr('id'));
@@ -309,7 +309,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       return false;
     });
 
-    $('.form_fastaction_cancel:not(.event_set)').addClass('event_set').each(function () {
+    $('.form_fastaction_cancel:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).click(function() {
         $('#make_cleaning_link').click();
         //Block the page loading
@@ -478,7 +478,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'submit_fastedit_form') {
           send_node_id = true;
           send_type = true;
-          make_cleaning = true;
           options.data.fastaction = subaction;
           
           if (type != 'implementation') {
@@ -885,15 +884,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (make_cleaning == true) {
           $('#make_cleaning_link').click();
         }
-//test_override();
       }
 
       return ajax;
     }
-
-    function test_override() {
-alert('test');
-    }    
     
     function remove_children_tree(node_id, link_prefix, children_prefix, computed) {
       $(children_prefix + node_id).each(function(index) {
@@ -915,25 +909,32 @@ alert('test');
 };
 
 
+
+
+//TODO isoler le test ajax dans une fonction a part
+
+
+
+
+
+//TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
+//TODO Regenerate the fastedit item when cleaning
+//TODO In translation, mettre à jour le flag missing required field
+
+
 //TODO remplacer les if action par des case
 //TODO remplacer drupal_render par render
-//TODO bouger l'initialisation des variables globales dans un endroit plus sur
-//TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
-//TODO isoler le test ajax dans une fonction a part
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
-//TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
+//TODO bouger l'initialisation des variables globales dans un endroit plus sur
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
-//TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 //TODO remplacer display par un flag true, pour recuperer le keyword action
-//TODO Dans les fastaction, separer les class en type et action
-//TODO remplacer event_set par listener_set
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
-//TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
-//TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
 
-
 //TODO Dans fastedit, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
+//TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Code quality : Split the javascript file in three : main for forms (defining ajax function), one for comparative table and one for needs. The last two will override some function in the main file, using a hook system.
+//TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
+//TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 })(jQuery);

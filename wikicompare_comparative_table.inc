@@ -23,7 +23,7 @@ function wikicompare_comparative_table($form_state) {
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
-  drupal_add_library('wikicompare', 'wikicompare_forms');
+  
 /*
   //Find all the compared on the first level of the tree
   $res = request_db('compared', array('can_be_translated' => 1));
@@ -902,7 +902,7 @@ function make_cleaning_response($method = 'ajax') {
 
     //Preparing the ajax commands to return to javascript
 
-    $commands[] = ajax_command_invoke('.form_fastedit', 'remove', array());
+    $commands[] = ajax_command_invoke('.form_fastaction', 'remove', array());
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -1402,7 +1402,11 @@ function render_rows($feature_row_data, $fastedit_status) {
     }
 
     //Creating the first cell of the row, containing the feature details
-    $output .= '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="feature_weight_' . $fid . '">' .  $feature->weight . '</span><br/> Type : <span class="feature_type_' . $fid . '">' .  $feature->type . '</span><br/> State : <span class="feature_state_' . $fid . '">' .  $feature->state . '</span></td>';
+    $output .= '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="feature_weight_' . $fid . '">' .  $feature->weight . '</span>';
+    if ($feature->has_children == 1){
+      $output .= '<br/> Type : <span class="feature_type_' . $fid . '">' .  $feature->type . '</span>';
+    }
+    $output .= '<br/> State : <span class="feature_state_' . $fid . '">' .  $feature->state . '</span></td>';
 
     //Add a column for each column in the table
     foreach ($feature_array['implementations'] as $implementation) {

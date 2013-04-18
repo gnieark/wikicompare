@@ -263,7 +263,7 @@ function get_fastedit_form_response($method = 'ajax'){
 
       }
       
-
+      $output .= '<div id="form_fastaction_error_zone"></div>';
 
       $output .= '<input id="form_fastaction_submit_' . $nid . '" type="submit" value="Confirm" class="form_fastaction_submit button"/>';
       $submit_link = array(
@@ -273,7 +273,7 @@ function get_fastedit_form_response($method = 'ajax'){
         '#id' => 'form_fastaction_submit_link_' . $nid ,
         '#attributes' => array(
           'class' => 'form_fastaction_submit_link',
-//          'style' => 'display:none',
+          'style' => 'display:none',
           'type' => $type,
           'action' => $fastaction,
         )
@@ -355,9 +355,12 @@ function submit_fastedit_form_response($method = 'ajax'){
     if ($fastaction == 'remove' && !isset($from_db_record['no-remove'])) {
 
       node_delete($_POST['node_id']);
+      $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node is correctly removed');
     
     } elseif (!isset($from_db_record['no-edit'])) {
   
+      $missing_field = FALSE;
+
       switch ($fastaction) {
         case 'add':
           $node = new stdClass();
@@ -379,7 +382,11 @@ function submit_fastedit_form_response($method = 'ajax'){
       }    
 
       if ($type != 'implementation') {
-        $node->title = $_POST['title'];
+        if ($_POST['title'] != NULL) {
+          $node->title = $_POST['title'];
+        } else {
+          $missing_field = TRUE;
+        }
 
         foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
           $function = $module . '_wikicompare_fastedit_submit_element';
@@ -393,8 +400,17 @@ function submit_fastedit_form_response($method = 'ajax'){
           
         }
 
-        $node->wikicompare_sequence['und'][0]['value'] = $_POST['sequence'];  
-        $node->wikicompare_state['und'][0]['value'] = $_POST['state'];  
+        if ($_POST['sequence'] != NULL) {
+          $node->wikicompare_sequence['und'][0]['value'] = $_POST['sequence'];  
+        } else {
+          $missing_field = TRUE;
+        }
+
+        if ($_POST['state'] != NULL) {
+          $node->wikicompare_state['und'][0]['value'] = $_POST['state'];  
+        } else {
+          $missing_field = TRUE;
+        }
 
       }
 
@@ -411,7 +427,11 @@ function submit_fastedit_form_response($method = 'ajax'){
       }
       
       if ($type == 'feature') {
-        $node->wikicompare_type['und'][0]['value'] = $_POST['feature_type'];
+        if ($_POST['feature_type'] != NULL) {
+          $node->wikicompare_type['und'][0]['value'] = $_POST['feature_type'];
+        } else {
+          $missing_field = TRUE;
+        }
         
 /*  TODO When wysiwyg will work
         $node->wikicompare_guidelines['und'][0]['value'] = $_POST['guidelines'];
@@ -422,13 +442,21 @@ function submit_fastedit_form_response($method = 'ajax'){
         }
 */
         
-        $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];        
+        if ($_POST['weight'] != NULL) {
+          $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];        
+        } else {
+          $missing_field = TRUE;
+        }
         
         
       }
       
       if ($type == 'implementation') {
-        $node->wikicompare_support['und'][0]['value'] = $_POST['support'];
+        if ($_POST['support'] != NULL) {
+          $node->wikicompare_support['und'][0]['value'] = $_POST['support'];
+        } else {
+          $missing_field = TRUE;
+        }
       }
 
       foreach (module_implements('wikicompare_comparative_table_fastedit_submit') as $module) {
@@ -444,18 +472,27 @@ function submit_fastedit_form_response($method = 'ajax'){
       $node->log = $_POST['revision'];
 
 
+      if ($missing_field == FALSE) {
 
-
-      node_save($node);
+        node_save($node);
     
-      _revisioning_publish_latest_revision($node);
+        _revisioning_publish_latest_revision($node);
+ 
+        if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
+          $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
+        } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {
+          $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
+        }
 
-      if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
-        $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
-      } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {
-        $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
+        $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
+
+      } else {
+        $commands[] = ajax_command_html('#form_fastaction_error_zone', 'Some required fields are missing.');
       }
+
       
+    } else {
+      $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node was modified by someone else before your confirmation');
     }
 
 

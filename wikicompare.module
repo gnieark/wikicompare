@@ -330,13 +330,7 @@ function wikicompare_block_info_alter(&$blocks, $theme, $code_blocks) {
 
 function wikicompare_library() {
   $path = drupal_get_path('module', 'wikicompare');
-  $libraries['wikicompare_forms'] = array(
-    'title' => 'Wikicompare Forms',
-    'version' => '1.0',
-    'js' => array(
-       $path . "/js/wikicompare_forms.js" => array(),
-    ),
-  );
+
   $libraries['wikicompare_comparative_table'] = array(
     'title' => 'Wikicompare Table',
     'version' => '1.0',
@@ -550,6 +544,7 @@ dpm($form_state['node']);
         '#type' => 'textfield',
         '#title' => t('Sequence'),
         '#value' => 1,
+        '#required' => TRUE,
         '#element_validate' => array('element_validate_integer'),
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_sequence_' . $nid,
         '#attributes' => array(
@@ -667,6 +662,7 @@ dpm($form_state['node']);
       $support_field = array(
         '#type' => 'select',
         '#title' => t('Support'),
+        '#required' => TRUE,
         '#options' => array(
           0 => 'Unsupported',
           1 => 'Supported',
@@ -693,6 +689,7 @@ dpm($form_state['node']);
       $type_field = array(
         '#type' => 'select',
         '#title' => t('Type'),
+        '#required' => TRUE,
         '#options' => array(
           'parent-weighted-average' => 'Parent Feature - Weighted Average',
           'parent-highest-percentage' => 'Parent Feature - Highest Percentage',
@@ -753,6 +750,7 @@ dpm($form_state['node']);
       $weight_field = array(
         '#type' => 'textfield',
         '#title' => t('Weight'),
+        '#required' => TRUE,
         '#value' => $weight_default,
         '#element_validate' => array('element_validate_integer_positive_or_null'),
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_weight_' . $nid,
@@ -786,6 +784,7 @@ dpm($form_state['node']);
       $state_field = array(
         '#type' => 'select',
         '#title' => t('State'),
+        '#required' => TRUE,
         '#options' => wikicompare_state_get_options($nid, 'new'),
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_state_' . $nid,
         '#attributes' => array(
