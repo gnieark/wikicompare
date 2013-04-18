@@ -252,7 +252,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
-      
+/*      
       if ($(this).hasClass('compared_add_link')) {
         type = 'compared';
         subaction = 'add';
@@ -283,59 +283,36 @@ Drupal.behaviors.WikicompareComparativeTable = {
       } else if ($(this).hasClass('need_remove_link')) {
         type = 'need';
         subaction = 'remove';
-      }
+      } */
+
+      var type = $(this).attr('type');
+      var action = $(this).attr('action');
 
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, subaction);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, action);
     });
     
+/*
     $('.form_fastedit').submit(function () {
-      //Recover the compared_id by using a regular expression on the compared_link
-      var patt = /[0-9]+/g;
-      var node_id = patt.exec($(this).attr('id'));
       
-      if ($(this).hasClass('form_compared_fastadd')) {
-        type = 'compared';
-        subaction = 'add';
-      } else if ($(this).hasClass('form_compared_fastedit')) {
-        type = 'compared';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_compared_fastremove')) {
-        type = 'compared';
-        subaction = 'remove';
-      } else if ($(this).hasClass('form_feature_fastadd')) {
-        type = 'feature';
-        subaction = 'add';
-      } else if ($(this).hasClass('form_feature_fastedit')) {
-        type = 'feature';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_feature_fastremove')) {
-        type = 'feature';
-        subaction = 'remove';
-      } else if ($(this).hasClass('form_implementation_fastedit')) {
-        type = 'implementation';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_need_fastadd')) {
-        type = 'need';
-        subaction = 'add';
-      } else if ($(this).hasClass('form_need_fastedit')) {
-        type = 'need';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_need_fastremove')) {
-        type = 'need';
-        subaction = 'remove';
-      }
-      
-      $('#form_' + type + '_fast' + subaction + '_submit_link_' + node_id).click();
+      $('#form_fastaction_submit_link').click();
       //Block the page loading
       return false;
-    });
+    }); */
        
+     $('.form_fastaction').submit(function () {
+      var patt = /[0-9]+/g;
+      var node_id = patt.exec($(this).attr('id'));
 
-    $('.fastform_cancel_button:not(.event_set)').addClass('event_set').each(function () {
+      $('#form_fastaction_submit_link_' + node_id).click();
+      return false;
+    });
+
+    $('.form_fastaction_cancel:not(.event_set)').addClass('event_set').each(function () {
       $(this).click(function() {
         $('#make_cleaning_link').click();
+        //Block the page loading
         return false;
       });
     }); 
@@ -343,45 +320,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
     
     
     //Dynamize the compared add fastedit submit link.
-    $('.form_fastedit_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('.form_fastaction_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
-      if ($(this).hasClass('form_compared_fastadd_submit_link')) {
-        type = 'compared';
-        subaction = 'add';
-      } else if ($(this).hasClass('form_compared_fastedit_submit_link')) {
-        type = 'compared';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_compared_fastremove_submit_link')) {
-        type = 'compared';
-        subaction = 'remove';
-      } else if ($(this).hasClass('form_feature_fastadd_submit_link')) {
-        type = 'feature';
-        subaction = 'add';
-      } else if ($(this).hasClass('form_feature_fastedit_submit_link')) {
-        type = 'feature';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_feature_fastremove_submit_link')) {
-        type = 'feature';
-        subaction = 'remove';
-      } else if ($(this).hasClass('form_implementation_fastedit_submit_link')) {
-        type = 'implementation';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_need_fastadd_submit_link')) {
-        type = 'need';
-        subaction = 'add';
-      } else if ($(this).hasClass('form_need_fastedit_submit_link')) {
-        type = 'need';
-        subaction = 'edit';
-      } else if ($(this).hasClass('form_need_fastremove_submit_link')) {
-        type = 'need';
-        subaction = 'remove';
-      }
-      
+
+      var type = $(this).attr('type');
+      var action = $(this).attr('action');
+
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', type, subaction);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', type, action);
     });
 
     
@@ -391,7 +340,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var patt = /[0-9]+/g;
       var node_id = patt.exec(link_id);
 
-    
+  
       //Configure the ajax event
       var element_settings = {};
       element_settings.progress = { 'type': 'throbber' };
@@ -409,7 +358,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.beforeSerialize = function (element, options) {  
         //We remove all hidded element so they can't perturb the computation
         $('.to_remove').remove();
-        
+
         options.data.fastedit_status = fastedit_status;
         
         manage_displayed_flag = false;
@@ -983,7 +932,8 @@ alert('test');
 //TODO pour les fastedit, rajouter le type et le fastaction comme attribut du lien, comme on a fait pour clear
 //TODO Ajouter les required dans les fastedit. Gérer le cas quand un champ est manquant
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
-//TODO Split the javascript file en deux
+
 
 //TODO Dans fastedit, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
+//TODO Code quality : Split the javascript file in three : main for forms (defining ajax function), one for comparative table and one for needs. The last two will override some function in the main file, using a hook system.
 })(jQuery);

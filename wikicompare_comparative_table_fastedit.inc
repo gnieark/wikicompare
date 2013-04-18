@@ -125,7 +125,7 @@ function add_fastedit_items($type, $node_array){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_edit_link')), 'html' => True));
+      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_edit_link'), 'type' => $type, 'action' => 'edit'), 'html' => True));
       $output .= $img_link_to_edit;
     }
   
@@ -137,7 +137,7 @@ function add_fastedit_items($type, $node_array){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_add_link')), 'html' => True));
+    $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_add_link'), 'type' => $type, 'action' => 'add'), 'html' => True));
     $output .= $img_link_to_add;
 
 
@@ -160,7 +160,7 @@ function add_fastedit_items($type, $node_array){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_edit_link')), 'html' => True));
+      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_edit_link'), 'type' => $type, 'action' => 'edit'), 'html' => True));
       $output .= $img_link_to_edit;
 
       if (!isset($node_array['no-remove'])) {
@@ -171,7 +171,7 @@ function add_fastedit_items($type, $node_array){
           'height' => '100%',
         ));
         //Create the link. The html = True indicate that the title of the link contain html.
-        $img_link_to_remove = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_remove_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_remove_link')), 'html' => True));
+        $img_link_to_remove = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_remove_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_remove_link'), 'type' => $type, 'action' => 'remove'), 'html' => True));
         $output .= $img_link_to_remove;
       }
     }
@@ -211,10 +211,10 @@ function get_fastedit_form_response($method = 'ajax'){
         if (isset($_POST['nb_compareds'])) {
           $colspan = 'colspan="' . $_POST['nb_compareds'] . '"';
         }
-        $output .= '<tr id="line_form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '"><td class="row_auto_colspan" ' . $colspan . '>';
+        $output .= '<tr id="form_fastaction_' . $nid . '" class="form_fastaction"><td class="row_auto_colspan" ' . $colspan . '>';
       }
       
-      $output .= '<form id="form_' . $type . '_fast' . $fastaction . '_'. $nid . '" class="form_fastedit form_'. $type . '_fast' . $fastaction . '">';
+      $output .= '<form id="form_fastaction_' . $nid . '" class="form_fastaction">';
       
       
     
@@ -265,19 +265,21 @@ function get_fastedit_form_response($method = 'ajax'){
       
 
 
-      $output .= '<input id="form_'. $type . '_fast' . $fastaction . '_submit_'. $nid . '" type="submit" value="Confirm" class="form_' . $type . '_fast' . $fastaction . '_submit button"/>';
+      $output .= '<input id="form_fastaction_submit_' . $nid . '" type="submit" value="Confirm" class="form_fastaction_submit button"/>';
       $submit_link = array(
         '#type' => 'link',
         '#title' => 'submit',
         '#href' => 'submit_fastedit_form_callback/nojs/',
-        '#id' => 'form_' . $type . '_fast' . $fastaction . '_submit_link_' . $nid,
+        '#id' => 'form_fastaction_submit_link_' . $nid ,
         '#attributes' => array(
-          'class' => array('form_fastedit_submit_link form_' . $type . '_fast' . $fastaction . '_submit_link'),
-          'style' => 'display:none',
+          'class' => 'form_fastaction_submit_link',
+//          'style' => 'display:none',
+          'type' => $type,
+          'action' => $fastaction,
         )
       );
       $output .= drupal_render($submit_link);
-      $output .= '<input id="form_' . $type . '_fast' . $fastaction . '_cancel_'. $nid . '" type="button" value="Cancel" class="fastform_cancel_button button"/>';
+      $output .= '<input id="form_fastaction_cancel_ ' . $nid . '" type="button" value="Cancel" class="form_fastaction_cancel button"/>';
       $output .= '</form>';
       
       if ($display_type == 'row_table') {
