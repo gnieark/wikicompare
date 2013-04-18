@@ -966,9 +966,7 @@ alert('test');
 };
 
 
-//TODO dans edit et remove, centraliser les controles dans une function
 //TODO remplacer les if action par des case
-//TODO mettre les securité dans la fonction submit pour edit et remove
 //TODO remplacer drupal_render par render
 //TODO bouger l'initialisation des variables globales dans un endroit plus sur
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan

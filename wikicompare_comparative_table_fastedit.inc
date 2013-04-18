@@ -343,11 +343,18 @@ function submit_fastedit_form_response($method = 'ajax'){
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
-    if ($fastaction == 'remove') {
+    if ($_POST['node_id']) {
+      $from_db = request_db($type, array('fastedit' => 1), 'nids', array($_POST['node_id']));
+      $from_db_record = $from_db[$_POST['node_id']];
+    }
+
+    $commands = array();
+
+    if ($fastaction == 'remove' && !isset($from_db_record['no-remove'])) {
 
       node_delete($_POST['node_id']);
     
-    } else {
+    } elseif (!isset($from_db_record['no-edit'])) {
   
       switch ($fastaction) {
         case 'add':
@@ -377,15 +384,9 @@ function submit_fastedit_form_response($method = 'ajax'){
         }
 
         if ($_POST['parent_id'] != 0) {
-//          switch ($type) {
-//            case 'compared':
+
               $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
               $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-//              break;
-//            case 'feature':
-//              $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
-//              $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-//              break;
           
         }
 
@@ -394,11 +395,12 @@ function submit_fastedit_form_response($method = 'ajax'){
 
       }
 
-        
+/*  TODO When wysiwyg will work
       $node->body['und'][0] = array(
         'value' => $_POST['description'],
         'format' => 'full_html',
       );
+*/
 
       foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
         $function = $module . '_wikicompare_fastedit_submit_element';
@@ -408,12 +410,14 @@ function submit_fastedit_form_response($method = 'ajax'){
       if ($type == 'feature') {
         $node->wikicompare_type['und'][0]['value'] = $_POST['feature_type'];
         
+/*  TODO When wysiwyg will work
         $node->wikicompare_guidelines['und'][0]['value'] = $_POST['guidelines'];
         $node->wikicompare_guidelines['und'][0]['format'] = 'full_html';
         foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
           $function = $module . '_wikicompare_fastedit_submit_element';
           $function($tnode, $_POST, 'wikicompare_guidelines', 'guidelines');
         }
+*/
         
         $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];        
         
@@ -436,23 +440,22 @@ function submit_fastedit_form_response($method = 'ajax'){
       
       $node->log = $_POST['revision'];
 
-dpm($node, 'node final');
+
 
 
       node_save($node);
     
       _revisioning_publish_latest_revision($node);
+
+      if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
+        $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
+      } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {
+        $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
+      }
       
     }
 
-    //We return nothing, everything is managed on the javascript side
-    $commands = array();
 
-    if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
-      $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
-    } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {
-      $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
-    }
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
     
