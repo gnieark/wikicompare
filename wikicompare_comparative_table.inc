@@ -483,16 +483,18 @@ dpm($feature, 'feature');
 }
 
 
-function get_dialog_response($action, $type, $container, $nid){
+function get_dialog_response($action, $type, $container, $nid, $container_autocomplete, $container_id){
 
 
+
+dpm('testtest');
   $output = t("<div id='dialog-content'>");
 
 
   //Find all the features on the first level of the tree
   $nodes = request_db($type, array('states' => array('draft' => 'draft', 'closed' => 'closed')));
 
-  $output .= '<div id="initialize_selected_feature_dialog_ids">';
+  $output .= '<div id="initialize_selected_feature_dialog_ids" style="display:none;">';
   if ($container == 'manual_selected_features') {
     $output .= 'manual';
   } else {
@@ -501,7 +503,8 @@ function get_dialog_response($action, $type, $container, $nid){
   $output .= '</div>';
   $output .= '<div id="dialog_type" style="display:none;">' . $type . '</div>';
   $output .= '<div id="select_container" style="display:none;">' . $container . '</div>';
-  
+  $output .= '<div id="select_container_autocomplete" style="display:none;">' . $container_autocomplete . '</div>';
+  $output .= '<div id="select_container_id" style="display:none;">' . $container_id . '</div>';
 
   $itemlist_settings = initialize_itemlist_settings($action);
 
@@ -548,13 +551,15 @@ function select_dialog_response($method = 'ajax'){
 
     $hidden = '';
     if ($parent) {
-      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="wikicompare_parent_id[und][0][target_id]">';
+      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container_autocomplete']) . '[und][0][target_id]">';
+/*
+      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="wikicompare_parent_id[und][0][target_id]">';*/
     }
 
     $commands = array();
     $commands[] = ajax_command_html('#' . $_POST['container'], $parent->fulltitle);
-    $commands[] = ajax_command_html('#edit-wikicompare-parent-id', $hidden);
-    $commands[] = ajax_command_replace('#parent_id', '<span id="parent_id" style="display:none;">' . $parent->nid . '</span>');
+    $commands[] = ajax_command_html('#edit-' . $_POST['container_autocomplete'], $hidden);
+    $commands[] = ajax_command_html('#' . $_POST['container_id'], $parent->nid);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 dpm($page);

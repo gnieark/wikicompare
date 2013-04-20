@@ -129,14 +129,20 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('.clear_link:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).click(function() {
-        type = $(this).attr('type');
         $('#form_selected_parent').html('No parent');
-        $('#edit-' + type + '-parent-' + type).html('<input type="text" size="60" value="" name="' + type + '_parent_' + type + '[und][0][target_id]">');
+        $('#edit-wikicompare-parent-id').html('<input type="text" size="60" value="" name="wikicompare_parent_id[und][0][target_id]">');
         $('#parent_id').empty();
         return false;
       });
     });
 
+    $('.clear_link_inherit:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        $('#form_selected_inherit').html('No inherited compared');
+        $('#edit-wikicompare-inherit-compared-id').html('<input type="text" size="60" value="" name="wikicompare-inherit-compared-id[und][0][target_id]">');
+        return false;
+      });
+    });
 
 
     //Ajaxify the compute table link
@@ -447,9 +453,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'select_dialog') {
-           send_node_id = true;
-           send_type = true;
-           send_container = true;
+          send_node_id = true;
+          send_type = true;
+          send_container = true;
+        
+          options.data.container_autocomplete = $('#select_container_autocomplete').text();
+          options.data.container_id = $('#select_container_id').text();
         }
 
         if (action == 'submit_dialog') {
@@ -519,7 +528,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           options.data.description = $('#form_' + type + '_fast' + subaction + '_description_' + node_id).val();
           options.data.description_translation = $('#form_' + type + '_fast' + subaction + '_description_' + node_id + '_translation').val();
-          
+          if (type == 'compared') {
+            options.data.inherit_id = $('#inherit_id').text();
+          }
           if (type == 'feature') {
             options.data.feature_type = $('#form_' + type + '_fast' + subaction + '_type_' + node_id).val();
             options.data.guidelines = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id).val();
@@ -926,9 +937,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO isoler le test ajax dans une fonction a part
 
 
-//TODO Finish moving toogle fastedit in cleaning function
-
-
+//TODO in inherit compared, verifier que la mise à jour du champ use_from a l'installation ne pose pas de probleme
 //TODO In translation, mettre à jour le flag missing required field
 
 //TODO Remplacer fastedit par fastaction

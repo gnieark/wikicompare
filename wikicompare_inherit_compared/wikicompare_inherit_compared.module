@@ -1,5 +1,64 @@
 <?php
 
+function wikicompare_inherit_compared_modify_form(&$form, &$output, $form_type, $node) {
+dpm('test');
+  if ($node->type == 'compared') {
+
+    $title = 'No inherited compared';
+    $inherit_id = 0;
+    if (isset($node->wikicompare_inherit_compared_id['und'])) {
+      $inherit_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
+      $res = get_recursive_data('compared', array($inherit_id));
+      $title = $res['data'][$inherit_id]['data']->fulltitle;
+    }
+
+
+    $select_inherit_link = array(
+      'text' => 'Select inherited compared',
+      'title' => 'Select inherited compared',
+      'selector' => 'dialog-content',
+      'path' => 'get_dialog_callback/select_simple_dialog/compared/form_selected_inherit/' . $node->nid . '/wikicompare-inherit-compared-id/inherit_id',
+    );
+    $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $node->type)));
+
+    if ($form_type == 'form') {
+
+      $form['container_selected_inherit'] = array(
+        'title' => array('#markup' => $title),
+        '#type' => 'container',
+        '#id' => 'form_selected_inherit',
+        '#weight' => -3,
+        '#suffix' => '<p>' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>'
+  
+      );
+      hide($form['wikicompare_inherit_compared_id']);
+    }
+
+    if ($form_type == 'fastedit') {
+      $output .= '<p><span id="form_selected_inherit">' . $title . '</span>';
+      if ($readonly != True) {
+        $output .= '<span id="inherit_id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
+      }
+
+      
+    }
+
+  }  
+
+}
+
+function wikicompare_inherit_compared_submit_element(&$node, $_POST) {
+
+  if ($_POST['inherit_id'] != 0 && $node->type == 'compared') {
+
+        $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $_POST['inherit_id'];
+        $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
+    
+  }
+
+}
+
+/*
 
 //Update inherit_compared_id in cache_compared table
 function wikicompare_inherit_compared_wikicompare_cache_compared_fields(&$fields, $node) {
@@ -259,6 +318,6 @@ function wikicompare_inherit_compared_wikicompare_flush_cache_implementation(&$i
   $implementation['use_from_inherit'] = $record->use_from_inherit;
 
 }
-
+*/
 
 ?>

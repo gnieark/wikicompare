@@ -421,11 +421,16 @@ function submit_fastedit_form_response($method = 'ajax'){
         'value' => $_POST['description'],
         'format' => 'full_html',
       );
-*/
 
       foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
         $function = $module . '_wikicompare_fastedit_submit_element';
         $function($tnode, $_POST, 'body', 'description');
+      }
+*/
+
+
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_submit_element($node, $_POST);
       }
       
       if ($type == 'feature') {

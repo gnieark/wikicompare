@@ -65,7 +65,7 @@ function wikicompare_inherit_compared_install() {
 
 
   $field = array(
-    'field_name' => 'compared_inherit_compared',
+    'field_name' => 'wikicompare_inherit_compared_id',
     'type' => 'entityreference',
     'cardinality' => 1,
     'settings' => array(
@@ -76,7 +76,7 @@ function wikicompare_inherit_compared_install() {
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'compared_inherit_compared',
+    'field_name' => 'wikicompare_inherit_compared_id',
     'entity_type' => 'node',
     'bundle' => 'compared',
     'label' => 'Inherit Compared',
@@ -105,7 +105,7 @@ function wikicompare_inherit_compared_install() {
 
 
   $field = array(
-    'field_name' => 'implementation_use_from_inherit',
+    'field_name' => 'wikicompare_use_from_inherit',
     'type' => 'list_boolean',
     'cardinality' => 1,
     'settings' => array(
@@ -118,7 +118,7 @@ function wikicompare_inherit_compared_install() {
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'implementation_use_from_inherit',
+    'field_name' => 'wikicompare_use_from_inherit',
     'entity_type' => 'node',
     'bundle' => 'implementation',
     'label' => 'Use data from inherit compared?',
@@ -141,7 +141,7 @@ function wikicompare_inherit_compared_install() {
 
   foreach($implementations as $item) {
     $node = node_load($item->nid);
-    $node->implementation_use_from_inherit[LANGUAGE_NONE][0]['value'] = 1;
+    $node->implementation_use_from_inherit['und'][0]['value'] = 1;
     node_save($node);
   }
 
@@ -165,10 +165,10 @@ function wikicompare_inherit_compared_uninstall() {
 
   db_drop_field('cache_compared', 'inherit_compared_id');
   db_drop_index('cache_compared', 'inherit_compared_id');
-  field_delete_field('compared_inherit_compared');
+  field_delete_field('wikicompare_inherit_compared_id');
 
   db_drop_field('cache_implementation', 'use_from_inherit');
-  field_delete_field('implementation_use_from_inherit');
+  field_delete_field('wikicompare_use_from_inherit');
 
 
 

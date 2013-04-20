@@ -226,11 +226,11 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
   
-  $items['get_dialog_callback/%/%/%/%'] = array(
+  $items['get_dialog_callback/%/%/%/%/%/%'] = array(
     'page callback' => 'get_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
-    'page arguments' => array(1,2,3,4),
+    'page arguments' => array(1,2,3,4,5,6),
     'type' => MENU_CALLBACK,
     'file' => 'wikicompare_comparative_table.inc',
   );
@@ -488,7 +488,7 @@ dpm($form_state['node']);
         'text' => 'Select parent',
         'title' => 'Select parent',
         'selector' => 'dialog-content',
-        'path' => 'get_dialog_callback/select_simple_dialog/' . $node->type . '/form_selected_parent/' . $nid,
+        'path' => 'get_dialog_callback/select_simple_dialog/' . $node->type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
       );
       $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $node->type)));
       $form['container_selected_parent'] = array(
@@ -506,11 +506,12 @@ dpm($form_state['node']);
 
       if ($fastaction == 'edit') {
 
-        $parent = 0;
-        if ($type == 'feature') {
+        $parent_id = 0;
+        $parent_name = 'No parent';
+        if (isset($node->wikicompare_parent_id['und'])) {
           $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
-        } elseif ($type == 'compared') {
-          $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
+          $res = get_recursive_data($type, array($parent_id));
+          $parent_name = $res['data'][$parent_id]['data']->fulltitle;
         }
 
         //Allow others modules to modify the output
@@ -519,8 +520,6 @@ dpm($form_state['node']);
           $function($parent_id, $type, $node);
         }
 
-        $res = get_recursive_data($type, array($parent_id));
-        $parent_name = $res['data'][$parent_id]['data']->fulltitle;
 
         //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
         //Add the link to open the select feature popup
@@ -528,7 +527,7 @@ dpm($form_state['node']);
           'text' => 'Select parent',
           'title' => 'Select parent',
           'selector' => 'dialog-content',
-          'path' => 'get_dialog_callback/select_simple_dialog/' . $type . '/form_selected_parent/' . $nid,
+          'path' => 'get_dialog_callback/select_simple_dialog/' . $type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
         );
         $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
         $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span>';
@@ -560,6 +559,12 @@ dpm($form_state['node']);
       $output .= drupal_render($sequence_field);
 
     }
+
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_modify_form($form, $output, $form_type, $node);
+    }
+
 
 /* TODO Not working, textarea work but not text_format.
     if ($form_type == 'fastedit') {
@@ -921,8 +926,6 @@ function wikicompare_theme() {
  */ 
 function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
-dpm($node_op, 'node_op');
-dpm($revision_op, 'revision_op');
 
   if ($revision_op == 'publish revisions') {
 
