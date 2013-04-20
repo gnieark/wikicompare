@@ -1,6 +1,81 @@
 <?php
 
-function wikicompare_inherit_compared_modify_form(&$form, &$output, $form_type, $node) {
+
+function wikicompare_inherit_compared_menu() {
+
+  $items = array();
+
+
+  $items['compute_inherit_callback'] = array(
+    'page callback' => 'compute_inherit_response',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'page arguments' => array(),
+    'type' => MENU_CALLBACK,
+//    'file' => 'wikicompare_inherit_compared.module',
+    'delivery callback' => 'ajax_deliver',
+  );
+
+}
+
+
+function compute_inherit_response($method = 'ajax') {
+
+  if ($method == 'ajax') {
+
+
+    $commands = array();
+
+    if ($_POST['use_from_inherit'] == 1) {
+
+      $inherit_id = NULL;
+      $support = 0;
+
+      $query = db_select('cache_implementation', 'n');
+      $query->addField('c', 'inherit_compared_id', 'inherit_id');
+      $query->addField('ci', 'support', 'support');
+      $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+      $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND ci.feature_id = n.feature_id');
+      $query->condition('n.nid', $_POST['node_id']);
+      $result = $query->execute();
+      foreach ($result as $record) {
+        $inherit_id = $record->inherit_id;
+        $support = $record->support;
+      }
+
+      if ($inherit_id != NULL) {
+        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', $support));
+        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('disabled', 1));
+      }
+
+    } else {
+      $query = db_select('cache_implementation', 'n');
+      $query->addField('n', 'support', 'support');
+      $query->condition('n.nid', $_POST['node_id']);
+      $result = $query->execute();
+      foreach ($result as $record) {
+        $support = $record->support;
+      }
+
+      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', $support));
+      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('disabled', 0));
+
+    }
+    
+
+    $page = array('#type' => 'ajax', '#commands' => $commands);
+    return $page;
+
+  //If javascript isn't enabled, we redirect to an error page.
+  } else {
+    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
+    return $output;
+  }
+
+
+}
+
+function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$output, $form_type, $node) {
 dpm('test');
   if ($node->type == 'compared') {
 
@@ -32,6 +107,7 @@ dpm('test');
   
       );
       hide($form['wikicompare_inherit_compared_id']);
+
     }
 
     if ($form_type == 'fastedit') {
@@ -44,6 +120,51 @@ dpm('test');
     }
 
   }  
+}
+
+function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, $form_type, $node) {
+
+  if ($node->type == 'implementation') {
+    
+    $query = db_select('cache_implementation', 'n');
+    $query->addField('c', 'inherit_compared_id', 'inherit_id');
+    $query->addField('c', 'has_children', 'compared_has_children');
+    $query->addField('f', 'has_children', 'feature_has_children');
+    $query->addField('ci', 'support', 'inherit_support');
+    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
+    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
+    $query->condition('n.nid', $node->nid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $res = $record;
+    }
+dpm($res, 'res');
+    if ($form_type == 'form') {
+      if ($res->inherit_id == NULL || $res->compared_has_children == 1 || $res->feature_has_children == 1) {
+        hide($form['wikicompare_use_from_inherit']);
+      } else {
+
+        $reset_link = array(
+          '#type' => 'link',
+          '#title' => 'compute inherit',
+          //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
+          '#href' => 'compute_inherit_callback/nojs',
+          '#id' => 'compute_inherit_link_' . $node-> nid,
+          '#attributes' => array(
+            'class' => array('compute_inherit_link'),
+            //'style' => 'display:none',
+          ),
+        );
+        $form['wikicompare_use_from_inherit']['und']['#suffix'] = drupal_render($reset_link);
+
+        if ($form['wikicompare_use_from_inherit']['und']['#default_value'] == 1) {
+          $form['wikicompare_support']['und']['#default_value'] = $support;
+          $form['wikicompare_support']['und']['#disabled'] = TRUE;
+        }
+      }
+    }
+  }
 
 }
 
@@ -58,48 +179,45 @@ function wikicompare_inherit_compared_submit_element(&$node, $_POST) {
 
 }
 
-/*
+
 
 //Update inherit_compared_id in cache_compared table
-function wikicompare_inherit_compared_wikicompare_cache_compared_fields(&$fields, $node) {
+function wikicompare_inherit_compared_cache_insert_fields(&$fields, $type, $node) {
 
-  $compared_inherit_compared = NULL;
-  if (isset($node->compared_inherit_compared['und'][0])) {
-    $compared_inherit_compared = $node->compared_inherit_compared['und'][0]['target_id'];
+  if ($type == 'compared') {
+
+    $compared_inherit_compared = NULL;
+    if (isset($node->compared_inherit_compared['und'][0])) {
+      $compared_inherit_compared = $node->compared_inherit_compared['und'][0]['target_id'];
+    }
+
+    $fields['inherit_compared_id'] = $compared_inherit_compared;
   }
-
-  $fields['inherit_compared_id'] = $compared_inherit_compared;
-
 
 }
 
 //Update default value of use_from_inherit field when we insert an implementation
-function wikicompare_inherit_compared_wikicompare_insert_implementation(&$node_implementation) {
+function wikicompare_inherit_compared_insert_implementation(&$node_implementation) {
 
   $node_implementation->implementation_use_from_inherit['und'][0]['value'] = 1;
 
 }
 
 //Update default value of use_from_inherit field in cache when we insert an implementation
-function wikicompare_inherit_compared_wikicompare_cache_implementation_fields(&$cache_implementation, $node) {
+function wikicompare_inherit_compared_cache_implementation_fields(&$cache_implementation, $node) {
 
   $cache_implementation['use_from_inherit'] = $node->implementation_use_from_inherit['und'][0]['value'];
 
 }
 
 //Add the header use_from_inherit for the mass implementation insert in feature/compared creation
-function wikicompare_inherit_compared_wikicompare_cache_implementation_fields_header(&$header) {
+function wikicompare_inherit_compared_cache_implementation_fields_header(&$header) {
 
   $header[] = 'use_from_inherit';
 
 }
+/*
 
-//Add the header for the mass compared insert in flush cache
-function wikicompare_inherit_compared_wikicompare_cache_compared_fields_header(&$header) {
-
-  $header[] = 'inherit_compared_id';
-
-}
 
 //Update cache so all inherited children are now without inherit compared when we delete a compared
 function wikicompare_inherit_compared_wikicompare_cache_compared_delete($node) {
@@ -288,6 +406,12 @@ function wikicompare_inherit_compared_wikicompare_from_other_support(&$node) {
 
 }
 
+//Add the header for the mass compared insert in flush cache
+function wikicompare_inherit_compared_wikicompare_cache_compared_fields_header(&$header) {
+
+  $header[] = 'inherit_compared_id';
+
+}
 
 //Search for the new fields in compared in the flush tables function 
 function wikicompare_inherit_compared_wikicompare_select_compared(&$query) {

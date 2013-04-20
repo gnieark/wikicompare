@@ -562,7 +562,7 @@ dpm($form_state['node']);
 
 
     if (module_exists('wikicompare_inherit_compared')) {
-      wikicompare_inherit_compared_modify_form($form, $output, $form_type, $node);
+      wikicompare_inherit_compared_modify_form_no_implementation($form, $output, $form_type, $node);
     }
 
 
@@ -661,6 +661,10 @@ dpm($form_state['node']);
           //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
           unset($form_state['node']->wikicompare_proofs);
       }
+    }
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_modify_form_implementation($form, $output, $form_type, $node);
     }
 
     if ($form_type == 'fastedit') {

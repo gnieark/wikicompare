@@ -130,7 +130,7 @@ function wikicompare_inherit_compared_install() {
     ),
     'required' => 1,
     'widget' => array(
-      'type' => 'options_select',
+      'type' => 'options_onoff',
     ),
   );
   field_create_instance($instance);

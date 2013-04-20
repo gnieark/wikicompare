@@ -299,6 +299,8 @@ function get_item_list_children_response($method = 'ajax') {
     //If we want to collapse the compared children
     } else {
 
+
+
       //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
       $page = array('#type' => 'ajax', '#commands' => $commands);

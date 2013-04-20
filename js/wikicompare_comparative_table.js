@@ -20,6 +20,23 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
+    $('#edit-wikicompare-use-from-inherit-und:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+      $(this).click(function() {
+        $('#compute_inherit_link').click();
+      });
+    });
+
+
+    //Ajaxify the compared checkbox link
+    $('.compute_inherit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_inherit');
+    });
+
     //Ajaxify the compared link
     $('.list_item_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
@@ -497,6 +514,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           make_cleaning = true;
         }
         
+        if (action == 'compute_inherit') {
+          send_node_id = true;
+          options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').attr('checked');
+        }
         
         if (action == 'show_fastedit_form') {
           send_node_id = true;

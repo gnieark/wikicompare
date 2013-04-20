@@ -808,7 +808,7 @@ function wikicompare_node_install($type) {
       ),
       'required' => 1,
       'widget' => array(
-        'type' => 'options_select',
+        'type' => 'options_onoff',
       ),
     );
     field_create_instance($instance);
@@ -826,7 +826,7 @@ function wikicompare_node_install($type) {
       ),
       'required' => 1,
       'widget' => array(
-        'type' => 'options_select',
+        'type' => 'options_onoff',
       ),
     );
     field_create_instance($instance);

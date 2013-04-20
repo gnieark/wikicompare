@@ -91,6 +91,10 @@ dpm($node, 'insert test, pas bon si traduction');
     $function($fields, $type, $node);
   }
 
+  if (module_exists('wikicompare_inherit_compared')) {
+    wikicompare_inherit_compared_cache_insert_fields($fields, $type, $node);
+  }
+dpm($fields);
   db_insert('cache_' . $type)
     ->fields($fields)
     ->execute();
@@ -136,11 +140,15 @@ dpm($node, 'insert test, pas bon si traduction');
         $node_implementation->wikicompare_feature_id['und'][0]['target_type'] = "node";
       }
 
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_insert_implementation($node_implementation);
+      }
+/*
       //Allow others modules to modify the implrmentation to insert
       foreach (module_implements('wikicompare_insert_implementation') as $module) {
         $function = $module . '_wikicompare_insert_implementation';
         $function($node_implementation);
-      }
+      }*/
 
       //Save the implementation node in database
       node_save($node_implementation);
@@ -153,13 +161,15 @@ dpm($node, 'insert test, pas bon si traduction');
         'compared_id' => $node_implementation->wikicompare_compared_id['und'][0]['target_id'],
         'support' => 0,
       );
-
+/*
       //Allow others modules to modify the cache implrmentation to insert
       foreach (module_implements('wikicompare_cache_implementation_fields') as $module) {
         $function = $module . '_wikicompare_cache_implementation_fields';
         $function($cache_implementation, $node_implementation);
+      } */
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_cache_implementation_fields($cache_implementation, $node_implementation);
       }
-
 
       $cache_implementations[] = $cache_implementation;
     
@@ -168,9 +178,12 @@ dpm($node, 'insert test, pas bon si traduction');
 
     //If some fields for implementation cache are defined in other module, then we need to modify the header before the mass insert
     $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support');
-    foreach (module_implements('wikicompare_cache_implementation_fields_header') as $module) {
+/*    foreach (module_implements('wikicompare_cache_implementation_fields_header') as $module) {
       $function = $module . '_wikicompare_cache_implementation_fields_header';
       $function($header);
+    }*/
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_cache_implementation_fields_header($header);
     }
 
     //Update the cache_implementation table before the compare tree computation
