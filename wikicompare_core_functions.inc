@@ -58,11 +58,15 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     }
 
     $query->where('nfpnf.compared_id = fs.compared_id OR nf.parent_id IS NULL'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
-
+/*
     //Allow the others modules to update the query
     foreach (module_implements('wikicompare_update_main_query') as $module) {
       $function = $module . '_wikicompare_update_main_query';
       $function($query);
+    }*/
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_update_main_query($query);
     }
 
     $result = $query->execute();
@@ -119,7 +123,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
 
       //Only published feature are used in their parent computation
-      $query->condition('nf.state', 'Published', '=');
+      $query->condition('nf.state', array('published-incomplete', 'published-submitted', 'published'), 'in');
       $result = $query->execute();
 
       $through_feature_childs = array();
@@ -233,11 +237,16 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     }
 
   
-
+/*
     //Allow others modules to make some action before we start computing the node
     foreach (module_implements('wikicompare_update_comparative_table_preparation') as $module) {
       $function = $module . '_wikicompare_update_comparative_table_preparation';
       $function($nids, $nodes, $type);
+    }
+*/
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_update_comparative_table_preparation($nids, $nodes, $type);
     }
 
     //Recover the existing cache value only now and not in the first SQL request, because their value may be updated during the children update
@@ -288,11 +297,15 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
         $node->percent = 0;
         $node->css_class = 'cell-support-no';
       }
-
+/*
       //Allow others modules to change the way support is computed at the base of the tree
       foreach (module_implements('wikicompare_from_other_support') as $module) {
         $function = $module . '_wikicompare_from_other_support';
         $function($node);
+      }*/
+
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_from_other_support($node);
       }
 
     //If the feature is of type weighted average, it'll use the children through feature axis to compute the percent
@@ -338,11 +351,15 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
           $to_update[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
         }
       }
-
+/*
       //Allow others modules to update others implementations
       foreach (module_implements('wikicompare_update_comparative_table_post') as $module) {
         $function = $module . '_wikicompare_update_comparative_table_post';
         $function($to_update, $node);
+      }
+*/
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_update_comparative_table_post($to_update, $node);
       }
 
     }

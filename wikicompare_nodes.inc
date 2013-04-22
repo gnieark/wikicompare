@@ -286,10 +286,15 @@ function wikicompare_delete_node($type, $node) {
     ->condition('parent_id', $node->nid)
     ->execute();
 
+/*
   //Hook to trigger action from other modules
   foreach (module_implements('wikicompare_cache_compared_delete') as $module) {
     $function = $module . '_wikicompare_cache_compared_delete';
     $function($node);
+  }*/
+
+  if (module_exists('wikicompare_inherit_compared')) {
+    wikicompare_inherit_compared_cache_compared_delete($node);
   }
 
   if (isset($node->wikicompare_parent_id['und'][0])) {
@@ -424,6 +429,18 @@ function wikicompare_revisionapi($op, $node_revision) {
         }
       }
 
+      if ($node_revision->type == 'compared') {
+        //Allow others modules to make check and mark to update following other fields in the compared. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. 
+/*        foreach (module_implements('wikicompare_preupdate_compared') as $module) {
+          $function = $module . '_wikicompare_preupdate_compared';
+          $function($node_revision, $current_node);
+        }*/
+        if (module_exists('wikicompare_inherit_compared')) {
+          wikicompare_inherit_compared_preupdate_compared($test, $node_revision, $current_node);
+        }
+
+      }
+
 
       if ($node_revision->type == 'feature') {
         if (($node_revision->wikicompare_type['und'][0]['value'] != $current_node->wikicompare_type['und'][0]['value']) || ($node_revision->wikicompare_weight['und'][0]['value'] != $current_node->wikicompare_weight['und'][0]['value']) || ($node_revision->wikicompare_state['und'][0]['value'] != $current_node->wikicompare_state['und'][0]['value'])) {
@@ -435,6 +452,11 @@ function wikicompare_revisionapi($op, $node_revision) {
         if ($node_revision->wikicompare_support['und'][0]['value'] != $current_node->wikicompare_support['und'][0]['value']) {
           $test = true;
         }
+
+        if (module_exists('wikicompare_inherit_compared')) {
+          wikicompare_inherit_compared_preupdate_implementation($test, $node_revision, $current_node);
+        }
+
       }
 
       //If any of the critical field is changed
@@ -453,21 +475,8 @@ function wikicompare_revisionapi($op, $node_revision) {
   
       }
 
-      if ($node_revision->type == 'compared') {
-        //Allow others modules to make check and mark to update following other fields in the compared. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. 
-        foreach (module_implements('wikicompare_preupdate_compared') as $module) {
-          $function = $module . '_wikicompare_preupdate_compared';
-          $function($node_revision, $current_node);
-        }
-      }
 
-      if ($node_revision->type == 'compared') {
-        //Allow others modules to make check and mark to update following other fields in the compared. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. 
-        foreach (module_implements('wikicompare_preupdate_implementation') as $module) {
-          $function = $module . '_wikicompare_preupdate_implementation';
-          $function($node_revision, $current_node);
-        }
-      }
+
 
     }
   }
@@ -524,6 +533,10 @@ function wikicompare_revisionapi($op, $node_revision) {
       foreach (module_implements('wikicompare_cache_update_fields') as $module) {
         $function = $module . '_wikicompare_cache_update_fields';
         $function($fields, $node_revision);
+      }
+
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_cache_update_fields($fields, $node_revision);
       }
 
       db_update('cache_' . $node_revision->type)
