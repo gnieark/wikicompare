@@ -183,7 +183,7 @@ dpm($fields);
       $function($header);
     }*/
     if (module_exists('wikicompare_inherit_compared')) {
-      wikicompare_inherit_compared_cache_implementation_fields_header($header);
+      wikicompare_inherit_compared_cache_fields_header($header, 'implementation');
     }
 
     //Update the cache_implementation table before the compare tree computation

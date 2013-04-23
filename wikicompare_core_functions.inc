@@ -9,6 +9,8 @@
   */
 function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
+dpm($type, 'type');
+dpm($nids, 'nids');
 
   $nodes = array();
   if (!empty($nids)) {
@@ -70,6 +72,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     }
 
     $result = $query->execute();
+dpm($result);
 
 
     $implementation_ids = array();
@@ -91,7 +94,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
       $res_search_compared_children = $res_search_compared_children . "('" . $record->cid . "','" . $record->fid . "')";
     }
-
+dpm($nodes, 'nodes');
 
     $through_feature_childs = array();
     //We don't need the children through feature child in case of type = 'compared'. Also, we should not call this function if $res_search_feature_children is used and null, otherwise it'll crash.
@@ -266,8 +269,10 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       $nodes[$record->nid]->cache_percent = $record->cache_percent;
       $nodes[$record->nid]->cache_css_class = $record->cache_css_class;
     }
-
+dpm($nodes, 'nodes4');
 }
+
+
 
   /*
    * Now we'll compute the percent and css_class of each nids in function argument
@@ -488,7 +493,6 @@ function find_css_class($percent) {
 
 function wikicompare_flush_caches() {
 
-/* TO REPAIR
 
   //We put the site in maintenance
   $was_in_maintenance = FALSE;
@@ -503,192 +507,149 @@ function wikicompare_flush_caches() {
   db_delete('cache_comparative_table')
     ->execute();
 
-  db_delete('cache_implementation')
-    ->execute();
 
-  db_delete('cache_feature')
-    ->execute();
+  foreach (array('compared', 'feature', 'implementation') as $type) {
 
-  db_delete('cache_compared')
-    ->execute();
+    db_delete('cache_' . $type)
+      ->execute();   
 
-
-  //Get all feature data and insert in feature cache table
-  $query = db_select('node', 'n');
-  $query->addField('n', 'nid', 'nid');
-  $query->addField('n', 'vid', 'vid');
-  $query->addField('n', 'title', 'title');
-  $query->addField('npf', 'wikicompare_parent_id_target_id', 'parent_id');
-  $query->addField('nt', 'wikicompare_type_value', 'type');
-  $query->addField('nw', 'wikicompare_weight_value', 'weight');
-  $query->addField('ns', 'wikicompare_state_value', 'state');
-  $query->leftjoin('field_revision_wikicompare_parent_id', 'npf', 'n.vid = npf.revision_id');
-  $query->leftjoin('field_revision_wikicompare_type', 'nt', 'n.vid = nt.revision_id');
-  $query->leftjoin('field_revision_wikicompare_weight', 'nw', 'n.vid = nw.revision_id');
-  $query->leftjoin('field_revision_wikicompare_state', 'ns', 'n.vid = ns.revision_id');
-  $query->condition('n.type', 'feature');
-  $result = $query->execute();
-
-  $parent_array = array();
-  $feature_to_insert = array();
-  foreach($result as $record) {
-    $feature_to_insert[$record->nid] = array(
-      'nid' => $record->nid,
-      'vid' => $record->vid,
-      'title' => $record->title,
-      'parent_id' => $record->parent_id,
-      'type' => $record->type,
-      'weight' => $record->weight,
-      'state' => $record->state,
-      'has_children' => 0,
-    );
-
-    if ($record->parent_id) {
-      $parent_array[$record->parent_id][] = $record->nid;
+    //Get all feature data and insert in feature cache table
+    $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'vid', 'vid');
+    if ($type != 'implementation') {
+      $query->addField('n', 'title', 'title');
+      $query->addField('npf', 'wikicompare_parent_id_target_id', 'parent_id');
+      $query->addField('nse', 'wikicompare_sequence_value', 'sequence');
+      $query->addField('ns', 'wikicompare_state_value', 'state');
+      $query->leftjoin('field_revision_wikicompare_parent_id', 'npf', 'n.vid = npf.revision_id');
+      $query->leftjoin('field_revision_wikicompare_sequence', 'nse', 'n.vid = nse.revision_id');
+      $query->leftjoin('field_revision_wikicompare_state', 'ns', 'n.vid = ns.revision_id');
+    } else {
+      $query->addField('nf', 'wikicompare_feature_id_target_id', 'feature_id');
+      $query->addField('nc', 'wikicompare_compared_id_target_id', 'compared_id');
+      $query->addField('ns', 'wikicompare_support_value', 'support');
+      $query->leftjoin('field_revision_wikicompare_feature_id', 'nf', 'n.vid = nf.revision_id');
+      $query->leftjoin('field_revision_wikicompare_compared_id', 'nc', 'n.vid = nc.revision_id');
+      $query->leftjoin('field_revision_wikicompare_support', 'ns', 'n.vid = ns.revision_id');
     }
-
-    
-
-  }
-
-  //Set has_children flag
-  foreach ($parent_array as $key => $parent) {
-    $feature_to_insert[$key]['has_children'] = 1;
-  }
-
-  //Later, we will launch the update_compare_table with only the feature without children
-  $feature_without_children = array();
-  foreach ($feature_to_insert as $feature) {
-    if ($feature['has_children'] == 0) {
-      $feature_without_children[$feature['nid']] = $feature['nid'];
+    if ($type == 'feature') {
+      $query->addField('nt', 'wikicompare_type_value', 'type');
+      $query->addField('nw', 'wikicompare_weight_value', 'weight');
+      $query->leftjoin('field_revision_wikicompare_type', 'nt', 'n.vid = nt.revision_id');
+      $query->leftjoin('field_revision_wikicompare_weight', 'nw', 'n.vid = nw.revision_id');
     }
-  }
+    $query->condition('n.type', $type);
 
 
-  $query = db_insert('cache_feature')->fields(array('nid', 'vid', 'title', 'parent_id', 'type', 'weight', 'state', 'has_children'));
-  foreach ($feature_to_insert as $feature) {
-    $query->values($feature);
-  }
-  $query->execute();
-
-
-  //Get all compared data and insert in compared cache table
-  $query = db_select('node', 'n');
-  $query->addField('n', 'nid', 'nid');
-  $query->addField('n', 'vid', 'vid');
-  $query->addField('n', 'title', 'title');
-  $query->addField('npc', 'wikicompare_parent_id_target_id', 'parent_id');
-  $query->leftjoin('field_revision_wikicompare_parent_id', 'npc', 'n.vid = npc.revision_id');
-  $query->condition('n.type', 'compared');
-
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_flush_select_compared($query, $type);
+    }
+/*
   foreach (module_implements('wikicompare_select_compared') as $module) {
     $function = $module . '_wikicompare_select_compared';
     $function($query);
-  }
+  }*/
 
-  $result = $query->execute();
+    $result = $query->execute();
 
-  $parent_array = array();
-  $compareds = array();
-  foreach($result as $record) {
-    $compared = array(
-      'nid' => $record->nid,
-      'vid' => $record->vid,
-      'title' => $record->title,
-      'parent_id' => $record->parent_id,
-      'has_children' => 0,
-    );
 
-    if ($record->parent_id) {
-      $parent_array[$record->parent_id][] = $record->nid;
-    }
+    $parent_array = array();
+    $to_insert = array();
+    $header = array();
+    foreach($result as $record) {
+      $to_insert[$record->nid]['nid'] = $record->nid;
+      $to_insert[$record->nid]['vid'] = $record->vid;
+      if ($type != 'implementation') {
+        $to_insert[$record->nid]['title'] = $record->title;
+        $to_insert[$record->nid]['parent_id'] = $record->parent_id;
+        $to_insert[$record->nid]['sequence'] = $record->sequence;
+        $to_insert[$record->nid]['state'] = $record->state;
+        $to_insert[$record->nid]['has_children'] = 0;
 
+        if ($record->parent_id) {
+          $parent_array[$record->parent_id][$record->nid] = $record->nid;
+        }
+
+      } else {
+
+        if ($record->support == 1) {
+          $support = 1;
+        } else {
+          $support = 0;
+        }
+
+        $to_insert[$record->nid]['compared_id'] = $record->compared_id;
+        $to_insert[$record->nid]['feature_id'] = $record->feature_id;
+        $to_insert[$record->nid]['support'] = $support;
+
+      }
+      if ($type == 'feature') {
+        $to_insert[$record->nid]['type'] = $record->type;
+        $to_insert[$record->nid]['weight'] = $record->weight;
+      }
+
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_flush_cache_compared($to_insert, $record, $type);
+      }
+/*
     foreach (module_implements('wikicompare_flush_cache_compared') as $module) {
       $function = $module . '_wikicompare_flush_cache_compared';
       $function($compared, $record);
+    } */
+
+
+
     }
 
-    $compareds[$compared['nid']] = $compared;
 
-  }
+    if ($type != 'implementation') {
+      //Set has_children flag
+      foreach ($parent_array as $pid => $parent) {
+        $to_insert[$pid]['has_children'] = 1;
+      }
+    
+      if ($type == 'feature') {
+        //Later, we will launch the update_compare_table with only the feature without children
+        $feature_without_children = array();
+        foreach ($to_insert as $node) {
+          if ($node['has_children'] == 0) {
+            $feature_without_children[$node['nid']] = $node['nid'];
+          }
+        }
+      }
+    }
 
-  //Set has_children flag
-  foreach ($parent_array as $key => $parent) {
-    $compareds[$key]['has_children'] = 1;
-  }
-
-
-  $header = array('nid', 'vid', 'title', 'parent_id', 'has_children');
-  foreach (module_implements('wikicompare_cache_compared_fields_header') as $module) {
-    $function = $module . '_wikicompare_cache_compared_fields_header';
-    $function($header);
-  }
-
-  $query = db_insert('cache_compared')->fields($header);
-  foreach ($compareds as $compared) {
-    $query->values($compared);
-  }
-  $query->execute();
-
-
-
-  //Get all implementation data and insert in implementation cache table
-  $query = db_select('node', 'n');
-  $query->addField('n', 'nid', 'nid');
-  $query->addField('n', 'vid', 'vid');
-  $query->addField('nf', 'wikicompare_feature_id_target_id', 'feature_id');
-  $query->addField('nc', 'wikicompare_compared_id_target_id', 'compared_id');
-  $query->addField('ns', 'wikicompare_support_value', 'support');
-  $query->leftjoin('field_revision_wikicompare_feature_id', 'nf', 'n.vid = nf.revision_id');
-  $query->leftjoin('field_revision_wikicompare_compared_id', 'nc', 'n.vid = nc.revision_id');
-  $query->leftjoin('field_revision_wikicompare_support', 'ns', 'n.vid = ns.revision_id');
-  $query->condition('n.type', 'implementation');
-
-  foreach (module_implements('wikicompare_select_implementation') as $module) {
-    $function = $module . '_wikicompare_select_implementation';
-    $function($query);
-  }
-
-  $result = $query->execute();
-
-  $implementations = array();
-  foreach($result as $record) {
-
-    if ($record->support == 1) {
-      $support = 1;
+    $header = array('nid', 'vid');
+    if ($type != 'implementation') {
+      $header[] = 'title';
+      $header[] = 'parent_id';
+      $header[] = 'sequence';
+      $header[] = 'state';
+      $header[] = 'has_children';
     } else {
-      $support = 0;
+      $header[] = 'compared_id';
+      $header[] = 'feature_id';
+      $header[] = 'support'; 
+    }
+    if ($type == 'feature') {
+      $header[] = 'type';
+      $header[] = 'weight';
     }
 
-    $implementation = array(
-      'nid' => $record->nid,
-      'vid' => $record->vid,
-      'feature_id' => $record->feature_id,
-      'compared_id' => $record->compared_id,
-      'support' => $support,
-    );
-
-    foreach (module_implements('wikicompare_flush_cache_implementation') as $module) {
-      $function = $module . '_wikicompare_flush_cache_implementation';
-      $function($implementation, $record);
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_cache_fields_header($header, $type);
     }
 
-    $implementations[$implementation['nid']] = $implementation;
+
+    $query = db_insert('cache_' . $type)->fields($header);
+    foreach ($to_insert as $values) {
+      $query->values($values);
+    }
+    $query->execute();
 
 
   }
-
-  $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support');
-  foreach (module_implements('wikicompare_cache_implementation_fields_header') as $module) {
-    $function = $module . '_wikicompare_cache_implementation_fields_header';
-    $function($header);
-  }
-
-  $query = db_insert('cache_implementation')->fields($header);
-  foreach ($implementations as $implementation) {
-    $query->values($implementation);
-  }
-  $query->execute();
 
 
   //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the compared tree.
@@ -698,7 +659,7 @@ function wikicompare_flush_caches() {
   if ($was_in_maintenance == FALSE) {
     variable_set('maintenance_mode', 0);
   }
-*/
+
 }
 
 

@@ -499,7 +499,7 @@ dpm($form_state['node']);
         '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
       );
-      hide($form['wikicompare_parent_id']);
+      //hide($form['wikicompare_parent_id']);
     }
 
     if ($form_type == 'fastedit') {

@@ -556,6 +556,7 @@ function select_dialog_response($method = 'ajax'){
       $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container_autocomplete']) . '[und][0][target_id]">';
 /*
       $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="wikicompare_parent_id[und][0][target_id]">';*/
+dpm($hidden, 'hidden');
     }
 
     $commands = array();
