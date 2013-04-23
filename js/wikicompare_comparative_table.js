@@ -954,7 +954,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 };
 
 
-
+TODO : Finir le submit et vérifier que les champs ne s'affichent pas dans lesparent
 
 //TODO isoler le test ajax dans une fonction a part
 

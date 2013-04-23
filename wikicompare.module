@@ -662,11 +662,35 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       }
     }
 
+    $test = FALSE;
     if (module_exists('wikicompare_inherit_compared')) {
-      wikicompare_inherit_compared_modify_form_implementation($form, $output, $form_type, $node);
+      wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, $form_type, $node, $fastaction);
     }
 
     if ($form_type == 'fastedit') {
+
+      //I wasn't able to use the renderable array, so I coded directly in html
+      $output .= '<input class="form_implementation_fastedit_support form-checkbox" type="checkbox" id="edit-wikicompare-support-und"';
+
+      if ($fastaction == 'edit') {
+        if ($node->wikicompare_support['und'][0]['value'] == 1) {
+          $test_support = TRUE;
+        }
+
+        if (module_exists('wikicompare_inherit_compared')) {
+          wikicompare_inherit_compared_test_form_implementation($test_support, $test, $node);
+        }
+        if ($test_support == TRUE) {
+          $output .= ' checked="checked"';
+        }
+      }
+
+      if ($readonly == TRUE) {
+        $output .= ' disabled="disabled"';
+      }
+
+      $output .= ' value="1" />  <label class="option" for="form_implementation_fastedit_support_' . $node->nid . '">Support? </label>';
+/*
       $support_field = array(
         '#type' => 'select',
         '#title' => t('Support'),
@@ -687,6 +711,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         $support_field['#attributes']['disabled'] = True;
       }
       $output .= drupal_render($support_field);
+*/
     }
 
   }

@@ -400,6 +400,8 @@ function submit_fastedit_form_response($method = 'ajax'){
               $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
               $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
           
+        } else {
+          $node->wikicompare_parent_id['und'] = NULL;
         }
 
         if ($_POST['sequence'] != NULL) {
