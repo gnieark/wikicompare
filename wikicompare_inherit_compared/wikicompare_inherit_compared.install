@@ -128,7 +128,6 @@ function wikicompare_inherit_compared_install() {
         'value' => 1,
       ),
     ),
-    'required' => 1,
     'widget' => array(
       'type' => 'options_onoff',
     ),

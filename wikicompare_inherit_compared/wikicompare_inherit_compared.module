@@ -16,6 +16,8 @@ function wikicompare_inherit_compared_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
+  return $items;
+
 }
 
 
@@ -23,10 +25,12 @@ function compute_inherit_response($method = 'ajax') {
 
   if ($method == 'ajax') {
 
+dpm($_POST);
 
     $commands = array();
 
-    if ($_POST['use_from_inherit'] == 1) {
+    if ($_POST['use_from_inherit'] == 'true') {
+dpm('test true');
 
       $inherit_id = NULL;
       $support = 0;
@@ -44,8 +48,12 @@ function compute_inherit_response($method = 'ajax') {
       }
 
       if ($inherit_id != NULL) {
-        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', $support));
-        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('disabled', 1));
+        if ($support == 1) {
+          $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', 'checked'));
+        } else {
+          $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('checked'));
+        }
+        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('disabled', 'disabled'));
       }
 
     } else {
@@ -57,12 +65,16 @@ function compute_inherit_response($method = 'ajax') {
         $support = $record->support;
       }
 
-      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', $support));
-      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('disabled', 0));
+      if ($support == 1) {
+        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', 'checked'));
+      } else {
+        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('checked'));
+      }
+      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('disabled'));
 
     }
     
-
+dpm($commands, 'commands');
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -153,16 +165,19 @@ dpm($res, 'res');
           '#id' => 'compute_inherit_link_' . $node-> nid,
           '#attributes' => array(
             'class' => array('compute_inherit_link'),
-            //'style' => 'display:none',
+            'style' => 'display:none',
           ),
         );
         $form['wikicompare_use_from_inherit']['und']['#suffix'] = drupal_render($reset_link);
 
         if ($form['wikicompare_use_from_inherit']['und']['#default_value'] == 1) {
-          $form['wikicompare_support']['und']['#default_value'] = $support;
+          $form['wikicompare_support']['und']['#default_value'] = $res->inherit_support;
           $form['wikicompare_support']['und']['#disabled'] = TRUE;
         }
       }
+      $form['wikicompare_use_from_inherit']['#weight'] = -2;
+
+
     }
   }
 

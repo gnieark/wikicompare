@@ -22,7 +22,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('#edit-wikicompare-use-from-inherit-und:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       $(this).click(function() {
-        $('#compute_inherit_link').click();
+        $('.compute_inherit_link').click();
       });
     });
 

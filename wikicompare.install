@@ -806,7 +806,6 @@ function wikicompare_node_install($type) {
           'value' => 0,
         ),
       ),
-      'required' => 1,
       'widget' => array(
         'type' => 'options_onoff',
       ),
@@ -824,7 +823,6 @@ function wikicompare_node_install($type) {
           'value' => 0,
         ),
       ),
-      'required' => 1,
       'widget' => array(
         'type' => 'options_onoff',
       ),
