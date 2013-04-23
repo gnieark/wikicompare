@@ -517,6 +517,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'compute_inherit') {
           send_node_id = true;
           options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').attr('checked');
+//          options.data.support = $('#edit-wikicompare-support-und').attr('checked');
         }
         
         if (action == 'show_fastedit_form') {
@@ -926,7 +927,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         if (make_cleaning == true) {
-          //$('#make_cleaning_link').click();
+          $('#make_cleaning_link').click();
         }
       }
 
@@ -975,9 +976,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Fastedit item ne sont plus des displayed, retirer toute mention
 
 
+//TODO Dans inherit compared, dans le formulaire d'implementation, quand on active / desactive la récupération depuis l'inherit, la valeur de support n'est pas correctement récupérée. Je n'arrive pas à corriger.
 //TODO Dans fastedit, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Code quality : Split the javascript file in three : main for forms (defining ajax function), one for comparative table and one for needs. The last two will override some function in the main file, using a hook system.
-//TODO integrer un module de chat sur le site pourrait être sympa, suggestion https://github.com/cloudfuji/kandan
+//TODO integrer un module de chat sur le site pourrait être sympa, suggestion drupalchat me parait pas mal
 //TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 })(jQuery);

@@ -18,7 +18,7 @@ function feature_insert($node) {
 
   wikicompare_insert_node('feature', $node);
 
-dpm($node, 'node_insert');
+
   
 
 }
@@ -41,7 +41,7 @@ function wikicompare_insert_node($type, $node) {
   if ($node->language != language_default('language')) {
     return;
   }
-dpm($node, 'insert test, pas bon si traduction');
+
   $countertype = '';
   if ($type == 'compared') {
     $countertype = 'feature';
@@ -94,7 +94,7 @@ dpm($node, 'insert test, pas bon si traduction');
   if (module_exists('wikicompare_inherit_compared')) {
     wikicompare_inherit_compared_cache_insert_fields($fields, $type, $node);
   }
-dpm($fields);
+
   db_insert('cache_' . $type)
     ->fields($fields)
     ->execute();
@@ -340,6 +340,8 @@ function wikicompare_delete_node($type, $node) {
  */
 function wikicompare_revisionapi($op, $node_revision) {
 
+dpm($op, 'op');
+
   if ($node_revision->language != language_default('language')) {
     return;
   }
@@ -461,7 +463,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
       //If any of the critical field is changed
       if ($test) {
-
+dpm($to_update, 'to_update');
         
         if (in_array($node_revision->type, array('compared', 'feature', 'implementation'))) {
           //We mark the updated node, his old parent and his new parent for update

@@ -72,7 +72,7 @@ dpm($nids, 'nids');
     }
 
     $result = $query->execute();
-dpm($result);
+
 
 
     $implementation_ids = array();
@@ -94,7 +94,7 @@ dpm($result);
       }
       $res_search_compared_children = $res_search_compared_children . "('" . $record->cid . "','" . $record->fid . "')";
     }
-dpm($nodes, 'nodes');
+
 
     $through_feature_childs = array();
     //We don't need the children through feature child in case of type = 'compared'. Also, we should not call this function if $res_search_feature_children is used and null, otherwise it'll crash.
@@ -269,9 +269,9 @@ dpm($nodes, 'nodes');
       $nodes[$record->nid]->cache_percent = $record->cache_percent;
       $nodes[$record->nid]->cache_css_class = $record->cache_css_class;
     }
-dpm($nodes, 'nodes4');
-}
 
+}
+dpm($nodes, 'nodes');
 
 
   /*
@@ -751,7 +751,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
       $res[$record->nid]['data'] = $record;
       $res[$record->nid]['children'] = array();
     } else {
-dpm($record, 'record imple');
+
       $res[$record->feature_id][$record->compared_id]['data'] = $record;
     }
 
