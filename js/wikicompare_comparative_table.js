@@ -561,7 +561,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           
           if (type == 'implementation') {
-            options.data.support = $('#form_' + type + '_fast' + subaction + '_support_' + node_id).val();
+            options.data.support = $('#edit-wikicompare-support-und').is(':checked');
+            options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').is(':checked');
           }
 
           if (type == 'need') {
@@ -954,7 +955,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 };
 
 
-TODO : Finir le submit et vérifier que les champs ne s'affichent pas dans lesparent
+
 
 //TODO isoler le test ajax dans une fonction a part
 

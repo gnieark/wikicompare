@@ -248,17 +248,31 @@ function wikicompare_inherit_compared_test_form_implementation(&$test_support, $
 
 }
 
-function wikicompare_inherit_compared_submit_element(&$node, $_POST) {
+function wikicompare_inherit_compared_submit_element(&$node, &$donotupdate,  $_POST) {
 
-  if ($_POST['inherit_id'] != 0 && $node->type == 'compared') {
+  if ($node->type == 'compared') {
+    if ($_POST['inherit_id'] != 0) {
 
-        $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $_POST['inherit_id'];
-        $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
-    
-  } else {
-        $node->wikicompare_inherit_compared_id['und'] = NULL;
+          $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $_POST['inherit_id'];
+          $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
+      
+    } else {
+          $node->wikicompare_inherit_compared_id['und'] = NULL;
+    }
   }
-dpm($node, 'node');
+
+
+  if ($node->type == 'implementation') {
+
+    if ($_POST['use_from_inherit'] == 'true') {
+      $node->wikicompare_use_from_inherit['und'][0]['value'] = 1;
+      $donotupdate = True;
+    } else {
+      $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
+
+    }
+  }
+
 
 }
 

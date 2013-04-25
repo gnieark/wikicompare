@@ -341,6 +341,7 @@ function get_fastedit_form_response($method = 'ajax'){
  */
 function submit_fastedit_form_response($method = 'ajax'){
 
+dpm($_POST, 'post');
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
@@ -430,9 +431,9 @@ function submit_fastedit_form_response($method = 'ajax'){
       }
 */
 
-
+      $donotupdate = False;
       if (module_exists('wikicompare_inherit_compared')) {
-        wikicompare_inherit_compared_submit_element($node, $_POST);
+        wikicompare_inherit_compared_submit_element($node, $donotupdate, $_POST);
       }
       
       if ($type == 'feature') {
@@ -454,17 +455,19 @@ function submit_fastedit_form_response($method = 'ajax'){
         if ($_POST['weight'] != NULL) {
           $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];        
         } else {
-          $missing_field = TRUE;
+          $missing_field = True;
         }
         
         
       }
       
       if ($type == 'implementation') {
-        if ($_POST['support'] != NULL) {
-          $node->wikicompare_support['und'][0]['value'] = $_POST['support'];
-        } else {
-          $missing_field = TRUE;
+        if ($donotupdate == False) {
+            if ($_POST['support'] == 'true') {
+              $node->wikicompare_support['und'][0]['value'] = 1;
+            } else {
+              $node->wikicompare_support['und'][0]['value'] = 0;
+            }
         }
       }
 
@@ -479,7 +482,7 @@ function submit_fastedit_form_response($method = 'ajax'){
       }
       
       $node->log = $_POST['revision'];
-
+dpm($node);
 
       if ($missing_field == FALSE) {
 
@@ -499,6 +502,7 @@ function submit_fastedit_form_response($method = 'ajax'){
       } else {
         $commands[] = ajax_command_html('#form_fastaction_error_zone', 'Some required fields are missing.');
       }
+
 
       
     } else {

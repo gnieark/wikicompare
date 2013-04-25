@@ -613,21 +613,23 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
   } else {
 
+    $query = db_select('cache_implementation', 'n');
+    $query->addField('f', 'title', 'feature');
+    $query->addField('c', 'title', 'compared');
+    $query->addField('f', 'has_children', 'feature_has_children');
+    $query->addField('c', 'has_children', 'compared_has_children');
+    $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines'); 
+    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
+    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
+    $query->condition('n.nid', $nid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $res = $record;
+    }
+
     if ($form_type == 'form') {
-      $query = db_select('cache_implementation', 'n');
-      $query->addField('f', 'title', 'feature');
-      $query->addField('c', 'title', 'compared');
-      $query->addField('f', 'has_children', 'feature_has_children');
-      $query->addField('c', 'has_children', 'compared_has_children');
-      $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines'); 
-      $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-      $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-      $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
-      $query->condition('n.nid', $nid);
-      $result = $query->execute();
-      foreach ($result as $record) {
-        $res = $record;
-      }
+
 
       $form['wikicompare_guidelines'] = array(
         '#markup' => $record->guidelines,
@@ -660,36 +662,47 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
           unset($form_state['node']->wikicompare_proofs);
       }
+
+      if (module_exists('wikicompare_inherit_compared')) {
+        wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'form', $node, $fastaction);
+      }
+
     }
 
-    $test = FALSE;
-    if (module_exists('wikicompare_inherit_compared')) {
-      wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, $form_type, $node, $fastaction);
-    }
+
 
     if ($form_type == 'fastedit') {
 
-      //I wasn't able to use the renderable array, so I coded directly in html
-      $output .= '<input class="form_implementation_fastedit_support form-checkbox" type="checkbox" id="edit-wikicompare-support-und"';
+      if (!$res->feature_has_children && !$res->compared_has_children) {
 
-      if ($fastaction == 'edit') {
-        if ($node->wikicompare_support['und'][0]['value'] == 1) {
-          $test_support = TRUE;
-        }
-
+        $test = FALSE;
         if (module_exists('wikicompare_inherit_compared')) {
-          wikicompare_inherit_compared_test_form_implementation($test_support, $test, $node);
+          wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'fastedit', $node, $fastaction);
         }
-        if ($test_support == TRUE) {
-          $output .= ' checked="checked"';
+
+        //I wasn't able to use the renderable array, so I coded directly in html
+        $output .= '<input class="form_implementation_fastedit_support form-checkbox" type="checkbox" id="edit-wikicompare-support-und"';
+
+        if ($fastaction == 'edit') {
+
+          if ($node->wikicompare_support['und'][0]['value'] == 1) {
+            $test_support = TRUE;
+          }
+
+          if (module_exists('wikicompare_inherit_compared')) {
+            wikicompare_inherit_compared_test_form_implementation($test_support, $test, $node);
+          }
+          if ($test_support == TRUE) {
+            $output .= ' checked="checked"';
+          }
         }
-      }
 
-      if ($readonly == TRUE) {
-        $output .= ' disabled="disabled"';
-      }
+        if ($readonly == TRUE) {
+          $output .= ' disabled="disabled"';
+        }
 
-      $output .= ' value="1" />  <label class="option" for="form_implementation_fastedit_support_' . $node->nid . '">Support? </label>';
+        $output .= ' value="1" />  <label class="option" for="form_implementation_fastedit_support_' . $node->nid . '">Support? </label>';
+      }
 /*
       $support_field = array(
         '#type' => 'select',
