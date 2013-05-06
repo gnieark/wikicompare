@@ -103,9 +103,15 @@ function submit_settings($form, $form_state) {
     $res = array();
 
     $types = array('compared', 'feature', 'implementation');
+/*
     foreach (module_implements('wikicompare_node_types') as $module) {
       $function = $module . '_wikicompare_node_types';
       $function($array);
+    }
+*/
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_node_types($array);
     }
 
     $query = db_select('node', 'n');
@@ -456,6 +462,11 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       $function($settings, $node, $nid, $form, $form_state);
     }
 */
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_build_form_settings($settings, $node, $nid, $form, $form_state);
+    }
+
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_build_form_settings($settings, $node, $nid, $form, $form_state);
     }
@@ -537,11 +548,16 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           $res = get_recursive_data($type, array($parent_id));
           $parent_name = $res['data'][$parent_id]['data']->fulltitle;
         }
-
+/*
         //Allow others modules to modify the output
         foreach (module_implements('wikicompare_comparative_table_fastedit_parent') as $module) {
           $function = $module . '_wikicompare_comparative_table_fastedit_parent';
           $function($parent_id, $type, $node);
+        }
+*/
+
+        if (module_exists('wikicompare_needs')) {
+          wikicompare_needs_wikicompare_comparative_table_fastedit_parent($parent_id, $type, $node);
         }
 
 
@@ -889,10 +905,16 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
   }
 
   if ($form_type == 'fastedit') {
+/*
     //Allow others modules to modify the output
     foreach (module_implements('wikicompare_comparative_table_fastedit_specific') as $module) {
       $function = $module . '_wikicompare_comparative_table_fastedit_specific';
       $function($output, $type, $node, $fastaction, $nid);
+    }
+*/
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_comparative_table_fastedit_specific($output, $type, $node, $fastaction, $nid);
     }
     
     $revision_field = array(

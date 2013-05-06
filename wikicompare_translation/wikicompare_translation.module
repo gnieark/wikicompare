@@ -85,10 +85,15 @@ function wikicompare_translation_wikicompare_build_form_after(&$form, &$form_sta
       $form['wikicompare_support'] = array('#markup' => $node->wikicompare_support['und'][0]['value']);
       unset($form_state['node']->wikicompare_support);
     }
-
+/*
     foreach (module_implements('wikicompare_translation_form') as $module) {
       $function = $module . '_wikicompare_translation_form';
       $function($form, $form_state, $node);
+    }
+*/
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_translation_form($form, $form_state, $node);
     }
 
   }

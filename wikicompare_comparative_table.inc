@@ -91,11 +91,15 @@ function theme_wikicompare_comparative_table($variables) {
   );
   $output .= '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
   
-
+/*
   //Allow others modules to modify the output
   foreach (module_implements('wikicompare_comparative_table_before_compute') as $module) {
     $function = $module . '_wikicompare_comparative_table_before_compute';
     $function($output);
+  }
+*/
+  if (module_exists('wikicompare_needs')) {
+    wikicompare_needs_wikicompare_comparative_table_before_compute($output);
   }
 
 
@@ -262,11 +266,16 @@ function get_item_list_children_response($method = 'ajax') {
             $nodes[$key]['data']->displayed = True;
           }
         }
-
+/*
         //Allow others modules to modify the output
         foreach (module_implements('wikicompare_comparative_table_prepare_itemlist') as $module) {
           $function = $module . '_wikicompare_comparative_table_prepare_itemlist';
           $function($key, $nodes, $_POST);
+        }
+*/
+
+        if (module_exists('wikicompare_needs')) {
+          wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, $nodes, $_POST);
         }
 
       }
@@ -646,10 +655,16 @@ dpm($_POST, 'post');
 
     $selected_feature_ids = $_POST['selected_feature_ids'];
 
+/*
     //Allow others modules to modify the output
     foreach (module_implements('wikicompare_comparative_table_prepare_compute') as $module) {
       $function = $module . '_wikicompare_comparative_table_prepare_compute';
       $function($selected_feature_ids, $_POST);
+    }
+*/
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_comparative_table_prepare_compute($selected_feature_ids, $_POST);
     }
 
     //If empty, javascript return a null string and not an empty array. So we need to assign it in a variable and manage the null case.
@@ -820,12 +835,17 @@ function make_cleaning_response($method = 'ajax') {
       $compared['data']->nid = 0;
       $commands[] = ajax_command_invoke('#add_compared_link_fastaction', 'html', array(add_fastedit_items('compared' , $compared)));
     }
-
+/*
     //Allow others modules to modify the output
     foreach (module_implements('wikicompare_comparative_table_cleaning') as $module) {
       $function = $module . '_wikicompare_comparative_table_cleaning';
       $function($commands, $_POST);
     }
+*/
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_comparative_table_cleaning($commands, $_POST);
+    }
+
 
     if (!$_POST['computed']) {
       $feature_ids = array();

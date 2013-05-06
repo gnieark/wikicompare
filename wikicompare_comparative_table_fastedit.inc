@@ -319,11 +319,16 @@ function get_fastedit_form_response($method = 'ajax'){
           $commands[] = ajax_command_invoke('#feature_row_' . $node->wikicompare_feature_id['und'][0]['target_id'], 'after', array($output));
           break;
       }
-
+/*
       //Allow others modules to modify the output
       foreach (module_implements('wikicompare_comparative_table_fastedit_command') as $module) {
         $function = $module . '_wikicompare_comparative_table_fastedit_command';
         $function($commands, $type, $nid, $output);
+      }
+*/
+
+      if (module_exists('wikicompare_needs')) {
+        wikicompare_needs_wikicompare_comparative_table_fastedit_command($commands, $type, $nid, $output);
       }
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
@@ -496,11 +501,17 @@ dpm($_POST, 'post');
             }
         }
       }
-
+/*
       foreach (module_implements('wikicompare_comparative_table_fastedit_submit') as $module) {
         $function = $module . '_wikicompare_comparative_table_fastedit_submit';
         $function($node, $type, $_POST);
       }
+*/
+
+      if (module_exists('wikicompare_needs')) {
+        wikicompare_needs_wikicompare_comparative_table_fastedit_submit($node, $type, $_POST);
+      }
+
 /*
       foreach (module_implements('wikicompare_fastedit_submit_after') as $module) {
         $function = $module . '_wikicompare_fastedit_submit_after';

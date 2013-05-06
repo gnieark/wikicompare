@@ -609,10 +609,14 @@ function wikicompare_install() {
 
 
 
-
+/*
   foreach (module_implements('wikicompare_install_node_install') as $module) {
     $function = $module . '_wikicompare_install_node_install';
     $function($type);
+  }
+*/
+  if (module_exists('wikicompare_needs')) {
+    wikicompare_translation_wikicompare_install_node_install($type);
   }
 
 

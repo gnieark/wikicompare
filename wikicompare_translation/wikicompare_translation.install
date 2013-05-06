@@ -47,7 +47,7 @@ dpm(LANGUAGE_TYPE_INTERFACE, 'test');
  * Implements hook_uninstall().
  * This function is called at the module uninstallation
  */
-function wikicompare_needs_uninstall() {
+function wikicompare_translation_uninstall() {
 
   foreach (array('compared', 'feature', 'implementation') as $type) {
     variable_set('language_content_type_' . $type, 0);

@@ -363,10 +363,17 @@ dpm($op, 'op');
   if ($op == 'pre publish') {
 
     $types = array('compared', 'feature', 'implementation');
+/*
     foreach (module_implements('wikicompare_node_types') as $module) {
       $function = $module . '_wikicompare_node_types';
       $function($array);
     }
+*/
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_node_types($array);
+    }
+
     if (in_array($node_revision->type, $types)) {
 
       $test = false;
@@ -379,10 +386,17 @@ dpm($op, 'op');
 
 
       $types = array('compared', 'feature');
+/*
       foreach (module_implements('wikicompare_node_types') as $module) {
         $function = $module . '_wikicompare_node_types';
         $function($array);
       }
+*/
+
+      if (module_exists('wikicompare_needs')) {
+        wikicompare_needs_wikicompare_node_types($array);
+      }
+
       if (in_array($node_revision->type, $types)) {
 
         $node_revision_parent = NULL;
@@ -500,9 +514,15 @@ dpm($to_update, 'to_update');
   if ($op == 'post publish') {
 
     $types = array('compared', 'feature', 'implementation');
+/*
     foreach (module_implements('wikicompare_node_types') as $module) {
       $function = $module . '_wikicompare_node_types';
       $function($array);
+    }
+*/
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_node_types($array);
     }
     if (in_array($node_revision->type, $types)) {
 
@@ -540,12 +560,17 @@ dpm($to_update, 'to_update');
         $fields['type'] = $node_revision->wikicompare_type['und'][0]['value'];
         $fields['weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
       }
-
+/*
       //Update other fields from others modules
 //TODO old wikicompare_cache_compared_fields
       foreach (module_implements('wikicompare_cache_update_fields') as $module) {
         $function = $module . '_wikicompare_cache_update_fields';
         $function($fields, $node_revision);
+      }
+*/
+
+      if (module_exists('wikicompare_needs')) {
+        wikicompare_needs_wikicompare_cache_update_fields($fields, $node_revision);
       }
 
       if (module_exists('wikicompare_inherit_compared')) {
@@ -582,11 +607,17 @@ dpm($to_update, 'to_update');
       }
 
     }
-
+/*
     foreach (module_implements('wikicompare_cache_after_update_fields') as $module) {
       $function = $module . '_wikicompare_cache_after_update_fields';
       $function($fields, $node_revision);
     }
+*/
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_cache_after_update_fields($fields, $node_revision);
+    }
+
   }
 }
 
