@@ -152,14 +152,16 @@ dpm($node_array);
       $test = True;
     }
 
-dpm($test, 'test premier');
 
+/*
     foreach (module_implements('wikicompare_fastedit_items_test') as $module) {
       $function = $module . '_wikicompare_fastedit_items_test';
       $function($test, $node_array);
     }
-
-dpm($test, 'test_final');
+*/
+    if (module_exists('wikicompare_translation')) {
+      wikicompare_translation_wikicompare_fastedit_items_test($test, $node_array);
+    }
 
     if ($test == False) {
       //Create the image link to edit the node
@@ -257,9 +259,15 @@ function get_fastedit_form_response($method = 'ajax'){
 
           $tnode = new stdClass;
           $readonly_translation = False;
+/*
           foreach (module_implements('wikicompare_fastedit_get_tnode') as $module) {
             $function = $module . '_wikicompare_fastedit_get_tnode';
             $function($tnode, $readonly_translation, $node);
+          }
+*/
+
+          if (module_exists('wikicompare_translation')) {
+            wikicompare_translation_wikicompare_fastedit_get_tnode($tnode, $readonly_translation, $node);
           }
           
         } else {
@@ -386,10 +394,15 @@ dpm($_POST, 'post');
       }
 
       $tnode = new stdClass();
+/*
       foreach (module_implements('wikicompare_fastedit_submit_init_tnode') as $module) {
         $function = $module . '_wikicompare_fastedit_submit_init_tnode';
         $function($tnode, $_POST, $fastaction);
-      }    
+      }   
+*/
+      if (module_exists('wikicompare_translation')) {
+        wikicompare_translation_wikicompare_fastedit_submit_init_tnode($tnode, $_POST, $fastaction);
+      } 
 
       if ($type != 'implementation') {
         if ($_POST['title'] != NULL) {
@@ -397,11 +410,15 @@ dpm($_POST, 'post');
         } else {
           $missing_field = TRUE;
         }
-
+/*
         foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
           $function = $module . '_wikicompare_fastedit_submit_element';
           $function($tnode, $_POST, 'title', 'title');
         }
+*/
+        if (module_exists('wikicompare_translation')) {
+          wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'title', 'title');
+        } 
 
         if ($_POST['parent_id'] != 0) {
 
@@ -432,10 +449,11 @@ dpm($_POST, 'post');
         'format' => 'full_html',
       );
 
-      foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
-        $function = $module . '_wikicompare_fastedit_submit_element';
-        $function($tnode, $_POST, 'body', 'description');
-      }
+
+      if (module_exists('wikicompare_translation')) {
+        wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'body', 'description');
+      } 
+
 */
 
       $donotupdate = False;
@@ -453,10 +471,11 @@ dpm($_POST, 'post');
 /*  TODO When wysiwyg will work
         $node->wikicompare_guidelines['und'][0]['value'] = $_POST['guidelines'];
         $node->wikicompare_guidelines['und'][0]['format'] = 'full_html';
-        foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
-          $function = $module . '_wikicompare_fastedit_submit_element';
-          $function($tnode, $_POST, 'wikicompare_guidelines', 'guidelines');
-        }
+
+        if (module_exists('wikicompare_translation')) {
+          wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'wikicompare_guidelines', 'guidelines');
+        } 
+
 */
         
         if ($_POST['weight'] != NULL) {
@@ -482,11 +501,16 @@ dpm($_POST, 'post');
         $function = $module . '_wikicompare_comparative_table_fastedit_submit';
         $function($node, $type, $_POST);
       }
-
+/*
       foreach (module_implements('wikicompare_fastedit_submit_after') as $module) {
         $function = $module . '_wikicompare_fastedit_submit_after';
         $function($node, $tnode, $_POST);
       }
+*/
+
+      if (module_exists('wikicompare_translation')) {
+        wikicompare_translation_wikicompare_fastedit_submit_after($node, $tnode, $_POST);
+      } 
       
       $node->log = $_POST['revision'];
 dpm($node);

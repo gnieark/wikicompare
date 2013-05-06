@@ -736,10 +736,14 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
       $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
     }
   }
-
+/*
   foreach (module_implements('wikicompare_request_db') as $module) {
     $function = $module . '_wikicompare_request_db';
     $function($query, $type, $settings);
+  }
+*/
+  if (module_exists('wikicompare_translation')) {
+    wikicompare_translation_wikicompare_request_db($query, $type, $settings);
   }
 
   $result = $query->execute();
@@ -767,16 +771,26 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
             $res[$record->feature_id][$record->compared_id]['no-remove'] = True;
           }
         }
+/*
         foreach (module_implements('wikicompare_request_db_fastedit') as $module) {
           $function = $module . '_wikicompare_request_db_fastedit';
           $function($res, $record, $type, $nids);
         }
+*/
+        if (module_exists('wikicompare_translation')) {
+          wikicompare_translation_wikicompare_request_db_fastedit($res, $record, $type, $nids);
+        }
       }
     }
 
+/*
     foreach (module_implements('wikicompare_request_db_build') as $module) {
       $function = $module . '_wikicompare_request_db_build';
       $function($res, $record);
+    }
+*/
+    if (module_exists('wikicompare_translation')) {
+      wikicompare_translation_wikicompare_request_db_build($res, $record);
     }
 
 

@@ -227,11 +227,17 @@ function compared_delete($node) {
 }
 
 function implementation_delete($node) {
-
+/*
   foreach (module_implements('wikicompare_delete_after') as $module) {
     $function = $module . '_wikicompare_delete_after';
     $function($node);
   }
+*/
+
+  if (module_exists('wikicompare_translation')) {
+    wikicompare_translation_wikicompare_delete_after($node);
+  } 
+
 }
 
 function wikicompare_delete_node($type, $node) {
@@ -324,11 +330,16 @@ function wikicompare_delete_node($type, $node) {
       wikicompare_update_compare_tree($type, array($node->wikicompare_parent_id['und'][0]['target_id']));
     }
   }
-
+/*
   foreach (module_implements('wikicompare_delete_after') as $module) {
     $function = $module . '_wikicompare_delete_after';
     $function($node);
   }
+*/
+
+  if (module_exists('wikicompare_translation')) {
+    wikicompare_translation_wikicompare_delete_after($node);
+  } 
 
 }
 

@@ -97,6 +97,7 @@ function wikicompare_translation_wikicompare_build_form_after(&$form, &$form_sta
 }
 
 
+/*
 //TODO security pour weight mais marche pas
 function wikicompare_translation_node_presave($node) {
   if ($node->language != language_default('language')) {
@@ -105,6 +106,8 @@ function wikicompare_translation_node_presave($node) {
     }
   }
 }
+
+*/
 
 function wikicompare_translation_wikicompare_request_db(&$query, $type, $settings) {
 
