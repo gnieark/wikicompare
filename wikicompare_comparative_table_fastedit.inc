@@ -113,9 +113,13 @@ function toggle_fastedit_response($method = 'ajax'){
 
 function add_fastedit_items($type, $node_array){
 
+dpm($type);
+dpm($node_array);
+
   $output = ' ';
 
   $nid = $node_array['data']->nid;
+
   
   if ($type == 'implementation') {
     
@@ -148,11 +152,14 @@ function add_fastedit_items($type, $node_array){
       $test = True;
     }
 
+dpm($test, 'test premier');
+
     foreach (module_implements('wikicompare_fastedit_items_test') as $module) {
       $function = $module . '_wikicompare_fastedit_items_test';
       $function($test, $node_array);
     }
 
+dpm($test, 'test_final');
 
     if ($test == False) {
       //Create the image link to edit the node

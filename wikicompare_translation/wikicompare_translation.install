@@ -19,6 +19,24 @@ function wikicompare_translation_install() {
     variable_set('language_content_type_need', 2);
   }
 
+  
+  // Turn on user & browser language negotiation
+  $weighted_provider_list = array(
+    1 => LOCALE_LANGUAGE_NEGOTIATION_SESSION,
+    2 => LOCALE_LANGUAGE_NEGOTIATION_USER,
+    4 => LOCALE_LANGUAGE_NEGOTIATION_BROWSER,
+    10 => LANGUAGE_NEGOTIATION_DEFAULT,
+  );
+  $all_negotiation_providers = language_negotiation_info();
+  $negotiation = array();
+  foreach ($weighted_provider_list as $weight => $id) {
+    $negotiation[$id] = $all_negotiation_providers[$id];
+    $negotiation[$id]['weight'] = $weight;
+  }
+dpm($negotiation, 'test');
+  language_negotiation_set(LANGUAGE_TYPE_INTERFACE, $negotiation);
+dpm(LANGUAGE_TYPE_INTERFACE, 'test');
+
 
 }
 

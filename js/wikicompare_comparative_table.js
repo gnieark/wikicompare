@@ -957,6 +957,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 
+
 //TODO isoler le test ajax dans une fonction a part
 
 

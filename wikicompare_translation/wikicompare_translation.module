@@ -1,6 +1,13 @@
 <?php
 
 
+function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks) {
+
+  $blocks['locale']['language']['region'] = 'content';
+  $blocks['locale']['language']['weight'] = 10;
+ 
+}
+
 function wikicompare_translation_wikicompare_build_form_settings(&$settings, &$node, &$nid, $form, $form_state) {
 
   
@@ -153,19 +160,19 @@ function wikicompare_translation_wikicompare_fastedit_items_test(&$test, $node_a
 
   global $language;
 
-  if ($language->language != language_default('language')) {
-dpm($test, 'test1');
+  if (($language->language != language_default('language')) && ($node_array['data']->nid != 0)) {
+
     $test_translate = False;
     if (isset($node_array['no-edit-translate'])) {
       $test_translate = True;
     }
-dpm($test_translate, 'test_translate');
+
     if ($test && $test_translate) {
       $test = True;
     } else {
       $test = False;
     }
-dpm($test, 'test2');
+
   }
 
 }

@@ -17,7 +17,9 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 
 function wikicompare_comparative_table($form_state) {
 
-
+dpm(variable_get('language_negotiation_language'), 'test');
+dpm(variable_get('language_negotiation_language_content'), 'test');
+dpm(variable_get('language_negotiation_language_url'), 'test');
 
   //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
