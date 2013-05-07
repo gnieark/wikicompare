@@ -79,11 +79,15 @@ Activate this feature can take some time, because the cache table need to be rec
   );
 
   $form['#submit'][] = 'submit_settings';
-
+/*
   //Allow others modules to modify the settings page
   foreach (module_implements('wikicompare_settings_page') as $module) {
     $function = $module . '_wikicompare_settings_page';
     $function($form);
+  }
+*/
+  if (module_exists('wikicompare_generate_demo')) {
+    wikicompare_generate_demo_wikicompare_settings_page($form);
   }
 
   return system_settings_form($form);

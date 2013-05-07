@@ -961,6 +961,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO isoler le test ajax dans une fonction a part
 
 
+//TODO Mettre tous les arguments de la fonction request_db dans les settings, pour la rendre plus flexible. Importante refonte.
+
 //TODO in inherit compared, verifier que la mise à jour du champ use_from a l'installation ne pose pas de probleme
 //TODO In translation, mettre à jour le flag missing required field
 //TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible

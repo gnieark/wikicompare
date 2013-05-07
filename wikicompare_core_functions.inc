@@ -742,6 +742,11 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
     $function($query, $type, $settings);
   }
 */
+
+  if (module_exists('wikicompare_inherit_compared')) {
+    wikicompare_inherit_compared_wikicompare_request_db($query, $type, $settings);
+  }
+
   if (module_exists('wikicompare_translation')) {
     wikicompare_translation_wikicompare_request_db($query, $type, $settings);
   }

@@ -157,6 +157,13 @@ function wikicompare_node_schema($type) {
       'not null' => TRUE,
     );
     $schema['indexes']['state'] = array('state');
+    $schema['fields']['has_children'] = array(
+      'description' => "Boolean indicated if this node has children. This allow us to know this feature has children without making each time a big sql query.",
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => TRUE,
+      'default' => 0,
+    );
   } else {
     $schema['fields']['feature_id'] = array(
       'description' => 'The feature id of the implementation node',
@@ -208,13 +215,7 @@ function wikicompare_node_schema($type) {
   }
 
 
-  $schema['fields']['has_children'] = array(
-    'description' => "Boolean indicated if this node has children. This allow us to know this feature has children without making each time a big sql query.",
-    'type' => 'int',
-    'size' => 'tiny',
-    'not null' => TRUE,
-    'default' => 0,
-  );
+
   $schema['fields']['to_update'] = array(
     'description' => "Boolean indicated if this node should be updated as soon as possible",
     'type' => 'int',
