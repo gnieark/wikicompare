@@ -2,7 +2,7 @@
 
 
 require_once drupal_get_path('module', 'wikicompare_generate_demo') . '/data/erp_data.inc';
-
+require_once drupal_get_path('module', 'wikicompare_generate_demo') . '/data/test_data.inc';
 
 function wikicompare_generate_demo_menu() {
 
@@ -74,6 +74,8 @@ function theme_wikicompare_export($variables) {
 
     $needs = request_db('need', array('states' => array('draft', 'closed')));
 
+dpm($needs);
+
     foreach ($needs as $need) {
       wikicompare_generate_demo_export_output_node($output, $need, 'need');
     }
@@ -81,6 +83,33 @@ function theme_wikicompare_export($variables) {
     $output .= "}</p>";
 
   }
+
+
+  if (module_exists('wikicompare_inherit_compared')) {
+    $query = db_select('cache_compared', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
+    $query->where("n.inherit_compared_id IS NOT NULL");
+    $result = $query->execute();
+
+    foreach ($result as $record) {
+
+      $output .= "<p>if (module_exists('wikicompare_inherit_compared')) {</p>";
+
+      $output .= "<p>\$node = node_load(\$compareds['new-" . $record->nid . "']);<br/>";
+      $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$compareds['new-" . $record->inherit_compared_id . "'];<br/>";
+      $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
+      $output .= "\$node->revision = TRUE;<br/>";
+      $output .= "\$node->revision_moderation = TRUE;<br/>";
+      $output .= "node_save(\$node);<br/>";
+      $output .= "_revisioning_publish_latest_revision(\$node);</p>";
+
+      $output .= "<p>}</p>";
+
+    }
+
+  }
+
 
 
   $query = db_select('cache_implementation', 'n');
@@ -132,6 +161,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   $output .= "\$node->type = '" . $type . "';<br/>";
   $output .= "\$node->language = 'en';<br/>";
   $output .= "\$node->title = '" . $node['data']->title . "';<br/>";
+dpm($node['data']->parent_id);
   if ($node['data']->parent_id != NULL) {
     $output .= "\$node->wikicompare_parent_id['und'][0]['target_id'] = \$". $type . "s['new-" . $node['data']->parent_id . "'];<br/>";
     $output .= "\$node->wikicompare_parent_id['und'][0]['target_type'] = 'node';<br/>";
@@ -142,11 +172,26 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     $output .= "\$node->wikicompare_type['und'][0]['value'] = '" . $node['data']->type . "';<br/>";
     $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";
   }
-
+/*
   if (module_exists('wikicompare_inherit_compared')) {
     if ($type == 'compared') {
-      $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$". $type . "s['new-" . $node['data']->inherit_compared_id . "'];<br/>";
-      $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
+      if ($node['data']->inherit_compared_id != NULL) {
+        $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$". $type . "s['new-" . $node['data']->inherit_compared_id . "'];<br/>";
+        $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
+      }
+    }
+  }
+*/
+
+  if (module_exists('wikicompare_needs')) {
+    if ($type == 'need') {
+      $i = 0;
+      $output .= "\$node->wikicompare_features['und'] = array();<br/>";
+      foreach($node['need_features'] as $fid) {
+        $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_id'] = \$features['new-" . $fid . "'];<br/>";
+        $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_type'] = 'node';<br/>";
+        $i++;
+      }
     }
   }
 
@@ -171,13 +216,17 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     foreach ($result as $record) {
       if ($first == True) {
         $output .= "<p>if (module_exists('wikicompare_translation')) {</p>";
+
+        $output .= "<p>\$node->tnid = \$node->nid;<br/>";
+        $output .= "node_save(\$node);</p>";
+
         $first = False;
       }
       $output .= "<p>if (in_array('" . $record->language . "', language_list())) {<br/>";
       $output .= "\$tnode = new stdClass();<br/>";
       $output .= "\$tnode->type = '" . $type . "';<br/>";
       $output .= "\$tnode->language = '" . $record->language . "';<br/>";
-      $output .= "\$tnode->translation_source = \$node->nid;<br/>";
+      $output .= "\$tnode->tnid = \$node->nid;<br/>";
       $output .= "\$tnode->title = '" . $record->title . "';<br/>";
       $output .= "node_save(\$node);<br/>";
       $output .= "}</p>";
@@ -194,6 +243,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   if ($node['data']->has_children) {
     //Find all the compared on the first level of the tree
     $children = request_db($type, array('states' => array('draft', 'closed')), 'parent', array($node['data']->nid));
+
 
     foreach ($children as $child) {
       wikicompare_generate_demo_export_output_node($output, $child, $type);
@@ -454,6 +504,15 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     '#submit' => array('wikicompare_generate_erp_data'),
   );
 
+  $form['demo_fieldset']['generate_test_data'] = array(
+    '#type' => 'submit',
+    '#prefix' => '<br/>',
+    '#suffix' => '<br/>You can use this button to generate predefine data on the test theme.',
+    '#value' => t('Generate test data'),
+    '#button_type' => 'button',
+    '#submit' => array('wikicompare_generate_test_data'),
+  );
+
   $form['demo_fieldset']['drop_nodes'] = array(
     '#type' => 'submit',
     '#prefix' => '<br/>',
@@ -461,6 +520,14 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     '#value' => t('Drop nodes'),
     '#button_type' => 'button',
     '#submit' => array('wikicompare_drop_nodes'),
+  );
+
+
+  $form['demo_fieldset']['export_link'] = array(
+    '#type' => 'link',
+    '#prefix' => '<br/><br/>',
+    '#title' => 'Export data',
+    '#href' => 'admin/config/wikicompare/export',
   );
 }
 

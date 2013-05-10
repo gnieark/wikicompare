@@ -750,10 +750,21 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
     wikicompare_translation_wikicompare_request_db($query, $type, $settings);
   }
 
+  if (module_exists('wikicompare_needs')) {
+    if ($type == 'need') {
+      $query->addField('nf', 'feature_nid', 'need_feature_id');
+      $query->leftjoin('cache_need_feature_rel', 'nf', 'n.nid = nf.need_nid');
+    }
+  }
+
+
   $result = $query->execute();
 
 
   foreach ($result as $record) {
+if ($type == 'need') {
+dpm($record);
+}
 
     if ($type != 'implementation' || $nids != NULL) {
       $res[$record->nid]['data'] = $record;
@@ -761,6 +772,17 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
     } else {
 
       $res[$record->feature_id][$record->compared_id]['data'] = $record;
+    }
+
+    if (module_exists('wikicompare_needs')) {
+      if ($type == 'need') {
+        if (isset($res[$record->nid]['need_features']) || $record->need_feature_id != NULL) {
+          $res[$record->nid]['need_features'][$record->need_feature_id] = $record->need_feature_id;
+        } else {
+          $res[$record->nid]['need_features'] = array();
+        } 
+        unset($res[$record->nid]['data']->need_feature_id);
+      }
     }
 
     if (isset($settings['fastedit_status'])) {
