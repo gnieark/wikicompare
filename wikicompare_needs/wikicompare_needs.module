@@ -31,24 +31,11 @@ function need_form($node, $form_state) {
 
 
 
-
+/*
 function wikicompare_needs_wikicompare_install_node_install($type) {
 
   if ($type == 'need') {
-    $instance = array(
-      'field_name' => 'need_features',
-      'entity_type' => 'node',
-      'bundle' => 'need',
-      'label' => 'Features',
-      'widget' => array(
-        'type' => 'entityreference_autocomplete',
-      ),
-      'settings' => array(
-        'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('feature')),
-      ),
-    );
-    field_create_instance($instance);
+
 
 
     $instance = array(
@@ -72,15 +59,15 @@ function wikicompare_needs_wikicompare_install_node_install($type) {
   }
 
 }
-
+*/
 
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
 
   wikicompare_build_form($form, $form_state);
 
   $selected_feature_ids = array();
-  if (isset($form_state['node']->need_features['und'])) {
-    foreach ($form_state['node']->need_features['und'] as $array) {
+  if (isset($form_state['node']->wikicompare_features['und'])) {
+    foreach ($form_state['node']->wikicompare_features['und'] as $array) {
       $id = $array['target_id'];
       $selected_feature_ids[$id] = $id;
     }
@@ -128,8 +115,8 @@ function wikicompare_needs_build_form_settings(&$settings, &$node, &$nid, $form,
 
   if ($form_state['node']->type == 'need') {
       $selected_feature_ids = array();
-      if (isset($form_state['node']->need_features['und'])) {
-        foreach ($form_state['node']->need_features['und'] as $array) {
+      if (isset($form_state['node']->wikicompare_features['und'])) {
+        foreach ($form_state['node']->wikicompare_features['und'] as $array) {
           $id = $array['target_id'];
           $selected_feature_ids[$id] = $id;
         }
@@ -214,7 +201,7 @@ function wikicompare_needs_wikicompare_comparative_table_toogle_fastedit(&$comma
 function wikicompare_needs_wikicompare_comparative_table_fastedit_parent(&$parent_id, $type, $node) {
 
   if ($type == 'need') {
-    $parent_id = $node->need_parent_need['und'][0]['target_id'];
+    $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
   }
 
 }
@@ -228,8 +215,8 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$out
     $selected_feature_hidden = '';
     if ($fastaction == 'edit') {
       $selected_feature_ids = array();
-      if (isset($node->need_features['und'])) {
-        foreach ($node->need_features['und'] as $array) {
+      if (isset($node->wikicompare_features['und'])) {
+        foreach ($node->wikicompare_features['und'] as $array) {
           $id = $array['target_id'];
           $selected_feature_ids[] = $id;
         }
@@ -285,7 +272,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$out
       )
     );
     if ($fastaction == 'edit') {
-      $state_field['#value'] = $node->need_state['und'][0]['value'];
+      $state_field['#value'] = $node->wikicompare_state['und'][0]['value'];
     }
     $output .= drupal_render($state_field);
 
@@ -332,10 +319,10 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_submit(&$node,
       $array['target_type'] = "node";
       $need_features[] = $array;
     }
-    $node->need_features[$node->language] = $need_features;
-    $node->need_parent_need[$node->language][0]['target_id'] = $_POST['parent_id'];
-    $node->need_parent_need[$node->language][0]['target_type'] = "node";
-    $node->need_state[$node->language][0]['value'] = $_POST['state'];
+    $node->wikicompare_features[$node->language] = $need_features;
+    $node->wikicompare_parent_id[$node->language][0]['target_id'] = $_POST['parent_id'];
+    $node->wikicompare_parent_id[$node->language][0]['target_type'] = "node";
+    $node->wikicompare_state[$node->language][0]['value'] = $_POST['state'];
 
   }
 
@@ -403,11 +390,17 @@ function recover_features($need_ids) {
 
 function need_insert($node) {
 
+
+
+  if ($node->language != language_default('language')) {
+    return;
+  }
+
   wikicompare_insert_node('need', $node);
 
-
+//dpm($node);
   $feature_m2m = array();
-  foreach ($node->need_features['und'] as $feature) {
+  foreach ($node->wikicompare_features['und'] as $feature) {
 
     $feature_m2m[] = array(
       'need_nid' => $node->nid,
@@ -449,7 +442,7 @@ function wikicompare_needs_wikicompare_node_types(&$array) {
 
 function wikicompare_needs_wikicompare_cache_update_fields(&$fields, $node_revision) {
 
-  if ($type == 'need') {
+  if ($node_revision->type == 'need') {
     $fields['state'] = $node_revision->need_state['und'][0]['value'];
   }
 
@@ -457,7 +450,7 @@ function wikicompare_needs_wikicompare_cache_update_fields(&$fields, $node_revis
 
 function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node_revision) {
 
-  if ($type == 'need') {
+  if ($node_revision->type == 'need') {
 
     $query = db_select('cache_need_feature_rel', 'f');
     $query->addField('f', 'feature_nid', 'feature_nid');
@@ -465,8 +458,8 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
     $result = $query->execute();
 
     $new_feature_ids = array();
-    if (isset($node_revision->need_features['und'])) {
-      foreach ($node_revision->need_features['und'] as $feature) {
+    if (isset($node_revision->wikicompare_features['und'])) {
+      foreach ($node_revision->wikicompare_features['und'] as $feature) {
         $new_feature_ids[$feature['target_id']] = $feature['target_id'];
       }
     }
@@ -514,7 +507,7 @@ function wikicompare_needs_wikicompare_translation_form(&$form, &$form_state, $n
 
   if (isset($form['need_features'])) {
 //    $form['need_features'] = array('#markup' => $node->wikicompare_support['und'][0]['value']);
-    unset($form_state['node']->need_features);
+    unset($form_state['node']->wikicompare_features);
   }
 
 }

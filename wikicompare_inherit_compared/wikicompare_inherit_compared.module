@@ -449,6 +449,8 @@ function wikicompare_inherit_compared_update_main_query(&$query) {
 //Prepare the variables before the node computation. Essentially check if we have the percent of the inherited implementation and recover the children through inherit we will update after the computation
 function wikicompare_inherit_compared_update_comparative_table_preparation($nids, &$nodes, $type) {
 
+
+
     //Mark to update the inherited implementation without cache percent
     $to_update = array();
     foreach($nodes as $node) {
@@ -459,9 +461,11 @@ function wikicompare_inherit_compared_update_comparative_table_preparation($nids
       }
     }
 
+
+
     //Recover the missing cache percent
     if (!empty($to_update)) {
-      //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop.
+      //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop. There is a secutity in the interface (in select popin) but not in this update code.
       $res = wikicompare_update_compare_tree('implementation', $to_update);
       foreach($nodes as $node) {
         if (isset($res[$node->inheriting_implementation_nid])) {
@@ -482,30 +486,33 @@ function wikicompare_inherit_compared_update_comparative_table_preparation($nids
       $res_search_inherit_compared_children = $res_search_inherit_compared_children . "('" . $node->fid . "','" . $node->cid . "')";
     }
 
-    $query = db_select('cache_implementation', 'i');
-    $query->addField('i', 'nid', 'nid');
-    $query->addField('i', 'feature_id', 'fid');
-    $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
-    $query->join('cache_feature', 'nf', 'i.feature_id = nf.nid');
-    $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
-    //Only the implementation which has no children on both axis will be updated because only them can have their percent updated by inheritance
-    $query->condition('nf.has_children', 0); 
-    $query->condition('nc.has_children', 0);
-
-    switch ($type) {
-      case "compared":
-        $query->condition('nc.inherit_compared_id', $nids, 'IN');
-        break;
-      default:
-        $query->where('(i.feature_id, nc.inherit_compared_id) IN (' . $res_search_inherit_compared_children . ')');
-        break;
-    }
-    $result = $query->execute();
-
     $through_inherit_childs = array();
-    foreach($result as $record) {
-      //We assign the children implementation in a array with fid and cid as key so their parents can recover them with fid and cid key
-      $through_inherit_childs[$record->fid][$record->inherit_compared_id][$record->nid] = $record;
+    if (($type == 'compared' && !empty($nids)) || $res_search_inherit_compared_children) {
+      $query = db_select('cache_implementation', 'i');
+      $query->addField('i', 'nid', 'nid');
+      $query->addField('i', 'feature_id', 'fid');
+      $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
+      $query->join('cache_feature', 'nf', 'i.feature_id = nf.nid');
+      $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
+      //Only the implementation which has no children on both axis will be updated because only them can have their percent updated by inheritance
+      $query->condition('nf.has_children', 0); 
+      $query->condition('nc.has_children', 0);
+
+      switch ($type) {
+        case "compared":
+          $query->condition('nc.inherit_compared_id', $nids, 'IN');
+          break;
+        default:
+          $query->where('(i.feature_id, nc.inherit_compared_id) IN (' . $res_search_inherit_compared_children . ')');
+          break;
+      }
+      $result = $query->execute();
+
+      
+      foreach($result as $record) {
+        //We assign the children implementation in a array with fid and cid as key so their parents can recover them with fid and cid key
+        $through_inherit_childs[$record->fid][$record->inherit_compared_id][$record->nid] = $record;
+      }
     }
 
 

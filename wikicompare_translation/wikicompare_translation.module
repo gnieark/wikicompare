@@ -8,7 +8,7 @@ function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks
  
 }
 
-function wikicompare_translation_wikicompare_build_form_settings(&$settings, &$node, &$nid, $form, $form_state) {
+function wikicompare_translation_build_form_settings(&$settings, &$node, &$nid, $form, $form_state) {
 
   
   if ($form_state['node']->language != language_default('language')) {
@@ -34,7 +34,7 @@ function wikicompare_translation_wikicompare_build_form_settings(&$settings, &$n
 
 }
 
-function wikicompare_translation_wikicompare_build_form_after(&$form, &$form_state, $node) {
+function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
 
 
 

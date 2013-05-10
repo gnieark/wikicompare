@@ -616,10 +616,11 @@ function wikicompare_install() {
     $function($type);
   }
 */
+/*
   if (module_exists('wikicompare_needs')) {
     wikicompare_translation_wikicompare_install_node_install($type);
   }
-
+*/
 
 
 }

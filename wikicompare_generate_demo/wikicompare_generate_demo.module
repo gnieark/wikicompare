@@ -125,7 +125,7 @@ function theme_wikicompare_export($variables) {
 
 function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
 
-dpm($node);
+
 
   $output .= "<p>";
   $output .= "\$node = new stdClass();<br/>";
@@ -217,7 +217,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['feature_min_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum feature depth'),
-    '#default_value' => 0,
+    '#default_value' => 2,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => True,
@@ -227,7 +227,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['feature_max_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum feature depth'),
-    '#default_value' => 0,
+    '#default_value' => 3,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
@@ -237,7 +237,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['feature_child_min_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum number of child feature per level'),
-    '#default_value' => 0,
+    '#default_value' => 2,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
@@ -247,7 +247,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['feature_child_max_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum number of child feature per level'),
-    '#default_value' => 0,
+    '#default_value' => 3,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
@@ -267,7 +267,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['feature_max_weight'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum feature weight'),
-    '#default_value' => 1,
+    '#default_value' => 3,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
@@ -287,7 +287,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['compared_min_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum compared depth'),
-    '#default_value' => 0,
+    '#default_value' => 2,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
@@ -297,7 +297,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['compared_max_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum compared depth'),
-    '#default_value' => 0,
+    '#default_value' => 3,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
@@ -307,7 +307,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['compared_child_min_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum number of child compared per level'),
-    '#default_value' => 0,
+    '#default_value' => 2,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
@@ -317,30 +317,31 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   $form['demo_fieldset']['compared_child_max_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum number of child compared per level'),
-    '#default_value' => 0,
+    '#default_value' => 3,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
     '#element_validate' => array('element_validate_integer_positive_or_null'), 
   );
-
+/*
   if (module_exists('wikicompare_inherit_compared')) {
     $form['demo_fieldset']['compared_inherit_chance'] = array(
       '#type' => 'textfield',
       '#title' => t('Chance that a compared inherit another one (1/x)'),
-      '#default_value' => 0,
+      '#default_value' => 20,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => TRUE,
       '#element_validate' => array('element_validate_integer_positive_or_null'), 
     );    
   }
+*/
 
   if (module_exists('wikicompare_needs')) {
     $form['demo_fieldset']['need_min_depth'] = array(
       '#type' => 'textfield',
       '#title' => t('Minimum need depth'),
-      '#default_value' => 0,
+      '#default_value' => 2,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => True,
@@ -350,7 +351,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     $form['demo_fieldset']['need_max_depth'] = array(
       '#type' => 'textfield',
       '#title' => t('Maximum need depth'),
-      '#default_value' => 0,
+      '#default_value' => 3,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => TRUE,
@@ -360,7 +361,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     $form['demo_fieldset']['need_child_min_per_level'] = array(
       '#type' => 'textfield',
       '#title' => t('Minimum number of child need per level'),
-      '#default_value' => 0,
+      '#default_value' => 2,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => TRUE,
@@ -370,7 +371,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     $form['demo_fieldset']['need_child_max_per_level'] = array(
       '#type' => 'textfield',
       '#title' => t('Maximum number of child need per level'),
-      '#default_value' => 0,
+      '#default_value' => 3,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => TRUE,
@@ -380,7 +381,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     $form['demo_fieldset']['need_min_feature_per_node'] = array(
       '#type' => 'textfield',
       '#title' => t('Minimum number of features per needs node'),
-      '#default_value' => 0,
+      '#default_value' => 2,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => TRUE,
@@ -390,7 +391,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     $form['demo_fieldset']['need_max_feature_per_node'] = array(
       '#type' => 'textfield',
       '#title' => t('Maximum number of features per needs node'),
-      '#default_value' => 0,
+      '#default_value' => 4,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => TRUE,
@@ -409,10 +410,21 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
   );
 
   if (module_exists('wikicompare_inherit_compared')) {
+
+    $form['demo_fieldset']['compared_inherit_chance'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Chance that a compared inherit another one (1/x)'),
+      '#default_value' => 5,
+      '#size' => 3,
+      '#maxlength' => 3,
+      '#required' => TRUE,
+      '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    );  
+
     $form['demo_fieldset']['implementation_use_from_inherit_chance'] = array(
       '#type' => 'textfield',
       '#title' => t('Chance that a implementation which inherit another one use his own value (1/x)'),
-      '#default_value' => 0,
+      '#default_value' => 5,
       '#size' => 3,
       '#maxlength' => 3,
       '#required' => TRUE,
@@ -428,7 +440,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
         'false' => t("No"),
         'true' => t("Yes"),
       ),
-      '#default_value' => 'false',
+      '#default_value' => 'true',
       '#required' => TRUE,
     );
   }
@@ -485,7 +497,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
       $settings['generate_translation'] = $form_state['input']['wikicompare_generate_translation'];
     }
 
-    wikicompare_generate_demo_create_children($settings, &$features_created);
+    wikicompare_generate_demo_create_children($settings, $features_created);
 
 
 /*
@@ -511,7 +523,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
       $settings['generate_translation'] = $form_state['input']['wikicompare_generate_translation'];
     }
 
-    wikicompare_generate_demo_create_children($settings, &$compareds_created);
+    wikicompare_generate_demo_create_children($settings, $compareds_created);
 
 /*
     create_compared_children($form_state['input']['compared_min_depth'], $form_state['input']['compared_max_depth'], 'Compared ' . variable_get('wikicompare_next_demo_sequence', 1) . '.', $form_state['input']['compared_child_min_per_level'], $form_state['input']['compared_child_max_per_level'], $depth, $parent_id, $compareds_created);
@@ -553,7 +565,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
         $settings['generate_translation'] = $form_state['input']['wikicompare_generate_translation'];
       }
 
-      wikicompare_generate_demo_create_children($settings, &$needs_created);
+      wikicompare_generate_demo_create_children($settings, $needs_created);
 
   /*
       create_compared_children($form_state['input']['compared_min_depth'], $form_state['input']['compared_max_depth'], 'Compared ' . variable_get('wikicompare_next_demo_sequence', 1) . '.', $form_state['input']['compared_child_min_per_level'], $form_state['input']['compared_child_max_per_level'], $depth, $parent_id, $compareds_created);
@@ -564,7 +576,8 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
   variable_set('wikicompare_next_demo_sequence', variable_get('wikicompare_next_demo_sequence', 1) + 1);
 
   if (module_exists('wikicompare_inherit_compared')) { 
-    if (!empty($compareds_created) && $form_state['input']['compared_inherit_compared_chance'] != 0) { 
+
+    if (!empty($compareds_created) && $form_state['input']['compared_inherit_chance'] != 0) { 
 
 
       $compared_without_children = array();
@@ -576,22 +589,30 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
         $compared_without_children[$record->nid] = $record->nid;
       }
 
+
+
       foreach ($compared_without_children as $cid) {
-        if (rand(1, $form_state['input']['compared_inherit_compared_chance']) != $form_state['input']['compared_inherit_compared_chance']) {
+        if (rand(1, $form_state['input']['compared_inherit_chance']) == $form_state['input']['compared_inherit_chance']) {
           $inherit_compared_id = 0;
-          while ($inherit_compared_id != 0 && $inherit_compared_id != $cid) {
+          while ($inherit_compared_id == 0 || $inherit_compared_id == $cid) {
             $inherit_compared_id = array_rand($compared_without_children);
           }
-          $node = node_load($record->nid);
+          
+
+          $node = node_load($cid);
           $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $inherit_compared_id;
           $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
     
           $node->revision = TRUE;
           $node->revision_moderation = TRUE;
 
+
           node_save($node);
 
           _revisioning_publish_latest_revision($node);
+
+          //Security against loop, we don't want that two compared inherit each other
+          unset($compared_without_children[$cid]);
             
         }
       }
@@ -618,12 +639,12 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
     foreach($result as $record) {
       $node = node_load($record->nid);
       $modified = False;
-      if (rand(1, $form_state['input']['implementation_support_chance']) != $form_state['input']['implementation_support_chance']) {
+      if (rand(1, $form_state['input']['implementation_support_chance']) == $form_state['input']['implementation_support_chance']) {
         $node->wikicompare_support['und'][0]['value'] = 1;
         $modified = True;
       }
       if (module_exists('wikicompare_inherit_compared')) { 
-        if (($record->inherit_compared_id != NULL) && (rand(1, $form_state['input']['implementation_use_from_inherit_chance']) != $form_state['input']['implementation_use_from_inherit_chance'])) {
+        if (($record->inherit_compared_id != NULL) && (rand(1, $form_state['input']['implementation_use_from_inherit_chance']) == $form_state['input']['implementation_use_from_inherit_chance'])) {
           $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
           $modified = True;
         }
@@ -661,7 +682,9 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
     $node = new stdClass();
     $node->type = $settings['type'];
     $node->language = language_default('language');
-    $node->title = $settings['prefix'] . '.' . $i;
+    $settings_for_children['prefix'] = $settings['prefix'] . '.' . $i;
+    $node->title = $settings_for_children['prefix'];
+    $node->wikicompare_sequence['und'][0]['value'] = $i;
     $node->wikicompare_state['und'][0]['value'] = 'published';
     if (isset($settings['parent_id'])) {
       $node->wikicompare_parent_id['und'][0]['target_id'] = $settings['parent_id'];
@@ -671,8 +694,8 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
     if ($settings['type'] == 'feature') {
 
       if ($settings['parent_type'] == 'parent-weighted-average') {
-        $node->wikicompare_weight['und'][0]['value'] = 100*rand($settings['min_weight'], $settings['max_weight']);
-      } elseif ($parent_type == 'parent-highest-percentage') {
+        $node->wikicompare_weight['und'][0]['value'] = rand($settings['min_weight'], $settings['max_weight']);
+      } elseif ($settings['parent_type'] == 'parent-highest-percentage') {
         $node->wikicompare_weight['und'][0]['value'] = 100/rand($settings['min_weight'], $settings['max_weight']);
       }
 
@@ -686,6 +709,12 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
       }
     }
 
+    if (module_exists('wikicompare_needs')) {  
+      if ($settings['type'] == 'need') {
+        $node->wikicompare_features['und'] = array();
+      }
+    }
+
 
 
     node_save($node);
@@ -693,6 +722,9 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
     if (module_exists('wikicompare_translation')) {  
       if ($settings['generate_translation'] == 'true') {
+
+        $node->tnid = $node->nid;
+        node_save($node);
 
         foreach (language_list() as $key => $language) {
 
@@ -703,8 +735,9 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
           $tnode = new stdClass();
           $tnode->type = $settings['type'];
           $tnode->language = $key;
-          $tnode->translation_source = $node->nid;
+          $tnode->tnid = $node->nid;
           $tnode->title = $settings['prefix'] . '.' . $i . ' ' . $key;
+
           node_save($tnode);
         }
 
@@ -712,7 +745,11 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
     }
 
 
-    if ((($settings['depth'] <= $settings['min_depth'] or (rand($settings['depth'], $settings['max_depth']) != $settings['depth'])) and ($settings['depth'] <= $settings['max_depth']))) {
+
+
+
+
+    if ((($settings['depth'] < $settings['min_depth'] or (rand($settings['depth'], $settings['max_depth']) != $settings['depth'])) and ($settings['depth'] < $settings['max_depth']))) {
       $settings_for_children['depth'] = $settings['depth'] + 1;
       $settings_for_children['parent_id'] = $node->nid;
       wikicompare_generate_demo_create_children($settings_for_children, $nodes_created);
@@ -722,15 +759,16 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
         if ($settings['type'] == 'need') {
 
+
           $nb_features = rand($settings['min_feature_per_node'], $settings['max_feature_per_node']);
 
           if (!in_array($nb_features, array(0,1))) {
 
             $node = node_load($node->nid);
             $i = 0;
-            foreach (array_rand($settings('features_without_children'), $nb_features) as $fid) {
-              $node->wikicompare_parent_id['und'][$i]['target_id'] = $fid;
-              $node->wikicompare_parent_id['und'][$i]['target_type'] = "node";
+            foreach (array_rand($settings['features_without_children'], $nb_features) as $fid) {
+              $node->wikicompare_features['und'][$i]['target_id'] = $fid;
+              $node->wikicompare_features['und'][$i]['target_type'] = "node";
               $i++;
             }      
             $node->revision = TRUE;

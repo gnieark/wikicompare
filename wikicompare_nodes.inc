@@ -351,7 +351,7 @@ function wikicompare_delete_node($type, $node) {
  */
 function wikicompare_revisionapi($op, $node_revision) {
 
-dpm($op, 'op');
+
 
   if ($node_revision->language != language_default('language')) {
     return;
@@ -361,6 +361,8 @@ dpm($op, 'op');
    * Action to do before a node is published
    */
   if ($op == 'pre publish') {
+
+//dpm($node_revision);
 
     $types = array('compared', 'feature', 'implementation');
 /*
@@ -488,7 +490,9 @@ dpm($op, 'op');
 
       //If any of the critical field is changed
       if ($test) {
-dpm($to_update, 'to_update');
+
+//dpm($to_update);
+
         
         if (in_array($node_revision->type, array('compared', 'feature', 'implementation'))) {
           //We mark the updated node, his old parent and his new parent for update
@@ -501,6 +505,7 @@ dpm($to_update, 'to_update');
         }
   
       }
+
 
 
 
@@ -576,6 +581,8 @@ dpm($to_update, 'to_update');
       if (module_exists('wikicompare_inherit_compared')) {
         wikicompare_inherit_compared_cache_update_fields($fields, $node_revision);
       }
+
+//dpm($fields);
 
       db_update('cache_' . $node_revision->type)
           ->fields($fields)

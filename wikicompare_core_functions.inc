@@ -9,8 +9,7 @@
   */
 function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
-dpm($type, 'type');
-dpm($nids, 'nids');
+
 
   $nodes = array();
   if (!empty($nids)) {
@@ -271,7 +270,7 @@ dpm($nids, 'nids');
     }
 
 }
-dpm($nodes, 'nodes');
+
 
 
   /*

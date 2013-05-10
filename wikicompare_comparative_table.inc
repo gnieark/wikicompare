@@ -17,9 +17,7 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 
 function wikicompare_comparative_table($form_state) {
 
-dpm(variable_get('language_negotiation_language'), 'test');
-dpm(variable_get('language_negotiation_language_content'), 'test');
-dpm(variable_get('language_negotiation_language_url'), 'test');
+
 
   //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
@@ -430,7 +428,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
       //Recover the detail of the compared we want to add
       $compared = request_db('compared', array('can_be_translated' => 1), 'nids', array($cid));
-dpm($compared, 'toggle test');
+
 
       //Add the header of the new column, with the compared detail
       $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;"><span class="compared_title_' . $cid . '">' . $compared[$cid]['data']->title . '</span> ' . $cid . '</th>';
@@ -456,7 +454,7 @@ dpm($features_array, 'init feature array');
 
         $cells = array();
         foreach ($features as $fid => $feature) {
-dpm($feature, 'feature');
+
           $implementation = $implementations[$fid][$cid];
 
           $cells[$implementation['data']->feature_id] .= render_implementation($implementation, $feature, $fastedit_status);
@@ -500,7 +498,7 @@ function get_dialog_response($action, $type, $container, $nid, $container_autoco
 
 
 
-dpm('testtest');
+
   $output = t("<div id='dialog-content'>");
 
 
@@ -567,7 +565,7 @@ function select_dialog_response($method = 'ajax'){
       $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container_autocomplete']) . '[und][0][target_id]">';
 /*
       $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="wikicompare_parent_id[und][0][target_id]">';*/
-dpm($hidden, 'hidden');
+
     }
 
     $commands = array();
@@ -576,7 +574,7 @@ dpm($hidden, 'hidden');
     $commands[] = ajax_command_html('#' . $_POST['container_id'], $parent->nid);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
-dpm($page);
+
 
   //If javascript isn't enabled, we redirect to an error page.
   } else {
@@ -649,7 +647,7 @@ function submit_dialog_response($method = 'ajax'){
 
 function compute_comparative_table_response($method = 'ajax') {
 
-dpm($_POST, 'post');
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -858,7 +856,7 @@ function make_cleaning_response($method = 'ajax') {
       if (!empty($feature_ids)) {
         $features = request_db('feature', array('fastedit_status' => $_POST['fastedit_status'], 'can_be_translated' => 1), 'nids', $feature_ids);
       }
-dpm($features, 'features_fastedit');
+
 
 
       $in_db_features = request_db('feature', array('states' => $_POST['states']));
@@ -1219,12 +1217,12 @@ function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
  */
 function get_rows_data($features, $compareds, $implementations, $computed){
 
-dpm('start get rows_data');
+
   $rows = array();
 
   foreach ($features as $fid => $feature){
 
-dpm($feature, 'feature');
+
 //    $rows[$fid] = $feature;
 
     $rows[$fid]['data'] = $feature['data'];
@@ -1353,7 +1351,7 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
     //Find all the features on the first level of the tree
     $features = request_db('feature', $db_settings);
 
-dpm($features, 'features');
+
   }
 
   $feature_ids = array();
@@ -1496,7 +1494,7 @@ function render_implementation($implementation_array, $feature_array, $fastedit_
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
     $img_link_to_node .= '<span id="fastaction_items_' . $implementation->nid . '">';
-dpm($fastedit_status, 'fastedit imple');
+
     if ($fastedit_status == 1) {
       $img_link_to_node .= add_fastedit_items('implementation', $implementation_array); 
     }
