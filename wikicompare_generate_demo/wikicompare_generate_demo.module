@@ -74,7 +74,7 @@ function theme_wikicompare_export($variables) {
 
     $needs = request_db('need', array('states' => array('draft', 'closed')));
 
-dpm($needs);
+
 
     foreach ($needs as $need) {
       wikicompare_generate_demo_export_output_node($output, $need, 'need');
@@ -161,7 +161,6 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   $output .= "\$node->type = '" . $type . "';<br/>";
   $output .= "\$node->language = 'en';<br/>";
   $output .= "\$node->title = '" . $node['data']->title . "';<br/>";
-dpm($node['data']->parent_id);
   if ($node['data']->parent_id != NULL) {
     $output .= "\$node->wikicompare_parent_id['und'][0]['target_id'] = \$". $type . "s['new-" . $node['data']->parent_id . "'];<br/>";
     $output .= "\$node->wikicompare_parent_id['und'][0]['target_type'] = 'node';<br/>";
@@ -546,6 +545,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
  
   if (($form_state['input']['feature_min_depth'] != 0) && ($form_state['input']['feature_max_depth'] != 0) && ($form_state['input']['feature_child_min_per_level'] != 0) && ($form_state['input']['feature_child_max_per_level'] != 0)) {
 
+
     $settings = array(
       'type' => 'feature',
       'min_depth' => $form_state['input']['feature_min_depth'],
@@ -647,6 +647,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
     if (!empty($compareds_created) && $form_state['input']['compared_inherit_chance'] != 0) { 
 
 
+
       $compared_without_children = array();
       $query = db_select('cache_compared', 'c');
       $query->addField('c', 'nid', 'nid');
@@ -689,6 +690,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
 
   //This part take a lot of time, better put a high support chance
   if (!empty($compareds_created) && !empty($features_created) && $form_state['input']['implementation_support_chance'] != 0) { 
+
     $query = db_select('cache_implementation', 'i');
     $query->addField('i', 'nid', 'nid');
     $query->leftjoin('cache_compared', 'c', 'i.compared_id = c.nid');
@@ -742,7 +744,7 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
   $settings_for_children = $settings;
   $nb_child = rand($settings['child_min_per_level'], $settings['child_max_per_level']);
-  
+
 
   $i = 1;
   while ($i <= $nb_child) {
@@ -826,26 +828,27 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
         if ($settings['type'] == 'need') {
 
+          if (!empty($settings['features_without_children'])) {
 
-          $nb_features = rand($settings['min_feature_per_node'], $settings['max_feature_per_node']);
+            $nb_features = rand($settings['min_feature_per_node'], $settings['max_feature_per_node']);
 
-          if (!in_array($nb_features, array(0,1))) {
+            if (!in_array($nb_features, array(0,1))) {
 
-            $node = node_load($node->nid);
-            $i = 0;
-            foreach (array_rand($settings['features_without_children'], $nb_features) as $fid) {
-              $node->wikicompare_features['und'][$i]['target_id'] = $fid;
-              $node->wikicompare_features['und'][$i]['target_type'] = "node";
-              $i++;
-            }      
-            $node->revision = TRUE;
-            $node->revision_moderation = TRUE;
+              $i_features = 0;
+              foreach (array_rand($settings['features_without_children'], $nb_features) as $fid) {
+                $node->wikicompare_features['und'][$i_features]['target_id'] = $fid;
+                $node->wikicompare_features['und'][$i_features]['target_type'] = "node";
+                $i_features++;
+              }      
+              $node->revision = TRUE;
+              $node->revision_moderation = TRUE;
 
-            node_save($node);
+              node_save($node);
 
-            _revisioning_publish_latest_revision($node);
+              _revisioning_publish_latest_revision($node);
 
 
+            }
           }
         }
 

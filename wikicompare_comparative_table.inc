@@ -352,6 +352,7 @@ function get_feature_response($method = 'ajax') {
         $features_ids[$key] = $key;
       }
 
+      $implementations = array();
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_column_ids'])) {
         //Recover the implementation needed for the cells
@@ -780,32 +781,35 @@ function make_cleaning_response($method = 'ajax') {
       $in_db_compareds_ids[$key] = $key;
     }
     
+
     $in_table_compared_ids = array();
     foreach ($_POST['compared_ids'] as $compared) {
       $in_table_compared_ids[$compared[0]] = $compared[0];
-      if ($compared[1] != $compareds[$compared[0]]['data']->parent_id) {
-        if (in_array($compared[1], $_POST['compared_displayed_ids'])) {
-          $compared1 = request_db('compared', array(), 'nids', array($compared[1]));
-          $compared1 = $compared1[$compared[1]];
-          if ($compared1['data']->parent_id != NULL) {
-            $commands[] = ajax_command_invoke('#compared_link_' . $compared[1], 'click', array());
-          } else {
-            $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
+      if (isset($compared[1])) {
+        if ($compared[1] != $compareds[$compared[0]]['data']->parent_id) {
+          if (in_array($compared[1], $_POST['compared_displayed_ids'])) {
+            $compared1 = request_db('compared', array(), 'nids', array($compared[1]));
+            $compared1 = $compared1[$compared[1]];
+            if ($compared1['data']->parent_id != NULL) {
+              $commands[] = ajax_command_invoke('#compared_link_' . $compared[1], 'click', array());
+            } else {
+              $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
+            }
+          }
+          if (in_array($compareds[$compared[0]]['data']->parent_id, $_POST['compared_displayed_ids'])) {
+            if ($compareds[$compared[0]]['data']->parent_id != NULL) {
+              $commands[] = ajax_command_invoke('#compared_link_' . $compareds[$compared[0]]['data']->parent_id, 'click', array());
+            } else {
+              $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
+            }
           }
         }
-        if (in_array($compareds[$compared[0]]['data']->parent_id, $_POST['compared_displayed_ids'])) {
-          if ($compareds[$compared[0]]['data']->parent_id != NULL) {
-            $commands[] = ajax_command_invoke('#compared_link_' . $compareds[$compared[0]]['data']->parent_id, 'click', array());
-          } else {
-            $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
-          }
+
+        if ((!in_array($compared[0], $in_db_compareds_ids)) && !isset($compared[1])) {
+
+          $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
+          break;
         }
-      }
-
-      if ((!in_array($compared[0], $in_db_compareds_ids)) && !isset($compared[1])) {
-
-        $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
-        break;
       }
     }
 
@@ -869,30 +873,33 @@ function make_cleaning_response($method = 'ajax') {
       $in_table_feature_ids = array();
       foreach ($_POST['feature_ids'] as $key => $feature) {
         $in_table_feature_ids[$feature[0]] = $feature[0];
-        if ($feature[1] != $features[$feature[0]]['data']->parent_id) {
-          $update_selected_feature = true;
-          if (in_array($feature[1], $_POST['feature_displayed_ids'])) {
-            $feature1 = request_db('feature', array(), 'nids', array($feature[1]));
-            $feature1 = $feature1[$feature[1]];
-            if ($feature1['data']->parent_id != NULL) {
-              $commands[] = ajax_command_invoke('#feature_link_' . $feature[1], 'click', array());
-            } else {
-              $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
+        if (isset($feature[1])) {
+          if ($feature[1] != $features[$feature[0]]['data']->parent_id) {
+            $update_selected_feature = true;
+            if (in_array($feature[1], $_POST['feature_displayed_ids'])) {
+              $feature1 = request_db('feature', array(), 'nids', array($feature[1]));
+              $feature1 = $feature1[$feature[1]];
+              if ($feature1['data']->parent_id != NULL) {
+                $commands[] = ajax_command_invoke('#feature_link_' . $feature[1], 'click', array());
+              } else {
+                $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
+              }
+            }
+            if (in_array($features[$feature[0]]['data']->parent_id, $_POST['feature_displayed_ids'])) {
+              if ($compareds[$compared[0]]['data']->parent_id != NULL) {
+                $commands[] = ajax_command_invoke('#feature_link_' . $features[$feature[0]]['data']->parent_id, 'click', array());
+              } else {
+                $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
+              }
             }
           }
-          if (in_array($features[$feature[0]]['data']->parent_id, $_POST['feature_displayed_ids'])) {
-            if ($compareds[$compared[0]]['data']->parent_id != NULL) {
-              $commands[] = ajax_command_invoke('#feature_link_' . $features[$feature[0]]['data']->parent_id, 'click', array());
-            } else {
-              $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
-            }
+        
+
+         if ((!in_array($feature[0], $in_db_features_ids)) && !isset($feature[1])) {
+
+            $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
+            break;
           }
-        }
-
-       if ((!in_array($feature[0], $in_db_features_ids)) && !isset($feature[1])) {
-
-          $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
-          break;
         }
       }
 

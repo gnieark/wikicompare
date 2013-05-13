@@ -341,12 +341,14 @@ function wikicompare_needs_wikicompare_comparative_table_cleaning(&$commands, $_
   }
     
   foreach ($_POST['need_ids'] as $need) {
-    if ($need[1] != $needs[$need[0]]['data']->parent_id) {
-      if (in_array($need[1], $_POST['need_displayed_ids'])) {
-        $commands[] = ajax_command_invoke('#need_link_' . $need[1], 'click', array());
-      }
-      if (in_array($needs[$need[0]]['data']->parent_id, $_POST['need_displayed_ids'])) {
-        $commands[] = ajax_command_invoke('#need_link_' . $needs[$need[0]]['data']->parent_id, 'click', array());
+    if (isset($need[1])) {
+      if ($need[1] != $needs[$need[0]]['data']->parent_id) {
+        if (in_array($need[1], $_POST['need_displayed_ids'])) {
+          $commands[] = ajax_command_invoke('#need_link_' . $need[1], 'click', array());
+        }
+        if (in_array($needs[$need[0]]['data']->parent_id, $_POST['need_displayed_ids'])) {
+          $commands[] = ajax_command_invoke('#need_link_' . $needs[$need[0]]['data']->parent_id, 'click', array());
+        }
       }
     }
   }
@@ -398,7 +400,7 @@ function need_insert($node) {
 
   wikicompare_insert_node('need', $node);
 
-//dpm($node);
+
   $feature_m2m = array();
   foreach ($node->wikicompare_features['und'] as $feature) {
 
