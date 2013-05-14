@@ -612,11 +612,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var i = 0;
           $('.compared_main_table').each(function (key, value) {
             if ($(this).hasClass('displayed')) {
+
               var patt = /[0-9]+/g;
               compared_displayed_ids[i] = patt.exec($(this).attr('id'))[0]
               i = i + 1;
             }
           });
+
           //Add them in the ajax call variables
           options.data.compared_displayed_ids = compared_displayed_ids;
 
@@ -725,7 +727,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         if (send_compareds_columns == true) {
           //Recover all compared columns displayed in the table to send their id to drupal, in the right order
-          var compared_column_ids = new Array();
+          var compared_column_ids = [];
           var i = 0;
           $('.header_compared').each(function (key, value) {
             var column_id = $('#' + $(this).attr('id'));
@@ -815,6 +817,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.container = container;
         }
         
+
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -928,6 +931,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         if (make_cleaning == true) {
+
           $('#make_cleaning_link').click();
         }
       }

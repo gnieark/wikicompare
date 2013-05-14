@@ -360,7 +360,9 @@ function get_feature_response($method = 'ajax') {
       }
       //Building the data for the table row
 
-
+      if ($_POST['compared_column_ids'] == '') {
+        $_POST['compared_column_ids'] = array();
+      }
       $feature_row_data = get_rows_data($features, $_POST['compared_column_ids'], $implementations, 0);
 
 
@@ -444,7 +446,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 /*
         if ($_POST['computed']) {
           $features_array = get_recursive_data('feature', $_POST['feature_ids'], $fastedit_status);
-dpm($features_array, 'init feature array');
+
           $features = $features_array['tree'];
         } else {
           $features = request_db('feature', array(), 'nids', $_POST['feature_ids']);
@@ -765,78 +767,122 @@ function make_cleaning_response($method = 'ajax') {
   if ($method == 'ajax') {
 
     $commands = array();
-    $compared_ids = $_POST['compared_column_ids'];
-    foreach ($_POST['compared_ids'] as $compared) {
-      $compared_ids[$compared[0]] = $compared[0];
+    $update_selected_feature = false;
+
+
+    $types = array('compared', 'feature');
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_node_types($types);
     }
 
-    $compareds = array();
-    if (!empty($compared_ids)) {
-      $compareds = request_db('compared', array('fastedit_status' => $_POST['fastedit_status'], 'can_be_translated' => 1), 'nids', $compared_ids);
-    }
+    foreach ($types as $type) {
 
-    $in_db_compareds = request_db('compared', array('states' => $_POST['states']));
-    $in_db_compareds_ids = array();
-    foreach ($in_db_compareds as $key => $compared) {
-      $in_db_compareds_ids[$key] = $key;
-    }
+      if ($type == 'feature' && !$_POST['computed']) {
+        continue;
+      }
+
+
+      $node_ids = array();  //$_POST['compared_column_ids'];
+      foreach ($_POST[$type . '_ids'] as $node) {
+        $node_ids[$node[0]] = $node[0];
+      }
     
 
-    $in_table_compared_ids = array();
-    foreach ($_POST['compared_ids'] as $compared) {
-      $in_table_compared_ids[$compared[0]] = $compared[0];
-      if (isset($compared[1])) {
-        if ($compared[1] != $compareds[$compared[0]]['data']->parent_id) {
-          if (in_array($compared[1], $_POST['compared_displayed_ids'])) {
-            $compared1 = request_db('compared', array(), 'nids', array($compared[1]));
-            $compared1 = $compared1[$compared[1]];
-            if ($compared1['data']->parent_id != NULL) {
-              $commands[] = ajax_command_invoke('#compared_link_' . $compared[1], 'click', array());
-            } else {
-              $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
+      $nodes = array();
+      if (!empty($node_ids)) {
+        $nodes = request_db($type, array('fastedit_status' => $_POST['fastedit_status'], 'can_be_translated' => 1), 'nids', $node_ids);
+      }
+
+
+      $in_db_nodes = request_db($type, array('states' => $_POST['states']));
+      $in_db_node_ids = array();
+      foreach ($in_db_nodes as $key => $node) {
+        $in_db_nodes_ids[$key] = $key;
+      }
+      
+
+      $in_table_node_ids = array();
+      $reset = False;
+      foreach ($_POST[$type . '_ids'] as $node) {
+        $in_table_node_ids[$node[0]] = $node[0];
+        if (isset($node[1])) {
+          if ($node[1] != $nodes[$node[0]]['data']->parent_id) {
+            if ($type == 'feature') {
+              $update_selected_feature = true;
+            }
+            if (in_array($node[1], $_POST[$type . '_displayed_ids'])) {
+              $node1 = request_db($type, array(), 'nids', array($node[1]));
+              $node1 = $node1[$node[1]];
+              if ($node1['data']->parent_id != NULL) {
+                $commands[] = ajax_command_invoke('#' . $type . '_link_' . $node[1], 'click', array());
+              } else {
+                $reset = True;
+                
+              }
+            }
+
+            if (!in_array($nodes[$node[0]]['data']->parent_id, $_POST[$type . '_displayed_ids'])) {
+              if ($nodes[$node[0]]['data']->parent_id != NULL) {
+                $commands[] = ajax_command_invoke('#' . $type . '_link_' . $nodes[$node[0]]['data']->parent_id, 'click', array());
+              } else {
+                $reset = True;
+              }
             }
           }
-          if (in_array($compareds[$compared[0]]['data']->parent_id, $_POST['compared_displayed_ids'])) {
-            if ($compareds[$compared[0]]['data']->parent_id != NULL) {
-              $commands[] = ajax_command_invoke('#compared_link_' . $compareds[$compared[0]]['data']->parent_id, 'click', array());
-            } else {
-              $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
-            }
+
+
+
+          if ((!in_array($node[0], $in_db_node_ids)) && !isset($node[1])) {
+            $reset = True;
+
           }
         }
+      }
 
-        if ((!in_array($compared[0], $in_db_compareds_ids)) && !isset($compared[1])) {
+      foreach ($in_db_node_ids as $nid) {
 
-          $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
-          break;
+        if (!in_array($nid, $in_table_node_ids)) {
+          $reset = True;
+        }
+      } 
+
+      if ($reset == True) {
+        switch ($type) {
+          case 'compared':
+            $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
+            break;
+          case 'feature':
+            $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
+            break;
+        }
+
+      }
+
+
+      foreach($nodes as $nid => $node) {
+        $commands[] = ajax_command_invoke('.' . $type . '_title_' . $nid, 'html', array($node['data']->title));
+        if ($type == 'feature') {
+          $commands[] = ajax_command_invoke('.feature_title_' . $fid, 'html', array($feature['data']->title));
+          $commands[] = ajax_command_invoke('.feature_weight_' . $fid, 'html', array($feature['data']->weight));
+          $commands[] = ajax_command_invoke('.feature_type_' . $fid, 'html', array($feature['data']->type));
+          $commands[] = ajax_command_invoke('.feature_state_' . $fid, 'html', array($feature['data']->state));
+        }
+        if ($_POST['fastedit_status'] == 1) {
+          $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array(add_fastedit_items($type , $node)));
         }
       }
-    }
 
-    foreach ($in_db_compareds_ids as $cid) {
-
-      if (!in_array($cid, $in_table_compared_ids)) {
-
-        $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
-        break;
-      }
-    } 
-
-
-    foreach($compareds as $cid => $compared) {
-      $commands[] = ajax_command_invoke('.compared_title_' . $cid, 'html', array($compared['data']->title));
       if ($_POST['fastedit_status'] == 1) {
-        $commands[] = ajax_command_invoke('#fastaction_items_' . $cid, 'html', array(add_fastedit_items('compared' , $compared)));
+        $node = array(
+          'data' => new stdClass(),
+        );
+        $node['data']->nid = 0;
+        $commands[] = ajax_command_invoke('#add_' . $type . '_link_fastaction', 'html', array(add_fastedit_items($type , $node)));
       }
+
     }
 
-    if ($_POST['fastedit_status'] == 1) {
-      $compared = array(
-        'data' => new stdClass(),
-      );
-      $compared['data']->nid = 0;
-      $commands[] = ajax_command_invoke('#add_compared_link_fastaction', 'html', array(add_fastedit_items('compared' , $compared)));
-    }
+
 /*
     //Allow others modules to modify the output
     foreach (module_implements('wikicompare_comparative_table_cleaning') as $module) {
@@ -844,10 +890,9 @@ function make_cleaning_response($method = 'ajax') {
       $function($commands, $_POST);
     }
 */
-    if (module_exists('wikicompare_needs')) {
-      wikicompare_needs_wikicompare_comparative_table_cleaning($commands, $_POST);
-    }
 
+
+/*
 
     if (!$_POST['computed']) {
       $feature_ids = array();
@@ -929,37 +974,38 @@ function make_cleaning_response($method = 'ajax') {
         $feature['data']->nid = 0;
         $commands[] = ajax_command_invoke('#add_feature_link_fastaction', 'html', array(add_fastedit_items('feature' , $feature)));
       }
+*/
 
-      $implementations = array();
-      if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
-        $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
-      }
-
-
-      foreach($implementations as $fid => $compareds_implementations) {
-        foreach ($compareds_implementations as $cid => $implementation) {
-          $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastedit_status']));
-        }
-      }
-
-
-      if ($update_selected_feature) {
-        $selected_feature_ids = array();
-        foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
-        $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
-        }
-        $feature_array = array();
-        if ($selected_feature_ids) {
-          $feature_array = get_recursive_data('feature', $selected_feature_ids);
-        }
-        //Building the data for the item list
-        $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, 0);
-        //Render the item list
-        $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
-        $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
-      }
-
+    $implementations = array();
+    if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
+      $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
     }
+
+
+    foreach($implementations as $fid => $compareds_implementations) {
+      foreach ($compareds_implementations as $cid => $implementation) {
+        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastedit_status']));
+      }
+    }
+
+
+    if ($update_selected_feature) {
+      $selected_feature_ids = array();
+      foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
+      $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
+      }
+      $feature_array = array();
+      if ($selected_feature_ids) {
+        $feature_array = get_recursive_data('feature', $selected_feature_ids);
+      }
+      //Building the data for the item list
+      $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, 0);
+      //Render the item list
+      $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+      $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
+    }
+
+    
 
     //Preparing the ajax commands to return to javascript
 
