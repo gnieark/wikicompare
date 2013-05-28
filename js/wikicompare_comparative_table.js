@@ -43,40 +43,44 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
-
+/*
       if ($(this).hasClass('feature')) {
         type = 'feature';
       } else if ($(this).hasClass('compared')) {
         type = 'compared';
       } else if ($(this).hasClass('need')) {
         type = 'need';
-      }
+      }*/
 
+      var type = $(this).attr('type');
+      var context = $(this).attr('context');
+/*
       if ($(this).hasClass('compared_main_table')) {
-        subaction = 'compared_main_table';
+        context = 'compared_main_table';
       } else if ($(this).hasClass('select_multi_dialog')) {
-        subaction = 'select_multi_dialog';
+        context = 'select_multi_dialog';
       } else if ($(this).hasClass('select_simple_dialog')) {
-        subaction = 'select_simple_dialog';
+        context = 'select_simple_dialog';
       }
+*/
 
       if ($(this).hasClass('computed')) {
 
         $(this).click(function() {
-alert('test');
+
           var patt = /[0-9]+/g;
           var node_id = patt.exec(link_id);
           if (!$(this).hasClass('displayed')) {
-            $('.feature_child_' + node_id).show();
+            $('.feature_selected_child_' + node_id).show();
             $(this).addClass('displayed');
           } else { 
 
-            remove_children_tree(node_id, '#feature_link_', '.feature_child_', false);
+            remove_children_tree(node_id, '#feature_selected_link_', '.feature_selected_child_', false);
           }
           return false;
         });
       } else {
-        Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, subaction);
+        Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, context);
       }
 
 
@@ -211,6 +215,7 @@ alert('test');
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
+
       //Active the code
       if ($('#comparative_table').hasClass('computed')) {
         $(this).click(function() {
@@ -218,10 +223,10 @@ alert('test');
           var patt = /[0-9]+/g;
           var node_id = patt.exec(link_id);
           if (!$('#' + link_id).hasClass('displayed')) {
-            $('.feature_row_child_' + node_id).show();
+            $('.feature_table_child_' + node_id).show();
             $('#' + link_id).addClass('displayed');
           } else {
-            remove_children_tree(node_id, '.feature_link_children_', '.feature_row_child_', true);;
+            remove_children_tree(node_id, '.feature_link_children_', '.feature_table_child_', true);;
             $('#' + link_id).removeClass('displayed');
           }
           return false;
@@ -229,6 +234,7 @@ alert('test');
       } else {
         Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children');
       }
+
     });
 
 
@@ -307,34 +313,34 @@ alert('test');
 /*      
       if ($(this).hasClass('compared_add_link')) {
         type = 'compared';
-        subaction = 'add';
+        context = 'add';
       } else if ($(this).hasClass('compared_edit_link')) {
         type = 'compared';
-        subaction = 'edit';
+        context = 'edit';
       } else if ($(this).hasClass('compared_remove_link')) {
         type = 'compared';
-        subaction = 'remove';
+        context = 'remove';
       } else if ($(this).hasClass('feature_add_link')) {
         type = 'feature';
-        subaction = 'add';
+        context = 'add';
       } else if ($(this).hasClass('feature_edit_link')) {
         type = 'feature';
-        subaction = 'edit';
+        context = 'edit';
       } else if ($(this).hasClass('feature_remove_link')) {
         type = 'feature';
-        subaction = 'remove';
+        context = 'remove';
       } else if ($(this).hasClass('implementation_edit_link')) {
         type = 'implementation';
-        subaction = 'edit';
+        context = 'edit';
       } else if ($(this).hasClass('need_add_link')) {
         type = 'need';
-        subaction = 'add';
+        context = 'add';
       } else if ($(this).hasClass('need_edit_link')) {
         type = 'need';
-        subaction = 'edit';
+        context = 'edit';
       } else if ($(this).hasClass('need_remove_link')) {
         type = 'need';
-        subaction = 'remove';
+        context = 'remove';
       } */
 
       var type = $(this).attr('type');
@@ -387,7 +393,7 @@ alert('test');
     });
 
     
-    function build_ajax_link(link_id, object, action, type=false, subaction=false) {
+    function build_ajax_link(link_id, object, action, type=false, context=false) {
 
       //Recover the node_id by using a regular expression on the link_id
       var patt = /[0-9]+/g;
@@ -442,11 +448,11 @@ alert('test');
           send_states_to_display = true;
           send_forbidden_nid = true;
           options.data.type = type;
-          options.data.subaction = subaction;
+          options.data.context = context;
 
           if ($('#' + link_id).hasClass('dialog')) {
             options.data.dialog = true;
-            if (subaction == 'select_multi_dialog') {
+            if (context == 'select_multi_dialog') {
               options.data.selected_feature_ids = selected_feature_dialog_ids;
             } 
           } else {
@@ -539,31 +545,31 @@ alert('test');
           
           send_type = true;
           send_colspan = true;
-          options.data.fastaction = subaction;
+          options.data.fastaction = context;
         }
      
         if (action == 'submit_fastedit_form') {
           send_node_id = true;
           send_type = true;
-          options.data.fastaction = subaction;
+          options.data.fastaction = context;
           
           if (type != 'implementation') {
-            options.data.title = $('#form_' + type + '_fast' + subaction + '_title_' + node_id).val();
-            options.data.title_translation = $('#form_' + type + '_fast' + subaction + '_title_' + node_id + '_translation').val();
+            options.data.title = $('#form_' + type + '_fast' + context + '_title_' + node_id).val();
+            options.data.title_translation = $('#form_' + type + '_fast' + context + '_title_' + node_id + '_translation').val();
             options.data.parent_id = $('#parent_id').text();
-            options.data.sequence = $('#form_' + type + '_fast' + subaction + '_sequence_' + node_id).val();
-            options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
+            options.data.sequence = $('#form_' + type + '_fast' + context + '_sequence_' + node_id).val();
+            options.data.state = $('#form_' + type + '_fast' + context + '_state_' + node_id).val();
           }
-          options.data.description = $('#form_' + type + '_fast' + subaction + '_description_' + node_id).val();
-          options.data.description_translation = $('#form_' + type + '_fast' + subaction + '_description_' + node_id + '_translation').val();
+          options.data.description = $('#form_' + type + '_fast' + context + '_description_' + node_id).val();
+          options.data.description_translation = $('#form_' + type + '_fast' + context + '_description_' + node_id + '_translation').val();
           if (type == 'compared') {
             options.data.inherit_id = $('#inherit_id').text();
           }
           if (type == 'feature') {
-            options.data.feature_type = $('#form_' + type + '_fast' + subaction + '_type_' + node_id).val();
-            options.data.guidelines = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id).val();
-            options.data.guidelines_translation = $('#form_' + type + '_fast' + subaction + '_guidelines_' + node_id + '_translation').val();
-            options.data.weight = $('#form_' + type + '_fast' + subaction + '_weight_' + node_id).val();
+            options.data.feature_type = $('#form_' + type + '_fast' + context + '_type_' + node_id).val();
+            options.data.guidelines = $('#form_' + type + '_fast' + context + '_guidelines_' + node_id).val();
+            options.data.guidelines_translation = $('#form_' + type + '_fast' + context + '_guidelines_' + node_id + '_translation').val();
+            options.data.weight = $('#form_' + type + '_fast' + context + '_weight_' + node_id).val();
           }
           
           if (type == 'implementation') {
@@ -583,10 +589,10 @@ alert('test');
             //Add them in the ajax call variables
             options.data.need_feature_ids = need_feature_ids;
 
-            options.data.state = $('#form_' + type + '_fast' + subaction + '_state_' + node_id).val();
+            options.data.state = $('#form_' + type + '_fast' + context + '_state_' + node_id).val();
           }
-          options.data.revision = $('#form_' + type + '_fast' + subaction + '_revision_' + node_id).val();
-          options.data.selectnode = $('#form_' + type + '_fast' + subaction + '_selectnode_' + node_id).val();
+          options.data.revision = $('#form_' + type + '_fast' + context + '_revision_' + node_id).val();
+          options.data.selectnode = $('#form_' + type + '_fast' + context + '_selectnode_' + node_id).val();
         }
 
 
@@ -843,7 +849,7 @@ alert('test');
         this.old_success(response, status);
 
 
-
+/*
         dialog_text = '';
         if ($('#' + link_id).hasClass('dialog')) {
           dialog_text = 'dialog_';
@@ -852,7 +858,7 @@ alert('test');
         if (action == 'toogle_fastedit') {
 
         }
-
+*/
         
         if (manage_displayed_flag == true) {
         
@@ -861,13 +867,13 @@ alert('test');
             $('#' + link_id).addClass('displayed');
   
             if (action == 'expand_list_children') {
-              $('#' + type + '_children_' + dialog_text + node_id).slideDown();
+              $('#' + type + '_' + context + '_children_' + node_id).slideDown();
             }
   
             if (action == 'expand_row_children') {
              
               //Display the children with slide animation
-              $('.feature_row_child_' + node_id).show();
+              $('.feature_table_child_' + node_id).show();
 //TODO Les lignes s'affichent instantanement pour une raison qui m'echappe si je met un slideDown(). Utiliser la fonction suivante pour les afficher les unes apres les autres
 //http://paulirish.com/2008/sequentially-chain-your-callbacks-in-jquery-two-ways/
 /*
@@ -914,15 +920,15 @@ alert('test');
             $('#' + link_id).removeClass('displayed');
           
             if (action == 'expand_list_children') {
-              $('#' + type + '_children_' + dialog_text + node_id).slideUp();
-              $('.' + type + '_child_' + node_id).addClass('to_remove');
+              $('#' + type + '_' + context + '_children_' + node_id).slideUp();
+              $('.' + type + '_' + context + '_child_' + node_id).addClass('to_remove');
             }
           
             if (action == 'expand_row_children') {
               //Hide the children with slide animation
-              remove_children_tree(node_id, '.feature_link_children_', '.feature_row_child_', false);
+              remove_children_tree(node_id, '.feature_link_children_', '.feature_table_child_', false);
               //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
-              $('.feature_row_child_' + node_id).addClass('to_remove');
+//              $('.feature_row_child_' + node_id).addClass('to_remove');
             }
           
             if (action == 'toogle_compared_checkbox') {   
@@ -982,6 +988,7 @@ alert(computed.toSource());*/
 //TODO isoler le test ajax dans une fonction a part
 
 //TODOTODO conflit entre manualy selected et feature du tableau, ajouter un contexte (table, main itemlist, manually, dialog) a tous les liens, toutes les classes, sinon on va pas s'en sortir
+// Context possible : table, manual, selectdialog, multidialog, pas autre chose
 
 
 

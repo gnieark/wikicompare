@@ -83,7 +83,7 @@ function theme_wikicompare_comparative_table($variables) {
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_multi_dialog/feature/manual_selected_features/0/manual_selected_features/none',
+    'path' => 'get_dialog_callback/multidialog/feature/manual_selected_features/0/manual_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -221,10 +221,10 @@ function theme_wikicompare_comparative_table($variables) {
  */
 function get_item_list_children_response($method = 'ajax') {
 
-
+dpm($_POST);
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
-  $subaction = $_POST['subaction'];
+  $context = $_POST['context'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
@@ -234,8 +234,9 @@ function get_item_list_children_response($method = 'ajax') {
     //If we want to displayed the children
     if ($_POST['action'] == 'display') {
 
-      $itemlist_settings = initialize_itemlist_settings($subaction);
+      $itemlist_settings = initialize_itemlist_settings($context);
 
+      $itemlist_settings['context'] = $context;
 
       if (!empty($_POST['fastedit_status'])) {
         $itemlist_settings['fastedit_status'] = $_POST['fastedit_status'];
@@ -247,7 +248,7 @@ function get_item_list_children_response($method = 'ajax') {
 
       foreach ($nodes as $key => $record) {
 
-        if ($subaction == 'compared_main_table') {
+        if ($context == 'compared_main_table') {
           //If already displayed in the table, we check it by default
           if (!empty($_POST['compared_column_ids'])) {
             if (in_array($key, $_POST['compared_column_ids'])) {
@@ -257,7 +258,7 @@ function get_item_list_children_response($method = 'ajax') {
 
         }
 
-        if ($subaction == 'select_multi_dialog' && $type == 'feature') {
+        if ($context == 'select_multi_dialog' && $type == 'feature') {
 
           if ($_POST['selected_feature_ids'] == '') {
             $_POST['selected_feature_ids'] = array();
@@ -295,16 +296,16 @@ function get_item_list_children_response($method = 'ajax') {
       }
 
       //Building the data for the item list
-      $item_list_data = get_item_list($nodes, $type, $subaction, $nid, $itemlist_settings);
+      $item_list_data = get_item_list($nodes, $type, $context, $nid, $itemlist_settings);
 
       //Rendering the item list
       $output = theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
-
+dpm($output);
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
 
-      $commands[] = ajax_command_html('#'. $type . '_children_' . $dialog_text . $nid, $output);
+      $commands[] = ajax_command_html('#'. $type . '_' . $context . '_children_' . $nid, $output);
       $page = array('#type' => 'ajax', '#commands' => $commands);
 
       return $page;
@@ -375,7 +376,7 @@ function get_feature_response($method = 'ajax') {
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We add the code after the parent row. Note we can't use ajax_command_after because it adds an unwanted div
-      $commands[] = ajax_command_invoke('#feature_row_' . $fid, 'after', array($output));
+      $commands[] = ajax_command_invoke('#feature_table_' . $fid, 'after', array($output));
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
@@ -475,7 +476,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       $commands[] = ajax_command_append('#comparative_table_header', $header);
       //Add the new cells at the end of each row
       foreach ($cells as $key => $cell) {
-        $commands[] = ajax_command_append('#feature_row_' . $key, $cell);
+        $commands[] = ajax_command_append('#feature_table_' . $key, $cell);
       }
       $commands[] = ajax_command_invoke('#compared_checkbox_' . $cid, 'removeAttr', array('disabled'));
       $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -501,7 +502,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 }
 
 
-function get_dialog_response($action, $type, $container, $nid, $container_autocomplete, $container_id){
+function get_dialog_response($context, $type, $container, $nid, $container_autocomplete, $container_id){
 
 
 dpm('test');
@@ -524,9 +525,9 @@ dpm('test');
   $output .= '<div id="select_container_autocomplete" style="display:none;">' . $container_autocomplete . '</div>';
   $output .= '<div id="select_container_id" style="display:none;">' . $container_id . '</div>';
 
-  $itemlist_settings = initialize_itemlist_settings($action);
+  $itemlist_settings = initialize_itemlist_settings($context);
 
-  $itemlist_settings['dialog'] = 1;
+  $itemlist_settings['context'] = $context;
   $itemlist_settings['node_link'] = 0;
 
   if ($nid != 0) {
@@ -535,7 +536,8 @@ dpm('test');
   }
 
   //Building the data for the item list
-  $item_list_data = get_item_list($nodes, $type, $action, 0, $itemlist_settings);
+  $item_list_data = get_item_list($nodes, $type, $context, 0, $itemlist_settings);
+//      $item_list_data = get_item_list($nodes, $type, $context, $nid, $itemlist_settings);
 
   $output .= theme_item_list(array('items' => $item_list_data, 'type' => 'ul', 'attributes' => array()));
 
@@ -607,9 +609,11 @@ function submit_dialog_response($method = 'ajax'){
     }
 
     $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
+    $itemlist_settings['context'] = 'selected';
 
     //Building the data for the item list
-    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, $itemlist_settings);
+    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'selected', 0, $itemlist_settings);
+//      $item_list_data = get_item_list($nodes, $type, $context, $nid, $itemlist_settings);
 
     //Render the item list
     $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
@@ -1069,11 +1073,12 @@ function rebuild_table_response($method = 'ajax', $type) {
  * Function which will build the item list. Used in table initial building, in compared ajax callback and in modal dialog
  */
 function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings){
-
+/*
   $dialog_text = '';
   if ($itemlist_settings['dialog']) {
     $dialog_text = 'dialog_';
   }
+*/
 
   $items = array();
   foreach ($nodes as $nid => $node_array){
@@ -1087,31 +1092,35 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
     $title_title = '<span class="' . $type . '_title_' . $nid . '">' . $node->title . '</span>';
     //If the node has children, the node name will become a link calling the callback function to display his children
     if ($node->has_children == 1){
-      $class = array('list_item_link ', $action, $type);
-
+      $class = array('list_item_link ', $action, $type, $itemlist_settings['context']);
+/*
       if ($itemlist_settings['dialog']) {
         $class[] = 'dialog';
-      }
+      }*/
       if ($itemlist_settings['computed']) {
         $class[] = 'computed';
       }
-      $title = l($title_title, 'get_item_list_children_callback/nojs/',  array('attributes' => array('id' => $type . '_link_' . $dialog_text . $nid, 'class' => $class), 'html' => True));
+      $title = l($title_title, 'get_item_list_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
     } else {
       $title = $title_title;
     }
 
+
+
     //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
     $checkbox_area = '';
     $img_link_to_node = '';
-    if ($itemlist_settings['checkbox_children'] && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
-      if ($itemlist_settings['checkbox_parent'] || ($node->has_children != 1)) {
+    if (in_array($itemlist_settings['context'], array('table', 'multidialog')) && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
+//    if ($itemlist_settings['checkbox_children'] && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
+//      if ($itemlist_settings['checkbox_parent'] || ($node->has_children != 1)) {
+      if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' || $node->has_children != 1) {
         $checkbox_settings = array('element' => array(
           '#title' => $nid,
           '#id' => 'compared_checkbox_' . $nid,
         ));
 
-
-        if ($itemlist_settings['compared_link']) {
+        if ($type == 'compared') {
+//        if ($itemlist_settings['compared_link']) {
           $checkbox_settings['element']['#attributes']['class'] = array('compared_checkbox');
         } else {
           $checkbox_settings['element']['#attributes']['class'] = array('itemlist_checkbox ' . $type);
@@ -1124,7 +1133,8 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
 
         $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
 
-        if ($itemlist_settings['compared_link']) {
+        if ($type == 'compared') {
+//        if ($itemlist_settings['compared_link']) {
 
           //We were not able to ajaxify the checkbox, so instead the checkbox will call this hidden link
           $checkbox_link = array(
@@ -1144,7 +1154,8 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
       }
     }
 
-    if ($itemlist_settings['node_link']) {
+//    if ($itemlist_settings['node_link']) {
+    if ($type == 'compared' && $itemlist_settings['context'] == 'table') {
 
       //Create the image link to go to the node page
       $img = theme('image', array(
@@ -1176,11 +1187,13 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
     }
 
     
-    $items[$nid]['id'] = $type . '_item_' . $dialog_text . $nid;
+    $items[$nid]['id'] = $type . '_' . $itemlist_settings['context'] . '_item_' .  $nid;
     $items[$nid]['data'] = $checkbox_area . $title . $img_link_to_node;
-    $items[$nid]['class'] = array($type . '_item', 'list_item');
+    $items[$nid]['class'] = array($type . '_item', 'list_item', $itemlist_settings['context']);
+    $items[$nid]['type'] =  $type;
+    $items[$nid]['context'] = $itemlist_settings['context'];
     if ($parent_node != 0) {
-      $items[$nid]['class'] = array_merge($items[$nid]['class'], array($type . '_child_' . $parent_node));
+      $items[$nid]['class'] = array_merge($items[$nid]['class'], array($type . '_' . $itemlist_settings['context'] . '_child_' . $parent_node));
 //      $items[$nid]['class'] = array('feature_children_computed_' . $parent_node);
       if ($itemlist_settings['computed']) {
         $items[$nid]['style'] = 'display:none';
@@ -1192,7 +1205,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
        $items[$nid]['children'] = get_item_list($node_array['children'], $type, $action, $nid, $itemlist_settings);
     } else {
       //After the compared, we add the div which will contain the children
-      $items[$nid]['data'] .= '<div id="' . $type . '_children_' . $dialog_text . $nid . '" class="'. $type . '_children" style="display:none;"></div>';
+      $items[$nid]['data'] .= '<div id="' . $type . '_' . $itemlist_settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;"></div>';
     }
 
 
@@ -1468,7 +1481,7 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
   if (isset($settings['colspan'])) {
     $colspan = 'colspan="' . $settings['colspan'] . '"';
   }
-  $output .= '<tr id="feature_row_0"><td class="row_auto_colspan" ' . $colspan . '><a id="add_feature_link" href="?q=node/add/feature">Add</a><span id="add_feature_link_fastaction">';
+  $output .= '<tr id="feature_table_0"><td class="row_auto_colspan" ' . $colspan . '><a id="add_feature_link" href="?q=node/add/feature">Add</a><span id="add_feature_link_fastaction">';
 
   if ($fastedit_status) {
     $feature = array(
@@ -1495,9 +1508,9 @@ function render_rows($feature_row_data, $fastedit_status) {
 
     $feature = $feature_array['data'];
 
-    $output .= '<tr id="feature_row_'. $fid . '" class="feature_row';
+    $output .= '<tr id="feature_table_'. $fid . '" class="feature_row';
     if ($feature->parent_id) {
-        $output .= ' feature_row_child_' . $feature->parent_id;
+        $output .= ' feature_table_child_' . $feature->parent_id;
     }
     $output .= '"';
     if (!isset($feature_array['root'])) {
@@ -1581,7 +1594,7 @@ function initialize_itemlist_settings($subaction) {
 
   $itemlist_settings = array(
     'fastedit_status' => 0,
-    'dialog' => 0,
+    'context' => 0,
     'forbidden_nid' => 0,
     'node_link' => 0,
     'checkbox_parent' => 0,
@@ -1593,6 +1606,7 @@ function initialize_itemlist_settings($subaction) {
 
   switch ($subaction) {
     case 'compared_main_table':
+      $itemlist_settings['context'] = 'table';
       $itemlist_settings['checkbox_children'] = 1;
       $itemlist_settings['compared_link'] = 1;
       $itemlist_settings['node_link'] = 1;

@@ -144,8 +144,8 @@ function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output
   $needs = request_db('need');
 
   $itemlist_settings = initialize_itemlist_settings('select_multi_dialog');
-
-  $item_list_data = get_item_list($needs, 'need', 'select_multi_dialog', 0, $itemlist_settings);
+  $itemlist_settings['context'] = 'table';
+  $item_list_data = get_item_list($needs, 'need', 'table', 0, $itemlist_settings);
 
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
