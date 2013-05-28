@@ -83,7 +83,7 @@ function theme_wikicompare_comparative_table($variables) {
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_multi_dialog/feature/manual_selected_features/0',
+    'path' => 'get_dialog_callback/select_multi_dialog/feature/manual_selected_features/0/manual_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -257,7 +257,11 @@ function get_item_list_children_response($method = 'ajax') {
 
         }
 
-        if ($subaction == 'select_multi_dialog') {
+        if ($subaction == 'select_multi_dialog' && $type == 'feature') {
+
+          if ($_POST['selected_feature_ids'] == '') {
+            $_POST['selected_feature_ids'] = array();
+          }
 
           $selected_feature_ids = $_POST['selected_feature_ids'];
           if (in_array($key, $selected_feature_ids)) {
@@ -291,7 +295,7 @@ function get_item_list_children_response($method = 'ajax') {
       }
 
       //Building the data for the item list
-      $item_list_data = get_item_list($nodes, $type, $subaction, 0, $itemlist_settings);
+      $item_list_data = get_item_list($nodes, $type, $subaction, $nid, $itemlist_settings);
 
       //Rendering the item list
       $output = theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
@@ -460,7 +464,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
           $implementation = $implementations[$fid][$cid];
 
-          $cells[$implementation['data']->feature_id] .= render_implementation($implementation, $feature, $fastedit_status);
+          $cells[$implementation['data']->feature_id] = render_implementation($implementation, $feature, $fastedit_status);
         }
       }
 
@@ -500,7 +504,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 function get_dialog_response($action, $type, $container, $nid, $container_autocomplete, $container_id){
 
 
-
+dpm('test');
 
   $output = t("<div id='dialog-content'>");
 
@@ -763,6 +767,7 @@ function reset_table_response($method = 'ajax') {
 
 function make_cleaning_response($method = 'ajax') {
 
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -777,10 +782,13 @@ function make_cleaning_response($method = 'ajax') {
 
     foreach ($types as $type) {
 
-      if ($type == 'feature' && !$_POST['computed']) {
+      if ($type == 'feature' && $_POST['computed']) {
         continue;
       }
 
+      if ($_POST[$type . '_displayed_ids'] == '') {
+        $_POST[$type . '_displayed_ids'] = array();
+      }
 
       $node_ids = array();  //$_POST['compared_column_ids'];
       foreach ($_POST[$type . '_ids'] as $node) {
@@ -821,7 +829,10 @@ function make_cleaning_response($method = 'ajax') {
               }
             }
 
+
+
             if (!in_array($nodes[$node[0]]['data']->parent_id, $_POST[$type . '_displayed_ids'])) {
+
               if ($nodes[$node[0]]['data']->parent_id != NULL) {
                 $commands[] = ajax_command_invoke('#' . $type . '_link_' . $nodes[$node[0]]['data']->parent_id, 'click', array());
               } else {
@@ -862,10 +873,10 @@ function make_cleaning_response($method = 'ajax') {
       foreach($nodes as $nid => $node) {
         $commands[] = ajax_command_invoke('.' . $type . '_title_' . $nid, 'html', array($node['data']->title));
         if ($type == 'feature') {
-          $commands[] = ajax_command_invoke('.feature_title_' . $fid, 'html', array($feature['data']->title));
-          $commands[] = ajax_command_invoke('.feature_weight_' . $fid, 'html', array($feature['data']->weight));
-          $commands[] = ajax_command_invoke('.feature_type_' . $fid, 'html', array($feature['data']->type));
-          $commands[] = ajax_command_invoke('.feature_state_' . $fid, 'html', array($feature['data']->state));
+          $commands[] = ajax_command_invoke('.feature_title_' . $nid, 'html', array($node['data']->title));
+          $commands[] = ajax_command_invoke('.feature_weight_' . $nid, 'html', array($node['data']->weight));
+          $commands[] = ajax_command_invoke('.feature_type_' . $nid, 'html', array($node['data']->type));
+          $commands[] = ajax_command_invoke('.feature_state_' . $nid, 'html', array($node['data']->state));
         }
         if ($_POST['fastedit_status'] == 1) {
           $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array(add_fastedit_items($type , $node)));
@@ -1167,10 +1178,13 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
     
     $items[$nid]['id'] = $type . '_item_' . $dialog_text . $nid;
     $items[$nid]['data'] = $checkbox_area . $title . $img_link_to_node;
-    $items[$nid]['class'] = array($type . '_item list_item');
+    $items[$nid]['class'] = array($type . '_item', 'list_item');
     if ($parent_node != 0) {
-      $items[$nid]['class'] = array('feature_children_computed_' . $parent_node);
-      $items[$nid]['style'] = 'display:none';
+      $items[$nid]['class'] = array_merge($items[$nid]['class'], array($type . '_child_' . $parent_node));
+//      $items[$nid]['class'] = array('feature_children_computed_' . $parent_node);
+      if ($itemlist_settings['computed']) {
+        $items[$nid]['style'] = 'display:none';
+      }
     }
 
 
@@ -1483,7 +1497,7 @@ function render_rows($feature_row_data, $fastedit_status) {
 
     $output .= '<tr id="feature_row_'. $fid . '" class="feature_row';
     if ($feature->parent_id) {
-        $output .= ' feature_children_' . $feature->parent_id;
+        $output .= ' feature_row_child_' . $feature->parent_id;
     }
     $output .= '"';
     if (!isset($feature_array['root'])) {
@@ -1553,7 +1567,7 @@ function render_implementation($implementation_array, $feature_array, $fastedit_
     }
     $img_link_to_node .= '</span>';
 
-    $output = '<td id="implementation_' . $implementation->nid . '" class="implementation_cell ' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $feature->nid . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation->feature_id . '<br/>Compared : ' . $implementation->compared_id . '<br/>' . $implementation->percent . '%</td>';
+    $output = '<td id="implementation_' . $implementation->nid . '" class="implementation_cell ' . $implementation->css_class . ' implementation_compared_' . $implementation->compared_id . ' implementation_feature_' . $implementation->feature_id . '">' . $implementation->nid . ' ' .  $img_link_to_node . '<br/>Feature : ' . $implementation->feature_id . '<br/>Compared : ' . $implementation->compared_id . '<br/>' . $implementation->percent . '%</td>';
 
   } else {
     $output = '<td></td>';

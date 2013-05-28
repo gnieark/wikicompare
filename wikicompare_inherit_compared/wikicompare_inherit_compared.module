@@ -386,12 +386,11 @@ function wikicompare_inherit_compared_preupdate_compared(&$test, $node_revision,
 //When we update a compared, we check if his use_from_inherit has changed, and if yes we update him
 function wikicompare_inherit_compared_preupdate_implementation(&$test, $node_revision, $current_node) {
 
-dpm($node_revision, 'node_revision');
-dpm($current_node, 'current_node');
+
 
       if ($node_revision->wikicompare_use_from_inherit['und'][0]['value'] != $current_node->wikicompare_use_from_inherit['und'][0]['value']) {
         $test = TRUE;
-dpm($test, 'test');
+
 /*        db_update('cache_implementation')
           ->fields(array(
             'to_update' => 1,

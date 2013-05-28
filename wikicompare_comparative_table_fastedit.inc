@@ -113,8 +113,6 @@ function toggle_fastedit_response($method = 'ajax'){
 
 function add_fastedit_items($type, $node_array){
 
-dpm($type);
-dpm($node_array);
 
   $output = ' ';
 
@@ -361,7 +359,7 @@ function get_fastedit_form_response($method = 'ajax'){
  */
 function submit_fastedit_form_response($method = 'ajax'){
 
-dpm($_POST, 'post');
+
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
@@ -524,7 +522,7 @@ dpm($_POST, 'post');
       } 
       
       $node->log = $_POST['revision'];
-dpm($node);
+
 
       if ($missing_field == FALSE) {
 

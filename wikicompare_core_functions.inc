@@ -762,9 +762,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
 
 
   foreach ($result as $record) {
-if ($type == 'need') {
-dpm($record);
-}
+
 
     if ($type != 'implementation' || $nids != NULL) {
       $res[$record->nid]['data'] = $record;

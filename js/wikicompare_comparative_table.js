@@ -61,14 +61,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
       }
 
       if ($(this).hasClass('computed')) {
+
         $(this).click(function() {
+alert('test');
           var patt = /[0-9]+/g;
           var node_id = patt.exec(link_id);
           if (!$(this).hasClass('displayed')) {
-            $('.feature_children_computed_' + node_id).show();
+            $('.feature_child_' + node_id).show();
             $(this).addClass('displayed');
           } else { 
-            remove_children_tree(node_id, '#feature_link_', '.feature_children_computed_', false);
+
+            remove_children_tree(node_id, '#feature_link_', '.feature_child_', false);
           }
           return false;
         });
@@ -215,10 +218,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var patt = /[0-9]+/g;
           var node_id = patt.exec(link_id);
           if (!$('#' + link_id).hasClass('displayed')) {
-            $('.feature_children_' + node_id).show();
+            $('.feature_row_child_' + node_id).show();
             $('#' + link_id).addClass('displayed');
           } else {
-            remove_children_tree(node_id, '.feature_link_children_', '.feature_children_', true);;
+            remove_children_tree(node_id, '.feature_link_children_', '.feature_row_child_', true);;
             $('#' + link_id).removeClass('displayed');
           }
           return false;
@@ -406,8 +409,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.old_beforeSerialize = ajax.beforeSerialize;
 
       ajax.beforeSerialize = function (element, options) {  
-        //We remove all hidded element so they can't perturb the computation
-        $('.to_remove').remove();
+        //We can't remove directly at cleaning otherwise some content will be remove before the end of slideUp
+        if (action != 'make_cleaning') {
+          //We remove all hidded element so they can't perturb the computation
+          $('.to_remove').remove();
+        }
 
         options.data.fastedit_status = fastedit_status;
         
@@ -594,16 +600,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var compared_ids = new Array();
           var i = 0;
           $('.compared_item').each(function (key, value) {
-            var patt = /[0-9]+/g;
-            compared_ids[i] = new Array();
-            compared_id = patt.exec($(this).attr('id'))[0];
-            //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-            compared_ids[i][0] = compared_id;
-            if ($(this).parent().parent().parent().hasClass('compared_children')) {
-              parent = $(this).parent().parent().parent().attr('id');
-              compared_ids[i][1] = patt.exec(parent)[0];
+            //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
+            if (!$(this).hasClass('to_remove')) {
+              var patt = /[0-9]+/g;
+              compared_ids[i] = new Array();
+              compared_id = patt.exec($(this).attr('id'))[0];
+              //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
+              compared_ids[i][0] = compared_id;
+              if ($(this).parent().parent().parent().hasClass('compared_children')) {
+                parent = $(this).parent().parent().parent().attr('id');
+                compared_ids[i][1] = patt.exec(parent)[0];
+              }
+              i = i + 1;
             }
-            i = i + 1;
           });
           //Add them in the ajax call variables
           options.data.compared_ids = compared_ids;
@@ -611,6 +620,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var compared_displayed_ids = new Array();
           var i = 0;
           $('.compared_main_table').each(function (key, value) {
+
             if ($(this).hasClass('displayed')) {
 
               var patt = /[0-9]+/g;
@@ -657,16 +667,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var need_ids = new Array();
           var i = 0;
           $('.need_item').each(function (key, value) {
-            var patt = /[0-9]+/g;
-            need_ids[i] = new Array();
-            need_id = patt.exec($(this).attr('id'))[0];
-            //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-            need_ids[i][0] = need_id;
-            if ($(this).parent().parent().parent().hasClass('need_children')) {
-              parent = $(this).parent().parent().parent().attr('id');
-              need_ids[i][1] = patt.exec(parent)[0];
+            //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
+            if (!$(this).hasClass('to_remove')) {
+              var patt = /[0-9]+/g;
+              need_ids[i] = new Array();
+              need_id = patt.exec($(this).attr('id'))[0];
+              //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
+              need_ids[i][0] = need_id;
+              if ($(this).parent().parent().parent().hasClass('need_children')) {
+                parent = $(this).parent().parent().parent().attr('id');
+                need_ids[i][1] = patt.exec(parent)[0];
+              }
+              i = i + 1;
             }
-            i = i + 1;
           });
           //Add them in the ajax call variables
           options.data.need_ids = need_ids;
@@ -854,7 +867,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             if (action == 'expand_row_children') {
              
               //Display the children with slide animation
-              $('.feature_children_' + node_id).show();
+              $('.feature_row_child_' + node_id).show();
 //TODO Les lignes s'affichent instantanement pour une raison qui m'echappe si je met un slideDown(). Utiliser la fonction suivante pour les afficher les unes apres les autres
 //http://paulirish.com/2008/sequentially-chain-your-callbacks-in-jquery-two-ways/
 /*
@@ -902,13 +915,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
             if (action == 'expand_list_children') {
               $('#' + type + '_children_' + dialog_text + node_id).slideUp();
+              $('.' + type + '_child_' + node_id).addClass('to_remove');
             }
           
             if (action == 'expand_row_children') {
               //Hide the children with slide animation
-              remove_children_tree(node_id, '.feature_link_children_', '.feature_children_', false);
+              remove_children_tree(node_id, '.feature_link_children_', '.feature_row_child_', false);
               //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
-              $('.feature_children_' + node_id).addClass('to_remove');
+              $('.feature_row_child_' + node_id).addClass('to_remove');
             }
           
             if (action == 'toogle_compared_checkbox') {   
@@ -930,16 +944,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.row_auto_colspan').attr('colspan', colspan);
         }
         
-        if (make_cleaning == true) {
-
+/*        if (make_cleaning == true) {
           $('#make_cleaning_link').click();
-        }
+        }*/
       }
 
       return ajax;
     }
     
     function remove_children_tree(node_id, link_prefix, children_prefix, computed) {
+/*alert(node_id.toSource());
+alert(link_prefix.toSource());
+alert(children_prefix.toSource());
+alert(computed.toSource());*/
       $(children_prefix + node_id).each(function(index) {
         var patt = /[0-9]+/g;
         var node_child_id = patt.exec($(this).attr('id'));
@@ -963,6 +980,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 //TODO isoler le test ajax dans une fonction a part
+
+//TODOTODO conflit entre manualy selected et feature du tableau, ajouter un contexte (table, main itemlist, manually, dialog) a tous les liens, toutes les classes, sinon on va pas s'en sortir
+
 
 
 //TODO Mettre tous les arguments de la fonction request_db dans les settings, pour la rendre plus flexible. Importante refonte.

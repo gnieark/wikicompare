@@ -92,7 +92,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_multi_dialog/feature/form_selected_features/0',
+    'path' => 'get_dialog_callback/select_multi_dialog/feature/form_selected_features/0/form_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -250,7 +250,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$out
       'text' => 'Select features',
       'title' => 'Select features',
       'selector' => 'dialog-content',
-      'path' => 'get_dialog_callback/select_multi_dialog/feature/form_selected_features/0',
+      'path' => 'get_dialog_callback/select_multi_dialog/feature/form_selected_features/0/form_selected_features/none',
       'id' => 'select_feature_link',
     );
     $output .= '<div id="form_selected_features">';

@@ -362,7 +362,7 @@ function wikicompare_revisionapi($op, $node_revision) {
    */
   if ($op == 'pre publish') {
 
-//dpm($node_revision);
+
 
     $types = array('compared', 'feature', 'implementation');
 /*
@@ -491,7 +491,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       //If any of the critical field is changed
       if ($test) {
 
-//dpm($to_update);
+
 
         
         if (in_array($node_revision->type, array('compared', 'feature', 'implementation'))) {
@@ -582,7 +582,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         wikicompare_inherit_compared_cache_update_fields($fields, $node_revision);
       }
 
-//dpm($fields);
+
 
       db_update('cache_' . $node_revision->type)
           ->fields($fields)

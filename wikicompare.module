@@ -629,7 +629,6 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       if ($readonly == True) {
         $description_field['#attributes']['disabled'] = True;
       }
-      dpm(render($description_field), 'description');
 
     
 
