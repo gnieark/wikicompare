@@ -511,7 +511,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
 
 
   //Find all the features on the first level of the tree
-  $nodes = request_db($type, array('states' => array('draft' => 'draft', 'closed' => 'closed')));
+  $nodes = request_db($type, array('can_be_translated' => 1, 'states' => array('draft' => 'draft', 'closed' => 'closed')));
 
   $output .= '<div id="initialize_selected_feature_dialog_ids" style="display:none;">';
   if ($container == 'manual_selected_features') {
@@ -552,7 +552,10 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
       'style' => 'display:none',
     ),
   );
-  $output .= '<p><input id="submit_dialog_button" type="submit" value="Submit" class="button"/>' . drupal_render($submit_link) . '</p>';
+
+  if ($context == 'multidialog') {
+    $output .= '<p><input id="submit_dialog_button" type="submit" value="Submit" class="button"/>' . drupal_render($submit_link) . '</p>';
+  }
 
   $output .= t("</div>");
   return $output;
@@ -607,9 +610,13 @@ function submit_dialog_response($method = 'ajax'){
     if ($selected_feature_ids) {
       $feature_array = get_recursive_data('feature', $selected_feature_ids);
     }
-
+dpm($_POST);
     $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
-    $itemlist_settings['context'] = 'selected';
+    if ($_POST['container'] == 'manual_selected_features') {
+      $itemlist_settings['context'] = 'manual';
+    } else {
+      $itemlist_settings['context'] = 'selected';
+    }
 
     //Building the data for the item list
     $item_list_data = get_item_list($feature_array['tree'], 'feature', 'selected', 0, $itemlist_settings);
@@ -1194,7 +1201,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
       $img_link_to_node .= '</span>';
     }
 
-    if ($itemlist_settings['select_link']) {
+    if ($itemlist_settings['context'] == 'selectdialog') {
 
       $img = theme('image', array(
         'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
@@ -1430,7 +1437,7 @@ function wikicompare_table_render_compared($settings=array()) {
     $output .= add_fastedit_items('compared' , $compared);
   }
   $output .= '</span></p>';
-  $output .= '<div id="compared_children_0"></div>';
+  $output .= '<div id="compared_table_children_0"></div>';
   $output .="</div>";
 
   return $output;

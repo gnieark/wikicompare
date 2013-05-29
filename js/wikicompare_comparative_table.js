@@ -71,11 +71,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var patt = /[0-9]+/g;
           var node_id = patt.exec(link_id);
           if (!$(this).hasClass('displayed')) {
-            $('.feature_selected_child_' + node_id).show();
+            $('.feature_' + context + '_child_' + node_id).show();
             $(this).addClass('displayed');
           } else { 
 
-            remove_children_tree(node_id, '#feature_selected_link_', '.feature_selected_child_', false);
+            remove_children_tree(node_id, '#feature_' + context + '_link_', '.feature_' + context + '_child_', false);
           }
           return false;
         });
@@ -450,13 +450,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.type = type;
           options.data.context = context;
 
-          if ($('#' + link_id).hasClass('multidialog')) {
+          if (context == 'multidialog') {
             options.data.dialog = true;
 
 //            if (context == 'multidialog') {
             options.data.selected_feature_ids = selected_feature_dialog_ids;
 //            } 
-          } else if (!$('#' + link_id).hasClass('simpledialog')) {
+          } else if (context != 'selectdialog') {
+
             make_cleaning = true;
           }
 
@@ -953,9 +954,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.row_auto_colspan').attr('colspan', colspan);
         }
         
-/*        if (make_cleaning == true) {
+        if (make_cleaning == true) {
           $('#make_cleaning_link').click();
-        }*/
+        }
       }
 
       return ajax;
@@ -986,7 +987,7 @@ alert(computed.toSource());*/
 
 
 
-
+//TODO multidialog affiche même les nodes traductions
 
 //TODO isoler le test ajax dans une fonction a part
 

@@ -493,6 +493,8 @@ function find_css_class($percent) {
 function wikicompare_flush_caches() {
 
 
+  global $language;
+
   //We put the site in maintenance
   $was_in_maintenance = FALSE;
   if (variable_get('maintenance_mode', 0) == 1) {
@@ -506,8 +508,15 @@ function wikicompare_flush_caches() {
   db_delete('cache_comparative_table')
     ->execute();
 
+  $types = array('compared', 'feature', 'implementation');
 
-  foreach (array('compared', 'feature', 'implementation') as $type) {
+
+  if (module_exists('wikicompare_needs')) {
+    wikicompare_needs_wikicompare_node_types($types);
+  }
+
+
+  foreach ($types as $type) {
 
     db_delete('cache_' . $type)
       ->execute();   
@@ -539,6 +548,7 @@ function wikicompare_flush_caches() {
       $query->leftjoin('field_revision_wikicompare_weight', 'nw', 'n.vid = nw.revision_id');
     }
     $query->condition('n.type', $type);
+    $query->condition('n.language', language_default('language'));
 
 
     if (module_exists('wikicompare_inherit_compared')) {
@@ -735,6 +745,8 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
       $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
     }
   }
+
+
 /*
   foreach (module_implements('wikicompare_request_db') as $module) {
     $function = $module . '_wikicompare_request_db';
@@ -762,6 +774,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
 
 
   foreach ($result as $record) {
+
 
 
     if ($type != 'implementation' || $nids != NULL) {

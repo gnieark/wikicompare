@@ -199,6 +199,8 @@ function get_fastedit_form_response($method = 'ajax'){
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
+dpm($_POST);
+
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
@@ -208,7 +210,7 @@ function get_fastedit_form_response($method = 'ajax'){
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
-
+      $output = '';
 
       $display_type = 'itemlist';
       if (in_array($type, array('feature','implementation'))) {
@@ -238,12 +240,17 @@ function get_fastedit_form_response($method = 'ajax'){
       } else {
       
         
-      
+        $node = new stdClass;
+        $node->type = $type;
+        $readonly = False;
+        $tnode = new stdClass;
+        $readonly_translation = False;        
+              
         if ($fastaction == 'edit') {
     
           $node = node_load($nid);
 
-          $readonly = False;
+
           $query = db_select('node_revision', 'n');
           $query->addField('n', 'nid', 'nid');
           $query->addField('n', 'uid', 'uid');
@@ -255,8 +262,6 @@ function get_fastedit_form_response($method = 'ajax'){
             }
           }
 
-          $tnode = new stdClass;
-          $readonly_translation = False;
 /*
           foreach (module_implements('wikicompare_fastedit_get_tnode') as $module) {
             $function = $module . '_wikicompare_fastedit_get_tnode';
@@ -301,20 +306,20 @@ function get_fastedit_form_response($method = 'ajax'){
         $output .= '</td></tr>';
       }
 
-      
+dpm($output);      
 
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //Insert the form in the page. Note we can't use ajax_command_before or ajax_command_after because it adds an unwanted div
       switch ($type) {
         case ('compared'):
-          $commands[] = ajax_command_invoke('#compared_children_' . $nid, 'before', array($output));
+          $commands[] = ajax_command_invoke('#compared_table_children_' . $nid, 'before', array($output));
           break;
         case ('feature'):
-          $commands[] = ajax_command_invoke('#feature_row_' . $nid, 'after', array($output));
+          $commands[] = ajax_command_invoke('#feature_table_' . $nid, 'after', array($output));
           break;
         case ('implementation'):
-          $commands[] = ajax_command_invoke('#feature_row_' . $node->wikicompare_feature_id['und'][0]['target_id'], 'after', array($output));
+          $commands[] = ajax_command_invoke('#feature_table_' . $node->wikicompare_feature_id['und'][0]['target_id'], 'after', array($output));
           break;
       }
 /*
@@ -331,6 +336,7 @@ function get_fastedit_form_response($method = 'ajax'){
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+dpm($commands);
       
       $page = array('#type' => 'ajax', '#commands' => $commands);          
       return $page;
@@ -420,7 +426,7 @@ function submit_fastedit_form_response($method = 'ajax'){
         }
 */
         if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'title', 'title');
+          wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'title', 'title', $fastaction);
         } 
 
         if ($_POST['parent_id'] != 0) {
@@ -518,7 +524,7 @@ function submit_fastedit_form_response($method = 'ajax'){
 */
 
       if (module_exists('wikicompare_translation')) {
-        wikicompare_translation_wikicompare_fastedit_submit_after($node, $tnode, $_POST);
+        wikicompare_translation_wikicompare_fastedit_submit_after($node, $tnode, $_POST, $fastaction);
       } 
       
       $node->log = $_POST['revision'];

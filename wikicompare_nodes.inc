@@ -373,9 +373,9 @@ function wikicompare_revisionapi($op, $node_revision) {
 */
 
     if (module_exists('wikicompare_needs')) {
-      wikicompare_needs_wikicompare_node_types($array);
+      wikicompare_needs_wikicompare_node_types($types);
     }
-
+dpm($types);
     if (in_array($node_revision->type, $types)) {
 
       $test = false;
@@ -396,7 +396,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 */
 
       if (module_exists('wikicompare_needs')) {
-        wikicompare_needs_wikicompare_node_types($array);
+        wikicompare_needs_wikicompare_node_types($types);
       }
 
       if (in_array($node_revision->type, $types)) {
@@ -412,7 +412,8 @@ function wikicompare_revisionapi($op, $node_revision) {
           $current_node_parent = $current_node->wikicompare_parent_id['und'][0]['target_id'];
         }
       
-        
+dpm($node_revision_parent);
+dpm($current_node_parent);      
 
         //If the field parent of the node was changed, then this is a big part of the compare tree which was changed. We will have to update the previous implementation parent on the countertype axis after the leave of the node child.
         if ($node_revision_parent != $current_node_parent) {
@@ -527,7 +528,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 */
 
     if (module_exists('wikicompare_needs')) {
-      wikicompare_needs_wikicompare_node_types($array);
+      wikicompare_needs_wikicompare_node_types($types);
     }
     if (in_array($node_revision->type, $types)) {
 
@@ -591,7 +592,14 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     }
 
-    foreach(array('compared', 'feature', 'implementation') as $type) {
+    $types = array('compared', 'feature', 'implementation');
+
+    if (module_exists('wikicompare_needs')) {
+      wikicompare_needs_wikicompare_node_types($types);
+    }
+
+
+    foreach($types as $type) {
       //Get all the node to update
       $query = db_select('cache_' . $type, 'n');
       $query->addField('n', 'nid', 'nid');

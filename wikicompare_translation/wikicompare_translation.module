@@ -119,6 +119,8 @@ function wikicompare_translation_wikicompare_request_db(&$query, $type, $setting
 
   global $language;
 
+
+
   if (isset($settings['can_be_translated'])) {
     $query->addField('t', 'nid', 'nid_translated');
     $query->addField('t', 'title', 'title_translated');
@@ -204,11 +206,23 @@ function wikicompare_translation_wikicompare_fastedit_get_tnode(&$tnode, &$reado
         $readonly_translation = True;
       }
     }
+
+    //If the translation node wasn't already created
+    if (!isset($tnode->nid)) {
+      $tnode = new stdClass;
+      $tnode->title = '';
+
+dpm($tnode, 'test');
+    }
+
   }
   
 }
 
 function wikicompare_translation_wikicompare_fastedit_add_element(&$output, $tnode, $field, $name, $readonly_translation, $fastaction) {
+
+dpm($name);
+dpm($tnode);
 
   global $language;
   if ($language->language != language_default('language')) {
@@ -292,31 +306,35 @@ function wikicompare_translation_wikicompare_fastedit_submit_init_tnode(&$tnode,
   }
 }
 
-function wikicompare_translation_wikicompare_fastedit_submit_element(&$tnode, $_POST, $field_name, $jscript_name) {
+function wikicompare_translation_wikicompare_fastedit_submit_element(&$tnode, $_POST, $field_name, $jscript_name, $fastaction) {
 
-  global $language;
+  if ($fastaction == 'edit') {
+    global $language;
 
-  if ($language->language != language_default('language')) {
-    $value = $_POST[$jscript_name . '_translation'];
-    if ($field_name != 'title') {
-      $temp = $value;
-      $value = array();
-      $value['und'][0]['value'] = $temp;
-      $value['und'][0]['format'] = 'full_html';
+    if ($language->language != language_default('language')) {
+      $value = $_POST[$jscript_name . '_translation'];
+      if ($field_name != 'title') {
+        $temp = $value;
+        $value = array();
+        $value['und'][0]['value'] = $temp;
+        $value['und'][0]['format'] = 'full_html';
+      }
+    
+      $tnode->$field_name = $value;
     }
-  
-    $tnode->$field_name = $value;
   }
 
 }
 
-function wikicompare_translation_wikicompare_fastedit_submit_after(&$node, $tnode, $_POST) {
+function wikicompare_translation_wikicompare_fastedit_submit_after(&$node, $tnode, $_POST, $fastaction) {
 
-  global $language;
+  if ($fastaction == 'edit') {
+    global $language;
 
-  if ($language->language != language_default('language')) {
-    if ($_POST['selectnode'] == 1) {
-      $node = $tnode;
+    if ($language->language != language_default('language')) {
+      if ($_POST['selectnode'] == 1) {
+        $node = $tnode;
+      }
     }
   }
 

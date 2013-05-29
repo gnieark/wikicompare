@@ -437,7 +437,7 @@ function wikicompare_form_implementation_node_form_alter(&$form, &$form_state, $
 
 function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$output=NULL, $nid=NULL, $type=NULL, $fastaction=NULL, $node=NULL, $readonly=NULL, $tnode=NULL, $readonly_translation=NULL) {
 
-
+dpm($tnode);
 
   if ($form_type == 'form') {
 
@@ -527,7 +527,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         'text' => 'Select parent',
         'title' => 'Select parent',
         'selector' => 'dialog-content',
-        'path' => 'get_dialog_callback/select_simple_dialog/' . $node->type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
+        'path' => 'get_dialog_callback/selectdialog/' . $node->type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
       );
       $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $node->type)));
       $form['container_selected_parent'] = array(
@@ -571,7 +571,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           'text' => 'Select parent',
           'title' => 'Select parent',
           'selector' => 'dialog-content',
-          'path' => 'get_dialog_callback/select_simple_dialog/' . $type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
+          'path' => 'get_dialog_callback/selectdialog/' . $type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
         );
         $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
         $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span>';
@@ -606,7 +606,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
 
     if (module_exists('wikicompare_inherit_compared')) {
-      wikicompare_inherit_compared_modify_form_no_implementation($form, $output, $form_type, $node);
+      wikicompare_inherit_compared_modify_form_no_implementation($form, $output, $form_type, $node, $readonly);
     }
 
 
@@ -924,6 +924,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       '#type' => 'textarea',
       '#title' => t('Revision log message'),
       '#id' => 'form_' . $type . '_fast' . $fastaction . '_revision_' . $nid,
+      '#value' => '',
       '#attributes' => array(
         'class' => array('form_' . $type . '_fast' . $fastaction . '_revision'),
       )
