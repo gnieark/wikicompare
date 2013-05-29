@@ -221,7 +221,7 @@ function theme_wikicompare_comparative_table($variables) {
  */
 function get_item_list_children_response($method = 'ajax') {
 
-dpm($_POST);
+
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
   $context = $_POST['context'];
@@ -248,7 +248,7 @@ dpm($_POST);
 
       foreach ($nodes as $key => $record) {
 
-        if ($context == 'compared_main_table') {
+        if ($type == 'compared' && $context == 'table') {
           //If already displayed in the table, we check it by default
           if (!empty($_POST['compared_column_ids'])) {
             if (in_array($key, $_POST['compared_column_ids'])) {
@@ -258,7 +258,7 @@ dpm($_POST);
 
         }
 
-        if ($context == 'select_multi_dialog' && $type == 'feature') {
+        if ($type == 'feature' && $context == 'multidialog') {
 
           if ($_POST['selected_feature_ids'] == '') {
             $_POST['selected_feature_ids'] = array();
@@ -300,7 +300,7 @@ dpm($_POST);
 
       //Rendering the item list
       $output = theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
-dpm($output);
+
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
@@ -505,7 +505,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 function get_dialog_response($context, $type, $container, $nid, $container_autocomplete, $container_id){
 
 
-dpm('test');
+
 
   $output = t("<div id='dialog-content'>");
 
@@ -692,6 +692,8 @@ function compute_comparative_table_response($method = 'ajax') {
     $settings = array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
     if ($selected_feature_ids && !isset($_POST['reset'])) {
       $feature_array = get_recursive_data('feature', $selected_feature_ids, $fastedit_status);
+dpm($feature_array);
+      $settings['feature_ids'] = $feature_array['ids'];
       $settings['computed'] = 1;
       $output = render_comparative_table($feature_array['tree'], $compared_columns_ids, $settings);
     } else {
@@ -720,6 +722,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
     $commands[] = ajax_command_replace('#comparative_table', $output);
     $page = array('#type' => 'ajax', '#commands' => $commands);
+dpm($page);
     return $page;
 
   //If javascript isn't enabled, we redirect to an error page.
@@ -1080,6 +1083,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
   }
 */
 
+
   $items = array();
   foreach ($nodes as $nid => $node_array){
 
@@ -1433,12 +1437,12 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
 
 
   }
-
+/*
   $feature_ids = array();
   foreach ($features as $key => $feature) {
     $feature_ids[$key] = $key;
   }
-
+*/
 
 
   $headers = array();
@@ -1455,10 +1459,13 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
   }
 
   $implementations = array();
-  if (!empty($feature_ids) && !empty($compareds)) {
-    $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, $compareds, $feature_ids);
+  if (!empty($settings['feature_ids']) && !empty($compareds)) {
+    $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, $compareds, $settings['feature_ids']);
   } 
 
+dpm($features);
+dpm($compareds);
+dpm($implementations);
   $feature_row_data = get_rows_data($features, $compareds, $implementations, $computed);
 
   //Building the table

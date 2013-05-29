@@ -450,14 +450,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.type = type;
           options.data.context = context;
 
-          if ($('#' + link_id).hasClass('dialog')) {
+          if ($('#' + link_id).hasClass('multidialog')) {
             options.data.dialog = true;
-            if (context == 'select_multi_dialog') {
-              options.data.selected_feature_ids = selected_feature_dialog_ids;
-            } 
-          } else {
+
+//            if (context == 'multidialog') {
+            options.data.selected_feature_ids = selected_feature_dialog_ids;
+//            } 
+          } else if (!$('#' + link_id).hasClass('simpledialog')) {
             make_cleaning = true;
           }
+
 
           if ($('#' + link_id).hasClass('need')) {
             send_selected_needs = true;
@@ -990,7 +992,7 @@ alert(computed.toSource());*/
 //TODOTODO conflit entre manualy selected et feature du tableau, ajouter un contexte (table, main itemlist, manually, dialog) a tous les liens, toutes les classes, sinon on va pas s'en sortir
 // Context possible : table, manual, selectdialog, multidialog, pas autre chose
 
-
+//TODO les manual selected sont en liste numeroté
 
 //TODO Mettre tous les arguments de la fonction request_db dans les settings, pour la rendre plus flexible. Importante refonte.
 
