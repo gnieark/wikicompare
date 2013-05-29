@@ -502,7 +502,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           send_container = true;
         }
-  
+
         if (action == 'compute_table') {
           send_compareds_columns = true;
           send_manual_selected_features = true;
@@ -511,6 +511,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_colspan = true;
           make_cleaning = true;
         }
+
 
         if (action == 'reset_table') {
           send_compareds_columns = true;
@@ -756,6 +757,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             compared_column_ids[i] = patt.exec($(this).attr('id'))[0];
             i = i + 1;
           });
+
           //Add them in the ajax call variables
           options.data.compared_column_ids = compared_column_ids;
         }
@@ -838,7 +840,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.container = container;
         }
         
-
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
       }
@@ -993,6 +994,8 @@ alert(computed.toSource());*/
 // Context possible : table, manual, selectdialog, multidialog, pas autre chose
 
 //TODO les manual selected sont en liste numeroté
+
+//TODO attention les array_merge ne conservent pas les key, faire une recherche pour corriger tous les array_merge. au lieu de array_merge(array1, array2) utiliser simplement array1 + array2, ca marche
 
 //TODO Mettre tous les arguments de la fonction request_db dans les settings, pour la rendre plus flexible. Importante refonte.
 

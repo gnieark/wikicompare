@@ -659,8 +659,14 @@ function submit_dialog_response($method = 'ajax'){
 function compute_comparative_table_response($method = 'ajax') {
 
 
+dpm('compute launch');
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
+
+    if ($_POST['selected_feature_ids'] == '') {
+      $_POST['selected_feature_ids'] = array();
+    }
 
     $selected_feature_ids = $_POST['selected_feature_ids'];
 
@@ -672,9 +678,12 @@ function compute_comparative_table_response($method = 'ajax') {
     }
 */
 
+dpm($selected_feature_ids, 'before');
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_wikicompare_comparative_table_prepare_compute($selected_feature_ids, $_POST);
     }
+
+dpm($selected_feature_ids, 'after');
 
     //If empty, javascript return a null string and not an empty array. So we need to assign it in a variable and manage the null case.
     $compared_columns_ids = array();
@@ -688,11 +697,15 @@ function compute_comparative_table_response($method = 'ajax') {
     }
 
     $commands = array();
+
     $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared(array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'])));
+dpm($compared_columns_ids, 'columns');
+
     $settings = array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
     if ($selected_feature_ids && !isset($_POST['reset'])) {
+dpm($selected_feature_ids, 'before get_recursive_data');
       $feature_array = get_recursive_data('feature', $selected_feature_ids, $fastedit_status);
-dpm($feature_array);
+dpm($feature_array, 'feature_array');
       $settings['feature_ids'] = $feature_array['ids'];
       $settings['computed'] = 1;
       $output = render_comparative_table($feature_array['tree'], $compared_columns_ids, $settings);
@@ -1159,7 +1172,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
     }
 
 //    if ($itemlist_settings['node_link']) {
-    if ($type == 'compared' && $itemlist_settings['context'] == 'table') {
+    if ($itemlist_settings['context'] == 'table') {
 
       //Create the image link to go to the node page
       $img = theme('image', array(
@@ -1228,7 +1241,7 @@ function get_recursive_data($type, $ids, $fastedit_status=0){
 
   $res = array();
   $res = build_recursive_tree($type, $ids, $res, $fastedit_status);
-
+dpm($res, 'before build_fulltitle');
   $res = build_fulltitle($res, $res['tree'], '');
 
   return $res;
@@ -1265,10 +1278,18 @@ function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
 
   $nodes = request_db($type, array('fastedit_status' => $fastedit_status, 'can_be_translated' => 1), 'nid', $ids);
 
+dpm($nodes, 'nodes in recursive_tree');
   foreach ($nodes as $nid => $node) {
     //Check if some children of this node launched the recursive function to find this node as their parent. Then assign them as children of this node and unset the node in the array.
     if (isset($res['parent_ressource'][$nid]['children'])) {
       $node['children'] = $res['parent_ressource'][$nid]['children'];
+      //If the parent was already set on the tree by a child on a different level
+      if (isset($res['tree'][$nid])) {
+dpm($res['tree'][$nid], 'children');
+dpm($res['parent_ressource'][$nid]['children'], 'children2');
+dpm($res['tree'][$nid]['children'] + $res['parent_ressource'][$nid]['children'], 'merge');
+        $node['children'] = $res['tree'][$nid]['children'] + $res['parent_ressource'][$nid]['children'];
+      }
       unset($res['parent_ressource'][$nid]);
     }
 
@@ -1283,7 +1304,9 @@ function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
     } else {
       $res['tree'][$nid] = $node;
     }
+
   }
+dpm($res, 'after nodes in recursive tree');
 
   //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
   if ($parent_ids){

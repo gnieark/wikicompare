@@ -171,8 +171,10 @@ function wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, 
 function wikicompare_needs_wikicompare_comparative_table_prepare_compute(&$selected_feature_ids, $_POST) {
 
   if (!empty($_POST['selected_need_ids'])) {
+dpm($_POST['selected_need_ids'], 'selected_need_ids');
 
     $feature_ids = recover_features($_POST['selected_need_ids']);
+dpm($feature_ids, 'feature_ids');
     foreach ($feature_ids as $feature_id) {
       $selected_feature_ids[$feature_id] = $feature_id;
     }
@@ -362,6 +364,7 @@ function wikicompare_needs_wikicompare_comparative_table_cleaning(&$commands, $_
 
 function recover_features($need_ids) {
 
+dpm($need_ids, 'recursif');
   $feature_ids = array();
 
   $query = db_select('cache_need', 'n');
@@ -374,10 +377,19 @@ function recover_features($need_ids) {
 
   $need_parent_ids = array();
   foreach ($result as $record) {
-    $feature_ids[$record->feature_id] = $record->feature_id;
-    $need_parent_ids[$record->parent_id] = $record->parent_id;
+dpm($record);
+
+    if ($record->parent_id != NULL) {
+      $need_parent_ids[$record->parent_id] = $record->parent_id;
+    }
+
+    //Prevent sending a null value if the need has no feature. We can't do it directly in the sql query through a where clause because we need to get the parent even if the node has no feature
+    if ($record->feature_id != NULL) {
+      $feature_ids[$record->feature_id] = $record->feature_id;
+    }
+
   }
-//TODO Block if parent is disactivated
+//TODO Block if parent is disactivated, probably best block the checkbox for children in get_item_list function
   if (!empty($need_parent_ids)) {
     $feature_from_parent_ids = recover_features($need_parent_ids);
     foreach ($feature_from_parent_ids as $feature_id) {
