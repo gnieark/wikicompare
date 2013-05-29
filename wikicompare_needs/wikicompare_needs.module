@@ -171,10 +171,10 @@ function wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, 
 function wikicompare_needs_wikicompare_comparative_table_prepare_compute(&$selected_feature_ids, $_POST) {
 
   if (!empty($_POST['selected_need_ids'])) {
-dpm($_POST['selected_need_ids'], 'selected_need_ids');
+
 
     $feature_ids = recover_features($_POST['selected_need_ids']);
-dpm($feature_ids, 'feature_ids');
+
     foreach ($feature_ids as $feature_id) {
       $selected_feature_ids[$feature_id] = $feature_id;
     }
@@ -364,7 +364,7 @@ function wikicompare_needs_wikicompare_comparative_table_cleaning(&$commands, $_
 
 function recover_features($need_ids) {
 
-dpm($need_ids, 'recursif');
+
   $feature_ids = array();
 
   $query = db_select('cache_need', 'n');
@@ -377,7 +377,7 @@ dpm($need_ids, 'recursif');
 
   $need_parent_ids = array();
   foreach ($result as $record) {
-dpm($record);
+
 
     if ($record->parent_id != NULL) {
       $need_parent_ids[$record->parent_id] = $record->parent_id;
