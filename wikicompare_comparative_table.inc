@@ -17,8 +17,6 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 
 function wikicompare_comparative_table($form_state) {
 
-
-
   //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
@@ -76,7 +74,21 @@ function theme_wikicompare_comparative_table($variables) {
 */
 
 
-  $output = '<div id="manual_selected_features"></div>';
+  $checkbox_settings =  array(
+    '#type' => 'checkbox',
+    '#title' => 'Display draft items',
+    '#id' => 'checkbox-draft-items',
+   );
+  $output = drupal_render($checkbox_settings);
+
+  $checkbox_settings =  array(
+    '#type' => 'checkbox',
+    '#title' => 'Display closed items',
+    '#id' => 'checkbox-closed-items',
+   );
+  $output .= drupal_render($checkbox_settings);
+
+  $output .= '<div id="manual_selected_features"></div>';
 
   //Add the link to open the select feature popup
   $select_feature_link = array(
@@ -103,19 +115,6 @@ function theme_wikicompare_comparative_table($variables) {
 
 
 
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display draft items',
-    '#id' => 'checkbox-draft-items',
-   );
-  $output .= drupal_render($checkbox_settings);
-
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display closed items',
-    '#id' => 'checkbox-closed-items',
-   );
-  $output .= drupal_render($checkbox_settings);
 
   //Add the compute button
   $compute_link = array(
@@ -632,13 +631,13 @@ dpm($_POST);
       //We remove the feature if it's a parent feature. This case can happen if we add the feature to the need when it has no children, and then it become a parent.
       if (!$feature['data']->has_children) {
         $hidden .= '<tr><td>
-        <input type="text" size="60" value="&quot;' . $feature['data']->title . ' (' . $feature['data']->nid . ')&quot;" name="need_features[und][' . $i . '][target_id]">
+        <input type="text" size="60" value="&quot;' . $feature['data']->title . ' (' . $feature['data']->nid . ')&quot;" name="wikicompare_features[und][' . $i . '][target_id]">
         </td></tr>';
         $i += 1;
       }
       
       $hidden .= '<tr><td>
-        <input type="text" size="60" value="" name="need_features[und][' . $i . '][target_id]" >
+        <input type="text" size="60" value="" name="wikicompare_features[und][' . $i . '][target_id]" >
         </td></tr>
         </tbody>';
     }
@@ -650,7 +649,7 @@ dpm($_POST);
 
     $commands = array();
     $commands[] = ajax_command_html('#' . $_POST['container'], $output);
-    $commands[] = ajax_command_html('#need-features-values', $hidden);
+    $commands[] = ajax_command_html('#wikicompare-features-values', $hidden);
     $commands[] = ajax_command_html('#need-features', $hidden_fastedit);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
@@ -709,6 +708,10 @@ function compute_comparative_table_response($method = 'ajax') {
     }
 
     $commands = array();
+
+    if (module_exists('wikicompare_needs')) {
+      $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need(array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'])));
+    }
 
     $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared(array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'])));
 

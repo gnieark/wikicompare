@@ -468,6 +468,7 @@ function wikicompare_install() {
         'delete any compared content' => TRUE,
         'access site in maintenance mode' => TRUE,
         'administer users' => TRUE,
+        'moderate wikicompare' => TRUE,
       ));
     }
 

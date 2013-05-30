@@ -112,6 +112,31 @@ function wikicompare_needs_install() {
   );
   field_create_instance($instance);
 
+
+  foreach (array('wikicompare_admin', 'moderator', 'authenticated user') as $role_name) {
+
+    $permissions = array(
+      'create need content' => TRUE,
+      'edit any need content' => TRUE,
+      'delete own need content' => TRUE,
+      'view revisions of any need content' => TRUE,
+      'publish revisions of any need content' => TRUE,
+    );
+
+    if ($role_name != 'authenticated user') {
+      $permissions = array_merge($permissions, array(
+        'delete any need content' => TRUE,
+      ));
+    }
+
+
+
+    $role = user_role_load_by_name($role_name);
+    $rid = $role->rid;
+    user_role_change_permissions($rid, $permissions);
+  }
+
+
   if (module_exists('wikicompare_translation')) {
     variable_set('language_content_type_need', 2);
   }

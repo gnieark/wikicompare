@@ -63,7 +63,9 @@ function wikicompare_needs_wikicompare_install_node_install($type) {
 
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form($form, $form_state);
+  wikicompare_build_form('form', $form, $form_state);
+
+  $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
 
   $selected_feature_ids = array();
   if (isset($form_state['node']->wikicompare_features['und'])) {
@@ -81,8 +83,9 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
   
 
     $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
+    $itemlist_settings['context'] = 'selected';
     //Building the data for the item list
-    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'feature_list_computed', 0, $itemlist_settings);
+    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'selected', 0, $itemlist_settings);
     //Render the item list
     $selected_feature_itemlist = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
   }
@@ -92,7 +95,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/select_multi_dialog/feature/form_selected_features/0/form_selected_features/none',
+    'path' => 'get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -130,7 +133,7 @@ function wikicompare_needs_build_form_settings(&$settings, &$node, &$nid, $form,
 
 
 function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output) {
-
+/*
   $needs = array();
 
   $query = db_select('cache_need', 'n');
@@ -146,8 +149,55 @@ function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output
   $itemlist_settings = initialize_itemlist_settings('select_multi_dialog');
   $itemlist_settings['context'] = 'table';
   $item_list_data = get_item_list($needs, 'need', 'table', 0, $itemlist_settings);
-
+  $output ="<div id='comparative_table_main_need'>";
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
+
+  $output .= '<p><a id="add_need_link" href="?q=node/add/need">Add</a><span id="add_need_link_fastaction"/>';
+  $output .= '<div id="need_table_children_0"></div>';
+  $output .= '</div>';
+*/
+
+  $output .= wikicompare_needs_table_render_need();
+
+}
+
+function wikicompare_needs_table_render_need($settings=array()) {
+
+  $db_settings = array('can_be_translated' => 1);
+  if (isset($settings['states'])) {
+    $db_settings['states'] = $settings['states'];
+  }
+
+  //Find all the compared on the first level of the tree
+  $needs = request_db('need', $db_settings);
+
+  
+  $itemlist_settings = initialize_itemlist_settings('compared_main_table');
+
+  if (isset($settings['fastedit_status'])) {
+    $itemlist_settings['fastedit_status'] = $settings['fastedit_status'];
+  }
+
+  //Building the data for the item list
+  $item_list_data = get_item_list($needs, 'need', 'compared_main_table', 0, $itemlist_settings);
+
+  $output ="<div id='comparative_table_main_need'>";
+  //Render the item list
+  $output .= theme_item_list(array('items' => $item_list_data, 'title' => 'Need', 'type' => 'ul', 'attributes' => array()));
+  $output .= '<p><a id="add_need_link" href="?q=node/add/need">Add</a><span id="add_need_link_fastaction">';
+ 
+  if ($itemlist_settings['fastedit_status']) {
+    $need = array(
+      'data' => new stdClass(),
+    );
+    $need['data']->nid = 0;
+    $output .= add_fastedit_items('need' , $need);
+  }
+  $output .= '</span></p>';
+  $output .= '<div id="need_table_children_0"></div>';
+  $output .="</div>";
+
+  return $output;
 
 }
 

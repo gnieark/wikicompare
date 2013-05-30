@@ -123,7 +123,8 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
         '#suffix' => '<p>' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>'
   
       );
-      //hide($form['wikicompare_inherit_compared_id']);
+      hide($form['wikicompare_inherit_compared_id']);
+      $form['wikicompare_inherit_compared_id']['#attributes']['style'] = 'display:none;';
 
     }
 

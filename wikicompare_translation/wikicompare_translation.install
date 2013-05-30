@@ -11,6 +11,10 @@
  */
 function wikicompare_translation_install() {
 
+  //Needed for the language_negotiation_info(), I don't understand why it's not directly included
+  require_once 'includes/language.inc';
+
+
   foreach (array('compared', 'feature', 'implementation') as $type) {
     variable_set('language_content_type_' . $type, 2);
   }
@@ -23,8 +27,8 @@ function wikicompare_translation_install() {
   // Turn on user & browser language negotiation
   $weighted_provider_list = array(
     1 => LOCALE_LANGUAGE_NEGOTIATION_SESSION,
-    2 => LOCALE_LANGUAGE_NEGOTIATION_USER,
-    4 => LOCALE_LANGUAGE_NEGOTIATION_BROWSER,
+//    2 => LOCALE_LANGUAGE_NEGOTIATION_USER,
+//    4 => LOCALE_LANGUAGE_NEGOTIATION_BROWSER,
     10 => LANGUAGE_NEGOTIATION_DEFAULT,
   );
   $all_negotiation_providers = language_negotiation_info();

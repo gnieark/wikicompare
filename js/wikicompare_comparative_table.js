@@ -14,9 +14,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
   attach: function (context, settings) {
 
 
-    $('#edit-need-state:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       fastedit_status = settings['wikicompare_needs']['fastedit_status'];
       selected_feature_ids = settings['wikicompare_needs']['selected_feature_ids'];
+
     });
 
 
@@ -987,10 +988,14 @@ alert(computed.toSource());*/
 };
 
 
+//TODO A l'installation, le block language ne se met pas dans le contenu
 
-//TODO multidialog affiche même les nodes traductions
+//TODO Je crois que le systeme utilise toujours la langue de la fiche utilisateur et non la langue cookie
+
 
 //TODO isoler le test ajax dans une fonction a part
+
+//TODO gestion utilisateurs par modo et admin
 
 //TODOTODO conflit entre manualy selected et feature du tableau, ajouter un contexte (table, main itemlist, manually, dialog) a tous les liens, toutes les classes, sinon on va pas s'en sortir
 // Context possible : table, manual, selectdialog, multidialog, pas autre chose

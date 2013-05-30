@@ -38,6 +38,13 @@ function wikicompare_admin() {
   foreach (language_list() as $key => $language) {
     $languages[$key] = $language->name;
   }
+
+  $form['manage_users'] = array(
+    '#type' => 'link',
+    '#title' => 'Manage users',
+    '#href' => 'admin/people',
+  );
+
   //Display the select button for managing the compared parent update
   $form['wikicompare_main_language'] = array(
     '#type' => 'select',
@@ -338,6 +345,10 @@ function wikicompare_permission() {
       'title' => t('Administer Wikicompare'),
       'restrict access' => TRUE,
     ),
+    'moderate wikicompare' => array(
+      'title' => t('Moderate Wikicompare'),
+      'restrict access' => TRUE,
+    ),
   );
 }
 
@@ -538,7 +549,9 @@ dpm($tnode);
         '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
   
       );
-      //hide($form['wikicompare_parent_id']);
+
+      $form['wikicompare_parent_id']['#attributes']['style'] = 'display:none;';
+
     }
 
     if ($form_type == 'fastedit') {
@@ -1043,6 +1056,8 @@ function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
     if (isset($node->nid)) { //Manage case when we create the node
       $test = wikicompare_test_access_node('test', $node->nid, $uid);
     }
+dpm($node_op);
+dpm($revision_op);
 
     if (($test == False) && ($uid != 1)) {
       return False;
@@ -1065,55 +1080,59 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
       return False;
     }
 
+    if (user_access('moderate wikicompare')) {
+      $test = True;
+    } else {
 
-    $query = db_select('node', 'n');
-    $query->addField('f', 'wikicompare_user_from_parent_ids_target_id', 'uid');
-    $query->join('field_revision_wikicompare_user_from_parent_ids', 'f', 'n.vid = f.revision_id');
-    $query->condition('n.nid', $nid);
-    if ($action == 'test') {
-      $query->condition('f.wikicompare_user_from_parent_ids_target_id', $uid);
-    }
-    $result = $query->execute();
-    foreach ($result as $record) {
+      $query = db_select('node', 'n');
+      $query->addField('f', 'wikicompare_user_from_parent_ids_target_id', 'uid');
+      $query->join('field_revision_wikicompare_user_from_parent_ids', 'f', 'n.vid = f.revision_id');
+      $query->condition('n.nid', $nid);
       if ($action == 'test') {
-        $test = True;
-      } else {
-          $users[$record->uid] = array(
-            'entity_type' => 'node',
-            'bundle' => '',
-            'deleted' => 0,
-            'entity_id' => 0,
-            'revision_id' => 0,
-            'language' => 'und',
-            'delta' => 0,
-            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
-          );
+        $query->condition('f.wikicompare_user_from_parent_ids_target_id', $uid);
       }
-    }
+      $result = $query->execute();
+      foreach ($result as $record) {
+        if ($action == 'test') {
+          $test = True;
+        } else {
+            $users[$record->uid] = array(
+              'entity_type' => 'node',
+              'bundle' => '',
+              'deleted' => 0,
+              'entity_id' => 0,
+              'revision_id' => 0,
+              'language' => 'und',
+              'delta' => 0,
+              'wikicompare_user_from_parent_ids_target_id' => $record->uid,
+            );
+        }
+      }
 
 
-    $query = db_select('node', 'n');
-    $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
-    $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
-    $query->condition('n.nid', $nid);
-    if ($action == 'test') {
-      $query->condition('f.wikicompare_user_ids_target_id', $uid);
-    }
-    $result = $query->execute();
-    foreach ($result as $record) {
+      $query = db_select('node', 'n');
+      $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
+      $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
+      $query->condition('n.nid', $nid);
       if ($action == 'test') {
-        $test = True;
-      } else {
-          $users[$record->uid] = array(
-            'entity_type' => 'node',
-            'bundle' => '',
-            'deleted' => 0,
-            'entity_id' => 0,
-            'revision_id' => 0,
-            'language' => 'und',
-            'delta' => 0,
-            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
-          );
+        $query->condition('f.wikicompare_user_ids_target_id', $uid);
+      }
+      $result = $query->execute();
+      foreach ($result as $record) {
+        if ($action == 'test') {
+          $test = True;
+        } else {
+            $users[$record->uid] = array(
+              'entity_type' => 'node',
+              'bundle' => '',
+              'deleted' => 0,
+              'entity_id' => 0,
+              'revision_id' => 0,
+              'language' => 'und',
+              'delta' => 0,
+              'wikicompare_user_from_parent_ids_target_id' => $record->uid,
+            );
+        }
       }
     }
 
