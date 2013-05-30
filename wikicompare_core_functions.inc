@@ -757,7 +757,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   if (module_exists('wikicompare_inherit_compared')) {
     wikicompare_inherit_compared_wikicompare_request_db($query, $type, $settings);
   }
-
+dpm($type);
   if (module_exists('wikicompare_translation')) {
     wikicompare_translation_wikicompare_request_db($query, $type, $settings);
   }
@@ -798,6 +798,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
 
     if (isset($settings['fastedit_status'])) {
       if ($settings['fastedit_status'] == 1) {
+dpm('ok2');
         //If the node was created by or have some revision from other users, current user will not be able to fastedit it
         if ($GLOBALS['user']->uid != $record->uid) {
           if ($type != 'implementation' || $nids != NULL) {
@@ -815,7 +816,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
         }
 */
         if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_request_db_fastedit($res, $record, $type, $nids);
+          wikicompare_translation_wikicompare_request_db_fastedit($res, $record, $type, $nids, $settings);
         }
       }
     }

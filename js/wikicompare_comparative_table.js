@@ -164,6 +164,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       $(this).click(function() {
         $('#form_selected_inherit').html('No inherited compared');
         $('#edit-wikicompare-inherit-compared-id').html('<input type="text" size="60" value="" name="wikicompare_inherit_compared_id[und][0][target_id]">');
+        $('#inherit_id').empty();
         return false;
       });
     });

@@ -125,7 +125,7 @@ function add_fastedit_items($type, $node_array){
       //Create the image link to edit the node
       $img = theme('image', array(
         'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to edit ') . $type . ' ' . $node['nid'],
+        'alt' => t('Link to edit ') . $type . ' ' . $nid,
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
@@ -529,6 +529,8 @@ function submit_fastedit_form_response($method = 'ajax'){
       
       $node->log = $_POST['revision'];
 
+dpm($node, 'final node');
+
 
       if ($missing_field == FALSE) {
 
@@ -536,10 +538,12 @@ function submit_fastedit_form_response($method = 'ajax'){
     
         _revisioning_publish_latest_revision($node);
  
-        if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
-          $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
-        } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {
-          $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
+        if ($type != 'implementation') {
+          if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
+            $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
+          } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {
+            $commands[] = ajax_command_invoke('#checkbox-closed-items', 'attr', array('checked', 'checked'));
+          }
         }
 
         $commands[] = ajax_command_invoke('.fastedit_item:.displayed', 'removeClass', array('displayed'));

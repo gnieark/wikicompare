@@ -445,7 +445,8 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       if (!empty($_POST['feature_ids'])) {
 
         $features = request_db('feature', array('states' => array('draft' => 'draft', 'closed' => 'closed')), 'nids', $_POST['feature_ids']);
-
+dpm('before request');
+dpm($fastedit_status, '$fastedit_status');
         //Recover the implementation needed for the cells
         $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
 /*
@@ -506,7 +507,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
 
 
 
-
+dpm($context);
   $output = t("<div id='dialog-content'>");
 
 

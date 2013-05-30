@@ -53,6 +53,11 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       unset($form_state['node']->wikicompare_parent_id);
     }
 
+    if (isset($form['wikicompare_sequence'])) {
+      $form['wikicompare_sequence'] = array('#markup' => $node->wikicompare_sequence['und'][0]['value']);
+      unset($form_state['node']->wikicompare_sequence);
+    }
+
     if (isset($form['wikicompare_type'])) {
       $form['wikicompare_type'] = array('#markup' => $node->wikicompare_type['und'][0]['value']);
       unset($form_state['node']->wikicompare_type);
@@ -92,8 +97,22 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
     }
 */
 
+    if (isset($form['wikicompare_compared_id'])) {
+      unset($form_state['node']->wikicompare_compared_id);
+    }
+
+    if (isset($form['wikicompare_user_ids'])) {
+      hide($form['wikicompare_user_ids']);
+      unset($form_state['node']->wikicompare_user_ids);
+    }
+
+
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_wikicompare_translation_form($form, $form_state, $node);
+    }
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      wikicompare_inherit_compared_wikicompare_translation_form($form, $form_state, $node);
     }
 
   }
@@ -127,9 +146,10 @@ function wikicompare_translation_wikicompare_request_db(&$query, $type, $setting
     $query->addField('t', 'language', 'tlanguage');
     $query->leftjoin('node', 't', 'n.nid = t.tnid');
     $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
-
+dpm($settings, 'settings');
     if (isset($settings['fastedit_status'])) {
       if ($settings['fastedit_status'] == 1) {
+dpm('ok1');
         $query->addField('tr', 'uid', 'tuid');
         $query->leftjoin('node_revision', 'tr', 't.nid = tr.nid');
       }
@@ -138,15 +158,17 @@ function wikicompare_translation_wikicompare_request_db(&$query, $type, $setting
 
 }
 
-function wikicompare_translation_wikicompare_request_db_fastedit(&$res, $record, $type, $nids) {
+function wikicompare_translation_wikicompare_request_db_fastedit(&$res, $record, $type, $nids, $settings) {
 
   global $language;
 
-  if ($GLOBALS['user']->uid != $record->tuid && $record->tuid != NULL && $record->tlanguage == $language->language) {
-    if ($type != 'implementation' || $nids != NULL) {
-       $res[$record->nid]['no-edit-translate'] = True;
-    } else {
-      $res[$record->feature_id][$record->compared_id]['no-edit-translate'] = True;
+  if (isset($settings['can_be_translated'])) {
+    if ($GLOBALS['user']->uid != $record->tuid && $record->tuid != NULL && $record->tlanguage == $language->language) {
+      if ($type != 'implementation' || $nids != NULL) {
+         $res[$record->nid]['no-edit-translate'] = True;
+      } else {
+        $res[$record->feature_id][$record->compared_id]['no-edit-translate'] = True;
+      }
     }
   }
 

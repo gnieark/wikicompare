@@ -109,7 +109,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
       'text' => 'Select inherited compared',
       'title' => 'Select inherited compared',
       'selector' => 'dialog-content',
-      'path' => 'get_dialog_callback/select_simple_dialog/compared/form_selected_inherit/' . $nid . '/wikicompare-inherit-compared-id/inherit_id',
+      'path' => 'get_dialog_callback/selectdialog/compared/form_selected_inherit/' . $nid . '/wikicompare-inherit-compared-id/inherit_id',
     );
     $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $node->type)));
 
@@ -187,39 +187,41 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
     if ($form_type == 'fastedit') {
 
-      //I wasn't able to use the renderable array, so I coded directly in html
-      $output .= '<input class="form_implementation_fastedit_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
+      if ($res->inherit_id != NULL) {
 
-      if ($fastaction == 'edit') {
+        //I wasn't able to use the renderable array, so I coded directly in html
+        $output .= '<input class="form_implementation_fastedit_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
+
+        if ($fastaction == 'edit') {
+          if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
+            $output .= ' checked="checked"';
+            $test = TRUE;
+          }
+        }
+
+        if ($readonly == TRUE) {
+          $output .= ' disabled="disabled"';
+        }
+
+        $reset_link = array(
+          '#type' => 'link',
+          '#title' => 'compute inherit',
+          //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
+          '#href' => 'compute_inherit_callback/nojs',
+          '#id' => 'compute_inherit_link_' . $node-> nid,
+          '#attributes' => array(
+            'class' => array('compute_inherit_link'),
+            'style' => 'display:none',
+          ),
+        );
+
+        $output .= ' value="1" />' . drupal_render($reset_link) . '<label class="option" for="form_implementation_fastedit_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
+
+        //Disable the support field located after this one
         if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
-          $output .= ' checked="checked"';
-          $test = TRUE;
+          $readonly = TRUE;
         }
       }
-
-      if ($readonly == TRUE) {
-        $output .= ' disabled="disabled"';
-      }
-
-      $reset_link = array(
-        '#type' => 'link',
-        '#title' => 'compute inherit',
-        //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-        '#href' => 'compute_inherit_callback/nojs',
-        '#id' => 'compute_inherit_link_' . $node-> nid,
-        '#attributes' => array(
-          'class' => array('compute_inherit_link'),
-          'style' => 'display:none',
-        ),
-      );
-
-      $output .= ' value="1" />' . drupal_render($reset_link) . '<label class="option" for="form_implementation_fastedit_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
-
-      //Disable the support field located after this one
-      if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
-        $readonly = TRUE;
-      }
-
     }
 
   }
@@ -599,6 +601,18 @@ function  wikicompare_inherit_compared_wikicompare_request_db($query, $type, $se
 
   if ($type == 'implementation') {
     $query->addField('n', 'use_from_inherit', 'use_from_inherit');
+  }
+
+}
+
+
+function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$form_state, $node) {
+
+  if (isset($form['wikicompare_inherit_compared_id'])) {
+    $form['container_selected_inherit'] = $form['container_selected_inherit']['title'];
+    unset($form['wikicompare_inherit_compared_id']);
+    unset($form_state['node']->wikicompare_inherit_compared_id);
+
   }
 
 }
