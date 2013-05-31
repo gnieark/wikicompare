@@ -1,10 +1,12 @@
 <?php
 
 
+//TODO Not working. Maybe we'll not debug it but just wait for the template which will incluse the language switcher anyway.
 function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks) {
 
   $blocks['locale']['language']['region'] = 'content';
   $blocks['locale']['language']['weight'] = 10;
+
  
 }
 

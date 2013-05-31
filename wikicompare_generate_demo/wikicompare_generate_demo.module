@@ -1,6 +1,5 @@
 <?php
 
-
 require_once drupal_get_path('module', 'wikicompare_generate_demo') . '/data/erp_data.inc';
 require_once drupal_get_path('module', 'wikicompare_generate_demo') . '/data/test_data.inc';
 
@@ -42,8 +41,12 @@ function theme_wikicompare_export($variables) {
 
   wikicompare_flush_caches();
 
-  $output = "<p>WARNING : Export must always be done when english is the main language of your website.</p>";
+  $output = "<p>WARNING : Export must always be done when english is the main language of your website. Also, do not use special characters in your translations, including accents.</p>";
 
+  $output .= "<p>\$language_list = array();<br/>";
+  $output .= "foreach (language_list() as \$key => \$lang) {<br/>";
+  $output .= "\$language_list[\$key] = \$key;<br/>";
+  $output .= "}</p>";
 
   $output .= "<p>\$compareds = array();</p>";
 
@@ -147,6 +150,7 @@ function theme_wikicompare_export($variables) {
   }
 
 
+
   return $output;
 
 }
@@ -221,13 +225,13 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
 
         $first = False;
       }
-      $output .= "<p>if (in_array('" . $record->language . "', language_list())) {<br/>";
+      $output .= "<p>if (in_array('" . $record->language . "', \$language_list)) {<br/>";
       $output .= "\$tnode = new stdClass();<br/>";
       $output .= "\$tnode->type = '" . $type . "';<br/>";
       $output .= "\$tnode->language = '" . $record->language . "';<br/>";
       $output .= "\$tnode->tnid = \$node->nid;<br/>";
       $output .= "\$tnode->title = '" . $record->title . "';<br/>";
-      $output .= "node_save(\$node);<br/>";
+      $output .= "node_save(\$tnode);<br/>";
       $output .= "}</p>";
     }
     if ($first == False) {
@@ -493,6 +497,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
       '#required' => TRUE,
     );
   }
+
 
   $form['demo_fieldset']['generate_erp_data'] = array(
     '#type' => 'submit',

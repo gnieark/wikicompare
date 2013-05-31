@@ -616,13 +616,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
             if (!$(this).hasClass('to_remove')) {
               var patt = /[0-9]+/g;
-              compared_ids[i] = new Array();
+              compared_ids[i] = {};
               compared_id = patt.exec($(this).attr('id'))[0];
               //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-              compared_ids[i][0] = compared_id;
+              compared_ids[i]['nid'] = compared_id;
               if ($(this).parent().parent().parent().hasClass('compared_children')) {
                 parent = $(this).parent().parent().parent().attr('id');
-                compared_ids[i][1] = patt.exec(parent)[0];
+                compared_ids[i]['parent_id'] = patt.exec(parent)[0];
+              }
+              compared_ids[i]['has_children'] = 0;
+              if ($(this).hasClass('has_children')) {
+                compared_ids[i]['has_children'] = 1;
               }
               i = i + 1;
             }
@@ -649,16 +653,20 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var i = 0;
           $('.feature_row').each(function (key, value) {
             var patt = /[0-9]+/g;
-            feature_ids[i] = new Array();
+            feature_ids[i] = {};
             feature_id = patt.exec($(this).attr('id'))[0];
             //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-            feature_ids[i][0] = feature_id;
+            feature_ids[i]['nid'] = feature_id;
             //The only numeric value in feature row class is the parent id
             if (patt.test($(this).attr('class'))) {
               //I don't know why, but I need to remake the patt, the patt.exec will otherwise not work  
               var patt = /[0-9]+/g;
               parent_id = patt.exec($(this).attr('class'));
-              feature_ids[i][1] = parent_id[0];
+              feature_ids[i]['parent_id'] = parent_id[0];
+            }
+            feature_ids[i]['has_children'] = 0;
+            if ($(this).hasClass('has_children')) {
+              feature_ids[i]['has_children'] = 1;
             }
             i = i + 1;
           });
@@ -683,13 +691,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
             if (!$(this).hasClass('to_remove')) {
               var patt = /[0-9]+/g;
-              need_ids[i] = new Array();
+              need_ids[i] = {};
               need_id = patt.exec($(this).attr('id'))[0];
               //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-              need_ids[i][0] = need_id;
+              need_ids[i]['nid'] = need_id;
               if ($(this).parent().parent().parent().hasClass('need_children')) {
                 parent = $(this).parent().parent().parent().attr('id');
-                need_ids[i][1] = patt.exec(parent)[0];
+                need_ids[i]['parent_id'] = patt.exec(parent)[0];
+              }
+              need_ids[i]['has_children'] = 0;
+              if ($(this).hasClass('has_children')) {
+                need_ids[i]['has_children'] = 1;
               }
               i = i + 1;
             }
@@ -991,19 +1003,22 @@ alert(computed.toSource());*/
 };
 
 
-//TODO A l'installation, le block language ne se met pas dans le contenu
-
-//TODO Je crois que le systeme utilise toujours la langue de la fiche utilisateur et non la langue cookie
 
 
-//TODO isoler le test ajax dans une fonction a part
 
-//TODO gestion utilisateurs par modo et admin
+
+//TODO To test: Create the first children of a feature, it do not transform the parent into link.
+//simple into link -> just regenerate the item
+//link into simple -> remove children et regenerate the item
+//compared ajout ok, manque compared retrait et feature
+
+//TODO When we click on add a new node while not being in the default language, we must have the default language form but the node created will be in the default language.
+
+
 
 //TODOTODO conflit entre manualy selected et feature du tableau, ajouter un contexte (table, main itemlist, manually, dialog) a tous les liens, toutes les classes, sinon on va pas s'en sortir
 // Context possible : table, manual, selectdialog, multidialog, pas autre chose
 
-//TODO les manual selected sont en liste numeroté
 
 //TODO attention les array_merge ne conservent pas les key, faire une recherche pour corriger tous les array_merge. au lieu de array_merge(array1, array2) utiliser simplement array1 + array2, ca marche
 
@@ -1013,6 +1028,7 @@ alert(computed.toSource());*/
 //TODO In translation, mettre à jour le flag missing required field
 //TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible
 
+//TODO isoler le test ajax dans une fonction a part
 //TODO Remplacer fastedit par fastaction
 //TODO remplacer les if action par des case
 //TODO remplacer drupal_render par render
@@ -1025,11 +1041,13 @@ alert(computed.toSource());*/
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
 //TODO Fastedit item ne sont plus des displayed, retirer toute mention
 
-
+//TODO A l'installation, le block language ne se met pas dans le contenu
 //TODO Dans inherit compared, dans le formulaire d'implementation, quand on active / desactive la récupération depuis l'inherit, la valeur de support n'est pas correctement récupérée. Je n'arrive pas à corriger.
 //TODO Dans fastedit, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Code quality : Split the javascript file in three : main for forms (defining ajax function), one for comparative table and one for needs. The last two will override some function in the main file, using a hook system.
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion drupalchat me parait pas mal
 //TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
+//TODO Low : The selected itemlist are in ordered list intead of unordered list. Looks like there is no error with html code, so we'll just wait for the template.
+
 })(jQuery);

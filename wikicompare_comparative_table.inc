@@ -17,6 +17,8 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 
 function wikicompare_comparative_table($form_state) {
 
+
+
   //Add the javascript files used in the comparative_table
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
@@ -89,6 +91,8 @@ function theme_wikicompare_comparative_table($variables) {
   $output .= drupal_render($checkbox_settings);
 
   $output .= '<div id="manual_selected_features"></div>';
+
+dpm(language_list());
 
   //Add the link to open the select feature popup
   $select_feature_link = array(
@@ -623,7 +627,7 @@ function submit_dialog_response($method = 'ajax'){
 
     //Render the item list
     $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
-
+dpm($output, 'themeitemlist');
     $hidden = '<tbody>';
     $i = 0;
     foreach ($feature_array['data'] as $feature) {
@@ -801,7 +805,7 @@ function reset_table_response($method = 'ajax') {
 
 function make_cleaning_response($method = 'ajax') {
 
-
+dpm($_POST, 'post');
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -826,7 +830,7 @@ function make_cleaning_response($method = 'ajax') {
 
       $node_ids = array();  //$_POST['compared_column_ids'];
       foreach ($_POST[$type . '_ids'] as $node) {
-        $node_ids[$node[0]] = $node[0];
+        $node_ids[$node['nid']] = $node['nid'];
       }
     
 
@@ -837,39 +841,40 @@ function make_cleaning_response($method = 'ajax') {
 
 
       $in_db_nodes = request_db($type, array('states' => $_POST['states']));
-      $in_db_node_ids = array();
+      $in_db_nodes_ids = array();
       foreach ($in_db_nodes as $key => $node) {
         $in_db_nodes_ids[$key] = $key;
       }
-      
-dpm($type);
+dpm($type);      
 dpm($nodes, 'nodes');
-dpm($in_db_nodes_ids, 'in_dbnodes');
+dpm($in_db_nodes_ids, 'indb_nodes');
 
       $in_table_node_ids = array();
       $reset = False;
       //We test all nodes present in the table
       foreach ($_POST[$type . '_ids'] as $node) {
-dpm($node);
+
         //Listing all node present in table in a array for later use
-        $in_table_node_ids[$node[0]] = $node[0];
+        $in_table_node_ids[$node['nid']] = $node['nid'];
         //If the node has a parent in the table
-        if (isset($node[1])) {
+        if (isset($node['parent_id'])) {
           //If the parent of the node in the table is different of the parent of the node in db
-          if ($node[1] != $nodes[$node[0]]['data']->parent_id) {
+          if ($node['parent_id'] != $nodes[$node['nid']]['data']->parent_id) {
+dpm($node);
             if ($type == 'feature') {
               //In the case of a feature, it means there is a structural change so better refresh the manual_selected_feature itemlist
               $update_selected_feature = true;
             }
             //If the parent in table is currently displaying his children, then the tested node is displayed as his child but isn't anymore, so we need to hide it
-            if (in_array($node[1], $_POST[$type . '_displayed_ids'])) {
-              $node1 = request_db($type, array(), 'nids', array($node[1]));
-              $node1 = $node1[$node[1]];
+            if (in_array($node['parent_id'], $_POST[$type . '_displayed_ids'])) {
+dpm('reset1');
+              $node1 = request_db($type, array(), 'nids', array($node['parent_id']));
+              $node1 = $node1[$node['parent_id']];
               //??
 //              if ($node1['data']->parent_id != NULL) {
-              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node[1], 'click', array());
+              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node['parent_id'], 'click', array());
 //              } else {
-dpm('#' . $type . '_table_link_' . $node[1], 'reset3');
+
 //                $reset = True;
                 
 //              }
@@ -877,13 +882,13 @@ dpm('#' . $type . '_table_link_' . $node[1], 'reset3');
 
 
             //If the parent of the node in db is displaying his children in the table, then the tested node is missing among the children so we need to hide the children of the parent. Also, if the tested node is now without parent, then we need to reset the table to display it.
-            if (in_array($nodes[$node[0]]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$node[0]]['data']->parent_id == NULL) {
+            if (in_array($nodes[$node['nid']]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$node['nid']]['data']->parent_id == NULL) {
+dpm('reset2');
+              if ($nodes[$node['nid']]['data']->parent_id != NULL) {
+                $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$node['nid']]['data']->parent_id, 'click', array());
 
-              if ($nodes[$node[0]]['data']->parent_id != NULL) {
-                $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$node[0]]['data']->parent_id, 'click', array());
-dpm('#' . $type . '_table_link_' . $nodes[$node[0]]['data']->parent_id, 'reset5');
               } else {
-dpm('reset4');
+
                 $reset = True;
               }
             }
@@ -893,19 +898,38 @@ dpm('reset4');
 
 
         }
+dpm($node['nid']);
+dpm($node['has_children'], 'has_children from table');
+dpm($nodes[$node['nid']]['data']->has_children, 'has_children from table');
+        if ($node['has_children'] != $nodes[$node['nid']]['data']->has_children) {
+dpm('test ok');
+          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $node['nid'], wikicompare_get_supertitle_item($type, $nodes[$node['nid']]['data'], array('context' => 'table')));
+          if ($nodes[$node['nid']]['data']->has_children == 0) {
+            $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $node['nid'], 'removeClass', array('has_children'));
+          }
+        
+
+      
+dpm($commands, 'commands');
+//TODO 
+// Regenerate title of this item
+// If node['has_children'] from db = 0, hide children
+// Agir directement sur le title via une commande, et utiliser addClass
+        }
+
 
         //If one of the node without parent displayed in table isn't in the first level in db anymore
-        if ((!in_array($node[0], $in_db_nodes_ids)) && !isset($node[1])) {
-dpm('reset1');
+        if ((!in_array($node['nid'], $in_db_nodes_ids)) && !isset($node['parent_id'])) {
+dpm('reset3');
           $reset = True;
 
         }
       }
-
-      foreach ($in_db_node_ids as $nid) {
+dpm($in_table_node_ids, 'intable_nodes');
+      foreach ($in_db_nodes_ids as $nid) {
         //If one of the node present in the first level in db isn't displayed in the table
         if (!in_array($nid, $in_table_node_ids)) {
-dpm('reset2');
+dpm('reset4');
           $reset = True;
         }
       } 
@@ -913,7 +937,7 @@ dpm('reset2');
       if ($reset == True) {
         switch ($type) {
           case 'compared':
-            $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
+            $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared(array('states' => $_POST['states'])));
             break;
           case 'feature':
             $settings = array(
@@ -930,7 +954,7 @@ dpm('reset2');
 
       if (module_exists('wikicompare_needs')) {
         if ($type == 'need' && $reset == True) {
-          $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need());
+          $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need(array('states' => $_POST['states'])));
         }
       }
 
@@ -1100,7 +1124,7 @@ dpm('reset2');
 
     //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
     $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
-dpm($commands);
+
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -1152,7 +1176,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
   }
 */
 
-
+dpm($nodes);
   $items = array();
   foreach ($nodes as $nid => $node_array){
 
@@ -1162,24 +1186,24 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
 
     $node = $node_array['data'];
 
-    $title_title = '<span class="' . $type . '_title_' . $nid . '">' . $node->title . '</span>';
+//    $data = wikicompare_get_supertitle_item($type, $node, $itemlist_settings);
+/*
+    $title = '<span class="' . $type . '_title_' . $nid . '">' . $node->title . '</span>';
     //If the node has children, the node name will become a link calling the callback function to display his children
     if ($node->has_children == 1){
-      $class = array('list_item_link ', $action, $type, $itemlist_settings['context']);
-/*
-      if ($itemlist_settings['dialog']) {
-        $class[] = 'dialog';
-      }*/
+      $class = array('list_item_link ', $type, $itemlist_settings['context']);
+
       if ($itemlist_settings['computed']) {
         $class[] = 'computed';
       }
-      $title = l($title_title, 'get_item_list_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
-    } else {
+      $title = l($title, 'get_item_list_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
+    }*/
+/* else {
       $title = $title_title;
-    }
+    }*/
 
 
-
+/*
     //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
     $checkbox_area = '';
     $img_link_to_node = '';
@@ -1258,11 +1282,14 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
       $img_link = l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $nid, 'class' => array('select_simple_dialog')), 'html' => True));
       $checkbox_area = $img_link . ' ';
     }
-
+*/
     
     $items[$nid]['id'] = $type . '_' . $itemlist_settings['context'] . '_item_' .  $nid;
-    $items[$nid]['data'] = $checkbox_area . $title . $img_link_to_node;
+    $items[$nid]['data'] = wikicompare_get_supertitle_item($type, $node, $itemlist_settings);
     $items[$nid]['class'] = array($type . '_item', 'list_item', $itemlist_settings['context']);
+    if ($node->has_children == 1){
+    $items[$nid]['class'][] = 'has_children';
+    }
     $items[$nid]['type'] =  $type;
     $items[$nid]['context'] = $itemlist_settings['context'];
     if ($parent_node != 0) {
@@ -1465,7 +1492,7 @@ function wikicompare_table_render_compared($settings=array()) {
   if (isset($settings['fastedit_status'])) {
     $itemlist_settings['fastedit_status'] = $settings['fastedit_status'];
   }
-
+dpm($compareds, 'compareds');
   //Building the data for the item list
   $item_list_data = get_item_list($compareds, 'compared', 'compared_main_table', 0, $itemlist_settings);
 
@@ -1513,10 +1540,10 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
     $features = request_db('feature', $db_settings);
     
     foreach ($features as $fid => $feature) {
-dpm($fid);
+
       $settings['feature_ids'][$fid] = $fid;
     }
-dpm($settings);
+
 
 
   }
@@ -1600,12 +1627,16 @@ function render_rows($feature_row_data, $fastedit_status) {
     if ($feature->parent_id) {
         $output .= ' feature_table_child_' . $feature->parent_id;
     }
+    if ($feature->has_children == 1){
+      $output .= ' has_children';
+    }
     $output .= '"';
     if (!isset($feature_array['root'])) {
       $output .= ' style="display:none;"';
     }
     $output .= '>';
 
+/*
     //Create the image link to go to the node page
     $img = theme('image', array(
       'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
@@ -1620,13 +1651,12 @@ function render_rows($feature_row_data, $fastedit_status) {
     }
     $img_link_to_node .= '</span>';
 
-    $title_title = '<span class="feature_title_' . $fid . '">' . $feature->title . '</span>';
+    $title = '<span class="feature_title_' . $fid . '">' . $feature->title . '</span>';
     //If the feature has children, the feature name will become a link calling the callback function to display his children
     if ($feature->has_children == 1){
-      $title = l($title_title . ' ' . $fid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => 'feature_table_link_' . $fid, 'class' => array('feature_link feature_link_children_' . $fid)), 'html' => True));
-    } else {
-      $title = $title_title;
-    }
+      $title = l($title . ' ' . $fid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => 'feature_table_link_' . $fid, 'class' => array('feature_link feature_link_children_' . $fid)), 'html' => True));
+    } 
+
 
     //Creating the first cell of the row, containing the feature details
     $output .= '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="feature_weight_' . $fid . '">' .  $feature->weight . '</span>';
@@ -1634,6 +1664,9 @@ function render_rows($feature_row_data, $fastedit_status) {
       $output .= '<br/> Type : <span class="feature_type_' . $fid . '">' .  $feature->type . '</span>';
     }
     $output .= '<br/> State : <span class="feature_state_' . $fid . '">' .  $feature->state . '</span></td>';
+*/
+    $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature, array('context' => 'table', 'fastedit_status' => $fastedit_status)) . '</td>';
+dpm($output);
 
     //Add a column for each column in the table
     foreach ($feature_array['implementations'] as $implementation) {
@@ -1715,5 +1748,144 @@ function initialize_itemlist_settings($subaction) {
   }
 
   return $itemlist_settings;
+}
+
+
+function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
+
+  if ($type != 'feature') {
+
+    $title = '<span class="' . $type . '_title_' . $node->nid . '">' . $node->title . '</span>';
+    //If the node has children, the node name will become a link calling the callback function to display his children
+    if ($node->has_children == 1){
+      $class = array('list_item_link ', $type, $itemlist_settings['context']);
+  /*
+      if ($itemlist_settings['dialog']) {
+        $class[] = 'dialog';
+      }*/
+      if ($itemlist_settings['computed']) {
+        $class[] = 'computed';
+      }
+      $title = l($title, 'get_item_list_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $node->nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
+    }
+
+
+    //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
+    $checkbox_area = '';
+    $img_link_to_node = '';
+    if (in_array($itemlist_settings['context'], array('table', 'multidialog')) && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
+  //    if ($itemlist_settings['checkbox_children'] && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
+  //      if ($itemlist_settings['checkbox_parent'] || ($node->has_children != 1)) {
+      if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' || $node->has_children != 1) {
+        $checkbox_settings = array('element' => array(
+          '#title' => $node->nid,
+          '#id' => 'compared_checkbox_' . $node->nid,
+        ));
+
+        if ($type == 'compared') {
+  //        if ($itemlist_settings['compared_link']) {
+          $checkbox_settings['element']['#attributes']['class'] = array('compared_checkbox');
+        } else {
+          $checkbox_settings['element']['#attributes']['class'] = array('itemlist_checkbox ' . $type);
+        }
+
+        if (isset($node->displayed)) {
+          $checkbox_settings['element']['#checked'] = True;
+  //TODO Pas le bon lien          $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
+        }
+
+        $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
+
+        if ($type == 'compared') {
+  //        if ($itemlist_settings['compared_link']) {
+
+          //We were not able to ajaxify the checkbox, so instead the checkbox will call this hidden link
+          $checkbox_link = array(
+            '#type' => 'link',
+            '#title' => 'toggle',
+            //The link for the callback function which will display or hide the column in the table
+            '#href' => 'toogle_compared_checkbox_callback/nojs/',
+            '#id' => 'compared_checkbox_link_' . $node->nid,
+            '#attributes' => array(
+              'class' => array('compared_checkbox_link' => 'compared_checkbox_link'),
+              'style' => 'display:none',
+            )
+          );
+
+          $checkbox_area .= drupal_render($checkbox_link);
+        }
+      }
+    }
+
+  //    if ($itemlist_settings['node_link']) {
+    if ($itemlist_settings['context'] == 'table') {
+
+      //Create the image link to go to the node page
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to compared ') . $node->nid,
+        'height' => '100%',
+      ));
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link_to_node = ' ' . l($img, 'node/' . $node->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
+
+      $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
+      if ($itemlist_settings['fastedit_status'] == 1) {
+        $img_link_to_node .=  add_fastedit_items($type, $node_array);
+      }
+      $img_link_to_node .= '</span>';
+    }
+
+    if ($itemlist_settings['context'] == 'selectdialog') {
+
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Select ') . $type . ' ' . $node->nid,
+        'height' => '100%',
+      ));
+
+      //Create the link. The html = True indicate that the title of the link contain html.
+      $img_link = l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node->nid, 'class' => array('select_simple_dialog')), 'html' => True));
+      $checkbox_area = $img_link . ' ';
+    }
+
+    $output = $checkbox_area . $title . $img_link_to_node;
+
+  } else {
+
+    //Create the image link to go to the node page
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to feature ') . $node->nid,
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
+    $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
+    if ($itemlist_settings['fastedit_status'] == 1) {
+      $img_link_to_node .= add_fastedit_items($type, $node_array); 
+    }
+    $img_link_to_node .= '</span>';
+
+    $title = '<span class="feature_title_' . $node->nid . '">' . $node->title . '</span>';
+    //If the feature has children, the feature name will become a link calling the callback function to display his children
+    if ($node->has_children == 1){
+      $title = l($title . ' ' . $node->nid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
+    } 
+/*else {
+      $title = $title_title;
+    }*/
+
+    //Creating the first cell of the row, containing the feature details
+    $output = $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="' . $type . '_weight_' . $node->nid . '">' .  $node->weight . '</span>';
+    if ($node->has_children == 1){
+      $output .= '<br/> Type : <span class="' . $type . '_type_' . $node->nid . '">' .  $node->type . '</span>';
+    }
+    $output .= '<br/> State : <span class="' . $type . '_state_' . $node->nid . '">' .  $node->state . '</span>';
+
+  }
+
+  return '<span id="' . $type . '_' . $itemlist_settings['context'] . '_supertitle_' . $node->nid . '">' . $output . '</span>';
+
 }
 ?>

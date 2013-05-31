@@ -382,7 +382,11 @@ function submit_fastedit_form_response($method = 'ajax'){
     if ($fastaction == 'remove' && !isset($from_db_record['no-remove'])) {
 
       node_delete($_POST['node_id']);
+
+      $commands[] = ajax_command_remove('#' . $type . '_table_supertitle_'. $_POST['node_id']);
+      $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $_POST['node_id'], 'addClass', array('to_remove'));
       $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node is correctly removed');
+      $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
     
     } elseif (!isset($from_db_record['no-edit'])) {
   
@@ -560,7 +564,7 @@ dpm($node, 'final node');
       $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node was modified by someone else before your confirmation');
     }
 
-
+dpm($commands, 'commands submit');
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
     

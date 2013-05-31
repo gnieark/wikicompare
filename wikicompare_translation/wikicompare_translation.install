@@ -26,10 +26,10 @@ function wikicompare_translation_install() {
   
   // Turn on user & browser language negotiation
   $weighted_provider_list = array(
-    1 => LOCALE_LANGUAGE_NEGOTIATION_SESSION,
-//    2 => LOCALE_LANGUAGE_NEGOTIATION_USER,
-//    4 => LOCALE_LANGUAGE_NEGOTIATION_BROWSER,
-    10 => LANGUAGE_NEGOTIATION_DEFAULT,
+    1 => 'locale-session',
+    2 => 'locale-user',
+    4 => 'locale-browser',
+    10 => 'language-default',
   );
   $all_negotiation_providers = language_negotiation_info();
   $negotiation = array();
@@ -38,7 +38,7 @@ function wikicompare_translation_install() {
     $negotiation[$id]['weight'] = $weight;
   }
 dpm($negotiation, 'test');
-  language_negotiation_set(LANGUAGE_TYPE_INTERFACE, $negotiation);
+  language_negotiation_set('language', $negotiation);
 dpm(LANGUAGE_TYPE_INTERFACE, 'test');
 
 
