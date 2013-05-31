@@ -444,6 +444,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         make_cleaning = false;
         
         if (action == 'expand_list_children') {
+
           send_node_id = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;

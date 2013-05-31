@@ -844,35 +844,46 @@ function make_cleaning_response($method = 'ajax') {
       
 dpm($type);
 dpm($nodes, 'nodes');
-dpm($in_db_nodes, 'in_dbnodes');
+dpm($in_db_nodes_ids, 'in_dbnodes');
 
       $in_table_node_ids = array();
       $reset = False;
+      //We test all nodes present in the table
       foreach ($_POST[$type . '_ids'] as $node) {
+dpm($node);
+        //Listing all node present in table in a array for later use
         $in_table_node_ids[$node[0]] = $node[0];
+        //If the node has a parent in the table
         if (isset($node[1])) {
+          //If the parent of the node in the table is different of the parent of the node in db
           if ($node[1] != $nodes[$node[0]]['data']->parent_id) {
             if ($type == 'feature') {
+              //In the case of a feature, it means there is a structural change so better refresh the manual_selected_feature itemlist
               $update_selected_feature = true;
             }
+            //If the parent in table is currently displaying his children, then the tested node is displayed as his child but isn't anymore, so we need to hide it
             if (in_array($node[1], $_POST[$type . '_displayed_ids'])) {
               $node1 = request_db($type, array(), 'nids', array($node[1]));
               $node1 = $node1[$node[1]];
-              if ($node1['data']->parent_id != NULL) {
-                $commands[] = ajax_command_invoke('#' . $type . '_link_' . $node[1], 'click', array());
-              } else {
-                $reset = True;
+              //??
+//              if ($node1['data']->parent_id != NULL) {
+              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node[1], 'click', array());
+//              } else {
+dpm('#' . $type . '_table_link_' . $node[1], 'reset3');
+//                $reset = True;
                 
-              }
+//              }
             }
 
 
-
-            if (!in_array($nodes[$node[0]]['data']->parent_id, $_POST[$type . '_displayed_ids'])) {
+            //If the parent of the node in db is displaying his children in the table, then the tested node is missing among the children so we need to hide the children of the parent. Also, if the tested node is now without parent, then we need to reset the table to display it.
+            if (in_array($nodes[$node[0]]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$node[0]]['data']->parent_id == NULL) {
 
               if ($nodes[$node[0]]['data']->parent_id != NULL) {
-                $commands[] = ajax_command_invoke('#' . $type . '_link_' . $nodes[$node[0]]['data']->parent_id, 'click', array());
+                $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$node[0]]['data']->parent_id, 'click', array());
+dpm('#' . $type . '_table_link_' . $nodes[$node[0]]['data']->parent_id, 'reset5');
               } else {
+dpm('reset4');
                 $reset = True;
               }
             }
@@ -880,16 +891,21 @@ dpm($in_db_nodes, 'in_dbnodes');
 
 
 
-          if ((!in_array($node[0], $in_db_node_ids)) && !isset($node[1])) {
-            $reset = True;
 
-          }
+        }
+
+        //If one of the node without parent displayed in table isn't in the first level in db anymore
+        if ((!in_array($node[0], $in_db_nodes_ids)) && !isset($node[1])) {
+dpm('reset1');
+          $reset = True;
+
         }
       }
 
       foreach ($in_db_node_ids as $nid) {
-
+        //If one of the node present in the first level in db isn't displayed in the table
         if (!in_array($nid, $in_table_node_ids)) {
+dpm('reset2');
           $reset = True;
         }
       } 
@@ -900,10 +916,22 @@ dpm($in_db_nodes, 'in_dbnodes');
             $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
             break;
           case 'feature':
-            $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
+            $settings = array(
+              'fastedit_status' => $_POST['fastedit_status'],
+              'computed' => 0
+            );
+            $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $settings));
             break;
         }
 
+      }
+
+
+
+      if (module_exists('wikicompare_needs')) {
+        if ($type == 'need' && $reset == True) {
+          $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need());
+        }
       }
 
 
@@ -1072,6 +1100,7 @@ dpm($in_db_nodes, 'in_dbnodes');
 
     //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
     $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+dpm($commands);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -1484,8 +1513,10 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
     $features = request_db('feature', $db_settings);
     
     foreach ($features as $fid => $feature) {
+dpm($fid);
       $settings['feature_ids'][$fid] = $fid;
     }
+dpm($settings);
 
 
   }
@@ -1592,7 +1623,7 @@ function render_rows($feature_row_data, $fastedit_status) {
     $title_title = '<span class="feature_title_' . $fid . '">' . $feature->title . '</span>';
     //If the feature has children, the feature name will become a link calling the callback function to display his children
     if ($feature->has_children == 1){
-      $title = l($title_title . ' ' . $fid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => 'feature_link_' . $fid, 'class' => array('feature_link feature_link_children_' . $fid)), 'html' => True));
+      $title = l($title_title . ' ' . $fid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => 'feature_table_link_' . $fid, 'class' => array('feature_link feature_link_children_' . $fid)), 'html' => True));
     } else {
       $title = $title_title;
     }

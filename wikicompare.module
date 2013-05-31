@@ -448,7 +448,7 @@ function wikicompare_form_implementation_node_form_alter(&$form, &$form_state, $
 
 function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$output=NULL, $nid=NULL, $type=NULL, $fastaction=NULL, $node=NULL, $readonly=NULL, $tnode=NULL, $readonly_translation=NULL) {
 
-dpm($tnode);
+
 
   if ($form_type == 'form') {
 
@@ -958,7 +958,7 @@ dpm($tnode);
   }
 
 
-dpm($form);
+
 }
 
 
@@ -1056,8 +1056,7 @@ function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
     if (isset($node->nid)) { //Manage case when we create the node
       $test = wikicompare_test_access_node('test', $node->nid, $uid);
     }
-dpm($node_op);
-dpm($revision_op);
+
 
     if (($test == False) && ($uid != 1)) {
       return False;
@@ -1110,7 +1109,7 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
       }
     }
 
-dpm($users, 'users1');
+
     $query = db_select('node', 'n');
     $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
     $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
@@ -1135,7 +1134,7 @@ dpm($users, 'users1');
           );
       }
     }
-dpm($users, 'users2');
+
   
 
     if ($action == 'test') {
