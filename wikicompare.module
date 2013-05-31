@@ -1082,59 +1082,61 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
 
     if (user_access('moderate wikicompare')) {
       $test = True;
-    } else {
+    }
 
-      $query = db_select('node', 'n');
-      $query->addField('f', 'wikicompare_user_from_parent_ids_target_id', 'uid');
-      $query->join('field_revision_wikicompare_user_from_parent_ids', 'f', 'n.vid = f.revision_id');
-      $query->condition('n.nid', $nid);
+
+    $query = db_select('node', 'n');
+    $query->addField('f', 'wikicompare_user_from_parent_ids_target_id', 'uid');
+    $query->join('field_revision_wikicompare_user_from_parent_ids', 'f', 'n.vid = f.revision_id');
+    $query->condition('n.nid', $nid);
+    if ($action == 'test') {
+      $query->condition('f.wikicompare_user_from_parent_ids_target_id', $uid);
+    }
+    $result = $query->execute();
+    foreach ($result as $record) {
       if ($action == 'test') {
-        $query->condition('f.wikicompare_user_from_parent_ids_target_id', $uid);
-      }
-      $result = $query->execute();
-      foreach ($result as $record) {
-        if ($action == 'test') {
-          $test = True;
-        } else {
-            $users[$record->uid] = array(
-              'entity_type' => 'node',
-              'bundle' => '',
-              'deleted' => 0,
-              'entity_id' => 0,
-              'revision_id' => 0,
-              'language' => 'und',
-              'delta' => 0,
-              'wikicompare_user_from_parent_ids_target_id' => $record->uid,
-            );
-        }
-      }
-
-
-      $query = db_select('node', 'n');
-      $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
-      $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
-      $query->condition('n.nid', $nid);
-      if ($action == 'test') {
-        $query->condition('f.wikicompare_user_ids_target_id', $uid);
-      }
-      $result = $query->execute();
-      foreach ($result as $record) {
-        if ($action == 'test') {
-          $test = True;
-        } else {
-            $users[$record->uid] = array(
-              'entity_type' => 'node',
-              'bundle' => '',
-              'deleted' => 0,
-              'entity_id' => 0,
-              'revision_id' => 0,
-              'language' => 'und',
-              'delta' => 0,
-              'wikicompare_user_from_parent_ids_target_id' => $record->uid,
-            );
-        }
+        $test = True;
+      } else {
+          $users[$record->uid] = array(
+            'entity_type' => 'node',
+            'bundle' => '',
+            'deleted' => 0,
+            'entity_id' => 0,
+            'revision_id' => 0,
+            'language' => 'und',
+            'delta' => 0,
+            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
+          );
       }
     }
+
+dpm($users, 'users1');
+    $query = db_select('node', 'n');
+    $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
+    $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
+    $query->condition('n.nid', $nid);
+    if ($action == 'test') {
+      $query->condition('f.wikicompare_user_ids_target_id', $uid);
+    }
+    $result = $query->execute();
+    foreach ($result as $record) {
+      if ($action == 'test') {
+        $test = True;
+      } else {
+          $users[$record->uid] = array(
+            'entity_type' => 'node',
+            'bundle' => '',
+            'deleted' => 0,
+            'entity_id' => 0,
+            'revision_id' => 0,
+            'language' => 'und',
+            'delta' => 0,
+            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
+          );
+      }
+    }
+dpm($users, 'users2');
+  
 
     if ($action == 'test') {
       return $test;

@@ -428,7 +428,7 @@ function submit_fastedit_form_response($method = 'ajax'){
         if (module_exists('wikicompare_translation')) {
           wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'title', 'title', $fastaction);
         } 
-
+dpm($_POST, '$_POST');
         if ($_POST['parent_id'] != 0) {
 
               $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
@@ -437,6 +437,7 @@ function submit_fastedit_form_response($method = 'ajax'){
         } else {
           $node->wikicompare_parent_id['und'] = NULL;
         }
+dpm($node, 'node');
 
         if ($_POST['sequence'] != NULL) {
           $node->wikicompare_sequence['und'][0]['value'] = $_POST['sequence'];  

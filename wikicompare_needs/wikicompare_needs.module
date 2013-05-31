@@ -376,9 +376,9 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_submit(&$node,
       $need_features[] = $array;
     }
     $node->wikicompare_features['und'] = $need_features;
-    $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
-    $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-    $node->wikicompare_state['und'][0]['value'] = $_POST['state'];
+//    $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
+//    $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
+//    $node->wikicompare_state['und'][0]['value'] = $_POST['state'];
 
   }
 

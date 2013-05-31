@@ -444,8 +444,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       if (!empty($_POST['feature_ids'])) {
 
         $features = request_db('feature', array('states' => array('draft' => 'draft', 'closed' => 'closed')), 'nids', $_POST['feature_ids']);
-dpm('before request');
-dpm($fastedit_status, '$fastedit_status');
+
         //Recover the implementation needed for the cells
         $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
 /*
@@ -506,7 +505,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
 
 
 
-dpm($context);
+
   $output = t("<div id='dialog-content'>");
 
 
@@ -610,7 +609,7 @@ function submit_dialog_response($method = 'ajax'){
     if ($selected_feature_ids) {
       $feature_array = get_recursive_data('feature', $selected_feature_ids);
     }
-dpm($_POST);
+
     $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
     if ($_POST['container'] == 'manual_selected_features') {
       $itemlist_settings['context'] = 'manual';
@@ -843,6 +842,9 @@ function make_cleaning_response($method = 'ajax') {
         $in_db_nodes_ids[$key] = $key;
       }
       
+dpm($type);
+dpm($nodes, 'nodes');
+dpm($in_db_nodes, 'in_dbnodes');
 
       $in_table_node_ids = array();
       $reset = False;
@@ -1022,15 +1024,25 @@ function make_cleaning_response($method = 'ajax') {
       }
 */
 
-    $implementations = array();
-    if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
-      $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
-    }
+    if (!$_POST['computed']) {
+
+      $feature_ids = array();
+      foreach ($_POST['feature_ids'] as $feature) {
+        $feature_ids[$feature[0]] = $feature[0];
+      }
+
+      $implementations = array();
+
+      if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
+        $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
+      }
+  
 
 
-    foreach($implementations as $fid => $compareds_implementations) {
-      foreach ($compareds_implementations as $cid => $implementation) {
-        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastedit_status']));
+      foreach($implementations as $fid => $compareds_implementations) {
+        foreach ($compareds_implementations as $cid => $implementation) {
+          $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastedit_status']));
+        }
       }
     }
 
@@ -1470,7 +1482,7 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
   if (empty($features)) {
     //Find all the features on the first level of the tree
     $features = request_db('feature', $db_settings);
-    dpm($features);
+    
     foreach ($features as $fid => $feature) {
       $settings['feature_ids'][$fid] = $fid;
     }

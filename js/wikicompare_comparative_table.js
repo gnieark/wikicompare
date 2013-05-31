@@ -755,10 +755,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var compared_column_ids = [];
           var i = 0;
           $('.header_compared').each(function (key, value) {
-            var column_id = $('#' + $(this).attr('id'));
-            var patt = /[0-9]+/g;
-            compared_column_ids[i] = patt.exec($(this).attr('id'))[0];
-            i = i + 1;
+            if (!$(this).hasClass('to_remove')) {
+              var column_id = $('#' + $(this).attr('id'));
+              var patt = /[0-9]+/g;
+              compared_column_ids[i] = patt.exec($(this).attr('id'))[0];
+              i = i + 1;
+            }
           });
 
           //Add them in the ajax call variables

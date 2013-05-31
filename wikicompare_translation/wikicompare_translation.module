@@ -146,10 +146,10 @@ function wikicompare_translation_wikicompare_request_db(&$query, $type, $setting
     $query->addField('t', 'language', 'tlanguage');
     $query->leftjoin('node', 't', 'n.nid = t.tnid');
     $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
-dpm($settings, 'settings');
+
     if (isset($settings['fastedit_status'])) {
       if ($settings['fastedit_status'] == 1) {
-dpm('ok1');
+
         $query->addField('tr', 'uid', 'tuid');
         $query->leftjoin('node_revision', 'tr', 't.nid = tr.nid');
       }

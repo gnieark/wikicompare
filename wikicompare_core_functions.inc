@@ -715,6 +715,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
       if (isset($settings['states']['closed'])) {
         $state = array_merge($state, array('rejected', 'disactivated'));
       }
+
       $query->condition('n.state', $state, 'in');
     } 
     $query->orderby('n.sequence, n.title');
@@ -757,7 +758,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   if (module_exists('wikicompare_inherit_compared')) {
     wikicompare_inherit_compared_wikicompare_request_db($query, $type, $settings);
   }
-dpm($type);
+
   if (module_exists('wikicompare_translation')) {
     wikicompare_translation_wikicompare_request_db($query, $type, $settings);
   }
@@ -798,7 +799,7 @@ dpm($type);
 
     if (isset($settings['fastedit_status'])) {
       if ($settings['fastedit_status'] == 1) {
-dpm('ok2');
+
         //If the node was created by or have some revision from other users, current user will not be able to fastedit it
         if ($GLOBALS['user']->uid != $record->uid) {
           if ($type != 'implementation' || $nids != NULL) {

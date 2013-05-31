@@ -638,6 +638,7 @@ dpm($current_node_parent);
 
 function wikicompare_update_cache_users($nid, $parent_id=NULL, $type=NULL, $vid=NULL) {
 
+dpm('in cache users');
   db_delete('field_data_wikicompare_user_from_parent_ids')
     ->condition('entity_id', $nid)
     ->execute();
@@ -650,7 +651,8 @@ function wikicompare_update_cache_users($nid, $parent_id=NULL, $type=NULL, $vid=
 
     $users = wikicompare_test_access_node('get_users', $parent_id);
 
-
+dpm($users, 'users');
+dpm($nid);
 
     if (!empty($users)) {
 
