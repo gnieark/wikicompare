@@ -236,7 +236,7 @@ function wikicompare_translation_wikicompare_fastedit_get_tnode(&$tnode, &$reado
       $tnode = new stdClass;
       $tnode->title = '';
 
-dpm($tnode, 'test');
+
     }
 
   }
@@ -245,8 +245,7 @@ dpm($tnode, 'test');
 
 function wikicompare_translation_wikicompare_fastedit_add_element(&$output, $tnode, $field, $name, $readonly_translation, $fastaction) {
 
-dpm($name);
-dpm($tnode);
+
 
   global $language;
   if ($language->language != language_default('language')) {

@@ -199,7 +199,7 @@ function get_fastedit_form_response($method = 'ajax'){
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
-dpm($_POST);
+
 
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
@@ -306,7 +306,7 @@ dpm($_POST);
         $output .= '</td></tr>';
       }
 
-dpm($output);      
+
 
       //Preparing the ajax commands to return to javascript
       $commands = array();
@@ -336,7 +336,7 @@ dpm($output);
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
-dpm($commands);
+
       
       $page = array('#type' => 'ajax', '#commands' => $commands);          
       return $page;
@@ -432,7 +432,7 @@ function submit_fastedit_form_response($method = 'ajax'){
         if (module_exists('wikicompare_translation')) {
           wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'title', 'title', $fastaction);
         } 
-dpm($_POST, '$_POST');
+
         if ($_POST['parent_id'] != 0) {
 
               $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
@@ -441,7 +441,7 @@ dpm($_POST, '$_POST');
         } else {
           $node->wikicompare_parent_id['und'] = NULL;
         }
-dpm($node, 'node');
+
 
         if ($_POST['sequence'] != NULL) {
           $node->wikicompare_sequence['und'][0]['value'] = $_POST['sequence'];  
@@ -534,7 +534,7 @@ dpm($node, 'node');
       
       $node->log = $_POST['revision'];
 
-dpm($node, 'final node');
+
 
 
       if ($missing_field == FALSE) {
@@ -564,7 +564,7 @@ dpm($node, 'final node');
       $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node was modified by someone else before your confirmation');
     }
 
-dpm($commands, 'commands submit');
+
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
     

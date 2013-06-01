@@ -37,9 +37,9 @@ function wikicompare_translation_install() {
     $negotiation[$id] = $all_negotiation_providers[$id];
     $negotiation[$id]['weight'] = $weight;
   }
-dpm($negotiation, 'test');
+
   language_negotiation_set('language', $negotiation);
-dpm(LANGUAGE_TYPE_INTERFACE, 'test');
+
 
 
 }
