@@ -849,6 +849,10 @@ dpm($type);
 dpm($nodes, 'nodes');
 dpm($in_db_nodes_ids, 'indb_nodes');
 
+
+
+
+
       $in_table_node_ids = array();
       $reset = False;
       //We test all nodes present in the table
@@ -933,6 +937,18 @@ dpm('reset4');
           $reset = True;
         }
       } 
+
+      if (!empty($_POST[$type . '_displayed_ids'])) {
+        $in_db_nodes_with_parent = request_db($type, array('states' => $_POST['states']), 'parent', $_POST[$type . '_displayed_ids']);
+
+        foreach ($in_db_nodes_with_parent as $node) {
+          if (!in_array($node['data']->nid, $in_table_node_ids)) {
+  dpm('reset5');
+            $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node['data']->parent_id, 'click', array());
+          }
+        }
+      }
+
 
       if ($reset == True) {
         switch ($type) {
@@ -1753,7 +1769,40 @@ function initialize_itemlist_settings($subaction) {
 
 function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
 
-  if ($type != 'feature') {
+  if ($type == 'feature' && $itemlist_settings['context'] == 'table') {
+
+
+    //Create the image link to go to the node page
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to feature ') . $node->nid,
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
+    $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
+    if ($itemlist_settings['fastedit_status'] == 1) {
+      $img_link_to_node .= add_fastedit_items($type, $node_array); 
+    }
+    $img_link_to_node .= '</span>';
+
+    $title = '<span class="feature_title_' . $node->nid . '">' . $node->title . '</span>';
+    //If the feature has children, the feature name will become a link calling the callback function to display his children
+    if ($node->has_children == 1){
+      $title = l($title . ' ' . $node->nid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
+    } 
+/*else {
+      $title = $title_title;
+    }*/
+
+    //Creating the first cell of the row, containing the feature details
+    $output = $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="' . $type . '_weight_' . $node->nid . '">' .  $node->weight . '</span>';
+    if ($node->has_children == 1){
+      $output .= '<br/> Type : <span class="' . $type . '_type_' . $node->nid . '">' .  $node->type . '</span>';
+    }
+    $output .= '<br/> State : <span class="' . $type . '_state_' . $node->nid . '">' .  $node->state . '</span>';
+
+  } else{
 
     $title = '<span class="' . $type . '_title_' . $node->nid . '">' . $node->title . '</span>';
     //If the node has children, the node name will become a link calling the callback function to display his children
@@ -1851,39 +1900,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
 
     $output = $checkbox_area . $title . $img_link_to_node;
 
-  } else {
-
-    //Create the image link to go to the node page
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to feature ') . $node->nid,
-      'height' => '100%',
-    ));
-    //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
-    $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
-    if ($itemlist_settings['fastedit_status'] == 1) {
-      $img_link_to_node .= add_fastedit_items($type, $node_array); 
-    }
-    $img_link_to_node .= '</span>';
-
-    $title = '<span class="feature_title_' . $node->nid . '">' . $node->title . '</span>';
-    //If the feature has children, the feature name will become a link calling the callback function to display his children
-    if ($node->has_children == 1){
-      $title = l($title . ' ' . $node->nid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
-    } 
-/*else {
-      $title = $title_title;
-    }*/
-
-    //Creating the first cell of the row, containing the feature details
-    $output = $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="' . $type . '_weight_' . $node->nid . '">' .  $node->weight . '</span>';
-    if ($node->has_children == 1){
-      $output .= '<br/> Type : <span class="' . $type . '_type_' . $node->nid . '">' .  $node->type . '</span>';
-    }
-    $output .= '<br/> State : <span class="' . $type . '_state_' . $node->nid . '">' .  $node->state . '</span>';
-
-  }
+  } 
 
   return '<span id="' . $type . '_' . $itemlist_settings['context'] . '_supertitle_' . $node->nid . '">' . $output . '</span>';
 

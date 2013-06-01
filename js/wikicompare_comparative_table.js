@@ -1004,7 +1004,7 @@ alert(computed.toSource());*/
 
 
 
-
+//TODO Ajout d'un enfant alors qu'il y en a déjà un et qu'il est affiché. Il faut replier le parent
 
 
 //TODO To test: Create the first children of a feature, it do not transform the parent into link.
