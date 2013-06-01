@@ -164,7 +164,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   $output .= "\$node = new stdClass();<br/>";
   $output .= "\$node->type = '" . $type . "';<br/>";
   $output .= "\$node->language = 'en';<br/>";
-  $output .= "\$node->title = '" . $node['data']->title . "';<br/>";
+  $output .= '$node->title = "' . $node['data']->title . '";<br/>';
   if ($node['data']->parent_id != NULL) {
     $output .= "\$node->wikicompare_parent_id['und'][0]['target_id'] = \$". $type . "s['new-" . $node['data']->parent_id . "'];<br/>";
     $output .= "\$node->wikicompare_parent_id['und'][0]['target_type'] = 'node';<br/>";
@@ -230,7 +230,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
       $output .= "\$tnode->type = '" . $type . "';<br/>";
       $output .= "\$tnode->language = '" . $record->language . "';<br/>";
       $output .= "\$tnode->tnid = \$node->nid;<br/>";
-      $output .= "\$tnode->title = '" . $record->title . "';<br/>";
+      $output .= '$tnode->title = "' . $record->title . '";<br/>';
       $output .= "node_save(\$tnode);<br/>";
       $output .= "}</p>";
     }

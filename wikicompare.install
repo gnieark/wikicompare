@@ -130,7 +130,7 @@ function wikicompare_node_schema($type) {
     $schema['fields']['title'] = array(
       'description' => 'The title of the node',
       'type' => 'varchar',
-      'length' => 64,
+      'length' => 256,
       'not null' => TRUE,
     );
     $schema['fields']['parent_id'] = array(

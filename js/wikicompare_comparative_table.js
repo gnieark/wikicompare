@@ -697,7 +697,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
               need_ids[i]['nid'] = need_id;
               if ($(this).parent().parent().parent().hasClass('need_children')) {
                 parent = $(this).parent().parent().parent().attr('id');
+
                 need_ids[i]['parent_id'] = patt.exec(parent)[0];
+
               }
               need_ids[i]['has_children'] = 0;
               if ($(this).hasClass('has_children')) {
@@ -1005,7 +1007,7 @@ alert(computed.toSource());*/
 
 
 //TODO Ajout d'un enfant alors qu'il y en a déjà un et qu'il est affiché. Il faut replier le parent
-
+//TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte
 
 //TODO To test: Create the first children of a feature, it do not transform the parent into link.
 //simple into link -> just regenerate the item
