@@ -13,7 +13,7 @@
  *   A form array set for theming
  */
 
-require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparative_table_fastedit.inc';
+
 
 function wikicompare_comparative_table($form_state) {
 
