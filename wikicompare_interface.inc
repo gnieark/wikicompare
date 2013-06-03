@@ -59,7 +59,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
     $settings = array(
       'wikicompare' => array(
-        'fastedit_status' => 0,
+        'fastaction_status' => 0,
       )
     );
 
@@ -82,7 +82,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
   if ($node->type != 'implementation') {
 
-    if ($form_type == 'fastedit') { 
+    if ($form_type == 'fastaction') { 
       $name_field = array(
         '#type' => 'textfield',
         '#title' => t('Title'),
@@ -102,7 +102,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       $output .= render($name_field);
 
       if (module_exists('wikicompare_translation')) {
-        wikicompare_translation_wikicompare_fastedit_add_element($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
+        wikicompare_translation_wikicompare_fastaction_add_element($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
       }
 
     }
@@ -135,7 +135,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
     }
 
-    if ($form_type == 'fastedit') {
+    if ($form_type == 'fastaction') {
 
       if ($fastaction == 'edit') {
 
@@ -149,7 +149,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
 
         if (module_exists('wikicompare_needs')) {
-          wikicompare_needs_wikicompare_comparative_table_fastedit_parent($parent_id, $type, $node);
+          wikicompare_needs_wikicompare_comparative_table_fastaction_parent($parent_id, $type, $node);
         }
 
 
@@ -199,7 +199,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
 
 /* TODO Not working, textarea work but not text_format.
-    if ($form_type == 'fastedit') {
+    if ($form_type == 'fastaction') {
       $description_field = array(
         '#type' => 'text_format',
         '#title' => t('Description'),
@@ -221,7 +221,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
     
 
       if (module_exists('wikicompare_translation')) {
-        wikicompare_translation_wikicompare_fastedit_add_element($output, $tnode, $name_field_clone, 'body', $readonly_translation, $fastaction);
+        wikicompare_translation_wikicompare_fastaction_add_element($output, $tnode, $name_field_clone, 'body', $readonly_translation, $fastaction);
       }
 
     }
@@ -304,17 +304,17 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
 
 
-    if ($form_type == 'fastedit') {
+    if ($form_type == 'fastaction') {
 
       if (!$res->feature_has_children && !$res->compared_has_children) {
 
         $test = FALSE;
         if (module_exists('wikicompare_inherit_compared')) {
-          wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'fastedit', $node, $fastaction);
+          wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'fastaction', $node, $fastaction);
         }
 
         //I wasn't able to use the renderable array, so I coded directly in html
-        $output .= '<input class="form_implementation_fastedit_support form-checkbox" type="checkbox" id="edit-wikicompare-support-und"';
+        $output .= '<input class="form_implementation_fastaction_support form-checkbox" type="checkbox" id="edit-wikicompare-support-und"';
 
         if ($fastaction == 'edit') {
 
@@ -334,7 +334,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           $output .= ' disabled="disabled"';
         }
 
-        $output .= ' value="1" />  <label class="option" for="form_implementation_fastedit_support_' . $node->nid . '">Support? </label>';
+        $output .= ' value="1" />  <label class="option" for="form_implementation_fastaction_support_' . $node->nid . '">Support? </label>';
       }
 
     }
@@ -342,7 +342,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
   }
 
 
-  if ($form_type == 'fastedit') {
+  if ($form_type == 'fastaction') {
     if ($type == 'feature') {
       $type_field = array(
         '#type' => 'select',
@@ -384,7 +384,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       $output .= render($guidelines_field);
 
       if (module_exists('wikicompare_translation')) {
-        wikicompare_translation_wikicompare_fastedit_add_element($output, $tnode, $name_field_clone, 'wikicompare_guidelines', $readonly_translation, $fastaction);
+        wikicompare_translation_wikicompare_fastaction_add_element($output, $tnode, $name_field_clone, 'wikicompare_guidelines', $readonly_translation, $fastaction);
       }
 
 */
@@ -438,7 +438,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       $form['wikicompare_state']['und']['#options'] = wikicompare_state_get_options($nid, $current_state);
     }
 
-    if ($form_type == 'fastedit') {
+    if ($form_type == 'fastaction') {
       $state_field = array(
         '#type' => 'select',
         '#title' => t('State'),
@@ -470,11 +470,11 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
   }
 
-  if ($form_type == 'fastedit') {
+  if ($form_type == 'fastaction') {
 
 
     if (module_exists('wikicompare_needs')) {
-      wikicompare_needs_wikicompare_comparative_table_fastedit_specific($output, $type, $node, $fastaction, $nid);
+      wikicompare_needs_wikicompare_comparative_table_fastaction_specific($output, $type, $node, $fastaction, $nid);
     }
     
     $revision_field = array(
@@ -490,7 +490,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
     //Allow others modules to modify the output
     if (module_exists('wikicompare_translation')) {
-      wikicompare_translation_wikicompare_fastedit_specific_after($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
+      wikicompare_translation_wikicompare_fastaction_specific_after($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
     }
 
   }
@@ -676,7 +676,7 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
 
 
 
-function add_fastedit_items($type, $node_array){
+function add_fastaction_items($type, $node_array){
 
 
   $output = ' ';
@@ -694,7 +694,7 @@ function add_fastedit_items($type, $node_array){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_edit_link'), 'type' => $type, 'action' => 'edit'), 'html' => True));
+      $img_link_to_edit = l($img, 'get_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastaction_item ' . $type . '_edit_link'), 'type' => $type, 'action' => 'edit'), 'html' => True));
       $output .= $img_link_to_edit;
     }
   
@@ -706,7 +706,7 @@ function add_fastedit_items($type, $node_array){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_add = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_add_link'), 'type' => $type, 'action' => 'add'), 'html' => True));
+    $img_link_to_add = l($img, 'get_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastaction_item ' . $type . '_add_link'), 'type' => $type, 'action' => 'add'), 'html' => True));
     $output .= $img_link_to_add;
 
 
@@ -718,7 +718,7 @@ function add_fastedit_items($type, $node_array){
 
 
     if (module_exists('wikicompare_translation')) {
-      wikicompare_translation_wikicompare_fastedit_items_test($test, $node_array);
+      wikicompare_translation_wikicompare_fastaction_items_test($test, $node_array);
     }
 
     if ($test == False) {
@@ -729,7 +729,7 @@ function add_fastedit_items($type, $node_array){
         'height' => '100%',
       ));
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_edit_link'), 'type' => $type, 'action' => 'edit'), 'html' => True));
+      $img_link_to_edit = l($img, 'get_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastaction_item ' . $type . '_edit_link'), 'type' => $type, 'action' => 'edit'), 'html' => True));
       $output .= $img_link_to_edit;
 
       if (!isset($node_array['no-remove'])) {
@@ -740,7 +740,7 @@ function add_fastedit_items($type, $node_array){
           'height' => '100%',
         ));
         //Create the link. The html = True indicate that the title of the link contain html.
-        $img_link_to_remove = l($img, 'get_fastedit_form_callback/nojs', array('attributes' => array('id' => $type . '_remove_link_' . $nid, 'class' => array('fastedit_item ' . $type . '_remove_link'), 'type' => $type, 'action' => 'remove'), 'html' => True));
+        $img_link_to_remove = l($img, 'get_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_remove_link_' . $nid, 'class' => array('fastaction_item ' . $type . '_remove_link'), 'type' => $type, 'action' => 'remove'), 'html' => True));
         $output .= $img_link_to_remove;
       }
     }
@@ -751,9 +751,9 @@ function add_fastedit_items($type, $node_array){
 }
 
 /*
- * Ajax callback cunction called by javascript to display the fastedit form
+ * Ajax callback cunction called by javascript to display the fastaction form
  */
-function get_fastedit_form_response($method = 'ajax'){
+function get_fastaction_form_response($method = 'ajax'){
 
   $nid = $_POST['node_id'];
   $type = $_POST['type'];
@@ -824,7 +824,7 @@ function get_fastedit_form_response($method = 'ajax'){
 
 
           if (module_exists('wikicompare_translation')) {
-            wikicompare_translation_wikicompare_fastedit_get_tnode($tnode, $readonly_translation, $node);
+            wikicompare_translation_wikicompare_fastaction_get_tnode($tnode, $readonly_translation, $node);
           }
           
         } else {
@@ -833,7 +833,7 @@ function get_fastedit_form_response($method = 'ajax'){
 
         $form = array();
         $form_state = array();
-        wikicompare_build_form('fastedit', $form, $form_state, $output, $nid, $type, $fastaction, $node, $readonly, $tnode, $readonly_translation);
+        wikicompare_build_form('fastaction', $form, $form_state, $output, $nid, $type, $fastaction, $node, $readonly, $tnode, $readonly_translation);
 
       }
       
@@ -843,7 +843,7 @@ function get_fastedit_form_response($method = 'ajax'){
       $submit_link = array(
         '#type' => 'link',
         '#title' => 'submit',
-        '#href' => 'submit_fastedit_form_callback/nojs/',
+        '#href' => 'submit_fastaction_form_callback/nojs/',
         '#id' => 'form_fastaction_submit_link_' . $nid ,
         '#attributes' => array(
           'class' => 'form_fastaction_submit_link',
@@ -879,7 +879,7 @@ function get_fastedit_form_response($method = 'ajax'){
 
 
       if (module_exists('wikicompare_needs')) {
-        wikicompare_needs_wikicompare_comparative_table_fastedit_command($commands, $type, $nid, $output);
+        wikicompare_needs_wikicompare_comparative_table_fastaction_command($commands, $type, $nid, $output);
       }
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
@@ -909,9 +909,9 @@ function get_fastedit_form_response($method = 'ajax'){
 
 
 /*
- * Ajax callback function called by javascript when we submit one of the fastedit form.
+ * Ajax callback function called by javascript when we submit one of the fastaction form.
  */
-function submit_fastedit_form_response($method = 'ajax'){
+function submit_fastaction_form_response($method = 'ajax'){
 
 
   $type = $_POST['type'];
@@ -921,7 +921,7 @@ function submit_fastedit_form_response($method = 'ajax'){
   if ($method == 'ajax') {
 
     if ($_POST['node_id']) {
-      $from_db = request_db($type, array('fastedit' => 1), 'nids', array($_POST['node_id']));
+      $from_db = request_db($type, array('fastaction' => 1), 'nids', array($_POST['node_id']));
       $from_db_record = $from_db[$_POST['node_id']];
     }
 
@@ -957,7 +957,7 @@ function submit_fastedit_form_response($method = 'ajax'){
       $tnode = new stdClass();
 
       if (module_exists('wikicompare_translation')) {
-        wikicompare_translation_wikicompare_fastedit_submit_init_tnode($tnode, $_POST, $fastaction);
+        wikicompare_translation_wikicompare_fastaction_submit_init_tnode($tnode, $_POST, $fastaction);
       } 
 
       if ($type != 'implementation') {
@@ -968,7 +968,7 @@ function submit_fastedit_form_response($method = 'ajax'){
         }
 
         if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'title', 'title', $fastaction);
+          wikicompare_translation_wikicompare_fastaction_submit_element($tnode, $_POST, 'title', 'title', $fastaction);
         } 
 
         if ($_POST['parent_id'] != 0) {
@@ -1003,7 +1003,7 @@ function submit_fastedit_form_response($method = 'ajax'){
 
 
       if (module_exists('wikicompare_translation')) {
-        wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'body', 'description');
+        wikicompare_translation_wikicompare_fastaction_submit_element($tnode, $_POST, 'body', 'description');
       } 
 
 */
@@ -1025,7 +1025,7 @@ function submit_fastedit_form_response($method = 'ajax'){
         $node->wikicompare_guidelines['und'][0]['format'] = 'full_html';
 
         if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'wikicompare_guidelines', 'guidelines');
+          wikicompare_translation_wikicompare_fastaction_submit_element($tnode, $_POST, 'wikicompare_guidelines', 'guidelines');
         } 
 
 */
@@ -1051,13 +1051,13 @@ function submit_fastedit_form_response($method = 'ajax'){
 
 
       if (module_exists('wikicompare_needs')) {
-        wikicompare_needs_wikicompare_comparative_table_fastedit_submit($node, $type, $_POST);
+        wikicompare_needs_wikicompare_comparative_table_fastaction_submit($node, $type, $_POST);
       }
 
 
 
       if (module_exists('wikicompare_translation')) {
-        wikicompare_translation_wikicompare_fastedit_submit_after($node, $tnode, $_POST, $fastaction);
+        wikicompare_translation_wikicompare_fastaction_submit_after($node, $tnode, $_POST, $fastaction);
       } 
       
       $node->log = $_POST['revision'];
@@ -1079,7 +1079,7 @@ function submit_fastedit_form_response($method = 'ajax'){
           }
         }
 
-        $commands[] = ajax_command_invoke('.fastedit_item:.displayed', 'removeClass', array('displayed'));
+        $commands[] = ajax_command_invoke('.fastaction_item:.displayed', 'removeClass', array('displayed'));
         $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
 
       } else {

@@ -84,20 +84,20 @@ function wikicompare_comparative_table() {
   $output .= render_comparative_table();
 
 
-  //Add the link to go on FastEdit mode
+  //Add the link to go on FastAction mode
   $toogle_link = array(
     '#type' => 'link',
-    '#title' => 'Toogle FastEdit',
+    '#title' => 'Toogle FastAction',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'toogle_fastedit_callback/nojs',
-    '#id' => 'toogle_fastedit_link',
+    '#href' => 'toogle_fastaction_callback/nojs',
+    '#id' => 'toogle_fastaction_link',
 
   );
 
   $output .= '<p>' . render($toogle_link) . '</p>';
 
 
-  //Add the link to go on FastEdit mode
+  //Add the link to go on FastAction mode
   $cleaning_link = array(
     '#type' => 'link',
     '#title' => 'Clean',
@@ -139,10 +139,10 @@ function get_item_list_children_response($method = 'ajax') {
 
       $itemlist_settings['context'] = $context;
 
-      if (!empty($_POST['fastedit_status'])) {
-        $itemlist_settings['fastedit_status'] = $_POST['fastedit_status'];
+      if (!empty($_POST['fastaction_status'])) {
+        $itemlist_settings['fastaction_status'] = $_POST['fastaction_status'];
       }
-      $nodes = request_db($type, array('fastedit_status' => $itemlist_settings['fastedit_status'], 'can_be_translated' => 1, 'states' => $_POST['states']), 'parent', array($nid));
+      $nodes = request_db($type, array('fastaction_status' => $itemlist_settings['fastaction_status'], 'can_be_translated' => 1, 'states' => $_POST['states']), 'parent', array($nid));
 
 
       //Prepare the array to use as argument for the item list building function
@@ -240,12 +240,12 @@ function get_feature_response($method = 'ajax') {
 
 
 
-      $fastedit_status = 0;
-      if (!empty($_POST['fastedit_status'])) {
-        $fastedit_status = $_POST['fastedit_status'];
+      $fastaction_status = 0;
+      if (!empty($_POST['fastaction_status'])) {
+        $fastaction_status = $_POST['fastaction_status'];
       }
 
-      $features = request_db('feature', array('fastedit_status' => $fastedit_status, 'can_be_translated' => 1, 'states' => $_POST['states']), 'parent', array($fid));
+      $features = request_db('feature', array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1, 'states' => $_POST['states']), 'parent', array($fid));
 
       $features_ids = array();
       foreach ($features as $key => $feature) {
@@ -256,7 +256,7 @@ function get_feature_response($method = 'ajax') {
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_column_ids'])) {
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, $_POST['compared_column_ids'], $features_ids);
+        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status), 'parent', NULL, $_POST['compared_column_ids'], $features_ids);
       }
       //Building the data for the table row
 
@@ -266,7 +266,7 @@ function get_feature_response($method = 'ajax') {
       $feature_row_data = get_rows_data($features, $_POST['compared_column_ids'], $implementations, 0);
 
 
-      $output = render_rows($feature_row_data, $fastedit_status);
+      $output = render_rows($feature_row_data, $fastaction_status);
 
       //Preparing the ajax commands to return to javascript
       $commands = array();
@@ -313,10 +313,10 @@ function toggle_compared_checkbox_response($method = 'ajax'){
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
-      //Recover fastedit status
-      $fastedit_status = 0;
-      if (!empty($_POST['fastedit_status'])) {
-        $fastedit_status = $_POST['fastedit_status'];
+      //Recover fastaction status
+      $fastaction_status = 0;
+      if (!empty($_POST['fastaction_status'])) {
+        $fastaction_status = $_POST['fastaction_status'];
       }
 
 
@@ -333,7 +333,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
         $features = request_db('feature', array('states' => array('draft' => 'draft', 'closed' => 'closed')), 'nids', $_POST['feature_ids']);
 
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
+        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
 
 
         $cells = array();
@@ -341,7 +341,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
           $implementation = $implementations[$fid][$cid];
 
-          $cells[$implementation['data']->feature_id] = render_implementation($implementation, $feature, $fastedit_status);
+          $cells[$implementation['data']->feature_id] = render_implementation($implementation, $feature, $fastaction_status);
         }
       }
 
@@ -517,15 +517,15 @@ function submit_dialog_response($method = 'ajax'){
         </tbody>';
     }
 
-    $hidden_fastedit = '';
+    $hidden_fastaction = '';
     foreach ($selected_feature_ids as $feature_id) {
-      $hidden_fastedit .= '<div class="need_feature">' . $feature_id . '</div>';
+      $hidden_fastaction .= '<div class="need_feature">' . $feature_id . '</div>';
     }
 
     $commands = array();
     $commands[] = ajax_command_html('#' . $_POST['container'], $output);
     $commands[] = ajax_command_html('#wikicompare-features-values', $hidden);
-    $commands[] = ajax_command_html('#need-features', $hidden_fastedit);
+    $commands[] = ajax_command_html('#need-features', $hidden_fastaction);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -571,24 +571,24 @@ function compute_comparative_table_response($method = 'ajax') {
       $compared_columns_ids = $_POST['compared_column_ids'];
     }
 
-    $fastedit_status = 0;
-    if (!empty($_POST['fastedit_status'])) {
-      $fastedit_status = $_POST['fastedit_status'];
+    $fastaction_status = 0;
+    if (!empty($_POST['fastaction_status'])) {
+      $fastaction_status = $_POST['fastaction_status'];
     }
 
     $commands = array();
 
     if (module_exists('wikicompare_needs')) {
-      $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need(array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'])));
+      $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need(array('fastaction_status' => $fastaction_status, 'states' => $_POST['states'])));
     }
 
-    $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared(array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'])));
+    $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared(array('fastaction_status' => $fastaction_status, 'states' => $_POST['states'])));
 
 
-    $settings = array('fastedit_status' => $fastedit_status, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
+    $settings = array('fastaction_status' => $fastaction_status, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
     if ($selected_feature_ids && !isset($_POST['reset'])) {
 
-      $feature_array = get_recursive_data('feature', $selected_feature_ids, $fastedit_status);
+      $feature_array = get_recursive_data('feature', $selected_feature_ids, $fastaction_status);
 
       $settings['feature_ids'] = $feature_array['ids'];
       $settings['computed'] = 1;
@@ -648,7 +648,7 @@ function make_cleaning_response($method = 'ajax') {
 
       $nodes = array();
       if (!empty($node_ids)) {
-        $nodes = request_db($type, array('fastedit_status' => $_POST['fastedit_status'], 'can_be_translated' => 1), 'nids', $node_ids);
+        $nodes = request_db($type, array('fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1), 'nids', $node_ids);
       }
 
 
@@ -756,7 +756,7 @@ function make_cleaning_response($method = 'ajax') {
             break;
           case 'feature':
             $settings = array(
-              'fastedit_status' => $_POST['fastedit_status'],
+              'fastaction_status' => $_POST['fastaction_status'],
               'computed' => 0
             );
             $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $settings));
@@ -782,17 +782,17 @@ function make_cleaning_response($method = 'ajax') {
           $commands[] = ajax_command_invoke('.feature_type_' . $nid, 'html', array($node['data']->type));
           $commands[] = ajax_command_invoke('.feature_state_' . $nid, 'html', array($node['data']->state));
         }
-        if ($_POST['fastedit_status'] == 1) {
-          $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array(add_fastedit_items($type , $node)));
+        if ($_POST['fastaction_status'] == 1) {
+          $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array(add_fastaction_items($type , $node)));
         }
       }
 
-      if ($_POST['fastedit_status'] == 1) {
+      if ($_POST['fastaction_status'] == 1) {
         $node = array(
           'data' => new stdClass(),
         );
         $node['data']->nid = 0;
-        $commands[] = ajax_command_invoke('#add_' . $type . '_link_fastaction', 'html', array(add_fastedit_items($type , $node)));
+        $commands[] = ajax_command_invoke('#add_' . $type . '_link_fastaction', 'html', array(add_fastaction_items($type , $node)));
       }
 
     }
@@ -810,14 +810,14 @@ function make_cleaning_response($method = 'ajax') {
       $implementations = array();
 
       if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
-        $implementations = request_db('implementation', array('fastedit_status' => $_POST['fastedit_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
+        $implementations = request_db('implementation', array('fastaction_status' => $_POST['fastaction_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
       }
   
 
 
       foreach($implementations as $fid => $compareds_implementations) {
         foreach ($compareds_implementations as $cid => $implementation) {
-          $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastedit_status']));
+          $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastaction_status']));
         }
       }
     }
@@ -915,10 +915,10 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
 
 }
 
-function get_recursive_data($type, $ids, $fastedit_status=0){
+function get_recursive_data($type, $ids, $fastaction_status=0){
 
   $res = array();
-  $res = build_recursive_tree($type, $ids, $res, $fastedit_status);
+  $res = build_recursive_tree($type, $ids, $res, $fastaction_status);
 
   $res = build_fulltitle($res, $res['tree'], '');
 
@@ -948,13 +948,13 @@ function build_fulltitle($res, $tree, $parent_path) {
 }
 
 
-function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
+function build_recursive_tree($type, $ids, $res, $fastaction_status=0){
 
   $parent_ids = array();
 
   //No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
 
-  $nodes = request_db($type, array('fastedit_status' => $fastedit_status, 'can_be_translated' => 1), 'nid', $ids);
+  $nodes = request_db($type, array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1), 'nid', $ids);
 
 
   foreach ($nodes as $nid => $node) {
@@ -986,7 +986,7 @@ function build_recursive_tree($type, $ids, $res, $fastedit_status=0){
 
   //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
   if ($parent_ids){
-    $res = build_recursive_tree($type, $parent_ids, $res, $fastedit_status);
+    $res = build_recursive_tree($type, $parent_ids, $res, $fastaction_status);
   } else {
     unset($res['parent_ressource']);
   }
@@ -1084,8 +1084,8 @@ function wikicompare_table_render_compared($settings=array()) {
   
   $itemlist_settings = initialize_itemlist_settings('compared_main_table');
 
-  if (isset($settings['fastedit_status'])) {
-    $itemlist_settings['fastedit_status'] = $settings['fastedit_status'];
+  if (isset($settings['fastaction_status'])) {
+    $itemlist_settings['fastaction_status'] = $settings['fastaction_status'];
   }
 
   //Building the data for the item list
@@ -1096,12 +1096,12 @@ function wikicompare_table_render_compared($settings=array()) {
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
   $output .= '<p><a id="add_compared_link" href="?q=node/add/compared">Add</a><span id="add_compared_link_fastaction">';
  
-  if ($itemlist_settings['fastedit_status']) {
+  if ($itemlist_settings['fastaction_status']) {
     $compared = array(
       'data' => new stdClass(),
     );
     $compared['data']->nid = 0;
-    $output .= add_fastedit_items('compared' , $compared);
+    $output .= add_fastaction_items('compared' , $compared);
   }
   $output .= '</span></p>';
   $output .= '<div id="compared_table_children_0"></div>';
@@ -1114,9 +1114,9 @@ function wikicompare_table_render_compared($settings=array()) {
 
 function render_comparative_table($features=array(), $compareds=array(), $settings=array()){
 
-  $fastedit_status = 0;
-  if (isset($settings['fastedit_status'])) {
-    $fastedit_status = $settings['fastedit_status'];
+  $fastaction_status = 0;
+  if (isset($settings['fastaction_status'])) {
+    $fastaction_status = $settings['fastaction_status'];
   }
 
   $computed = 0;
@@ -1160,7 +1160,7 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
 
   $implementations = array();
   if (!empty($settings['feature_ids']) && !empty($compareds)) {
-    $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, $compareds, $settings['feature_ids']);
+    $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status), 'parent', NULL, $compareds, $settings['feature_ids']);
   } 
 
 
@@ -1181,19 +1181,19 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
   $output .= '</thead>';
   $output .= '<tbody>';
 
-  $output .= render_rows($feature_row_data, $fastedit_status);
+  $output .= render_rows($feature_row_data, $fastaction_status);
   $colspan = '';
   if (isset($settings['colspan'])) {
     $colspan = 'colspan="' . $settings['colspan'] . '"';
   }
   $output .= '<tr id="feature_table_0"><td class="row_auto_colspan" ' . $colspan . '><a id="add_feature_link" href="?q=node/add/feature">Add</a><span id="add_feature_link_fastaction">';
 
-  if ($fastedit_status) {
+  if ($fastaction_status) {
     $feature = array(
       'data' => new stdClass(),
     );
     $feature['data']->nid = 0;
-    $output .= add_fastedit_items('feature' , $feature);
+    $output .= add_fastaction_items('feature' , $feature);
   }
   $output .= '</span></td><tr>';
   $output .= '</tbody>';
@@ -1204,7 +1204,7 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
 
 }
 
-function render_rows($feature_row_data, $fastedit_status) {
+function render_rows($feature_row_data, $fastaction_status) {
 
   $output = '';
 
@@ -1227,12 +1227,12 @@ function render_rows($feature_row_data, $fastedit_status) {
     $output .= '>';
 
 
-    $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature, array('context' => 'table', 'fastedit_status' => $fastedit_status)) . '</td>';
+    $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature, array('context' => 'table', 'fastaction_status' => $fastaction_status)) . '</td>';
 
 
     //Add a column for each column in the table
     foreach ($feature_array['implementations'] as $implementation) {
-      $output .= render_implementation($implementation, $feature_array, $fastedit_status);
+      $output .= render_implementation($implementation, $feature_array, $fastaction_status);
     }
     $output .= '</tr>';
   }
@@ -1242,7 +1242,7 @@ function render_rows($feature_row_data, $fastedit_status) {
 
 }
 
-function render_implementation($implementation_array, $feature_array, $fastedit_status) {
+function render_implementation($implementation_array, $feature_array, $fastaction_status) {
 
   $implementation = $implementation_array['data'];
 
@@ -1258,8 +1258,8 @@ function render_implementation($implementation_array, $feature_array, $fastedit_
     $img_link_to_node = l($img, 'node/' . $implementation->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation->nid, 'class' => array('implementation_node_link')), 'html' => True));
     $img_link_to_node .= '<span id="fastaction_items_' . $implementation->nid . '">';
 
-    if ($fastedit_status == 1) {
-      $img_link_to_node .= add_fastedit_items('implementation', $implementation_array); 
+    if ($fastaction_status == 1) {
+      $img_link_to_node .= add_fastaction_items('implementation', $implementation_array); 
     }
     $img_link_to_node .= '</span>';
 
@@ -1276,7 +1276,7 @@ function render_implementation($implementation_array, $feature_array, $fastedit_
 function initialize_itemlist_settings($subaction) {
 
   $itemlist_settings = array(
-    'fastedit_status' => 0,
+    'fastaction_status' => 0,
     'context' => 0,
     'forbidden_nid' => 0,
     'node_link' => 0,
@@ -1327,8 +1327,8 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
     $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
-    if ($itemlist_settings['fastedit_status'] == 1) {
-      $img_link_to_node .= add_fastedit_items($type, $node_array); 
+    if ($itemlist_settings['fastaction_status'] == 1) {
+      $img_link_to_node .= add_fastaction_items($type, $node_array); 
     }
     $img_link_to_node .= '</span>';
 
@@ -1418,8 +1418,8 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
       $img_link_to_node = ' ' . l($img, 'node/' . $node->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
 
       $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
-      if ($itemlist_settings['fastedit_status'] == 1) {
-        $img_link_to_node .=  add_fastedit_items($type, $node_array);
+      if ($itemlist_settings['fastaction_status'] == 1) {
+        $img_link_to_node .=  add_fastaction_items($type, $node_array);
       }
       $img_link_to_node .= '</span>';
     }

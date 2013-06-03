@@ -2,7 +2,7 @@
 
 
       //Set global variable
-      fastedit_status = 0;
+      fastaction_status = 0;
       manual_selected_feature_ids = {};
       selected_feature_ids = {};
       selected_need_ids = {};
@@ -15,7 +15,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-      fastedit_status = settings['wikicompare_needs']['fastedit_status'];
+      fastaction_status = settings['wikicompare_needs']['fastaction_status'];
       selected_feature_ids = settings['wikicompare_needs']['selected_feature_ids'];
 
     });
@@ -252,16 +252,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     //Dynamize the toogle fast edit link to display the elements add/edit/remove.
-    $('#toogle_fastedit_link:not(.listener_set)').addClass('listener_set').each(function () {
+    $('#toogle_fastaction_link:not(.listener_set)').addClass('listener_set').each(function () {
 
       $(this).click(function() {
-        if (fastedit_status == 0) {
+        if (fastaction_status == 0) {
           //Set the global variable
-          fastedit_status = 1;
+          fastaction_status = 1;
         //If we are hidding the items
         } else {
           //Set the global variable
-          fastedit_status = 0;
+          fastaction_status = 0;
           $('.compared_add_link').remove();
           $('.compared_edit_link').remove();
           $('.compared_remove_link').remove();
@@ -282,8 +282,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
     
-    //Dynamize the compared add fastedit element.
-    $('.fastedit_item:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    //Dynamize the compared add fastaction element.
+    $('.fastaction_item:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
 
 
@@ -296,7 +296,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, action);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastaction_form', type, action);
     });
     
 
@@ -311,7 +311,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('.form_fastaction_cancel:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).click(function() {
-        $('.fastedit_item:.displayed').removeClass('displayed');
+        $('.fastaction_item:.displayed').removeClass('displayed');
         $('#make_cleaning_link').click();
         //Block the page loading
         return false;
@@ -320,7 +320,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     
     
     
-    //Dynamize the compared add fastedit submit link.
+    //Dynamize the compared add fastaction submit link.
     $('.form_fastaction_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
     
       //Recover the link_id used later in the functions
@@ -331,7 +331,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var action = $(this).attr('action');
 
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastedit_form', type, action);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastaction_form', type, action);
     });
 
     
@@ -363,7 +363,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.to_remove').remove();
         }
 
-        options.data.fastedit_status = fastedit_status;
+        options.data.fastaction_status = fastaction_status;
         
         manage_displayed_flag = false;
         send_node_id = false;
@@ -464,7 +464,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.reset = true;
         }
      
-        if (action == 'toogle_fastedit') {
+        if (action == 'toogle_fastaction') {
           manage_displayed_flag = true;
           send_compareds = true;
           send_features = true;
@@ -479,7 +479,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         }
         
-        if (action == 'show_fastedit_form') {
+        if (action == 'show_fastaction_form') {
           send_node_id = true;
           manage_displayed_flag = true;
 
@@ -495,7 +495,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.fastaction = context;
         }
      
-        if (action == 'submit_fastedit_form') {
+        if (action == 'submit_fastaction_form') {
           send_node_id = true;
           send_type = true;
           options.data.fastaction = context;
@@ -845,7 +845,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             }
             
 
-            if (action == 'show_fastedit_form') {
+            if (action == 'show_fastaction_form') {
               if (type == 'need') {
                 var need_feature_ids = {};
                 var i = 0;
@@ -931,10 +931,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 
+
 //TODO Ajout d'un enfant alors qu'il y en a déjà un et qu'il est affiché. Il faut replier le parent
 //TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte
 //TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres
 //TODO probleme de calcul sur les compute need
+//TODO quand on étend une feature, les factaction ne se mettent pas tout de suite
 
 //TODO To test: Create the first children of a feature, it do not transform the parent into link.
 //simple into link -> just regenerate the item
@@ -958,7 +960,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible
 
 //TODO isoler le test ajax dans une fonction a part
-//TODO Remplacer fastedit par fastaction
 //TODO remplacer les if action par des case
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
@@ -967,15 +968,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO remplacer display par un flag true, pour recuperer le keyword action
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
 //TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
-//TODO Fastedit item ne sont plus des displayed, retirer toute mention
+//TODO fastaction item ne sont plus des displayed, retirer toute mention
 
 //TODO A l'installation, le block language ne se met pas dans le contenu
 //TODO Dans inherit compared, dans le formulaire d'implementation, quand on active / desactive la récupération depuis l'inherit, la valeur de support n'est pas correctement récupérée. Je n'arrive pas à corriger.
-//TODO Dans fastedit, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
+//TODO Dans fastaction, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
 //TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
 //TODO Code quality : Split the javascript file in three : main for forms (defining ajax function), one for comparative table and one for needs. The last two will override some function in the main file, using a hook system.
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion drupalchat me parait pas mal
-//TODO Pour faire marcher le dialog dans fastedit, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
+//TODO Pour faire marcher le dialog dans fastaction, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 //TODO Low : The selected itemlist are in ordered list intead of unordered list. Looks like there is no error with html code, so we'll just wait for the template.
 
 })(jQuery);

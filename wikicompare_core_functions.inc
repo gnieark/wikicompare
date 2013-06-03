@@ -710,8 +710,8 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
     $query->addField('n', 'weight', 'weight');
   }
 
-  if (isset($settings['fastedit_status'])) {
-    if ($settings['fastedit_status'] == 1) {
+  if (isset($settings['fastaction_status'])) {
+    if ($settings['fastaction_status'] == 1) {
       $query->addField('r', 'uid', 'uid');
       $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
     }
@@ -762,10 +762,10 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
       }
     }
 
-    if (isset($settings['fastedit_status'])) {
-      if ($settings['fastedit_status'] == 1) {
+    if (isset($settings['fastaction_status'])) {
+      if ($settings['fastaction_status'] == 1) {
 
-        //If the node was created by or have some revision from other users, current user will not be able to fastedit it
+        //If the node was created by or have some revision from other users, current user will not be able to fastaction it
         if ($GLOBALS['user']->uid != $record->uid) {
           if ($type != 'implementation' || $nids != NULL) {
             $res[$record->nid]['no-edit'] = True;
@@ -777,7 +777,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
         }
 
         if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_request_db_fastedit($res, $record, $type, $nids, $settings);
+          wikicompare_translation_wikicompare_request_db_fastaction($res, $record, $type, $nids, $settings);
         }
       }
     }

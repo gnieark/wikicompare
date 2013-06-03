@@ -123,8 +123,8 @@ function wikicompare_needs_table_render_need($settings=array()) {
   
   $itemlist_settings = initialize_itemlist_settings('compared_main_table');
 
-  if (isset($settings['fastedit_status'])) {
-    $itemlist_settings['fastedit_status'] = $settings['fastedit_status'];
+  if (isset($settings['fastaction_status'])) {
+    $itemlist_settings['fastaction_status'] = $settings['fastaction_status'];
   }
 
   //Building the data for the item list
@@ -135,12 +135,12 @@ function wikicompare_needs_table_render_need($settings=array()) {
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => 'Need', 'type' => 'ul', 'attributes' => array()));
   $output .= '<p><a id="add_need_link" href="?q=node/add/need">Add</a><span id="add_need_link_fastaction">';
  
-  if ($itemlist_settings['fastedit_status']) {
+  if ($itemlist_settings['fastaction_status']) {
     $need = array(
       'data' => new stdClass(),
     );
     $need['data']->nid = 0;
-    $output .= add_fastedit_items('need' , $need);
+    $output .= add_fastaction_items('need' , $need);
   }
   $output .= '</span></p>';
   $output .= '<div id="need_table_children_0"></div>';
@@ -183,7 +183,7 @@ function wikicompare_needs_wikicompare_comparative_table_prepare_compute(&$selec
 }
 
 
-function wikicompare_needs_wikicompare_comparative_table_fastedit_parent(&$parent_id, $type, $node) {
+function wikicompare_needs_wikicompare_comparative_table_fastaction_parent(&$parent_id, $type, $node) {
 
   if ($type == 'need') {
     if (isset($node->wikicompare_parent_id['und'])) {
@@ -193,7 +193,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_parent(&$paren
 
 }
 
-function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$output, $type, $node, $fastaction, $nid) {
+function wikicompare_needs_wikicompare_comparative_table_fastaction_specific(&$output, $type, $node, $fastaction, $nid) {
 
   if ($type == 'need') {
 
@@ -249,7 +249,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$out
 
 }
 
-function wikicompare_needs_wikicompare_comparative_table_fastedit_command(&$commands, $type, $nid, $output) {
+function wikicompare_needs_wikicompare_comparative_table_fastaction_command(&$commands, $type, $nid, $output) {
 
 
   if ($type == 'need') {
@@ -259,7 +259,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_command(&$comm
 }
 
 
-function wikicompare_needs_wikicompare_comparative_table_fastedit_submit(&$node, $type, $_POST) {
+function wikicompare_needs_wikicompare_comparative_table_fastaction_submit(&$node, $type, $_POST) {
 
 
 

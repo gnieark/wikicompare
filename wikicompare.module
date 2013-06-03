@@ -283,23 +283,23 @@ function wikicompare_menu() {
   );
 
 
-  $items['get_fastedit_form_callback'] = array(
-    'page callback' => 'get_fastedit_form_response',
+  $items['get_fastaction_form_callback'] = array(
+    'page callback' => 'get_fastaction_form_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
     'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table_fastedit.inc',
+    'file' => 'wikicompare_interface.inc',
     'delivery callback' => 'ajax_deliver',
   );
   
-  $items['submit_fastedit_form_callback'] = array(
-    'page callback' => 'submit_fastedit_form_response',
+  $items['submit_fastaction_form_callback'] = array(
+    'page callback' => 'submit_fastaction_form_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
     'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table_fastedit.inc',
+    'file' => 'wikicompare_interface.inc',
     'delivery callback' => 'ajax_deliver',
   );
   

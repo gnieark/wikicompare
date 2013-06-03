@@ -127,7 +127,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
 
     }
 
-    if ($form_type == 'fastedit') {
+    if ($form_type == 'fastaction') {
       $output .= '<p><span id="form_selected_inherit">' . $title . '</span>';
       if ($readonly != True) {
         $output .= '<span id="inherit_id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
@@ -185,12 +185,12 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
     }
 
-    if ($form_type == 'fastedit') {
+    if ($form_type == 'fastaction') {
 
       if ($res->inherit_id != NULL) {
 
         //I wasn't able to use the renderable array, so I coded directly in html
-        $output .= '<input class="form_implementation_fastedit_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
+        $output .= '<input class="form_implementation_fastaction_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
 
         if ($fastaction == 'edit') {
           if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
@@ -215,7 +215,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
           ),
         );
 
-        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_implementation_fastedit_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
+        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_implementation_fastaction_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
 
         //Disable the support field located after this one
         if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
