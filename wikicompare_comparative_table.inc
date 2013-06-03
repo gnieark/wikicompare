@@ -710,7 +710,7 @@ function make_cleaning_response($method = 'ajax') {
 
         if ($node['has_children'] != $nodes[$node['nid']]['data']->has_children) {
 
-          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $node['nid'], wikicompare_get_supertitle_item($type, $nodes[$node['nid']]['data'], array('context' => 'table')));
+          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $node['nid'], wikicompare_get_supertitle_item($type, $nodes[$node['nid']], array('context' => 'table')));
           if ($nodes[$node['nid']]['data']->has_children == 0) {
             $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $node['nid'], 'removeClass', array('has_children'));
           }
@@ -880,7 +880,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
 
     
     $items[$nid]['id'] = $type . '_' . $itemlist_settings['context'] . '_item_' .  $nid;
-    $items[$nid]['data'] = wikicompare_get_supertitle_item($type, $node, $itemlist_settings);
+    $items[$nid]['data'] = wikicompare_get_supertitle_item($type, $node_array, $itemlist_settings);
     $items[$nid]['class'] = array($type . '_item', 'list_item', $itemlist_settings['context']);
     if ($node->has_children == 1){
     $items[$nid]['class'][] = 'has_children';
@@ -1227,7 +1227,7 @@ function render_rows($feature_row_data, $fastaction_status) {
     $output .= '>';
 
 
-    $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature, array('context' => 'table', 'fastaction_status' => $fastaction_status)) . '</td>';
+    $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature_array, array('context' => 'table', 'fastaction_status' => $fastaction_status)) . '</td>';
 
 
     //Add a column for each column in the table
@@ -1313,7 +1313,9 @@ function initialize_itemlist_settings($subaction) {
 }
 
 
-function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
+function wikicompare_get_supertitle_item($type, $node_array, $itemlist_settings) {
+
+  $node = $node_array['data'];
 
   if ($type == 'feature' && $itemlist_settings['context'] == 'table') {
 
@@ -1328,6 +1330,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
     $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
     $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
     if ($itemlist_settings['fastaction_status'] == 1) {
+
       $img_link_to_node .= add_fastaction_items($type, $node_array); 
     }
     $img_link_to_node .= '</span>';

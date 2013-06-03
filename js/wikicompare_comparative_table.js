@@ -936,12 +936,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte
 //TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres
 //TODO probleme de calcul sur les compute need
-//TODO quand on étend une feature, les factaction ne se mettent pas tout de suite
 
-//TODO To test: Create the first children of a feature, it do not transform the parent into link.
-//simple into link -> just regenerate the item
-//link into simple -> remove children et regenerate the item
-//compared ajout ok, manque compared retrait et feature
+
 
 //TODO When we click on add a new node while not being in the default language, we must have the default language form but the node created will be in the default language.
 
