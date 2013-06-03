@@ -16,14 +16,14 @@ function wikicompare_comparative_table() {
     '#title' => 'Display draft items',
     '#id' => 'checkbox-draft-items',
    );
-  $output = drupal_render($checkbox_settings);
+  $output = render($checkbox_settings);
 
   $checkbox_settings =  array(
     '#type' => 'checkbox',
     '#title' => 'Display closed items',
     '#id' => 'checkbox-closed-items',
    );
-  $output .= drupal_render($checkbox_settings);
+  $output .= render($checkbox_settings);
 
   $output .= '<div id="manual_selected_features"></div>';
 
@@ -60,7 +60,7 @@ function wikicompare_comparative_table() {
       'style' => 'display:none',
     ),
   );
-  $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/>' . drupal_render($compute_link);
+  $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/>' . render($compute_link);
  
 
 
@@ -74,7 +74,7 @@ function wikicompare_comparative_table() {
     '#id' => 'reset_table_link',
 
   );
-  $output .= ' ' . drupal_render($reset_link) . '</p>';
+  $output .= ' ' . render($reset_link) . '</p>';
 
   $output .= wikicompare_table_render_compared();
 
@@ -94,7 +94,7 @@ function wikicompare_comparative_table() {
 
   );
 
-  $output .= '<p>' . drupal_render($toogle_link) . '</p>';
+  $output .= '<p>' . render($toogle_link) . '</p>';
 
 
   //Add the link to go on FastEdit mode
@@ -110,7 +110,7 @@ function wikicompare_comparative_table() {
 
   );
 
-  $output .= '<p>' . drupal_render($cleaning_link) . '</p>';
+  $output .= '<p>' . render($cleaning_link) . '</p>';
 
 
   return $output;
@@ -430,7 +430,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
   );
 
   if ($context == 'multidialog') {
-    $output .= '<p><input id="submit_dialog_button" type="submit" value="Submit" class="button"/>' . drupal_render($submit_link) . '</p>';
+    $output .= '<p><input id="submit_dialog_button" type="submit" value="Submit" class="button"/>' . render($submit_link) . '</p>';
   }
 
   $output .= t("</div>");
@@ -1400,7 +1400,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
             )
           );
 
-          $checkbox_area .= drupal_render($checkbox_link);
+          $checkbox_area .= render($checkbox_link);
         }
       }
     }

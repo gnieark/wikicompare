@@ -960,7 +960,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO isoler le test ajax dans une fonction a part
 //TODO Remplacer fastedit par fastaction
 //TODO remplacer les if action par des case
-//TODO remplacer drupal_render par render
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
 //TODO bouger l'initialisation des variables globales dans un endroit plus sur

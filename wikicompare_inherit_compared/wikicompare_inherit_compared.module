@@ -173,7 +173,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
             'style' => 'display:none',
           ),
         );
-        $form['wikicompare_use_from_inherit']['und']['#suffix'] = drupal_render($reset_link);
+        $form['wikicompare_use_from_inherit']['und']['#suffix'] = render($reset_link);
 
         if ($form['wikicompare_use_from_inherit']['und']['#default_value'] == 1) {
           $form['wikicompare_support']['und']['#default_value'] = $res->inherit_support;
@@ -215,7 +215,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
           ),
         );
 
-        $output .= ' value="1" />' . drupal_render($reset_link) . '<label class="option" for="form_implementation_fastedit_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
+        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_implementation_fastedit_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
 
         //Disable the support field located after this one
         if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {

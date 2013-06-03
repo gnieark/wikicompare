@@ -99,7 +99,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       if ($readonly == True) {
         $name_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($name_field);
+      $output .= render($name_field);
 
       if (module_exists('wikicompare_translation')) {
         wikicompare_translation_wikicompare_fastedit_add_element($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
@@ -188,7 +188,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       if ($readonly == True) {
         $sequence_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($sequence_field);
+      $output .= render($sequence_field);
 
     }
 
@@ -363,7 +363,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       if ($readonly == True) {
         $type_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($type_field);
+      $output .= render($type_field);
       
 /* TODO Not working, textarea work but not text_format.
       $guidelines_field = array(
@@ -381,7 +381,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       if ($readonly == True) {
         $guidelines_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($guidelines_field);
+      $output .= render($guidelines_field);
 
       if (module_exists('wikicompare_translation')) {
         wikicompare_translation_wikicompare_fastedit_add_element($output, $tnode, $name_field_clone, 'wikicompare_guidelines', $readonly_translation, $fastaction);
@@ -422,7 +422,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       if ($readonly == True) {
         $weight_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($weight_field);
+      $output .= render($weight_field);
       
 
     }
@@ -456,7 +456,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       if ($readonly == True) {
         $state_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($state_field);
+      $output .= render($state_field);
     }
 
   }
@@ -486,7 +486,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         'class' => array('form_' . $type . '_fast' . $fastaction . '_revision'),
       )
     );
-    $output .= drupal_render($revision_field);
+    $output .= render($revision_field);
 
     //Allow others modules to modify the output
     if (module_exists('wikicompare_translation')) {
@@ -553,18 +553,7 @@ function wikicompare_state_get_options($nid, $current_state) {
 }
 
 
-/**
- * Implements hook_theme().
- */
-function wikicompare_theme() {
-  return array(
-    // Theme function for the compare table
-    'wikicompare_comparative_table' => array(
-      'render element' => 'form',
-      'file' => 'wikicompare_comparative_table.inc',
-    ),
-  );
-}
+
 
 /**
  * Implements hook_revisioning_access_node().
@@ -805,7 +794,7 @@ function get_fastedit_form_response($method = 'ajax'){
         $label = array(
           '#markup' => t('Do you really want to remove this ') . $type . '<br/>',
         );
-        $output .= drupal_render($label);
+        $output .= render($label);
       
       
       } else {
@@ -863,7 +852,7 @@ function get_fastedit_form_response($method = 'ajax'){
           'action' => $fastaction,
         )
       );
-      $output .= drupal_render($submit_link);
+      $output .= render($submit_link);
       $output .= '<input id="form_fastaction_cancel_ ' . $nid . '" type="button" value="Cancel" class="form_fastaction_cancel button"/>';
       $output .= '</form>';
       

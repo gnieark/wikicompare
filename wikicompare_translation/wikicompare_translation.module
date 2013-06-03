@@ -246,7 +246,7 @@ function wikicompare_translation_wikicompare_fastedit_add_element(&$output, $tno
       if ($readonly_translation == True) {
         $field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($field);
+      $output .= render($field);
     }
 
   }
@@ -278,7 +278,7 @@ function wikicompare_translation_wikicompare_fastedit_specific_after(&$output, $
       if ($readonly_translation == True) {
         $selectnode_field['#attributes']['disabled'] = True;
       }
-      $output .= drupal_render($selectnode_field);
+      $output .= render($selectnode_field);
     }
 
   }
