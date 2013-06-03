@@ -184,8 +184,7 @@ function wikicompare_menu() {
   $items['compare'] = array(
     'title' => 'Comparative Table',
     'description' => 'Comparative Table',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('wikicompare_comparative_table'),
+    'page callback' => 'wikicompare_comparative_table',
     'access callback' => TRUE,
     'menu_name' => 'main-menu',
     'weight' => 0,
@@ -379,6 +378,21 @@ function wikicompare_node_info() {
   );
 }
 
+
+/**
+ * Implements hook_theme().
+ */
+/*
+function wikicompare_theme() {
+  return array(
+    // Theme function for the compare table
+    'wikicompare_comparative_table' => array(
+      'render element' => 'form',
+      'file' => 'wikicompare_comparative_table.inc',
+    ),
+  );
+}
+*/
 
 
 ?>

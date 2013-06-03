@@ -12,32 +12,15 @@ function wikicompare_generate_demo_menu() {
   $items['admin/config/wikicompare/export'] = array(
     'title' => 'Export Wikicompare',
     'description' => 'Export Wikicompare',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('wikicompare_export'),
+    'page callback' => 'wikicompare_export_page',
     'access callback' => TRUE,
   );
 
   return $items;
 }
 
-function wikicompare_generate_demo_theme() {
-  return array(
-    // Theme function for the compare table
-    'wikicompare_export' => array(
-      'render element' => 'form',
-      //'file' => 'wikicompare_comparative_table.inc',
-    ),
-  );
-}
 
-function wikicompare_export($form_state) {
-
-  $form = array();
-  return $form;
-
-}
-
-function theme_wikicompare_export($variables) {
+function wikicompare_export_page() {
 
   wikicompare_flush_caches();
 

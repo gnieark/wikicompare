@@ -1,21 +1,8 @@
 <?php
-/**
- * @file
- * Building the compare table page
- */
-
-//For ajax, informations from http://www.angrydonuts.com/drupal-7-advanced-ajax-tips-and-tricks was really helpfull
-
-/**
- * Build the compare table form
- *
- * @return
- *   A form array set for theming
- */
 
 
 
-function wikicompare_comparative_table($form_state) {
+function wikicompare_comparative_table() {
 
 
 
@@ -23,33 +10,6 @@ function wikicompare_comparative_table($form_state) {
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
-  
-
-  $form = array();
-  return $form;
-
-}
-
-
-/**
- * Theme callback for the wikicompare_comparative_table form
- *
- * The theme callback will format the $form data structure into a table and
- * add our tabledrag functionality.  (Note that drupal_add_tabledrag should be
- * called from the theme layer, and not from a form declaration.  This helps
- * keep template files clean and readable, and prevents tabledrag.js from
- * being added twice accidently.
- *
- * @return
- *   The rendered tabledrag form
- */
-
-
-function theme_wikicompare_comparative_table($variables) {
-
-  $form = $variables['form'];
-
-
 
   $checkbox_settings =  array(
     '#type' => 'checkbox',
