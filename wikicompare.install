@@ -59,41 +59,7 @@ function wikicompare_schema() {
 
   }
 
-/*
-  $schema['cache_wikicompare_users'] = array(
 
-    'description' => 'Cache table for the access to node to users',
-    'fields' => array(
-      'nid' => array(
-        'description' => 'The nid of the node',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'uid' => array(
-        'description' => 'The uid of the user',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-    ),
-    'indexes' => array(
-      'nid' => array('nid'),
-      'uid' => array('uid'),
-    ),
-    'foreign keys' => array(
-      'node' => array(
-        'table' => 'node',
-        'columns' => array('nid' => 'nid'),
-      ),
-      'user' => array(
-        'table' => 'users',
-        'columns' => array('uid' => 'uid'),
-      ),
-    )
-
-  );
-*/  
   return $schema;
 
 }
@@ -246,8 +212,8 @@ function wikicompare_install() {
 
 
 
-  //Assign body field to the new node types
-//  $types = node_type_get_types();
+
+
 
   $field = field_info_field('body');
   if (empty($field)) {
@@ -382,7 +348,6 @@ function wikicompare_install() {
     'cardinality' => -1,
     'settings' => array(
       'target_type' => 'user',
-//      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
     ),
   );
   field_create_field($field);
@@ -393,7 +358,7 @@ function wikicompare_install() {
     'cardinality' => -1,
     'settings' => array(
       'target_type' => 'user',
-//      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
+
     ),
   );
   field_create_field($field);
@@ -611,18 +576,6 @@ function wikicompare_install() {
 
 
 
-/*
-  foreach (module_implements('wikicompare_install_node_install') as $module) {
-    $function = $module . '_wikicompare_install_node_install';
-    $function($type);
-  }
-*/
-/*
-  if (module_exists('wikicompare_needs')) {
-    wikicompare_translation_wikicompare_install_node_install($type);
-  }
-*/
-
 
 }
 
@@ -632,7 +585,7 @@ function wikicompare_node_install($type) {
 
   $t = get_t();
 
-//  node_add_body_field( $types[$type] , $t('Description'));
+
 
 
 
@@ -738,7 +691,6 @@ function wikicompare_node_install($type) {
       ),
       'settings' => array(
         'target_type' => 'user',
-//        'handler_settings' => array('target_bundles' => array($type)),
       ),
     );
     field_create_instance($instance);
@@ -753,7 +705,7 @@ function wikicompare_node_install($type) {
       ),
       'settings' => array(
         'target_type' => 'user',
-//        'handler_settings' => array('target_bundles' => array($type)),
+
       ),
     );
     field_create_instance($instance);
@@ -1016,13 +968,6 @@ function wikicompare_uninstall() {
 
   node_delete_multiple($nids);
 
-  //Delete all fields of feature type.
-
-  //foreach (array_keys(_feature_installed_fields()) as $field) {
-  //  field_delete_field($field);
-  //}
-
-  //Delete all variable of feature type.
 
   foreach (array('compared', 'feature', 'implementation') as $type) {
 

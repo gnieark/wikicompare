@@ -31,35 +31,6 @@ function need_form($node, $form_state) {
 
 
 
-/*
-function wikicompare_needs_wikicompare_install_node_install($type) {
-
-  if ($type == 'need') {
-
-
-
-    $instance = array(
-      'field_name' => 'need_state',
-      'entity_type' => 'node',
-      'bundle' => 'need',
-      'label' => 'State',
-      'description' => 'TODO : State of the need',
-      'required' => 1,
-      'default_value' => array(
-        0 => array(
-          'value' => 'Disactivated',
-        ),
-      ),
-      'widget' => array(
-        'type' => 'options_select',
-      ),
-    );
-    field_create_instance($instance);
-
-  }
-
-}
-*/
 
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
 
@@ -75,7 +46,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     }
   }
 
-  //hide($form['need_features']);
+
   $selected_feature_itemlist = '';
   $feature_array = array();
   if ($selected_feature_ids) {
@@ -133,29 +104,7 @@ function wikicompare_needs_build_form_settings(&$settings, &$node, &$nid, $form,
 
 
 function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output) {
-/*
-  $needs = array();
 
-  $query = db_select('cache_need', 'n');
-  $query->addField('n', 'nid', 'nid');
-  $query->addField('n', 'title', 'title');
-  $query->addField('n', 'has_children', 'has_children');
-  $query->addField('n', 'parent_id', 'parent_id');
-  $query->condition('n.parent_id', NULL);
-  $result = $query->execute();
-
-  $needs = request_db('need');
-
-  $itemlist_settings = initialize_itemlist_settings('select_multi_dialog');
-  $itemlist_settings['context'] = 'table';
-  $item_list_data = get_item_list($needs, 'need', 'table', 0, $itemlist_settings);
-  $output ="<div id='comparative_table_main_need'>";
-  $output .= theme_item_list(array('items' => $item_list_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
-
-  $output .= '<p><a id="add_need_link" href="?q=node/add/need">Add</a><span id="add_need_link_fastaction"/>';
-  $output .= '<div id="need_table_children_0"></div>';
-  $output .= '</div>';
-*/
 
   $output .= wikicompare_needs_table_render_need();
 
@@ -233,22 +182,6 @@ function wikicompare_needs_wikicompare_comparative_table_prepare_compute(&$selec
 
 }
 
-/*
-function wikicompare_needs_wikicompare_comparative_table_toogle_fastedit(&$commands, $_POST) {
-
-  $needs = array();
-  if (!empty($_POST['need_ids'])) {
-    $needs = request_db('need', array('fastedit_status' => 1), 'nids', $_POST['need_ids']);
-  }
-
-  foreach($needs as $nid =>$need) {
-    $output = add_fastedit_items('need', $need);
-    //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
-    $commands[] = ajax_command_invoke('#need_node_link_' . $nid, 'after', array($output));
-  }
-
-}
-*/
 
 function wikicompare_needs_wikicompare_comparative_table_fastedit_parent(&$parent_id, $type, $node) {
 
@@ -311,43 +244,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_specific(&$out
     $output .= '<div id="form_selected_features">';
     $output .= $selected_feature_itemlist;
     $output .= '</div><div id="need-features" style="display:none;">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
-/*
-    $state_field = array(
-      '#type' => 'select',
-      '#title' => t('State'),
-      '#options' => array(
-        'New' => 'New',
-        'Incomplete' => 'Incomplete',
-        'Published' => 'Published',
-        'Disactivated' => 'Disactivated',
-      ),
-      '#id' => 'form_' . $type . '_fast' . $fastaction . '_state_' . $nid,
-        '#attributes' => array(
-        'class' => array('form_' . $type . '_fast' . $fastaction . '_state'),
-      )
-    );
-    if ($fastaction == 'edit') {
-      $state_field['#value'] = $node->wikicompare_state['und'][0]['value'];
-    }
-    $output .= drupal_render($state_field);
-*/
 
-/*TODO    $support_field = array(
-      '#type' => 'select',
-      '#title' => t('Support'),
-      '#options' => array(
-        0 => 'Unsupported',
-        1 => 'Supported',
-      ),
-      '#id' => 'form_' . $type . '_fast' . $fastaction . '_support_' . $nid,
-      '#attributes' => array(
-        'class' => array('form_' . $type . '_fast' . $fastaction . '_support'),
-      )
-    );
-    if ($fastaction == 'edit') {
-      $support_field['#value'] = $node->feature_support['und'][0]['value'];
-    }
-    $output .= drupal_render($support_field);*/
   }
 
 }
@@ -376,45 +273,12 @@ function wikicompare_needs_wikicompare_comparative_table_fastedit_submit(&$node,
       $need_features[] = $array;
     }
     $node->wikicompare_features['und'] = $need_features;
-//    $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
-//    $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-//    $node->wikicompare_state['und'][0]['value'] = $_POST['state'];
+
 
   }
 
 }
-/*
-function wikicompare_needs_wikicompare_comparative_table_cleaning(&$commands, $_POST) {
 
-
-  $need_ids = array();
-  foreach ($_POST['need_ids'] as $need) {
-    $need_ids[$need[0]] = $need[0];
-  }
-  $needs = array();
-  if (!empty($need_ids)) {
-    $needs = request_db('need', array(), 'nids', $need_ids);
-  }
-    
-  foreach ($_POST['need_ids'] as $need) {
-    if (isset($need[1])) {
-      if ($need[1] != $needs[$need[0]]['data']->parent_id) {
-        if (in_array($need[1], $_POST['need_displayed_ids'])) {
-          $commands[] = ajax_command_invoke('#need_link_' . $need[1], 'click', array());
-        }
-        if (!in_array($needs[$need[0]]['data']->parent_id, $_POST['need_displayed_ids'])) {
-          $commands[] = ajax_command_invoke('#need_link_' . $needs[$need[0]]['data']->parent_id, 'click', array());
-        }
-      }
-    }
-  }
-
-  foreach($needs as $nid => $need) {
-    $commands[] = ajax_command_invoke('.need_title_' . $nid, 'html', array($need['data']->title));
-  }
-
-}
-*/
 
 function recover_features($need_ids) {
 
@@ -488,7 +352,7 @@ function need_insert($node) {
     $query->execute();
   }
 
-//TODO update many2many table
+
 }
 
 function need_delete($node) {
@@ -575,7 +439,6 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
 function wikicompare_needs_wikicompare_translation_form(&$form, &$form_state, $node) {
 
   if (isset($form['need_features'])) {
-//    $form['need_features'] = array('#markup' => $node->wikicompare_support['und'][0]['value']);
     unset($form_state['node']->wikicompare_features);
   }
 

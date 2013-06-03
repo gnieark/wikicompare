@@ -44,26 +44,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 
-/*
-      if ($(this).hasClass('feature')) {
-        type = 'feature';
-      } else if ($(this).hasClass('compared')) {
-        type = 'compared';
-      } else if ($(this).hasClass('need')) {
-        type = 'need';
-      }*/
+
 
       var type = $(this).attr('type');
       var context = $(this).attr('context');
-/*
-      if ($(this).hasClass('compared_main_table')) {
-        context = 'compared_main_table';
-      } else if ($(this).hasClass('select_multi_dialog')) {
-        context = 'select_multi_dialog';
-      } else if ($(this).hasClass('select_simple_dialog')) {
-        context = 'select_simple_dialog';
-      }
-*/
+
 
       if ($(this).hasClass('computed')) {
 
@@ -293,14 +278,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
       });
 
 
-/*
-      //Recover the link_id used later in the functions
-      var link_id = $(this).attr('id');
-
-
-
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_fastedit'); */
 
     });
 
@@ -312,38 +289,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
-/*      
-      if ($(this).hasClass('compared_add_link')) {
-        type = 'compared';
-        context = 'add';
-      } else if ($(this).hasClass('compared_edit_link')) {
-        type = 'compared';
-        context = 'edit';
-      } else if ($(this).hasClass('compared_remove_link')) {
-        type = 'compared';
-        context = 'remove';
-      } else if ($(this).hasClass('feature_add_link')) {
-        type = 'feature';
-        context = 'add';
-      } else if ($(this).hasClass('feature_edit_link')) {
-        type = 'feature';
-        context = 'edit';
-      } else if ($(this).hasClass('feature_remove_link')) {
-        type = 'feature';
-        context = 'remove';
-      } else if ($(this).hasClass('implementation_edit_link')) {
-        type = 'implementation';
-        context = 'edit';
-      } else if ($(this).hasClass('need_add_link')) {
-        type = 'need';
-        context = 'add';
-      } else if ($(this).hasClass('need_edit_link')) {
-        type = 'need';
-        context = 'edit';
-      } else if ($(this).hasClass('need_remove_link')) {
-        type = 'need';
-        context = 'remove';
-      } */
+
 
       var type = $(this).attr('type');
       var action = $(this).attr('action');
@@ -353,13 +299,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastedit_form', type, action);
     });
     
-/*
-    $('.form_fastedit').submit(function () {
-      
-      $('#form_fastaction_submit_link').click();
-      //Block the page loading
-      return false;
-    }); */
+
        
      $('.form_fastaction').submit(function () {
       var patt = /[0-9]+/g;
@@ -456,9 +396,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (context == 'multidialog') {
             options.data.dialog = true;
 
-//            if (context == 'multidialog') {
+
             options.data.selected_feature_ids = selected_feature_dialog_ids;
-//            } 
+
           } else if (context != 'selectdialog') {
 
             make_cleaning = true;
@@ -536,7 +476,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'compute_inherit') {
           send_node_id = true;
           options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').attr('checked');
-//          options.data.support = $('#edit-wikicompare-support-und').attr('checked');
+
         }
         
         if (action == 'show_fastedit_form') {
@@ -588,8 +528,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             var need_feature_ids = {};
             var i = 0;
             $('.need_feature').each(function (key, value) {
-              //var need_feature_id = $('#' + $(this).attr('id'));
-              //var patt = /[0-9]+/g;
+
               need_feature_ids[$(this).text()] = $(this).text();
               i = i + 1;
             });
@@ -872,16 +811,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         this.old_success(response, status);
 
 
-/*
-        dialog_text = '';
-        if ($('#' + link_id).hasClass('dialog')) {
-          dialog_text = 'dialog_';
-        }
-        
-        if (action == 'toogle_fastedit') {
-
-        }
-*/
         
         if (manage_displayed_flag == true) {
         
@@ -915,7 +844,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('.implementation_compared_' + node_id).fadeIn();
             }
             
-//TODO Repli des enfants, copier le fonctionnement sur les autres form ou supprimer la feature, le clean pourrait suffire
+
             if (action == 'show_fastedit_form') {
               if (type == 'need') {
                 var need_feature_ids = {};
@@ -950,8 +879,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             if (action == 'expand_row_children') {
               //Hide the children with slide animation
               remove_children_tree(node_id, '.feature_link_children_', '.feature_table_child_', false);
-              //Mark the children row so they will be remove at the next event. We can't do it now because otherwise it will crash the slide animation
-//              $('.feature_row_child_' + node_id).addClass('to_remove');
+
             }
           
             if (action == 'toogle_compared_checkbox') {   
@@ -982,10 +910,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     }
     
     function remove_children_tree(node_id, link_prefix, children_prefix, computed) {
-/*alert(node_id.toSource());
-alert(link_prefix.toSource());
-alert(children_prefix.toSource());
-alert(computed.toSource());*/
+
       $(children_prefix + node_id).each(function(index) {
         var patt = /[0-9]+/g;
         var node_child_id = patt.exec($(this).attr('id'));

@@ -84,12 +84,6 @@ function wikicompare_insert_node($type, $node) {
     $fields['weight'] = $node->wikicompare_weight['und'][0]['value'];
   }
 
-  //Allow to insert other field from other modules. The $fields variable will be modified in other module by reference.
-//TODO ancien _wikicompare_cache_compared_fields
-  foreach (module_implements('wikicompare_cache_node_insert_fields') as $module) {
-    $function = $module . '_wikicompare_cache_node_insert_fields';
-    $function($fields, $type, $node);
-  }
 
   if (module_exists('wikicompare_inherit_compared')) {
     wikicompare_inherit_compared_cache_insert_fields($fields, $type, $node);
@@ -143,12 +137,7 @@ function wikicompare_insert_node($type, $node) {
       if (module_exists('wikicompare_inherit_compared')) {
         wikicompare_inherit_compared_insert_implementation($node_implementation);
       }
-/*
-      //Allow others modules to modify the implrmentation to insert
-      foreach (module_implements('wikicompare_insert_implementation') as $module) {
-        $function = $module . '_wikicompare_insert_implementation';
-        $function($node_implementation);
-      }*/
+
 
       //Save the implementation node in database
       node_save($node_implementation);
@@ -161,12 +150,7 @@ function wikicompare_insert_node($type, $node) {
         'compared_id' => $node_implementation->wikicompare_compared_id['und'][0]['target_id'],
         'support' => 0,
       );
-/*
-      //Allow others modules to modify the cache implrmentation to insert
-      foreach (module_implements('wikicompare_cache_implementation_fields') as $module) {
-        $function = $module . '_wikicompare_cache_implementation_fields';
-        $function($cache_implementation, $node_implementation);
-      } */
+
       if (module_exists('wikicompare_inherit_compared')) {
         wikicompare_inherit_compared_cache_implementation_fields($cache_implementation, $node_implementation);
       }
@@ -178,10 +162,7 @@ function wikicompare_insert_node($type, $node) {
 
     //If some fields for implementation cache are defined in other module, then we need to modify the header before the mass insert
     $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support');
-/*    foreach (module_implements('wikicompare_cache_implementation_fields_header') as $module) {
-      $function = $module . '_wikicompare_cache_implementation_fields_header';
-      $function($header);
-    }*/
+
     if (module_exists('wikicompare_inherit_compared')) {
       wikicompare_inherit_compared_cache_fields_header($header, 'implementation');
     }
@@ -227,12 +208,7 @@ function compared_delete($node) {
 }
 
 function implementation_delete($node) {
-/*
-  foreach (module_implements('wikicompare_delete_after') as $module) {
-    $function = $module . '_wikicompare_delete_after';
-    $function($node);
-  }
-*/
+
 
   if (module_exists('wikicompare_translation')) {
     wikicompare_translation_wikicompare_delete_after($node);
@@ -292,12 +268,7 @@ function wikicompare_delete_node($type, $node) {
     ->condition('parent_id', $node->nid)
     ->execute();
 
-/*
-  //Hook to trigger action from other modules
-  foreach (module_implements('wikicompare_cache_compared_delete') as $module) {
-    $function = $module . '_wikicompare_cache_compared_delete';
-    $function($node);
-  }*/
+
 
   if (module_exists('wikicompare_inherit_compared')) {
     wikicompare_inherit_compared_cache_compared_delete($node);
@@ -330,12 +301,7 @@ function wikicompare_delete_node($type, $node) {
       wikicompare_update_compare_tree($type, array($node->wikicompare_parent_id['und'][0]['target_id']));
     }
   }
-/*
-  foreach (module_implements('wikicompare_delete_after') as $module) {
-    $function = $module . '_wikicompare_delete_after';
-    $function($node);
-  }
-*/
+
 
   if (module_exists('wikicompare_translation')) {
     wikicompare_translation_wikicompare_delete_after($node);
@@ -365,12 +331,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
 
     $types = array('compared', 'feature', 'implementation');
-/*
-    foreach (module_implements('wikicompare_node_types') as $module) {
-      $function = $module . '_wikicompare_node_types';
-      $function($array);
-    }
-*/
+
 
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_wikicompare_node_types($types);
@@ -388,12 +349,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
 
       $types = array('compared', 'feature');
-/*
-      foreach (module_implements('wikicompare_node_types') as $module) {
-        $function = $module . '_wikicompare_node_types';
-        $function($array);
-      }
-*/
+
 
       if (module_exists('wikicompare_needs')) {
         wikicompare_needs_wikicompare_node_types($types);
@@ -460,10 +416,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
       if ($node_revision->type == 'compared') {
         //Allow others modules to make check and mark to update following other fields in the compared. We unfortunately can't directly use invoke_all with reference, so we use this workaround. Will maybe be corrected in Drupal 8. 
-/*        foreach (module_implements('wikicompare_preupdate_compared') as $module) {
-          $function = $module . '_wikicompare_preupdate_compared';
-          $function($node_revision, $current_node);
-        }*/
+
         if (module_exists('wikicompare_inherit_compared')) {
           wikicompare_inherit_compared_preupdate_compared($test, $node_revision, $current_node);
         }
@@ -519,12 +472,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   if ($op == 'post publish') {
 
     $types = array('compared', 'feature', 'implementation');
-/*
-    foreach (module_implements('wikicompare_node_types') as $module) {
-      $function = $module . '_wikicompare_node_types';
-      $function($array);
-    }
-*/
+
 
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_wikicompare_node_types($types);
@@ -565,14 +513,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         $fields['type'] = $node_revision->wikicompare_type['und'][0]['value'];
         $fields['weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
       }
-/*
-      //Update other fields from others modules
-//TODO old wikicompare_cache_compared_fields
-      foreach (module_implements('wikicompare_cache_update_fields') as $module) {
-        $function = $module . '_wikicompare_cache_update_fields';
-        $function($fields, $node_revision);
-      }
-*/
+
 
       if (module_exists('wikicompare_needs')) {
         wikicompare_needs_wikicompare_cache_update_fields($fields, $node_revision);
@@ -621,12 +562,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       }
 
     }
-/*
-    foreach (module_implements('wikicompare_cache_after_update_fields') as $module) {
-      $function = $module . '_wikicompare_cache_after_update_fields';
-      $function($fields, $node_revision);
-    }
-*/
+
 
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_wikicompare_cache_after_update_fields($fields, $node_revision);

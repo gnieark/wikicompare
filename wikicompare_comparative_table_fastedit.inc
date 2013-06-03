@@ -2,115 +2,6 @@
 
 
 
-
-/*
- * Ajax callback function called by javascript to add or remove the fastedit items in the comparative table.
- */
-function toggle_fastedit_response($method = 'ajax'){
-
-  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($method == 'ajax') {
-
-    //If we want to displayed the fastedit items
-    if ($_POST['fastedit_status'] == false) {
-
-/*
-      $compareds = array();
-      if (!empty($_POST['compared_ids'])) {
-
-        $compareds = request_db('compared', array('fastedit_status' => 1, 'can_be_translated' => 1), 'nids', $_POST['compared_ids']);
-
-      }
-
-      $commands = array();
-      foreach($compareds as $nid => $compared) {
-
-        $output = add_fastedit_items('compared' , $compared);
-
-        $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array($output));
-        //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-        $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
-
-      } */
-/*
-      $compared = array(
-        'data' => new stdClass(),
-      );
-      $compared['data']->nid = 0;
-      $commands[] = ajax_command_invoke('#add_compared_link', 'after', array(add_fastedit_items('compared' , $compared))); 
-*/
-/*
-      $features = array();
-      if (!empty($_POST['feature_ids'])) {
-
-
-        $features = request_db('feature', array('fastedit_status' => 1, 'can_be_translated' => 1), 'nids', $_POST['feature_ids']);
-
-      }
-
-      foreach($features as $nid =>$feature) {
-
-        $output = add_fastedit_items('feature', $feature);
-        //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
-        $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array($output));
-
-      } */
-/*
-      $feature = array(
-        'data' => new stdClass(),
-      );
-      $feature['data']->nid = 0;
-      $commands[] = ajax_command_invoke('#add_feature_link', 'after', array(add_fastedit_items('feature' , $feature)));
- */     
-/*
-      $implementations = array();
-      if (!empty($_POST['implementation_ids'])) {
-
-        $implementations = request_db('implementation', array('fastedit_status' => 1, 'can_be_translated' => 1), 'nids', $_POST['implementation_ids']);
-
-
-        foreach($implementations as $nid => $implementation) {
-
-          $output = add_fastedit_items('implementation', $implementation);
-          //Insert the link in the page. Note we can't use ajax_command_after because it adds an unwanted div
-          $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array($output));
-
-        }
-
-      }
-*/
-      
-
-      //Allow others modules to modify the output
-      foreach (module_implements('wikicompare_comparative_table_toogle_fastedit') as $module) {
-        $function = $module . '_wikicompare_comparative_table_toogle_fastedit';
-        $function($commands, $_POST);
-      }
-
-      //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-      $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
-
-      $page = array('#type' => 'ajax', '#commands' => $commands);
-
-      return $page;
-
-    //If we want to hide the fastedit items
-    } else {
-
-      //In this case we return nothing, everything is managed on the javascript side
-      $commands = array();
-      $page = array('#type' => 'ajax', '#commands' => $commands);
-      return $page;
-
-    }
-
-  //If javascript isn't enabled, we redirect to an error page.nds = array();
-  } else {
-    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
-    return $output;
-  }
-}
-
 function add_fastedit_items($type, $node_array){
 
 
@@ -151,12 +42,7 @@ function add_fastedit_items($type, $node_array){
     }
 
 
-/*
-    foreach (module_implements('wikicompare_fastedit_items_test') as $module) {
-      $function = $module . '_wikicompare_fastedit_items_test';
-      $function($test, $node_array);
-    }
-*/
+
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_wikicompare_fastedit_items_test($test, $node_array);
     }
@@ -262,12 +148,6 @@ function get_fastedit_form_response($method = 'ajax'){
             }
           }
 
-/*
-          foreach (module_implements('wikicompare_fastedit_get_tnode') as $module) {
-            $function = $module . '_wikicompare_fastedit_get_tnode';
-            $function($tnode, $readonly_translation, $node);
-          }
-*/
 
           if (module_exists('wikicompare_translation')) {
             wikicompare_translation_wikicompare_fastedit_get_tnode($tnode, $readonly_translation, $node);
@@ -322,13 +202,7 @@ function get_fastedit_form_response($method = 'ajax'){
           $commands[] = ajax_command_invoke('#feature_table_' . $node->wikicompare_feature_id['und'][0]['target_id'], 'after', array($output));
           break;
       }
-/*
-      //Allow others modules to modify the output
-      foreach (module_implements('wikicompare_comparative_table_fastedit_command') as $module) {
-        $function = $module . '_wikicompare_comparative_table_fastedit_command';
-        $function($commands, $type, $nid, $output);
-      }
-*/
+
 
       if (module_exists('wikicompare_needs')) {
         wikicompare_needs_wikicompare_comparative_table_fastedit_command($commands, $type, $nid, $output);
@@ -407,12 +281,7 @@ function submit_fastedit_form_response($method = 'ajax'){
       }
 
       $tnode = new stdClass();
-/*
-      foreach (module_implements('wikicompare_fastedit_submit_init_tnode') as $module) {
-        $function = $module . '_wikicompare_fastedit_submit_init_tnode';
-        $function($tnode, $_POST, $fastaction);
-      }   
-*/
+
       if (module_exists('wikicompare_translation')) {
         wikicompare_translation_wikicompare_fastedit_submit_init_tnode($tnode, $_POST, $fastaction);
       } 
@@ -423,12 +292,7 @@ function submit_fastedit_form_response($method = 'ajax'){
         } else {
           $missing_field = TRUE;
         }
-/*
-        foreach (module_implements('wikicompare_fastedit_submit_element') as $module) {
-          $function = $module . '_wikicompare_fastedit_submit_element';
-          $function($tnode, $_POST, 'title', 'title');
-        }
-*/
+
         if (module_exists('wikicompare_translation')) {
           wikicompare_translation_wikicompare_fastedit_submit_element($tnode, $_POST, 'title', 'title', $fastaction);
         } 
@@ -510,23 +374,13 @@ function submit_fastedit_form_response($method = 'ajax'){
             }
         }
       }
-/*
-      foreach (module_implements('wikicompare_comparative_table_fastedit_submit') as $module) {
-        $function = $module . '_wikicompare_comparative_table_fastedit_submit';
-        $function($node, $type, $_POST);
-      }
-*/
+
 
       if (module_exists('wikicompare_needs')) {
         wikicompare_needs_wikicompare_comparative_table_fastedit_submit($node, $type, $_POST);
       }
 
-/*
-      foreach (module_implements('wikicompare_fastedit_submit_after') as $module) {
-        $function = $module . '_wikicompare_fastedit_submit_after';
-        $function($node, $tnode, $_POST);
-      }
-*/
+
 
       if (module_exists('wikicompare_translation')) {
         wikicompare_translation_wikicompare_fastedit_submit_after($node, $tnode, $_POST, $fastaction);

@@ -6,6 +6,7 @@
   * The main function to update the percent and css_class for each implementation
   * It'll find all children on compared and feature axis for the ids passed in argument, compute the percent thanks to theses informations and feature type, and finally if the percent changed it'll update the parents on feature and compared axis.
   * This is a recursive function, which will call itself on children side if a cache percent is missing and parent side if the percent computed change, and in both the feature and compared axis.
+  * DISCLAIMER : Trying to read this function may cause important headeaches.
   */
 function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
@@ -59,12 +60,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     }
 
     $query->where('nfpnf.compared_id = fs.compared_id OR nf.parent_id IS NULL'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
-/*
-    //Allow the others modules to update the query
-    foreach (module_implements('wikicompare_update_main_query') as $module) {
-      $function = $module . '_wikicompare_update_main_query';
-      $function($query);
-    }*/
+
 
     if (module_exists('wikicompare_inherit_compared')) {
       wikicompare_inherit_compared_update_main_query($query);
@@ -238,14 +234,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
     }
 
-  
-/*
-    //Allow others modules to make some action before we start computing the node
-    foreach (module_implements('wikicompare_update_comparative_table_preparation') as $module) {
-      $function = $module . '_wikicompare_update_comparative_table_preparation';
-      $function($nids, $nodes, $type);
-    }
-*/
+
 
     if (module_exists('wikicompare_inherit_compared')) {
       wikicompare_inherit_compared_update_comparative_table_preparation($nids, $nodes, $type);
@@ -301,12 +290,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
         $node->percent = 0;
         $node->css_class = 'cell-support-no';
       }
-/*
-      //Allow others modules to change the way support is computed at the base of the tree
-      foreach (module_implements('wikicompare_from_other_support') as $module) {
-        $function = $module . '_wikicompare_from_other_support';
-        $function($node);
-      }*/
+
 
       if (module_exists('wikicompare_inherit_compared')) {
         wikicompare_inherit_compared_from_other_support($node);
@@ -355,13 +339,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
           $to_update[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
         }
       }
-/*
-      //Allow others modules to update others implementations
-      foreach (module_implements('wikicompare_update_comparative_table_post') as $module) {
-        $function = $module . '_wikicompare_update_comparative_table_post';
-        $function($to_update, $node);
-      }
-*/
+
       if (module_exists('wikicompare_inherit_compared')) {
         wikicompare_inherit_compared_update_comparative_table_post($to_update, $node);
       }
@@ -554,11 +532,7 @@ function wikicompare_flush_caches() {
     if (module_exists('wikicompare_inherit_compared')) {
       wikicompare_inherit_compared_flush_select_compared($query, $type);
     }
-/*
-  foreach (module_implements('wikicompare_select_compared') as $module) {
-    $function = $module . '_wikicompare_select_compared';
-    $function($query);
-  }*/
+
 
     $result = $query->execute();
 
@@ -601,11 +575,7 @@ function wikicompare_flush_caches() {
       if (module_exists('wikicompare_inherit_compared')) {
         wikicompare_inherit_compared_flush_cache_compared($to_insert, $record, $type);
       }
-/*
-    foreach (module_implements('wikicompare_flush_cache_compared') as $module) {
-      $function = $module . '_wikicompare_flush_cache_compared';
-      $function($compared, $record);
-    } */
+
 
 
 
@@ -748,12 +718,7 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   }
 
 
-/*
-  foreach (module_implements('wikicompare_request_db') as $module) {
-    $function = $module . '_wikicompare_request_db';
-    $function($query, $type, $settings);
-  }
-*/
+
 
   if (module_exists('wikicompare_inherit_compared')) {
     wikicompare_inherit_compared_wikicompare_request_db($query, $type, $settings);
@@ -810,24 +775,14 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
             $res[$record->feature_id][$record->compared_id]['no-remove'] = True;
           }
         }
-/*
-        foreach (module_implements('wikicompare_request_db_fastedit') as $module) {
-          $function = $module . '_wikicompare_request_db_fastedit';
-          $function($res, $record, $type, $nids);
-        }
-*/
+
         if (module_exists('wikicompare_translation')) {
           wikicompare_translation_wikicompare_request_db_fastedit($res, $record, $type, $nids, $settings);
         }
       }
     }
 
-/*
-    foreach (module_implements('wikicompare_request_db_build') as $module) {
-      $function = $module . '_wikicompare_request_db_build';
-      $function($res, $record);
-    }
-*/
+
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_wikicompare_request_db_build($res, $record);
     }

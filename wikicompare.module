@@ -86,13 +86,7 @@ Activate this feature can take some time, because the cache table need to be rec
   );
 
   $form['#submit'][] = 'submit_settings';
-/*
-  //Allow others modules to modify the settings page
-  foreach (module_implements('wikicompare_settings_page') as $module) {
-    $function = $module . '_wikicompare_settings_page';
-    $function($form);
-  }
-*/
+
   if (module_exists('wikicompare_generate_demo')) {
     wikicompare_generate_demo_wikicompare_settings_page($form);
   }
@@ -105,7 +99,7 @@ Activate this feature can take some time, because the cache table need to be rec
 function submit_settings($form, $form_state) {
 
   if ($form_state['input']['wikicompare_main_language'] != language_default('language')) {
-//TODO Intervertir les translation_source entre les nodes, réassigner les champs perso et les implementation sur le nouveau node referent. Si node du nouveau language non existant, changer le langage du precedent.
+
     $languages = language_list();
     $old_key = language_default('language');
     $new_key = $form_state['input']['wikicompare_main_language'];
@@ -114,12 +108,7 @@ function submit_settings($form, $form_state) {
     $res = array();
 
     $types = array('compared', 'feature', 'implementation');
-/*
-    foreach (module_implements('wikicompare_node_types') as $module) {
-      $function = $module . '_wikicompare_node_types';
-      $function($array);
-    }
-*/
+
 
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_wikicompare_node_types($array);
@@ -131,12 +120,6 @@ function submit_settings($form, $form_state) {
     $query->condition('n.language', $old_key);
     $query->condition('n.type', $types, 'in');
 
-/*
-    foreach (module_implements('wikicompare_settings_change_language_request') as $module) {
-      $function = $module . '_wikicompare_settings_change_language_request';
-      $function($query, $new_key);
-    }
-*/
 
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_wikicompare_settings_change_language_request($query, $new_key);
@@ -147,13 +130,7 @@ function submit_settings($form, $form_state) {
       $old_ids[$record->nid] = $record->nid;
       $res[$record->nid] = $record;
     }
-/*
-    //Allow others modules to update others implementations
-    foreach (module_implements('wikicompare_settings_change_language') as $module) {
-      $function = $module . '_wikicompare_settings_change_language';
-      $function($old_ids, $res);
-    }
-*/
+
 
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_wikicompare_settings_change_language($old_ids, $res);
@@ -305,17 +282,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-/*
-  $items['toogle_fastedit_callback'] = array(
-    'page callback' => 'toggle_fastedit_response',
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
-    'page arguments' => array(),
-    'type' => MENU_CALLBACK,
-    'file' => 'wikicompare_comparative_table_fastedit.inc',
-    'delivery callback' => 'ajax_deliver',
-  );
-*/
+
   $items['get_fastedit_form_callback'] = array(
     'page callback' => 'get_fastedit_form_response',
     'access callback' => 'user_access',
@@ -471,12 +438,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         'fastedit_status' => 0,
       )
     );
-/*
-    foreach (module_implements('wikicompare_build_form_settings') as $module) {
-      $function = $module . '_wikicompare_build_form_settings';
-      $function($settings, $node, $nid, $form, $form_state);
-    }
-*/
+
 
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_build_form_settings($settings, $node, $nid, $form, $form_state);
@@ -514,12 +476,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         $name_field['#attributes']['disabled'] = True;
       }
       $output .= drupal_render($name_field);
-/*
-      foreach (module_implements('wikicompare_fastedit_add_element') as $module) {
-        $function = $module . '_wikicompare_fastedit_add_element';
-        $function($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
-      }
-*/
+
       if (module_exists('wikicompare_translation')) {
         wikicompare_translation_wikicompare_fastedit_add_element($output, $tnode, $name_field_clone, 'title', $readonly_translation, $fastaction);
       }
@@ -565,13 +522,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           $res = get_recursive_data($type, array($parent_id));
           $parent_name = $res['data'][$parent_id]['data']->fulltitle;
         }
-/*
-        //Allow others modules to modify the output
-        foreach (module_implements('wikicompare_comparative_table_fastedit_parent') as $module) {
-          $function = $module . '_wikicompare_comparative_table_fastedit_parent';
-          $function($parent_id, $type, $node);
-        }
-*/
+
 
         if (module_exists('wikicompare_needs')) {
           wikicompare_needs_wikicompare_comparative_table_fastedit_parent($parent_id, $type, $node);
@@ -761,28 +712,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
         $output .= ' value="1" />  <label class="option" for="form_implementation_fastedit_support_' . $node->nid . '">Support? </label>';
       }
-/*
-      $support_field = array(
-        '#type' => 'select',
-        '#title' => t('Support'),
-        '#required' => TRUE,
-        '#options' => array(
-          0 => 'Unsupported',
-          1 => 'Supported',
-        ),
-        '#id' => 'form_' . $type . '_fast' . $fastaction . '_support_' . $nid,
-        '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_support'),
-        )
-      );
-      if ($fastaction == 'edit') {
-        $support_field['#value'] = $node->wikicompare_support['und'][0]['value'];
-      }
-      if ($readonly == True) {
-        $support_field['#attributes']['disabled'] = True;
-      }
-      $output .= drupal_render($support_field);
-*/
+
     }
 
   }
@@ -908,11 +838,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
   }
 
   if ($form_type == 'form') {
-/*
-    foreach (module_implements('wikicompare_build_form_after') as $module) {
-      $function = $module . '_wikicompare_build_form_after';
-      $function($form, $form_state, $node);
-    }*/
+
 
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_build_form_after($form, $form_state, $node);
@@ -921,13 +847,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
   }
 
   if ($form_type == 'fastedit') {
-/*
-    //Allow others modules to modify the output
-    foreach (module_implements('wikicompare_comparative_table_fastedit_specific') as $module) {
-      $function = $module . '_wikicompare_comparative_table_fastedit_specific';
-      $function($output, $type, $node, $fastaction, $nid);
-    }
-*/
+
 
     if (module_exists('wikicompare_needs')) {
       wikicompare_needs_wikicompare_comparative_table_fastedit_specific($output, $type, $node, $fastaction, $nid);
@@ -945,12 +865,6 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
     $output .= drupal_render($revision_field);
 
     //Allow others modules to modify the output
-/*
-    foreach (module_implements('wikicompare_fastedit_specific_after') as $module) {
-      $function = $module . '_wikicompare_fastedit_specific_after';
-      $function($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
-    }
-*/
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_wikicompare_fastedit_specific_after($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
     }

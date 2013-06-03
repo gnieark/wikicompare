@@ -65,10 +65,7 @@ function wikicompare_needs_install() {
   // Ensure that new node type is available.
   node_types_rebuild();
   
-/*
-  //Assign body field to the new node types
-  $types = node_type_get_types();
-*/
+
   $field = array(
     'field_name' => 'wikicompare_features',
     'type' => 'entityreference',
@@ -79,20 +76,7 @@ function wikicompare_needs_install() {
     ),
   );
   field_create_field($field);
-/*
-  $field = array(
-    'field_name' => 'need_state',
-    'type' => 'list_text',
-    'cardinality' => 1,
-    'settings' => array(
-      'allowed_values' => array(
-        'Published' => 'Published',
-        'Disactivated' => 'Disactivated',
-      ),
-    ),
-  );
-  field_create_field($field);
-*/
+
 
   wikicompare_node_install('need');
 
@@ -185,9 +169,9 @@ function wikicompare_needs_uninstall() {
 
   //Delete feature content type.
 
-//  field_delete_instance('need_parent_need'); //TODO
+
   field_delete_field('wikicompare_features');
-//  field_delete_field('need_state');
+
 
 
   field_delete_instance(field_read_instance('node', 'body', 'need'));

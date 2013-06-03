@@ -12,7 +12,6 @@ function wikicompare_inherit_compared_menu() {
     'access arguments' => array('access content'),
     'page arguments' => array(),
     'type' => MENU_CALLBACK,
-//    'file' => 'wikicompare_inherit_compared.module',
     'delivery callback' => 'ajax_deliver',
   );
 
@@ -377,12 +376,6 @@ function wikicompare_inherit_compared_preupdate_compared(&$test, $node_revision,
       
       if ($node_revision_inherit != $current_node_inherit) {
         $test = TRUE;
-/*        db_update('cache_compared')
-          ->fields(array(
-            'to_update' => 1,
-          ))
-          ->condition('nid', array($node_revision->nid) , 'IN')
-          ->execute();*/
 
       }
 
@@ -398,12 +391,7 @@ function wikicompare_inherit_compared_preupdate_implementation(&$test, $node_rev
       if ($node_revision->wikicompare_use_from_inherit['und'][0]['value'] != $current_node->wikicompare_use_from_inherit['und'][0]['value']) {
         $test = TRUE;
 
-/*        db_update('cache_implementation')
-          ->fields(array(
-            'to_update' => 1,
-          ))
-          ->condition('nid', array($node_revision->nid) , 'IN')
-          ->execute();*/
+
 
       }
 
@@ -556,13 +544,7 @@ function wikicompare_inherit_compared_from_other_support(&$node) {
   }
 
 }
-/*
-//Add the header for the mass compared insert in flush cache
-function wikicompare_inherit_compared_wikicompare_cache_compared_fields_header(&$header) {
 
-  $header[] = 'inherit_compared_id';
-
-} */
 
 //Search for the new fields in compared in the flush tables function 
 function wikicompare_inherit_compared_flush_select_compared(&$query, $type) {

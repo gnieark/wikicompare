@@ -24,19 +24,7 @@ function wikicompare_comparative_table($form_state) {
   drupal_add_js('/misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
   
-/*
-  //Find all the compared on the first level of the tree
-  $res = request_db('compared', array('can_be_translated' => 1));
 
-  $form['#compared_items'] = $res;
-*/
-
-/*
-  //Find all the features on the first level of the tree
-  $res = request_db('feature', array('can_be_translated' => 1));
-
-  $form['#feature_items'] = $res;
-*/
   $form = array();
   return $form;
 
@@ -60,20 +48,7 @@ function wikicompare_comparative_table($form_state) {
 function theme_wikicompare_comparative_table($variables) {
 
   $form = $variables['form'];
-/*
-  //Prepare the array to use as argument for the item list building function.
-  $compareds = array();
-  //element_children is used to avoid the children beginning by # which are inserted by drupal in $form
 
-  $itemlist_settings = initialize_itemlist_settings('compared_main_table');
-
-  //Building the data for the item list
-  $item_list_data = get_item_list($form['#compared_items'], 'compared', 'compared_main_table', 0, $itemlist_settings);
-
-
-  //Render the item list
-  $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Compared', 'type' => 'ul', 'attributes' => array()));
-*/
 
 
   $checkbox_settings =  array(
@@ -105,13 +80,7 @@ function theme_wikicompare_comparative_table($variables) {
   );
   $output .= '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
   
-/*
-  //Allow others modules to modify the output
-  foreach (module_implements('wikicompare_comparative_table_before_compute') as $module) {
-    $function = $module . '_wikicompare_comparative_table_before_compute';
-    $function($output);
-  }
-*/
+
   if (module_exists('wikicompare_needs')) {
     wikicompare_needs_wikicompare_comparative_table_before_compute($output);
   }
@@ -143,9 +112,7 @@ function theme_wikicompare_comparative_table($variables) {
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
     '#href' => 'compute_comparative_table_callback/nojs',
     '#id' => 'reset_table_link',
-/*    '#attributes' => array(
-      'style' => 'display:none',
-    ),*/
+
   );
   $output .= ' ' . drupal_render($reset_link) . '</p>';
 
@@ -184,36 +151,7 @@ function theme_wikicompare_comparative_table($variables) {
   );
 
   $output .= '<p>' . drupal_render($cleaning_link) . '</p>';
-/*
-  //Add the link to go on FastEdit mode
-  $rebuild_compared_link = array(
-    '#type' => 'link',
-    '#title' => 'Rebuild Compareds',
-    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'rebuild_table_callback/nojs/compared',
-    '#id' => 'rebuild_compared_link',
-    '#attributes' => array(
-      'style' => 'display:none',
-    ),
 
-  );
-
-  $output .= '<p>' . drupal_render($rebuild_compared_link) . '</p>';
-
-  //Add the link to go on FastEdit mode
-  $rebuild_feature_link = array(
-    '#type' => 'link',
-    '#title' => 'Rebuild Features',
-    //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'rebuild_table_callback/nojs/feature',
-    '#id' => 'rebuild_feature_link',
-    '#attributes' => array(
-      'style' => 'display:none',
-    ),
-
-  );
-
-  $output .= '<p>' . drupal_render($rebuild_feature_link) . '</p>';*/
 
   return $output;
 }
@@ -272,13 +210,7 @@ function get_item_list_children_response($method = 'ajax') {
             $nodes[$key]['data']->displayed = True;
           }
         }
-/*
-        //Allow others modules to modify the output
-        foreach (module_implements('wikicompare_comparative_table_prepare_itemlist') as $module) {
-          $function = $module . '_wikicompare_comparative_table_prepare_itemlist';
-          $function($key, $nodes, $_POST);
-        }
-*/
+
 
         if (module_exists('wikicompare_needs')) {
           wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, $nodes, $_POST);
@@ -426,16 +358,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       if (!empty($_POST['fastedit_status'])) {
         $fastedit_status = $_POST['fastedit_status'];
       }
-/*    
-      //Recover the detail of the compared we want to add
-      $query = db_select('cache_compared', 's');
-      $query->addField('s', 'nid', 'nid');
-      $query->addField('s', 'title', 'title');
-      $query->condition("s.nid", $cid);
-      $result = $query->execute();
-      foreach ($result as $record) {
-        $compared = $record;
-      }*/
+
 
       //Recover the detail of the compared we want to add
       $compared = request_db('compared', array('can_be_translated' => 1), 'nids', array($cid));
@@ -451,17 +374,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
         //Recover the implementation needed for the cells
         $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
-/*
-        if ($_POST['computed']) {
-          $features_array = get_recursive_data('feature', $_POST['feature_ids'], $fastedit_status);
 
-          $features = $features_array['tree'];
-        } else {
-          $features = request_db('feature', array(), 'nids', $_POST['feature_ids']);
-
-        }
-
-        $feature_row_data = get_rows_data($features, array($cid), $implementations, $_POST['computed']); */
 
         $cells = array();
         foreach ($features as $fid => $feature) {
@@ -540,7 +453,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
 
   //Building the data for the item list
   $item_list_data = get_item_list($nodes, $type, $context, 0, $itemlist_settings);
-//      $item_list_data = get_item_list($nodes, $type, $context, $nid, $itemlist_settings);
+
 
   $output .= theme_item_list(array('items' => $item_list_data, 'type' => 'ul', 'attributes' => array()));
 
@@ -578,8 +491,7 @@ function select_dialog_response($method = 'ajax'){
     $hidden = '';
     if ($parent) {
       $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container_autocomplete']) . '[und][0][target_id]">';
-/*
-      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="wikicompare_parent_id[und][0][target_id]">';*/
+
 
     }
 
@@ -623,7 +535,7 @@ function submit_dialog_response($method = 'ajax'){
 
     //Building the data for the item list
     $item_list_data = get_item_list($feature_array['tree'], 'feature', 'selected', 0, $itemlist_settings);
-//      $item_list_data = get_item_list($nodes, $type, $context, $nid, $itemlist_settings);
+
 
     //Render the item list
     $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
@@ -682,13 +594,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
       $selected_feature_ids = $_POST['selected_feature_ids'];
 
-  /*
-      //Allow others modules to modify the output
-      foreach (module_implements('wikicompare_comparative_table_prepare_compute') as $module) {
-        $function = $module . '_wikicompare_comparative_table_prepare_compute';
-        $function($selected_feature_ids, $_POST);
-      }
-  */
+
 
   
       if (module_exists('wikicompare_needs')) {
@@ -732,23 +638,6 @@ function compute_comparative_table_response($method = 'ajax') {
     }
 
 
-
-
-/*
-    $implementations = array();
-    if (!empty($feature_array['ids']) && !empty($compared_columns_ids)) {
-
-      $implementations = request_db('implementation', array('fastedit_status' => $fastedit_status), 'parent', NULL, $compared_columns_ids, $feature_array['ids']);
-
-    } 
-*/
-
-  
-    //$output = render_comparative_table($feature_array['tree'], $compared_columns_ids, $fastedit_status, 1);
-
-
-
-
     //Preparing the ajax commands to return to javascript
 
     $commands[] = ajax_command_replace('#comparative_table', $output);
@@ -764,44 +653,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
 }
 
-/*
-function reset_table_response($method = 'ajax') {
 
-
-  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($method == 'ajax') {
-
-
-
-    //If empty, javascript return a null string and not an empty array. So we need to assign it in a variable and manage the null case.
-    $compared_columns_ids = array();
-    if ($_POST['compared_column_ids']) {
-      $compared_columns_ids = $_POST['compared_column_ids'];
-    }
-
-    $fastedit_status = 0;
-    if (!empty($_POST['fastedit_status'])) {
-      $fastedit_status = $_POST['fastedit_status'];
-    }
-
-
-//TODO MERGE WITH COMPUTE
-
-    //Preparing the ajax commands to return to javascript
-    $commands = array();
-    $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
-    $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $compared_columns_ids, $fastedit_status, 0));
-    $page = array('#type' => 'ajax', '#commands' => $commands);
-    return $page;
-
-  //If javascript isn't enabled, we redirect to an error page.
-  } else {
-    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
-    return $output;
-  }
-
-}
-*/
 
 function make_cleaning_response($method = 'ajax') {
 
@@ -872,14 +724,9 @@ function make_cleaning_response($method = 'ajax') {
 
               $node1 = request_db($type, array(), 'nids', array($node['parent_id']));
               $node1 = $node1[$node['parent_id']];
-              //??
-//              if ($node1['data']->parent_id != NULL) {
-              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node['parent_id'], 'click', array());
-//              } else {
 
-//                $reset = True;
-                
-//              }
+              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node['parent_id'], 'click', array());
+
             }
 
 
@@ -991,98 +838,7 @@ function make_cleaning_response($method = 'ajax') {
     }
 
 
-/*
-    //Allow others modules to modify the output
-    foreach (module_implements('wikicompare_comparative_table_cleaning') as $module) {
-      $function = $module . '_wikicompare_comparative_table_cleaning';
-      $function($commands, $_POST);
-    }
-*/
 
-
-/*
-
-    if (!$_POST['computed']) {
-      $feature_ids = array();
-      foreach ($_POST['feature_ids'] as $feature) {
-        $feature_ids[$feature[0]] = $feature[0];
-      }
-
-
-      $features = array();
-      if (!empty($feature_ids)) {
-        $features = request_db('feature', array('fastedit_status' => $_POST['fastedit_status'], 'can_be_translated' => 1), 'nids', $feature_ids);
-      }
-
-
-
-      $in_db_features = request_db('feature', array('states' => $_POST['states']));
-      $in_db_features_ids = array();
-      foreach ($in_db_features as $key => $feature) {
-        $in_db_features_ids[$key] = $key;
-      }
-    
-      $update_selected_feature = false;
-      $in_table_feature_ids = array();
-      foreach ($_POST['feature_ids'] as $key => $feature) {
-        $in_table_feature_ids[$feature[0]] = $feature[0];
-        if (isset($feature[1])) {
-          if ($feature[1] != $features[$feature[0]]['data']->parent_id) {
-            $update_selected_feature = true;
-            if (in_array($feature[1], $_POST['feature_displayed_ids'])) {
-              $feature1 = request_db('feature', array(), 'nids', array($feature[1]));
-              $feature1 = $feature1[$feature[1]];
-              if ($feature1['data']->parent_id != NULL) {
-                $commands[] = ajax_command_invoke('#feature_link_' . $feature[1], 'click', array());
-              } else {
-                $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
-              }
-            }
-            if (in_array($features[$feature[0]]['data']->parent_id, $_POST['feature_displayed_ids'])) {
-              if ($compareds[$compared[0]]['data']->parent_id != NULL) {
-                $commands[] = ajax_command_invoke('#feature_link_' . $features[$feature[0]]['data']->parent_id, 'click', array());
-              } else {
-                $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
-              }
-            }
-          }
-        
-
-         if ((!in_array($feature[0], $in_db_features_ids)) && !isset($feature[1])) {
-
-            $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
-            break;
-          }
-        }
-      }
-
-      foreach ($in_db_features_ids as $fid) {
-
-        if (!in_array($fid, $in_table_feature_ids)) {
-
-          $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
-          break;
-        }
-      }
-
-      foreach($features as $fid => $feature) {
-        $commands[] = ajax_command_invoke('.feature_title_' . $fid, 'html', array($feature['data']->title));
-        $commands[] = ajax_command_invoke('.feature_weight_' . $fid, 'html', array($feature['data']->weight));
-        $commands[] = ajax_command_invoke('.feature_type_' . $fid, 'html', array($feature['data']->type));
-        $commands[] = ajax_command_invoke('.feature_state_' . $fid, 'html', array($feature['data']->state));
-        if ($_POST['fastedit_status'] == 1) {
-          $commands[] = ajax_command_invoke('#fastaction_items_' . $fid, 'html', array(add_fastedit_items('feature' , $feature)));
-        }
-      }
-
-      if ($_POST['fastedit_status'] == 1) {
-        $feature = array(
-          'data' => new stdClass(),
-        );
-        $feature['data']->nid = 0;
-        $commands[] = ajax_command_invoke('#add_feature_link_fastaction', 'html', array(add_fastedit_items('feature' , $feature)));
-      }
-*/
 
     if (!$_POST['computed']) {
 
@@ -1143,46 +899,13 @@ function make_cleaning_response($method = 'ajax') {
   }
 
 }
-/*
 
-function rebuild_table_response($method = 'ajax', $type) {
-
-  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
-  if ($method == 'ajax') {
-
-    $commands = array();
-
-    if ($type == 'compared') {
-      $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_compared());
-    }
-
-    if ($type == 'feature') {
-      if ($_POST['computed'] != 1) {
-        $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $_POST['fastedit_status'], 0));
-      }
-    }
-    $page = array('#type' => 'ajax', '#commands' => $commands);
-    return $page;
-
-  //If javascript isn't enabled, we redirect to an error page.
-  } else {
-    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
-    return $output;
-  }
-
-}
-*/
 
 /*
  * Function which will build the item list. Used in table initial building, in compared ajax callback and in modal dialog
  */
 function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings){
-/*
-  $dialog_text = '';
-  if ($itemlist_settings['dialog']) {
-    $dialog_text = 'dialog_';
-  }
-*/
+
 
 
   $items = array();
@@ -1194,103 +917,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
 
     $node = $node_array['data'];
 
-//    $data = wikicompare_get_supertitle_item($type, $node, $itemlist_settings);
-/*
-    $title = '<span class="' . $type . '_title_' . $nid . '">' . $node->title . '</span>';
-    //If the node has children, the node name will become a link calling the callback function to display his children
-    if ($node->has_children == 1){
-      $class = array('list_item_link ', $type, $itemlist_settings['context']);
 
-      if ($itemlist_settings['computed']) {
-        $class[] = 'computed';
-      }
-      $title = l($title, 'get_item_list_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
-    }*/
-/* else {
-      $title = $title_title;
-    }*/
-
-
-/*
-    //Before the compared, we add a checkbox which will, when checked, add the column for this compared in the comparative table. Unless we configure the system to compute the compared parent, only the compared with no children will have a checkbox.
-    $checkbox_area = '';
-    $img_link_to_node = '';
-    if (in_array($itemlist_settings['context'], array('table', 'multidialog')) && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
-//    if ($itemlist_settings['checkbox_children'] && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
-//      if ($itemlist_settings['checkbox_parent'] || ($node->has_children != 1)) {
-      if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' || $node->has_children != 1) {
-        $checkbox_settings = array('element' => array(
-          '#title' => $nid,
-          '#id' => 'compared_checkbox_' . $nid,
-        ));
-
-        if ($type == 'compared') {
-//        if ($itemlist_settings['compared_link']) {
-          $checkbox_settings['element']['#attributes']['class'] = array('compared_checkbox');
-        } else {
-          $checkbox_settings['element']['#attributes']['class'] = array('itemlist_checkbox ' . $type);
-        }
-
-        if (isset($node->displayed)) {
-          $checkbox_settings['element']['#checked'] = True;
-//TODO Pas le bon lien          $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
-        }
-
-        $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
-
-        if ($type == 'compared') {
-//        if ($itemlist_settings['compared_link']) {
-
-          //We were not able to ajaxify the checkbox, so instead the checkbox will call this hidden link
-          $checkbox_link = array(
-            '#type' => 'link',
-            '#title' => 'toggle',
-            //The link for the callback function which will display or hide the column in the table
-            '#href' => 'toogle_compared_checkbox_callback/nojs/',
-            '#id' => 'compared_checkbox_link_' . $nid,
-            '#attributes' => array(
-              'class' => array('compared_checkbox_link' => 'compared_checkbox_link'),
-              'style' => 'display:none',
-            )
-          );
-
-          $checkbox_area .= drupal_render($checkbox_link);
-        }
-      }
-    }
-
-//    if ($itemlist_settings['node_link']) {
-    if ($itemlist_settings['context'] == 'table') {
-
-      //Create the image link to go to the node page
-      $img = theme('image', array(
-        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to compared ') . $nid,
-        'height' => '100%',
-      ));
-      //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_node = ' ' . l($img, 'node/' . $node->tnid, array('attributes' => array('id' => $type . '_node_link_' . $nid, 'class' => array($type . '_node_link')), 'html' => True));
-
-      $img_link_to_node .= '<span id="fastaction_items_' . $nid . '">';
-      if ($itemlist_settings['fastedit_status'] == 1) {
-        $img_link_to_node .=  add_fastedit_items($type, $node_array);
-      }
-      $img_link_to_node .= '</span>';
-    }
-
-    if ($itemlist_settings['context'] == 'selectdialog') {
-
-      $img = theme('image', array(
-        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Select ') . $type . ' ' . $nid,
-        'height' => '100%',
-      ));
-
-      //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link = l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $nid, 'class' => array('select_simple_dialog')), 'html' => True));
-      $checkbox_area = $img_link . ' ';
-    }
-*/
     
     $items[$nid]['id'] = $type . '_' . $itemlist_settings['context'] . '_item_' .  $nid;
     $items[$nid]['data'] = wikicompare_get_supertitle_item($type, $node, $itemlist_settings);
@@ -1302,7 +929,7 @@ function get_item_list($nodes, $type, $action, $parent_node, $itemlist_settings)
     $items[$nid]['context'] = $itemlist_settings['context'];
     if ($parent_node != 0) {
       $items[$nid]['class'] = array_merge($items[$nid]['class'], array($type . '_' . $itemlist_settings['context'] . '_child_' . $parent_node));
-//      $items[$nid]['class'] = array('feature_children_computed_' . $parent_node);
+
       if ($itemlist_settings['computed']) {
         $items[$nid]['style'] = 'display:none';
       }
@@ -1419,7 +1046,7 @@ function get_rows_data($features, $compareds, $implementations, $computed){
   foreach ($features as $fid => $feature){
 
 
-//    $rows[$fid] = $feature;
+
 
     $rows[$fid]['data'] = $feature['data'];
 
@@ -1555,12 +1182,7 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
 
 
   }
-/*
-  $feature_ids = array();
-  foreach ($features as $key => $feature) {
-    $feature_ids[$key] = $key;
-  }
-*/
+
 
 
   $headers = array();
@@ -1644,35 +1266,7 @@ function render_rows($feature_row_data, $fastedit_status) {
     }
     $output .= '>';
 
-/*
-    //Create the image link to go to the node page
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to feature ') . $fid,
-      'height' => '100%',
-    ));
-    //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $feature->tnid, array('attributes' => array('id' => 'feature_node_link_' . $fid, 'class' => array('feature_node_link')), 'html' => True));
-    $img_link_to_node .= '<span id="fastaction_items_' . $fid . '">';
-    if ($fastedit_status == 1) {
-      $img_link_to_node .= add_fastedit_items('feature', $feature_array); 
-    }
-    $img_link_to_node .= '</span>';
 
-    $title = '<span class="feature_title_' . $fid . '">' . $feature->title . '</span>';
-    //If the feature has children, the feature name will become a link calling the callback function to display his children
-    if ($feature->has_children == 1){
-      $title = l($title . ' ' . $fid, 'get_feature_callback/nojs/',  array('attributes' => array('id' => 'feature_table_link_' . $fid, 'class' => array('feature_link feature_link_children_' . $fid)), 'html' => True));
-    } 
-
-
-    //Creating the first cell of the row, containing the feature details
-    $output .= '<td>' . $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="feature_weight_' . $fid . '">' .  $feature->weight . '</span>';
-    if ($feature->has_children == 1){
-      $output .= '<br/> Type : <span class="feature_type_' . $fid . '">' .  $feature->type . '</span>';
-    }
-    $output .= '<br/> State : <span class="feature_state_' . $fid . '">' .  $feature->state . '</span></td>';
-*/
     $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature, array('context' => 'table', 'fastedit_status' => $fastedit_status)) . '</td>';
 
 
@@ -1783,9 +1377,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
     if ($node->has_children == 1){
       $title = l($title, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
     } 
-/*else {
-      $title = $title_title;
-    }*/
+
 
     //Creating the first cell of the row, containing the feature details
     $output = $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="' . $type . '_weight_' . $node->nid . '">' .  $node->weight . '</span>';
@@ -1800,10 +1392,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
     //If the node has children, the node name will become a link calling the callback function to display his children
     if ($node->has_children == 1){
       $class = array('list_item_link ', $type, $itemlist_settings['context']);
-  /*
-      if ($itemlist_settings['dialog']) {
-        $class[] = 'dialog';
-      }*/
+
       if ($itemlist_settings['computed']) {
         $class[] = 'computed';
       }
@@ -1815,8 +1404,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
     $checkbox_area = '';
     $img_link_to_node = '';
     if (in_array($itemlist_settings['context'], array('table', 'multidialog')) && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
-  //    if ($itemlist_settings['checkbox_children'] && in_array($node->state, array('published-incomplete', 'published-submitted', 'published'))) {
-  //      if ($itemlist_settings['checkbox_parent'] || ($node->has_children != 1)) {
+
       if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' || $node->has_children != 1) {
         $checkbox_settings = array('element' => array(
           '#title' => $node->nid,
@@ -1824,7 +1412,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
         ));
 
         if ($type == 'compared') {
-  //        if ($itemlist_settings['compared_link']) {
+
           $checkbox_settings['element']['#attributes']['class'] = array('compared_checkbox');
         } else {
           $checkbox_settings['element']['#attributes']['class'] = array('itemlist_checkbox ' . $type);
@@ -1832,13 +1420,12 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
 
         if (isset($node->displayed)) {
           $checkbox_settings['element']['#checked'] = True;
-  //TODO Pas le bon lien          $checkbox_link['#attributes']['class']['displayed'] = 'displayed';        
         }
 
         $checkbox_area = theme_checkbox($checkbox_settings) . ' ';
 
         if ($type == 'compared') {
-  //        if ($itemlist_settings['compared_link']) {
+
 
           //We were not able to ajaxify the checkbox, so instead the checkbox will call this hidden link
           $checkbox_link = array(
@@ -1858,7 +1445,7 @@ function wikicompare_get_supertitle_item($type, $node, $itemlist_settings) {
       }
     }
 
-  //    if ($itemlist_settings['node_link']) {
+
     if ($itemlist_settings['context'] == 'table') {
 
       //Create the image link to go to the node page

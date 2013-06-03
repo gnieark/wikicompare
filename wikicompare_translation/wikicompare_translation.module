@@ -92,12 +92,7 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       $form['wikicompare_support'] = array('#markup' => $node->wikicompare_support['und'][0]['value']);
       unset($form_state['node']->wikicompare_support);
     }
-/*
-    foreach (module_implements('wikicompare_translation_form') as $module) {
-      $function = $module . '_wikicompare_translation_form';
-      $function($form, $form_state, $node);
-    }
-*/
+
 
     if (isset($form['wikicompare_compared_id'])) {
       unset($form_state['node']->wikicompare_compared_id);
@@ -122,18 +117,6 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
 
 }
 
-
-/*
-//TODO security pour weight mais marche pas
-function wikicompare_translation_node_presave($node) {
-  if ($node->language != language_default('language')) {
-    if (isset($node->wikicompare_weight)) {
-      unset($node->wikicompare_weight);
-    }
-  }
-}
-
-*/
 
 function wikicompare_translation_wikicompare_request_db(&$query, $type, $settings) {
 
@@ -393,12 +376,7 @@ function wikicompare_translation_wikicompare_settings_change_language_request(&$
 }
 
 function wikicompare_translation_wikicompare_settings_change_language(&$old_ids, $res) {
-/*
-  $new_ids = array();
-  foreach ($res as $id) {
-    $new_ids[$id->new_id] = $id->new_id;
-  }
-*/
+
 
   foreach ($res as $ids) {
 

@@ -175,16 +175,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     $output .= "\$node->wikicompare_type['und'][0]['value'] = '" . $node['data']->type . "';<br/>";
     $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";
   }
-/*
-  if (module_exists('wikicompare_inherit_compared')) {
-    if ($type == 'compared') {
-      if ($node['data']->inherit_compared_id != NULL) {
-        $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$". $type . "s['new-" . $node['data']->inherit_compared_id . "'];<br/>";
-        $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
-      }
-    }
-  }
-*/
+
 
   if (module_exists('wikicompare_needs')) {
     if ($type == 'need') {
@@ -376,19 +367,7 @@ function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
     '#required' => TRUE,
     '#element_validate' => array('element_validate_integer_positive_or_null'), 
   );
-/*
-  if (module_exists('wikicompare_inherit_compared')) {
-    $form['demo_fieldset']['compared_inherit_chance'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Chance that a compared inherit another one (1/x)'),
-      '#default_value' => 20,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );    
-  }
-*/
+
 
   if (module_exists('wikicompare_needs')) {
     $form['demo_fieldset']['need_min_depth'] = array(
@@ -572,9 +551,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
     wikicompare_generate_demo_create_children($settings, $features_created);
 
 
-/*
-    create_feature_children($form_state['input']['feature_min_depth'], $form_state['input']['feature_max_depth'], 'Feature ' . variable_get('wikicompare_next_demo_sequence', 1) . '.', $form_state['input']['feature_child_min_per_level'], $form_state['input']['feature_child_max_per_level'], $form_state['input']['feature_min_weight'], $form_state['input']['feature_max_weight'], $form_state['input']['feature_highest_chance'], $depth, $parent_id, $features_created, False);
-*/
+
     
   }
 
@@ -597,9 +574,7 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
 
     wikicompare_generate_demo_create_children($settings, $compareds_created);
 
-/*
-    create_compared_children($form_state['input']['compared_min_depth'], $form_state['input']['compared_max_depth'], 'Compared ' . variable_get('wikicompare_next_demo_sequence', 1) . '.', $form_state['input']['compared_child_min_per_level'], $form_state['input']['compared_child_max_per_level'], $depth, $parent_id, $compareds_created);
-*/
+
   }
 
 
@@ -639,9 +614,6 @@ function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form
 
       wikicompare_generate_demo_create_children($settings, $needs_created);
 
-  /*
-      create_compared_children($form_state['input']['compared_min_depth'], $form_state['input']['compared_max_depth'], 'Compared ' . variable_get('wikicompare_next_demo_sequence', 1) . '.', $form_state['input']['compared_child_min_per_level'], $form_state['input']['compared_child_max_per_level'], $depth, $parent_id, $compareds_created);
-  */
     }
   }
 
@@ -872,103 +844,6 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
 
 
-/*
-
-function create_feature_children($min_depth, $max_depth, $prefix, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $parent_id, &$features_created, $parent_type) {
-
-  $depth++;
-  $nb_child = rand($child_min_per_level, $child_max_per_level);
-  
-
-  $i = 1;
-  while ($i <= $nb_child) {
-    $node = new stdClass();
-    $node->type = 'feature';
-    $node->language = language_default('language');
-    if ($parent_id != NULL) {
-    $title = $prefix . '.' . $i;
-    } else {
-    $title = $prefix . $i;
-    }
-    $node->title = $title;
-    $node->wikicompare_state['und'][0]['value'] = 'Published';
-    if ($parent_id != NULL) {
-      $node->wikicompare_parent_id['und'][0]['target_id'] = $parent_id;
-      $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-    }
-
-    if ($parent_type == 'parent-weighted-average') {
-      $node->wikicompare_weight['und'][0]['value'] = 100*rand($min_weight, $max_weight);
-    } elseif ($parent_type == 'parent-highest-percentage') {
-      $node->wikicompare_weight['und'][0]['value'] = 100/rand($min_weight, $max_weight);
-    }
-
-
-    if (rand(1, $feature_highest_chance) != $feature_highest_chance) {
-      $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
-      $parent_type = 'parent-weighted-average';
-    } else {
-      $node->wikicompare_type['und'][0]['value'] = 'parent-highest-percentage';
-      $parent_type = 'parent-highest-percentage';
-    }
-
-
-    $node->wikicompare_weight['und'][0]['value'] = rand($min_weight, $max_weight);
-
-    if ((($depth <= $min_depth or (rand($min_depth, $max_depth) != $min_depth)) and ($depth <= $max_depth))) {
-      node_save($node);
-      create_feature_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $min_weight, $max_weight, $feature_highest_chance, $depth, $node->nid, $features_created, $parent_type);
-    } else {
-      $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
-      node_save($node);
-    }
-
-    $features_created[$node->nid] = $node->nid;
-
-    $i++;
-
-
-  }
-
-}
-
-function create_compared_children($min_depth, $max_depth, $prefix, $child_min_per_level, $child_max_per_level, $depth, $parent_id, &$compareds_created) {
-
-  $depth++;
-  $nb_child = rand($child_min_per_level, $child_max_per_level);
-
-
-  $i = 1;
-  while ($i <= $nb_child) {
-    $node = new stdClass();
-    $node->type = 'compared';
-    $node->language = language_default('language');
-    if ($parent_id != NULL) {
-    $title = $prefix . '.' . $i;
-    } else {
-    $title = $prefix . $i;
-    }
-    $node->title = $title;
-    if ($parent_id != NULL) {
-      $node->wikicompare_parent_id['und'][0]['target_id'] = $parent_id;
-      $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-    }
-
-    node_save($node);
-
-    if ((($depth <= $min_depth or (rand($min_depth, $max_depth) != $min_depth)) and ($depth <= $max_depth))) {
-      create_compared_children($min_depth, $max_depth, $title, $child_min_per_level, $child_max_per_level, $depth, $node->nid, $compareds_created);
-    }
-
-    $compareds_created[$node->nid] = $node->nid;
-
-    $i++;
-
-
-  }
-
-}
-*/
 
 function wikicompare_drop_nodes() {
 
