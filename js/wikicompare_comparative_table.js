@@ -935,7 +935,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Ajout d'un enfant alors qu'il y en a déjà un et qu'il est affiché. Il faut replier le parent
 //TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte
 //TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres
-//TODO probleme de calcul sur les compute need
+
 
 
 

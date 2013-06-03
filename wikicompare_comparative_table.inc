@@ -307,6 +307,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
   $cid = $_POST['node_id'];
 
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -334,6 +335,24 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
         //Recover the implementation needed for the cells
         $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
+
+
+        if ($_POST['computed']) {
+          $features_without_children = array();
+          foreach ($features as $fid => $feature) {
+            if ($feature['data']->has_children == 0) {
+              $features_without_children[$fid] = $fid;
+            }
+          }
+          $features_array = get_recursive_data('feature', $features_without_children, $fastedit_status);
+          $features = get_rows_data($features_array['tree'], array($cid), $implementations, $_POST['computed']); 
+
+        } else {
+          $features = request_db('feature', array(), 'nids', $_POST['feature_ids']);
+
+        }
+
+
 
 
         $cells = array();
@@ -1051,6 +1070,7 @@ function get_rows_data($features, $compareds, $implementations, $computed){
           $through_feature_childs[$child_implementation->feature_id] = $child_implementation;
         }
         if ($feature['data']->has_children) {
+
           $implementation['data'] = wikicompare_compute_percent($implementation['data'], $through_feature_childs);
         }
       }
@@ -1063,6 +1083,8 @@ function get_rows_data($features, $compareds, $implementations, $computed){
     foreach ($children as $key=> $child) {
       $rows[$key] = $child;
     }
+
+
 
 
   }
@@ -1210,6 +1232,7 @@ function render_rows($feature_row_data, $fastaction_status) {
 
   //Add a row for each feature children
   foreach ($feature_row_data as $fid => $feature_array) {
+
 
     $feature = $feature_array['data'];
 
