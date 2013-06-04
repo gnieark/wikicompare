@@ -932,9 +932,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 
-//TODO Ajout d'un enfant alors qu'il y en a déjà un et qu'il est affiché. Il faut replier le parent
-//TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte
-//TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres
+
+
+
 
 
 
@@ -949,7 +949,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 //TODO attention les array_merge ne conservent pas les key, faire une recherche pour corriger tous les array_merge. au lieu de array_merge(array1, array2) utiliser simplement array1 + array2, ca marche
 
-//TODO Mettre tous les arguments de la fonction request_db dans les settings, pour la rendre plus flexible. Importante refonte.
+
 
 //TODO in inherit compared, verifier que la mise à jour du champ use_from a l'installation ne pose pas de probleme
 //TODO In translation, mettre à jour le flag missing required field
@@ -974,5 +974,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO integrer un module de chat sur le site pourrait être sympa, suggestion drupalchat me parait pas mal
 //TODO Pour faire marcher le dialog dans fastaction, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 //TODO Low : The selected itemlist are in ordered list intead of unordered list. Looks like there is no error with html code, so we'll just wait for the template.
+//TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte / medium
+//TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres / critical
 
 })(jQuery);

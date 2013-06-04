@@ -660,23 +660,28 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
 }
 
 
-function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $compareds=NULL, $features=NULL) {
+function request_db($type, $settings=array()) {
 
 
   $res = array();
-  $use_nids = true;
+  $settings['use_nids'] = true;
+//  $settings['is_implementation_without_nids'] = false;
   $query = db_select('cache_' . $type, 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'nid', 'tnid');
   if ($type != 'implementation') {
+
     $query->addField('n', 'title', 'title');
     $query->addField('n', 'sequence', 'sequence');
     $query->addField('n', 'state', 'state');
     $query->addField('n', 'has_children', 'has_children');
     $query->addField('n', 'parent_id', 'parent_id');
-    if ($type_nid == 'parent') {
-      $query->condition('n.parent_id', $nids);
-      $use_nids = false;
+    if (!isset($settings['nids'])) {
+      if (!isset($settings['parent_id'])) {
+        $settings['parent_id'] = NULL;
+      }
+      $query->condition('n.parent_id', $settings['parent_id']);
+      $settings['use_nids'] = false;
       //We don't filter per state when we directly give the nids
       $state = array('published-incomplete', 'published-submitted', 'published');
       if (isset($settings['states']['draft'])) {
@@ -695,14 +700,16 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
     $query->addField('ctc', 'percent', 'percent');
     $query->addField('ctc', 'css_class', 'css_class');
     $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
-    if ($nids == NULL) {
-      $query->condition("n.compared_id", $compareds, 'in');
-      $query->condition("n.feature_id", $features, 'in');
-      $use_nids = false;
+    if (!isset($settings['nids'])) {
+      $query->condition("n.compared_id", $settings['compared_ids'], 'in');
+      $query->condition("n.feature_id", $settings['feature_ids'], 'in');
+      $settings['use_nids'] = false;
+//      $settings['is_implementation_without_nids'] = true;
     }
   }
-  if ($use_nids == true) {
-    $query->condition('n.nid', $nids, 'in');
+  if ($settings['use_nids'] == true) {
+
+    $query->condition('n.nid', $settings['nids'], 'in');
   }
 
   if ($type == 'feature') {
@@ -742,23 +749,27 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
   foreach ($result as $record) {
 
 
-
-    if ($type != 'implementation' || $nids != NULL) {
+    $node_array = array(
+      'data' => $record,
+      'children' => array(),
+    );
+//    if ($type != 'implementation' || isset($settings['nids'])) {
+/*    if (!$settings['is_implementation_without_nids']) {
       $res[$record->nid]['data'] = $record;
       $res[$record->nid]['children'] = array();
     } else {
 
       $res[$record->feature_id][$record->compared_id]['data'] = $record;
-    }
+    }*/
 
     if (module_exists('wikicompare_needs')) {
       if ($type == 'need') {
         if (isset($res[$record->nid]['need_features']) || $record->need_feature_id != NULL) {
-          $res[$record->nid]['need_features'][$record->need_feature_id] = $record->need_feature_id;
+          $node_array['need_features'][$record->need_feature_id] = $record->need_feature_id;
         } else {
-          $res[$record->nid]['need_features'] = array();
+          $node_array['need_features'] = array();
         } 
-        unset($res[$record->nid]['data']->need_feature_id);
+        unset($node_array['data']->need_feature_id);
       }
     }
 
@@ -767,26 +778,33 @@ function request_db($type, $settings=array(), $type_nid='parent', $nids=NULL, $c
 
         //If the node was created by or have some revision from other users, current user will not be able to fastaction it
         if ($GLOBALS['user']->uid != $record->uid) {
-          if ($type != 'implementation' || $nids != NULL) {
-            $res[$record->nid]['no-edit'] = True;
-            $res[$record->nid]['no-remove'] = True;
-          } else {
+//          if ($type != 'implementation' || isset($settings['nids'])) {
+//          if (!$settings['is_implementation_without_nids']) {
+          $node_array['no-edit'] = True;
+          $node_array['no-remove'] = True;
+/*          } else {
             $res[$record->feature_id][$record->compared_id]['no-edit'] = True;
             $res[$record->feature_id][$record->compared_id]['no-remove'] = True;
-          }
+          }*/
         }
 
         if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_request_db_fastaction($res, $record, $type, $nids, $settings);
+          wikicompare_translation_wikicompare_request_db_fastaction($node_array, $record, $type, $settings);
         }
       }
     }
 
 
     if (module_exists('wikicompare_translation')) {
-      wikicompare_translation_wikicompare_request_db_build($res, $record);
+      wikicompare_translation_wikicompare_request_db_build($node_array, $record);
     }
 
+//    if (!$settings['is_implementation_without_nids']) {
+    if ($type != 'implementation' || isset($settings['nids'])) {
+      $res[$record->nid] = $node_array;
+    } else {
+      $res[$record->feature_id][$record->compared_id] = $node_array;
+    }
 
   }
 

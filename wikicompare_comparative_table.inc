@@ -142,7 +142,7 @@ function get_item_list_children_response($method = 'ajax') {
       if (!empty($_POST['fastaction_status'])) {
         $itemlist_settings['fastaction_status'] = $_POST['fastaction_status'];
       }
-      $nodes = request_db($type, array('fastaction_status' => $itemlist_settings['fastaction_status'], 'can_be_translated' => 1, 'states' => $_POST['states']), 'parent', array($nid));
+      $nodes = request_db($type, array('fastaction_status' => $itemlist_settings['fastaction_status'], 'can_be_translated' => 1, 'states' => $_POST['states'], 'parent_id' => $nid));
 
 
       //Prepare the array to use as argument for the item list building function
@@ -245,7 +245,7 @@ function get_feature_response($method = 'ajax') {
         $fastaction_status = $_POST['fastaction_status'];
       }
 
-      $features = request_db('feature', array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1, 'states' => $_POST['states']), 'parent', array($fid));
+      $features = request_db('feature', array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1, 'states' => $_POST['states'], 'parent_id' => $fid));
 
       $features_ids = array();
       foreach ($features as $key => $feature) {
@@ -256,7 +256,7 @@ function get_feature_response($method = 'ajax') {
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_column_ids'])) {
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status), 'parent', NULL, $_POST['compared_column_ids'], $features_ids);
+        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status, 'compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $features_ids));
       }
       //Building the data for the table row
 
@@ -322,7 +322,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
 
       //Recover the detail of the compared we want to add
-      $compared = request_db('compared', array('can_be_translated' => 1), 'nids', array($cid));
+      $compared = request_db('compared', array('can_be_translated' => 1, 'nids' => array($cid)));
 
 
       //Add the header of the new column, with the compared detail
@@ -331,10 +331,10 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
 
-        $features = request_db('feature', array('states' => array('draft' => 'draft', 'closed' => 'closed')), 'nids', $_POST['feature_ids']);
+        $features = request_db('feature', array('states' => array('draft' => 'draft', 'closed' => 'closed', 'nids' => $_POST['feature_ids'])));
 
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status), 'parent', NULL, array($cid), $_POST['feature_ids']);
+        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status, 'compared_ids' => array($cid), 'feature_ids' => $_POST['feature_ids']));
 
 
         if ($_POST['computed']) {
@@ -348,7 +348,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
           $features = get_rows_data($features_array['tree'], array($cid), $implementations, $_POST['computed']); 
 
         } else {
-          $features = request_db('feature', array(), 'nids', $_POST['feature_ids']);
+          $features = request_db('feature', array('nids' => $_POST['feature_ids']));
 
         }
 
@@ -667,7 +667,7 @@ function make_cleaning_response($method = 'ajax') {
 
       $nodes = array();
       if (!empty($node_ids)) {
-        $nodes = request_db($type, array('fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1), 'nids', $node_ids);
+        $nodes = request_db($type, array('fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1, 'nids' => $node_ids));
       }
 
 
@@ -701,7 +701,7 @@ function make_cleaning_response($method = 'ajax') {
             //If the parent in table is currently displaying his children, then the tested node is displayed as his child but isn't anymore, so we need to hide it
             if (in_array($node['parent_id'], $_POST[$type . '_displayed_ids'])) {
 
-              $node1 = request_db($type, array(), 'nids', array($node['parent_id']));
+              $node1 = request_db($type, array('nids' => array($node['parent_id'])));
               $node1 = $node1[$node['parent_id']];
 
               $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node['parent_id'], 'click', array());
@@ -757,7 +757,7 @@ function make_cleaning_response($method = 'ajax') {
       } 
 
       if (!empty($_POST[$type . '_displayed_ids'])) {
-        $in_db_nodes_with_parent = request_db($type, array('states' => $_POST['states']), 'parent', $_POST[$type . '_displayed_ids']);
+        $in_db_nodes_with_parent = request_db($type, array('states' => $_POST['states'], 'parent_id' => $_POST[$type . '_displayed_ids']));
 
         foreach ($in_db_nodes_with_parent as $node) {
           if (!in_array($node['data']->nid, $in_table_node_ids)) {
@@ -829,7 +829,7 @@ function make_cleaning_response($method = 'ajax') {
       $implementations = array();
 
       if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
-        $implementations = request_db('implementation', array('fastaction_status' => $_POST['fastaction_status']), 'parent', NULL, $_POST['compared_column_ids'], $feature_ids);
+        $implementations = request_db('implementation', array('fastaction_status' => $_POST['fastaction_status'], 'compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $feature_ids));
       }
   
 
@@ -973,7 +973,7 @@ function build_recursive_tree($type, $ids, $res, $fastaction_status=0){
 
   //No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
 
-  $nodes = request_db($type, array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1), 'nid', $ids);
+  $nodes = request_db($type, array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1, 'nid' => $ids));
 
 
   foreach ($nodes as $nid => $node) {
@@ -1182,7 +1182,7 @@ function render_comparative_table($features=array(), $compareds=array(), $settin
 
   $implementations = array();
   if (!empty($settings['feature_ids']) && !empty($compareds)) {
-    $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status), 'parent', NULL, $compareds, $settings['feature_ids']);
+    $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status, 'compared_ids' => $compareds, 'feature_ids' => $settings['feature_ids']));
   } 
 
 
@@ -1340,39 +1340,7 @@ function wikicompare_get_supertitle_item($type, $node_array, $itemlist_settings)
 
   $node = $node_array['data'];
 
-  if ($type == 'feature' && $itemlist_settings['context'] == 'table') {
-
-
-    //Create the image link to go to the node page
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to feature ') . $node->nid,
-      'height' => '100%',
-    ));
-    //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
-    $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
-    if ($itemlist_settings['fastaction_status'] == 1) {
-
-      $img_link_to_node .= add_fastaction_items($type, $node_array); 
-    }
-    $img_link_to_node .= '</span>';
-
-    $title = '<span class="feature_title_' . $node->nid . '">' . $node->title . '</span>';
-    //If the feature has children, the feature name will become a link calling the callback function to display his children
-    if ($node->has_children == 1){
-      $title = l($title, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
-    } 
-
-
-    //Creating the first cell of the row, containing the feature details
-    $output = $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="' . $type . '_weight_' . $node->nid . '">' .  $node->weight . '</span>';
-    if ($node->has_children == 1){
-      $output .= '<br/> Type : <span class="' . $type . '_type_' . $node->nid . '">' .  $node->type . '</span>';
-    }
-    $output .= '<br/> State : <span class="' . $type . '_state_' . $node->nid . '">' .  $node->state . '</span>';
-
-  } else{
+  if ($type != 'feature' || $itemlist_settings['context'] != 'table') {
 
     $title = '<span class="' . $type . '_title_' . $node->nid . '">' . $node->title . '</span>';
     //If the node has children, the node name will become a link calling the callback function to display his children
@@ -1465,7 +1433,41 @@ function wikicompare_get_supertitle_item($type, $node_array, $itemlist_settings)
 
     $output = $checkbox_area . $title . $img_link_to_node;
 
-  } 
+
+  } else {
+
+
+    //Create the image link to go to the node page
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to feature ') . $node->nid,
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
+    $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
+    if ($itemlist_settings['fastaction_status'] == 1) {
+
+      $img_link_to_node .= add_fastaction_items($type, $node_array); 
+    }
+    $img_link_to_node .= '</span>';
+
+    $title = '<span class="feature_title_' . $node->nid . '">' . $node->title . '</span>';
+    //If the feature has children, the feature name will become a link calling the callback function to display his children
+    if ($node->has_children == 1){
+      $title = l($title, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
+    } 
+
+
+    //Creating the first cell of the row, containing the feature details
+    $output = $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="' . $type . '_weight_' . $node->nid . '">' .  $node->weight . '</span>';
+    if ($node->has_children == 1){
+      $output .= '<br/> Type : <span class="' . $type . '_type_' . $node->nid . '">' .  $node->type . '</span>';
+    }
+    $output .= '<br/> State : <span class="' . $type . '_state_' . $node->nid . '">' .  $node->state . '</span>';
+
+  }
+  
 
   return '<span id="' . $type . '_' . $itemlist_settings['context'] . '_supertitle_' . $node->nid . '">' . $output . '</span>';
 
