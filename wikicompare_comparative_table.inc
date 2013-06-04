@@ -176,6 +176,7 @@ function get_item_list_children_response($method = 'ajax') {
           wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, $nodes, $_POST);
         }
 
+
       }
 
       if (isset($_POST['forbidden_nid'])) {
@@ -973,7 +974,7 @@ function build_recursive_tree($type, $ids, $res, $fastaction_status=0){
 
   //No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
 
-  $nodes = request_db($type, array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1, 'nid' => $ids));
+  $nodes = request_db($type, array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1, 'nids' => $ids));
 
 
   foreach ($nodes as $nid => $node) {

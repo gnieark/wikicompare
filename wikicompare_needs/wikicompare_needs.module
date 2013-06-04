@@ -156,7 +156,7 @@ function wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, 
 
     $selected_need_ids = array();
     foreach ($_POST['selected_need_ids'] as $selected_need_id) {
-      $selected_need_ids[$selected_need_id[0]] = $selected_need_id[0];
+      $selected_need_ids[$selected_need_id] = $selected_need_id;
     }
 
     if (in_array($key, $selected_need_ids)) {
