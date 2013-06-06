@@ -203,8 +203,8 @@ function wikicompare_menu() {
   ); 
 
 
-  $items['get_item_list_children_callback'] = array(
-    'page callback' => 'get_item_list_children_response',
+  $items['get_itemlist_children_callback'] = array(
+    'page callback' => 'get_itemlist_children_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),

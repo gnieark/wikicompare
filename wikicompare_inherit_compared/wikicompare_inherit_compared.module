@@ -576,7 +576,7 @@ function wikicompare_inherit_compared_flush_cache_compared(&$to_insert, $record,
 }
 
 
-function  wikicompare_inherit_compared_wikicompare_request_db($query, $type, $settings) {
+function  wikicompare_inherit_compared_wikicompare_request_db($query, $type) {
 
   if ($type == 'compared') {
     $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');

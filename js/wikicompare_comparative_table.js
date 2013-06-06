@@ -933,8 +933,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 
-
-
+//TODO Voir si on peut pas réduire le nombre d'argument pour les appel simpledialog
+//TODO verifier si on peut eviter que les appels de repli ne passe pas les ajax
+//TODO isoler le test ajax dans une fonction a part
+//TODO remplacer fastaction_status par un simple fastaction
 
 
 
@@ -955,7 +957,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO In translation, mettre à jour le flag missing required field
 //TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible
 
-//TODO isoler le test ajax dans une fonction a part
+
 //TODO remplacer les if action par des case
 //TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
 //TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
@@ -976,5 +978,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Low : The selected itemlist are in ordered list intead of unordered list. Looks like there is no error with html code, so we'll just wait for the template.
 //TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte / medium
 //TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres / critical
+//TODO achever la traduction
 
 })(jQuery);

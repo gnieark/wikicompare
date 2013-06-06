@@ -103,10 +103,16 @@ function wikicompare_needs_build_form_settings(&$settings, &$node, &$nid, $form,
 }
 
 
-function wikicompare_needs_wikicompare_comparative_table_before_compute(&$output) {
+/*****************************************************************
+*
+*    COMPARATIVE TABLE
+*
+*****************************************************************/
+
+function wikicompare_needs_comparative_table_main_output(&$output) {
 
 
-  $output .= wikicompare_needs_table_render_need();
+  $output .= wikicompare_table_render_main_itemlist('need', 'Needs', wikicompare_initialize_settings()); //wikicompare_needs_table_render_need();
 
 }
 
@@ -121,14 +127,14 @@ function wikicompare_needs_table_render_need($settings=array()) {
   $needs = request_db('need', $db_settings);
 
   
-  $itemlist_settings = initialize_itemlist_settings('compared_main_table');
+  $itemlist_settings = wikicompare_initialize_settings();
 
   if (isset($settings['fastaction_status'])) {
     $itemlist_settings['fastaction_status'] = $settings['fastaction_status'];
   }
 
   //Building the data for the item list
-  $item_list_data = get_item_list($needs, 'need', 'compared_main_table', 0, $itemlist_settings);
+  $item_list_data = get_itemlist('need', $needs, 0, $itemlist_settings);
 
   $output ="<div id='comparative_table_main_need'>";
   //Render the item list

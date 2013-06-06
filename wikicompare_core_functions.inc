@@ -660,11 +660,11 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
 }
 
 
-function request_db($type, $settings=array()) {
+function request_db($type, $db_settings = array(), $settings=array()) {
 
 
   $res = array();
-  $settings['use_nids'] = true;
+  $db_settings['use_nids'] = true;
 //  $settings['is_implementation_without_nids'] = false;
   $query = db_select('cache_' . $type, 'n');
   $query->addField('n', 'nid', 'nid');
@@ -676,12 +676,9 @@ function request_db($type, $settings=array()) {
     $query->addField('n', 'state', 'state');
     $query->addField('n', 'has_children', 'has_children');
     $query->addField('n', 'parent_id', 'parent_id');
-    if (!isset($settings['nids'])) {
-      if (!isset($settings['parent_id'])) {
-        $settings['parent_id'] = NULL;
-      }
-      $query->condition('n.parent_id', $settings['parent_id']);
-      $settings['use_nids'] = false;
+    if (!isset($db_settings['nids'])) {
+      $query->condition('n.parent_id', $db_settings['parent_id']);
+      $db_settings['use_nids'] = false;
       //We don't filter per state when we directly give the nids
       $state = array('published-incomplete', 'published-submitted', 'published');
       if (isset($settings['states']['draft'])) {
@@ -700,16 +697,16 @@ function request_db($type, $settings=array()) {
     $query->addField('ctc', 'percent', 'percent');
     $query->addField('ctc', 'css_class', 'css_class');
     $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
-    if (!isset($settings['nids'])) {
-      $query->condition("n.compared_id", $settings['compared_ids'], 'in');
-      $query->condition("n.feature_id", $settings['feature_ids'], 'in');
-      $settings['use_nids'] = false;
+    if (!isset($db_settings['nids'])) {
+      $query->condition("n.compared_id", $db_settings['compared_ids'], 'in');
+      $query->condition("n.feature_id", $db_settings['feature_ids'], 'in');
+      $db_settings['use_nids'] = false;
 //      $settings['is_implementation_without_nids'] = true;
     }
   }
-  if ($settings['use_nids'] == true) {
+  if ($db_settings['use_nids'] == true) {
 
-    $query->condition('n.nid', $settings['nids'], 'in');
+    $query->condition('n.nid', $db_settings['nids'], 'in');
   }
 
   if ($type == 'feature') {
@@ -728,7 +725,7 @@ function request_db($type, $settings=array()) {
 
 
   if (module_exists('wikicompare_inherit_compared')) {
-    wikicompare_inherit_compared_wikicompare_request_db($query, $type, $settings);
+    wikicompare_inherit_compared_wikicompare_request_db($query, $type);
   }
 
   if (module_exists('wikicompare_translation')) {
