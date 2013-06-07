@@ -7,39 +7,16 @@
       selected_feature_ids = {};
       selected_need_ids = {};
 
-  
+//TODO faire une fonction générique pour extraire le nid  
 
 //Drupal.behaviors is the equivalent for Drupal of ready()
 Drupal.behaviors.WikicompareComparativeTable = {
   attach: function (context, settings) {
 
 
-    $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-      fastaction_status = settings['wikicompare_needs']['fastaction_status'];
-      selected_feature_ids = settings['wikicompare_needs']['selected_feature_ids'];
-
-    });
-
-
-    $('#edit-wikicompare-use-from-inherit-und:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-      $(this).click(function() {
-        $('.compute_inherit_link').click();
-      });
-    });
-
-
-    //Ajaxify the compared checkbox link
-    $('.compute_inherit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-
-      //Recover the link_id used later in the functions
-      var link_id = $(this).attr('id');
-
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_inherit');
-    });
 
     //Ajaxify the compared link
-    $('.list_item_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('.item_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
@@ -53,25 +30,91 @@ Drupal.behaviors.WikicompareComparativeTable = {
       if ($(this).hasClass('computed')) {
 
         $(this).click(function() {
-
+/*
           var patt = /[0-9]+/g;
           var node_id = patt.exec(link_id);
+*/
+          var nid = extract_nid(link_id);
           if (!$(this).hasClass('displayed')) {
-            $('.feature_' + context + '_child_' + node_id).show();
+            $('.feature_' + context + '_child_' + nid).show();
             $(this).addClass('displayed');
           } else { 
-
-            remove_children_tree(node_id, '#feature_' + context + '_link_', '.feature_' + context + '_child_', false);
+            remove_children_tree(nid, '#feature_' + context + '_link_', '.feature_' + context + '_child_', false);
           }
           return false;
         });
       } else {
-        Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_list_children', type, context);
+        action = 'expand_list_children';
+        if (type == 'feature' && context == 'table') {
+          action = 'expand_row_children';
+        }
+        Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, type, context);
       }
 
 
 
+
+
     });
+
+/*
+    //Ajaxify the feature link
+    $('.feature_table_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+
+      //Active the code
+      if ($('#comparative_table').hasClass('computed')) {
+        $(this).click(function() {
+
+          var nid = extract_nid(link_id);
+
+          if (!$(this).hasClass('displayed')) {
+            $('.feature_table_child_' + nid).show();
+            $(this).addClass('displayed');
+          } else {
+            remove_children_tree(nid, '.feature_link_children_', '.feature_table_child_', true);;
+            $(this).removeClass('displayed');
+          }
+          return false;
+        });
+      } else {
+        Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children');
+      }
+
+    });
+*/
+
+
+
+    //Dynamize the compared checkbox so it call the compared checkbox link on click
+    $('.compared_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
+      //Recover the compared_id to find later the checkbox_link id
+      var patt = /[0-9]+/g;
+      var compared_id = patt.exec($(this).attr('id'));
+      //Set the onclick event
+      $('#' + $(this).attr('id')).click(function() {
+        $(this).attr('disabled', 'disabled');
+        $('#compared_checkbox_link_' + compared_id).click();
+      });
+    });
+
+    //Ajaxify the compared checkbox link
+    $('.compared_checkbox_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_compared_checkbox');
+    });
+
+
+
+
+
 
     //Dynamize the checkbox so it add the item in the return and mark the parent with css class
     $('.itemlist_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
@@ -97,6 +140,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
       });
     });
+
+
 
     $('#initialize_selected_feature_dialog_ids:not(.listener_set)').addClass('listener_set').each(function () {
 
@@ -156,15 +201,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
-    //Ajaxify the compute table link
-    $('#reset_table_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-
-      //Recover the link_id used later in the functions
-      var link_id = $(this).attr('id');
-
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'reset_table');
-    });
 
 
     $('#compute_table_button:not(.listener_set)').addClass('listener_set').each(function () {
@@ -185,6 +221,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_table');
     });
 
+
+
+    //Ajaxify the compute table link
+    $('#reset_table_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'reset_table');
+    });
+
     //Ajaxify the compute table link
     $('#make_cleaning_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
@@ -193,62 +241,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'make_cleaning');
-    });
-
-
-    //Ajaxify the feature link
-    $('.feature_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-
-      //Recover the link_id used later in the functions
-      var link_id = $(this).attr('id');
-
-
-      //Active the code
-      if ($('#comparative_table').hasClass('computed')) {
-        $(this).click(function() {
-
-          var patt = /[0-9]+/g;
-          var node_id = patt.exec(link_id);
-          if (!$('#' + link_id).hasClass('displayed')) {
-            $('.feature_table_child_' + node_id).show();
-            $('#' + link_id).addClass('displayed');
-          } else {
-            remove_children_tree(node_id, '.feature_link_children_', '.feature_table_child_', true);;
-            $('#' + link_id).removeClass('displayed');
-          }
-          return false;
-        });
-      } else {
-        Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children');
-      }
-
-    });
-
-
-
-
-
-    //Ajaxify the compared checkbox link
-    $('.compared_checkbox_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-
-      //Recover the link_id used later in the functions
-      var link_id = $(this).attr('id');
-
-      //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'toogle_compared_checkbox');
-    });
-
-
-    //Dynamize the compared checkbox so it call the compared checkbox link on click
-    $('.compared_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
-      //Recover the compared_id to find later the checkbox_link id
-      var patt = /[0-9]+/g;
-      var compared_id = patt.exec($(this).attr('id'));
-      //Set the onclick event
-      $('#' + $(this).attr('id')).click(function() {
-        $(this).attr('disabled', 'disabled');
-        $('#compared_checkbox_link_' + compared_id).click();
-      });
     });
 
     //Dynamize the toogle fast edit link to display the elements add/edit/remove.
@@ -308,16 +300,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       $('#form_fastaction_submit_link_' + node_id).click();
       return false;
     });
-
-    $('.form_fastaction_cancel:not(.listener_set)').addClass('listener_set').each(function () {
-      $(this).click(function() {
-        $('.fastaction_item:.displayed').removeClass('displayed');
-        $('#make_cleaning_link').click();
-        //Block the page loading
-        return false;
-      });
-    }); 
-    
+   
     
     
     //Dynamize the compared add fastaction submit link.
@@ -333,6 +316,45 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastaction_form', type, action);
     });
+
+
+    $('.form_fastaction_cancel:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        $('.fastaction_item:.displayed').removeClass('displayed');
+        $('#make_cleaning_link').click();
+        //Block the page loading
+        return false;
+      });
+    }); 
+
+
+
+    $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+      fastaction_status = settings['wikicompare_needs']['fastaction_status'];
+      selected_feature_ids = settings['wikicompare_needs']['selected_feature_ids'];
+
+    });
+
+
+    $('#edit-wikicompare-use-from-inherit-und:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+      $(this).click(function() {
+        $('.compute_inherit_link').click();
+      });
+    });
+
+
+    //Ajaxify the compared checkbox link
+    $('.compute_inherit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+
+      //Active the code
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_inherit');
+    });
+
+
+
 
     
     function build_ajax_link(link_id, object, action, type=false, context=false) {
@@ -395,12 +417,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
           if (context == 'multidialog') {
             options.data.dialog = true;
-
-
             options.data.selected_feature_ids = selected_feature_dialog_ids;
-
           } else if (context != 'selectdialog') {
-
             make_cleaning = true;
           }
 
@@ -473,11 +491,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           make_cleaning = true;
         }
         
-        if (action == 'compute_inherit') {
-          send_node_id = true;
-          options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').attr('checked');
 
-        }
         
         if (action == 'show_fastaction_form') {
           send_node_id = true;
@@ -539,6 +553,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           options.data.revision = $('#form_' + type + '_fast' + context + '_revision_' + node_id).val();
           options.data.selectnode = $('#form_' + type + '_fast' + context + '_selectnode_' + node_id).val();
+        }
+
+        if (action == 'compute_inherit') {
+          send_node_id = true;
+          options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').attr('checked');
+
         }
 
 
@@ -736,7 +756,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
         
         if (send_colspan == true) {
-          options.data.nb_compareds = $('.header_compared').length + 1;
+          options.data.colspan = $('.header_compared').length + 1;
         }
 
         if (send_implementations == true) {
@@ -866,6 +886,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 $('#compared_link_' + node_id).click();
               }
             }
+
+          //I'd like to move this case out of this ajax function so the children removing whould be manage only by javascript, without making a useless ajax call. Unfortunately, the ajax call is made each time we click on the link, so I found no solution.
           } else {
           
             //Change the class link, so next time we click on this link it will display the content
@@ -896,6 +918,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
         }
 
+//TODO maybe we can remove the colspan management on php side, this code will install it anyway
         if (auto_colspan == true) {
           colspan = $('.header_compared').length + 1;
           $('.row_auto_colspan').attr('colspan', colspan);
@@ -910,6 +933,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
       return ajax;
     }
     
+
+    function extract_nid(link_id) {
+      var patt = /[0-9]+/g;
+      var node_id = patt.exec(link_id);
+ 
+      return node_id;
+    }
+
     function remove_children_tree(node_id, link_prefix, children_prefix, computed) {
 
       $(children_prefix + node_id).each(function(index) {

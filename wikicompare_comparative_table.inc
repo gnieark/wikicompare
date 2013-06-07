@@ -263,6 +263,8 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
 //DONE
 function render_rows($features_row_data, $settings) {
 
+dpm($settings, 'settings_render_row');
+
   $output = '';
 
   //Add a row for each feature children
@@ -389,7 +391,11 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 
   if ($type == 'feature' && $settings['context'] == 'table') {
     if ($node['data']->has_children == 1){
-      $title = l($title, 'get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node['data']->nid)), 'html' => True));
+      $class = array('item_link ' . $type . '_link_children_' . $node['data']->nid);
+      if ($settings['computed']) {
+        $class[] = 'computed';
+      }
+      $title = l($title, 'get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => $class, 'type' => 'feature', 'context' => 'table'), 'html' => True));
     }
     //Creating the first cell of the row, containing the feature details
     $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
@@ -401,10 +407,11 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 //TODO move the parent id in an attr 'parent_id'.
 //TODO try move all information in the link, and no more in the items
 //TODO il faudra repasser un coup sur cette fonction pour l'optimiser après le fichier js
+//TODO Merge link feature dans le reste
   } else {
 
     if ($node['data']->has_children == 1){
-      $class = array('list_item_link ', $type, $settings['context']);
+      $class = array('item_link');
 
       if ($settings['computed']) {
         $class[] = 'computed';
@@ -1264,7 +1271,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
     $settings = wikicompare_initialize_settings($_POST);
 
-    $settings['colspan'] = $_POST['nb_compareds'];
+//    $settings['colspan'] = $_POST['colspan'];
 
     $selected_feature_ids = array();
     if (!isset($_POST['reset'])) {
@@ -1600,7 +1607,7 @@ function wikicompare_initialize_settings($args = array()) {
 
   $settings = array();
 
-  foreach (array('fastaction_status', 'context', 'forbidden_nid', 'computed', 'states', 'can_be_translated') as $key) {
+  foreach (array('fastaction_status', 'context', 'forbidden_nid', 'computed', 'states', 'colspan', 'can_be_translated') as $key) {
 
     if (isset($args[$key])) {
       $settings[$key] = $args[$key];
