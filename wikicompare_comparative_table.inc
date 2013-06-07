@@ -57,10 +57,12 @@ function wikicompare_comparative_table() {
     '#href' => 'compute_comparative_table_callback/nojs',
     '#id' => 'compute_table_link',
     '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'compute_table',
       'style' => 'display:none',
     ),
   );
-  $output .= '<p><input id="compute_table_button" type="submit" value="Compute table" class="button"/>' . render($compute_link);
+  $output .= '<p><input id="compute_table_button" type="submit" link="compute_table_link" value="Compute table" class="button wikicompare_button"/>' . render($compute_link);
  
 
 
@@ -72,6 +74,10 @@ function wikicompare_comparative_table() {
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
     '#href' => 'compute_comparative_table_callback/nojs',
     '#id' => 'reset_table_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'reset_table',
+    ),
 
   );
   $output .= ' ' . render($reset_link) . '</p>';
@@ -105,6 +111,8 @@ function wikicompare_comparative_table() {
     '#href' => 'make_cleaning_callback/nojs',
     '#id' => 'make_cleaning_link',
     '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'make_cleaning',
       'style' => 'display:none',
     ),
 
@@ -263,7 +271,7 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
 //DONE
 function render_rows($features_row_data, $settings) {
 
-dpm($settings, 'settings_render_row');
+
 
   $output = '';
 
@@ -395,7 +403,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       if ($settings['computed']) {
         $class[] = 'computed';
       }
-      $title = l($title, 'get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => $class, 'type' => 'feature', 'context' => 'table'), 'html' => True));
+      $title = l($title, 'get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => $class, 'ntype' => 'feature', 'context' => 'table'), 'html' => True));
     }
     //Creating the first cell of the row, containing the feature details
     $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
@@ -416,7 +424,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       if ($settings['computed']) {
         $class[] = 'computed';
       }
-      $title = l($title, 'get_itemlist_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'type' => $type, 'context' => $settings['context']), 'html' => True));
+      $title = l($title, 'get_itemlist_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context']), 'html' => True));
 
     }
 
@@ -425,15 +433,21 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' || $node['data']->has_children != 1) {
         $checkbox_settings = array('element' => array(
           '#title' => $node['data']->nid,
-          '#id' => 'compared_checkbox_' . $node['data']->nid,
+          '#id' => $type . '_' . $settings['context'] . '_checkbox_' . $node['data']->nid,
+          '#attributes' => array(
+            'class' => array('itemlist_checkbox'),
+            'ntype' => $type,
+            'context' => $settings['context'],
+          ),
         ));
-
+/*
         if ($type == 'compared') {
 
           $checkbox_settings['element']['#attributes']['class'] = array('compared_checkbox');
         } else {
           $checkbox_settings['element']['#attributes']['class'] = array('itemlist_checkbox ' . $type);
         }
+*/
 
         if (isset($node['data']->displayed)) {
           $checkbox_settings['element']['#checked'] = True;
@@ -452,11 +466,12 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
             '#href' => 'toogle_compared_checkbox_callback/nojs/',
             '#id' => 'compared_checkbox_link_' . $node['data']->nid,
             '#attributes' => array(
-              'class' => array('compared_checkbox_link' => 'compared_checkbox_link'),
+              'class' => array('simple_ajaxlink'),
+              'action' => 'toogle_compared_checkbox',
               'style' => 'display:none',
             )
           );
-
+//dpm(render($checkbox_link));
           $prefix .= render($checkbox_link);
         }
       }
@@ -469,7 +484,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       ));
 
       //Create the link. The html = True indicate that the title of the link contain html.
-      $prefix .= l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('select_simple_dialog')), 'html' => True)) . ' ';
+      $prefix .= l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog')), 'html' => True)) . ' ';
     }
   }
 
@@ -785,7 +800,7 @@ function build_rows_data($features_tree, $compared_ids, $implementations, $setti
 function get_itemlist_children_response($method = 'ajax') {
 
 
-//  $nid = $_POST['node_id'];
+//  $nid = $_POST['nid'];
 //  $type = $_POST['type'];
 //  $context = $_POST['context'];
 
@@ -799,7 +814,7 @@ function get_itemlist_children_response($method = 'ajax') {
 
       $settings = wikicompare_initialize_settings($_POST);
 
-      $nodes = request_db($_POST['type'], array('parent_id' => $_POST['node_id']),  $settings);
+      $nodes = request_db($_POST['type'], array('parent_id' => $_POST['nid']),  $settings);
 //'fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1, 'states' => $_POST['states']));
 
 //      $settings = array(); //initialize_itemlist_settings($_POST['context']);
@@ -864,18 +879,20 @@ function get_itemlist_children_response($method = 'ajax') {
 
 
       //Building the data for the item list
-      $itemlist_data = get_itemlist($_POST['type'], $nodes, $_POST['node_id'], $settings);
-
+      $itemlist_data = get_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
+dpm($itemlist_data);
       //Rendering the item list
       $output = theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
       //Preparing the ajax commands to return to javascript
 //      $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
+dpm($output);
+//$output = 'TEST';
+      $commands = array(ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output));
 
-      $commands = array(ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['node_id'], $output));
       $page = array('#type' => 'ajax', '#commands' => $commands);
-
+//dpm($page);
       return $page;
 
     //TODO See if we can do it in javascript
@@ -905,7 +922,7 @@ function get_itemlist_children_response($method = 'ajax') {
 //DONE
 function get_feature_children_response($method = 'ajax') {
 
-//  $fid = $_POST['node_id'];
+//  $fid = $_POST['nid'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
@@ -922,7 +939,7 @@ function get_feature_children_response($method = 'ajax') {
 */
 //      $settings['context'] = 'table';
 
-      $features = request_db('feature', array('parent_id' => $_POST['node_id']), $settings);
+      $features = request_db('feature', array('parent_id' => $_POST['nid']), $settings);
 
 
       $feature_ids = array();
@@ -950,7 +967,7 @@ function get_feature_children_response($method = 'ajax') {
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We add the code after the parent row. Note we can't use ajax_command_after because it adds an unwanted div
-      $commands[] = ajax_command_invoke('#feature_table_' . $_POST['node_id'], 'after', array($output));
+      $commands[] = ajax_command_invoke('#feature_table_' . $_POST['nid'], 'after', array($output));
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
@@ -986,7 +1003,7 @@ function get_feature_children_response($method = 'ajax') {
 //DONE
 function toggle_compared_checkbox_response($method = 'ajax'){
 
-//  $cid = $_POST['node_id'];
+//  $cid = $_POST['nid'];
 
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
@@ -1007,11 +1024,11 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       }
 */
       //Recover the detail of the compared we want to add
-      $compared = request_db('compared', array('nids' => array($_POST['node_id'])), $settings);
+      $compared = request_db('compared', array('nids' => array($_POST['nid'])), $settings);
 
 
       //Add the header of the new column, with the compared detail
-      $header = '<th id="header_compared_' . $_POST['node_id'] . '" class="header_compared" style="display:none;"><span class="compared_title_' . $_POST['node_id'] . '">' . $compared[$_POST['node_id']]['data']->title . '</span></th>';
+      $header = '<th id="header_compared_' . $_POST['nid'] . '" class="header_compared" style="display:none;"><span class="compared_title_' . $_POST['nid'] . '">' . $compared[$_POST['nid']]['data']->title . '</span></th>';
 
       //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
@@ -1019,7 +1036,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
         $features = request_db('feature', array('nids' => $_POST['feature_ids']), $settings);
 
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', array('compared_ids' => array($_POST['node_id']), 'feature_ids' => $_POST['feature_ids']), $settings);
+        $implementations = request_db('implementation', array('compared_ids' => array($_POST['nid']), 'feature_ids' => $_POST['feature_ids']), $settings);
 
 
 
@@ -1032,7 +1049,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
           }
           $features = build_recursive_data('feature', $features_without_children, $settings);
 
-          $features = build_rows_data($features['tree'], array($_POST['node_id']), $implementations, $settings); 
+          $features = build_rows_data($features['tree'], array($_POST['nid']), $implementations, $settings); 
 
 
         } else {
@@ -1046,7 +1063,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
         $cells = array();
         foreach ($features as $fid => $feature) {
 
-          $implementation = $implementations[$fid][$_POST['node_id']];
+          $implementation = $implementations[$fid][$_POST['nid']];
 
           $cells[$implementation['data']->feature_id] = render_implementation($implementation, $feature, $settings);
         }
@@ -1063,8 +1080,10 @@ function toggle_compared_checkbox_response($method = 'ajax'){
         $commands[] = ajax_command_append('#feature_table_' . $fid, $cell);
       }
 
-      $commands[] = ajax_command_invoke('#compared_checkbox_' . $_POST['node_id'], 'removeAttr', array('disabled'));
+      $commands[] = ajax_command_invoke('#compared_table_checkbox_' . $_POST['nid'], 'removeAttr', array('disabled'));
+
       $page = array('#type' => 'ajax', '#commands' => $commands);
+
       return $page;
 
     //If we want to remove the column
@@ -1072,8 +1091,9 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
       //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
-      $commands[] = ajax_command_invoke('#compared_checkbox_' . $_POST['node_id'], 'removeAttr', array('disabled'));
+      $commands[] = ajax_command_invoke('#compared_table_checkbox_' . $_POST['nid'], 'removeAttr', array('disabled'));
       $page = array('#type' => 'ajax', '#commands' => $commands);
+
       return $page;
 
     }
@@ -1136,14 +1156,16 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
     '#title' => 'Submit',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
     '#href' => 'submit_dialog_callback/nojs',
-    '#id' => 'submit_dialog_link',
+    '#id' => 'submitlink_dialog',
     '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'submit_dialog',
       'style' => 'display:none',
     ),
   );
 
   if ($settings['context'] == 'multidialog') {
-    $output .= '<p><input id="submit_dialog_button" type="submit" value="Submit" class="button"/>' . render($submit_link) . '</p>';
+    $output .= '<p><input id="submitbutton_dialog" type="submit" link="submitlink_dialog" value="Submit" class="button wikicompare_button"/>' . render($submit_link) . '</p>';
   }
 
   $output .= t("</div>");
@@ -1160,9 +1182,9 @@ function select_dialog_response($method = 'ajax'){
 
     $settings = wikicompare_initialize_settings($_POST);
 
-    $res = build_recursive_data($_POST['type'], array($_POST['node_id']), $settings);
+    $res = build_recursive_data($_POST['type'], array($_POST['nid']), $settings);
 
-    $parent = $res['data'][$_POST['node_id']];
+    $parent = $res['data'][$_POST['nid']];
 
     $hidden = '';
     if ($parent) {
@@ -1629,6 +1651,6 @@ function wikicompare_initialize_settings($args = array()) {
 }
 
 
-//TODO node_id to nid
+
 //TODO conflit entre selected_feature_ids et manual_selected_feature
 ?>
