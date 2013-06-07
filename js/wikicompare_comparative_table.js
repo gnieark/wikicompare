@@ -48,6 +48,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (type == 'feature' && context == 'table') {
           action = 'expand_row_children';
         }
+
         Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, type, context);
       }
 
@@ -432,10 +433,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         options.data.fastaction_status = fastaction_status;
         
-        manage_displayed_flag = false;
+
         send_nid = false;
         send_type = false;
-        send_computed_status = false;
+        manage_displayed_flag = false;
+        send_computed = false;
         send_compareds = false;
         send_compareds_columns = false;
         send_features = false;
@@ -443,7 +445,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_needs = false;
         send_manual_selected_features = false;
         send_selected_needs = false;
-        send_states_to_display = false;
+        send_states = false;
         send_forbidden_nid = false;
         send_container = false;
         send_colspan = false;
@@ -455,13 +457,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_nid = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
-          send_states_to_display = true;
+          send_states = true;
           send_forbidden_nid = true;
           options.data.type = type;
           options.data.context = context;
 
           if (context == 'multidialog') {
-            options.data.dialog = true;
+//            options.data.dialog = true;
             options.data.selected_feature_ids = selected_feature_dialog_ids;
           } else if (context != 'selectdialog') {
             make_cleaning = true;
@@ -477,24 +479,23 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_nid = true;
           manage_displayed_flag = true;
           send_compareds_columns = true;
-          send_states_to_display = true;
+          send_states = true;
           make_cleaning = true;
         }
         
         if (action == 'toogle_compared_checkbox') {
           send_nid = true;
-          send_computed_status = true;
           manage_displayed_flag = true;
+          send_computed = true;
           send_features = true;
-          make_cleaning = true;
           auto_colspan = true;
+          make_cleaning = true;
         }
 
         if (action == 'select_dialog') {
           send_nid = true;
           send_type = true;
           send_container = true;
-        
           options.data.container_autocomplete = $('#select_container_autocomplete').text();
           options.data.container_id = $('#select_container_id').text();
         }
@@ -514,7 +515,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_compareds_columns = true;
           send_manual_selected_features = true;
           send_selected_needs = true;
-          send_states_to_display = true;
+          send_states = true;
           send_colspan = true;
           make_cleaning = true;
         }
@@ -522,11 +523,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         if (action == 'reset_table') {
           send_compareds_columns = true;
-          send_states_to_display = true;
+          send_states = true;
           send_colspan = true;
           options.data.reset = true;
         }
-     
+/*     
         if (action == 'toogle_fastaction') {
           manage_displayed_flag = true;
           send_compareds = true;
@@ -535,12 +536,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_needs = true;
           make_cleaning = true;
         }
+*/
         
 
         
         if (action == 'show_fastaction_form') {
           send_nid = true;
+          send_type = true;
           manage_displayed_flag = true;
+          send_colspan = true;
+          options.data.fastaction = context;
 
           
           $('.form_fastaction').remove();
@@ -549,9 +554,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             make_cleaning = true;
           }
           
-          send_type = true;
-          send_colspan = true;
-          options.data.fastaction = context;
+
         }
      
         if (action == 'submit_fastaction_form') {
@@ -608,25 +611,91 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
         if (action == 'make_cleaning') {
-          send_computed_status = true;
+          send_computed = true;
           send_compareds_columns = true;
           send_implementations = true;
           send_selected_features = true;
-          send_states_to_display = true;
+          send_states = true;
 
+
+          var a = ['compared', 'feature', 'need'];
+          for (index = 0; index < a.length; ++index) {
+            var ftype = a[index];
+            var node_ids = {};
+//            var i = 0;
+            var item = ftype + '_item';
+            if (ftype == 'feature') {
+              item = 'feature_row';
+            }
+            $('.' + item).each(function (key, value) {
+              //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
+              if (!$(this).hasClass('to_remove')) {
+
+//                var id = $(this).attr('id');
+  /*              var patt = /[0-9]+/g;
+                compared_id = patt.exec($(this).attr('id'))[0]; */
+                nid = extract_nid($(this).attr('id'))[0];
+                node_ids[nid] = {};
+                //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
+                node_ids[nid]['nid'] = nid;
+                if (ftype == 'feature') {
+                  var patt = /[0-9]+/g;
+                  if (patt.test($(this).attr('class'))) {
+                    //I don't know why, but I need to remake the patt, the patt.exec will otherwise not work  
+      //              var patt = /[0-9]+/g;
+                    var pid = $(this).attr('class');
+                    node_ids[nid]['parent_id'] = extract_nid(pid)[0]; //patt.exec($(this).attr('class'));
+      //               = parent_id;
+                  }
+                } else {
+                  if ($(this).parent().parent().parent().hasClass('compared_children')) {
+                    pid = $(this).parent().parent().parent().attr('id');
+                    node_ids[nid]['parent_id'] = extract_nid(pid)[0];
+                  }
+                }
+
+                node_ids[nid]['has_children'] = 0;
+                if ($(this).hasClass('has_children')) {
+                  node_ids[nid]['has_children'] = 1;
+                }
+//                i = i + 1;
+              }
+            });
+            //Add them in the ajax call variables
+            options.data[ftype + '_ids'] = node_ids;
+
+            var node_displayed_ids = {};
+//            var i = 0;
+            $('.' + ftype + '_table_link').each(function (key, value) {
+
+              if ($(this).hasClass('displayed')) {
+
+  //              var patt = /[0-9]+/g;
+//                var id = $(this).attr('id');
+                var nid = extract_nid($(this).attr('id'))[0];
+                node_displayed_ids[nid] = nid;// patt.exec($(this).attr('id'))[0]
+//                i = i + 1;
+              }
+            });
+
+            //Add them in the ajax call variables
+            options.data[ftype + '_displayed_ids'] = node_displayed_ids;
+
+          }
+/*
           var compared_ids = new Array();
           var i = 0;
           $('.compared_item').each(function (key, value) {
             //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
             if (!$(this).hasClass('to_remove')) {
-              var patt = /[0-9]+/g;
               compared_ids[i] = {};
-              compared_id = patt.exec($(this).attr('id'))[0];
+              var id = $(this).attr('id');
+              cid = extract_nid(id);
               //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-              compared_ids[i]['nid'] = compared_id;
+              compared_ids[i]['nid'] = cid;
               if ($(this).parent().parent().parent().hasClass('compared_children')) {
-                parent = $(this).parent().parent().parent().attr('id');
-                compared_ids[i]['parent_id'] = patt.exec(parent)[0];
+                pid = $(this).parent().parent().parent().attr('id');
+                compared_ids[i]['parent_id'] = extract_nid(pid);
               }
               compared_ids[i]['has_children'] = 0;
               if ($(this).hasClass('has_children')) {
@@ -644,29 +713,34 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
             if ($(this).hasClass('displayed')) {
 
-              var patt = /[0-9]+/g;
-              compared_displayed_ids[i] = patt.exec($(this).attr('id'))[0]
+//              var patt = /[0-9]+/g;
+              var id = $(this).attr('id');
+              compared_displayed_ids[i] = extract_nid(id);// patt.exec($(this).attr('id'))[0]
               i = i + 1;
             }
           });
 
           //Add them in the ajax call variables
           options.data.compared_displayed_ids = compared_displayed_ids;
-
+*/
+/*
           var feature_ids = new Array();
           var i = 0;
           $('.feature_row').each(function (key, value) {
-            var patt = /[0-9]+/g;
+
             feature_ids[i] = {};
-            feature_id = patt.exec($(this).attr('id'))[0];
+            var id = $(this).attr('id');
+            fid = extract_nid(id); //patt.exec($(this).attr('id'))[0];
             //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-            feature_ids[i]['nid'] = feature_id;
+            feature_ids[i]['nid'] = fid;
             //The only numeric value in feature row class is the parent id
+            var patt = /[0-9]+/g;
             if (patt.test($(this).attr('class'))) {
               //I don't know why, but I need to remake the patt, the patt.exec will otherwise not work  
-              var patt = /[0-9]+/g;
-              parent_id = patt.exec($(this).attr('class'));
-              feature_ids[i]['parent_id'] = parent_id[0];
+//              var patt = /[0-9]+/g;
+              var pid = $(this).attr('class');
+              feature_ids[i]['parent_id'] = extract_nid(pid); //patt.exec($(this).attr('class'));
+//               = parent_id;
             }
             feature_ids[i]['has_children'] = 0;
             if ($(this).hasClass('has_children')) {
@@ -681,8 +755,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var i = 0;
           $('.feature_link').each(function (key, value) {
             if ($(this).hasClass('displayed')) {
-              var patt = /[0-9]+/g;
-              feature_displayed_ids[i] = patt.exec($(this).attr('id'))[0]
+//              var patt = /[0-9]+/g;
+              var id = $(this).attr('id');
+              feature_displayed_ids[i] = extract_nid(id); //patt.exec($(this).attr('id'))[0]
               i = i + 1;
             }
           });
@@ -694,15 +769,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.need_item').each(function (key, value) {
             //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
             if (!$(this).hasClass('to_remove')) {
-              var patt = /[0-9]+/g;
+//              var patt = /[0-9]+/g;
               need_ids[i] = {};
-              need_id = patt.exec($(this).attr('id'))[0];
+              var id = $(this).attr('id');
+              nid = extract_nid(id); //patt.exec($(this).attr('id'))[0];
               //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-              need_ids[i]['nid'] = need_id;
+              need_ids[i]['nid'] = nid;
               if ($(this).parent().parent().parent().hasClass('need_children')) {
-                parent = $(this).parent().parent().parent().attr('id');
+                pid = $(this).parent().parent().parent().attr('id');
 
-                need_ids[i]['parent_id'] = patt.exec(parent)[0];
+                need_ids[i]['parent_id'] = extract_nid(pid); //att.exec(parent)[0];
 
               }
               need_ids[i]['has_children'] = 0;
@@ -719,14 +795,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var i = 0;
           $('.list_item_link:.need').each(function (key, value) {
             if ($(this).hasClass('displayed')) {
-              var patt = /[0-9]+/g;
-              need_displayed_ids[i] = patt.exec($(this).attr('id'))[0]
+//              var patt = /[0-9]+/g;
+              var id = $(this).attr('id');
+              need_displayed_ids[i] = extract_nid(id); //patt.exec($(this).attr('id'))[0]
               i = i + 1;
             }
           });
           //Add them in the ajax call variables
           options.data.need_displayed_ids = need_displayed_ids;
-
+*/
 
         }
         
@@ -747,7 +824,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.type = type;
         }
 
-        if (send_computed_status == true) {
+        if (send_computed == true) {
           if ($('#comparative_table').hasClass('computed')) {
             options.data.computed = 1;
           } else {
@@ -842,7 +919,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.selected_need_ids = selected_need_ids;
         }
 
-        if (send_states_to_display == true) {
+        if (send_states == true) {
           var states = {};
           if ($('#checkbox-draft-items').attr('checked')) {
             states['draft'] = 'draft';
@@ -969,7 +1046,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           colspan = $('.header_compared').length + 1;
           $('.row_auto_colspan').attr('colspan', colspan);
         }
- 
+
         if (make_cleaning == true) {
           $('#make_cleaning_link').click();
         }

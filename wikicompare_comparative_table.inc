@@ -399,7 +399,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 
   if ($type == 'feature' && $settings['context'] == 'table') {
     if ($node['data']->has_children == 1){
-      $class = array('item_link ' . $type . '_link_children_' . $node['data']->nid);
+      $class = array('item_link ' . $type . '_link_children_' . $node['data']->nid . ' ' . $type . '_table_link');
       if ($settings['computed']) {
         $class[] = 'computed';
       }
@@ -423,6 +423,9 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 
       if ($settings['computed']) {
         $class[] = 'computed';
+      }
+      if ($settings['context'] == 'table') {
+        $class[] = $type . '_table_link';
       }
       $title = l($title, 'get_itemlist_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context']), 'html' => True));
 
@@ -880,14 +883,14 @@ function get_itemlist_children_response($method = 'ajax') {
 
       //Building the data for the item list
       $itemlist_data = get_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
-dpm($itemlist_data);
+
       //Rendering the item list
       $output = theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
       //Preparing the ajax commands to return to javascript
 //      $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
-dpm($output);
+
 //$output = 'TEST';
       $commands = array(ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output));
 
@@ -1374,7 +1377,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
 function make_cleaning_response($method = 'ajax') {
 
-
+dpm($_POST);
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
@@ -1401,8 +1404,8 @@ function make_cleaning_response($method = 'ajax') {
       }
 
       $node_ids = array();  //$_POST['compared_column_ids'];
-      foreach ($_POST[$type . '_ids'] as $node) {
-        $node_ids[$node['nid']] = $node['nid'];
+      foreach ($_POST[$type . '_ids'] as $nid => $node) {
+        $node_ids[$nid] = $nid;
       }
     
 
@@ -1427,14 +1430,14 @@ function make_cleaning_response($method = 'ajax') {
       $in_table_node_ids = array();
       $reset = False;
       //We test all nodes present in the table
-      foreach ($_POST[$type . '_ids'] as $node_from_table) {
+      foreach ($_POST[$type . '_ids'] as $nid => $node_from_table) {
 
         //Listing all node present in table in a array for later use
-        $in_table_node_ids[$node_from_table['nid']] = $node_from_table['nid'];
+        $in_table_node_ids[$nid] = $nid;
         //If the node has a parent in the table
         if (isset($node_from_table['parent_id'])) {
           //If the parent of the node in the table is different of the parent of the node in db
-          if ($node_from_table['parent_id'] != $nodes[$node_from_table['nid']]['data']->parent_id) {
+          if ($node_from_table['parent_id'] != $nodes[$nid]['data']->parent_id) {
 
             if ($type == 'feature') {
               //In the case of a feature, it means there is a structural change so better refresh the manual_selected_feature itemlist
@@ -1452,10 +1455,10 @@ function make_cleaning_response($method = 'ajax') {
 
 
             //If the parent of the node in db is displaying his children in the table, then the tested node is missing among the children so we need to hide the children of the parent. Also, if the tested node is now without parent, then we need to reset the table to display it.
-            if (in_array($nodes[$node_from_table['nid']]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$node_from_table['nid']]['data']->parent_id == NULL) {
+            if (in_array($nodes[$nid]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$nid]['data']->parent_id == NULL) {
 
-              if ($nodes[$node_from_table['nid']]['data']->parent_id != NULL) {
-                $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$node_from_table['nid']]['data']->parent_id, 'click', array());
+              if ($nodes[$nid]['data']->parent_id != NULL) {
+                $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$nid]['data']->parent_id, 'click', array());
 
               } else {
 
@@ -1469,11 +1472,11 @@ function make_cleaning_response($method = 'ajax') {
 
         }
 
-        if ($node_from_table['has_children'] != $nodes[$node_from_table['nid']]['data']->has_children) {
+        if ($node_from_table['has_children'] != $nodes[$nid]['data']->has_children) {
 
-          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $node_from_table['nid'], wikicompare_get_supertitle_item($type, $nodes[$node_from_table['nid']], $settings));
-          if ($nodes[$node_from_table['nid']]['data']->has_children == 0) {
-            $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $node_from_table['nid'], 'removeClass', array('has_children'));
+          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $nid, wikicompare_get_supertitle_item($type, $nodes[$nid], $settings));
+          if ($nodes[$nid]['data']->has_children == 0) {
+            $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $nid, 'removeClass', array('has_children'));
           }
         
 
@@ -1483,7 +1486,7 @@ function make_cleaning_response($method = 'ajax') {
 
 
         //If one of the node without parent displayed in table isn't in the first level in db anymore
-        if ((!in_array($node_from_table['nid'], $in_db_nodes_ids)) && !isset($node_from_table['parent_id'])) {
+        if ((!in_array($nid, $in_db_nodes_ids)) && !isset($node_from_table['parent_id'])) {
 
           $reset = True;
 
