@@ -900,10 +900,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           colspan = $('.header_compared').length + 1;
           $('.row_auto_colspan').attr('colspan', colspan);
         }
-        
+ 
         if (make_cleaning == true) {
           $('#make_cleaning_link').click();
         }
+
       }
 
       return ajax;

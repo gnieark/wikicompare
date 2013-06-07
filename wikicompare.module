@@ -213,8 +213,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['get_feature_callback'] = array(
-    'page callback' => 'get_feature_response',
+  $items['get_feature_children_callback'] = array(
+    'page callback' => 'get_feature_children_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),

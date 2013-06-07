@@ -139,11 +139,11 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 */
 
   //Building the data for the item list
-  $item_list_data = get_itemlist($type, $nodes, 0, $settings);
+  $itemlist_data = get_itemlist($type, $nodes, 0, $settings);
 
   $output ="<div id='comparative_table_main_" . $type . "'>";
   //Render the item list
-  $output .= theme_item_list(array('items' => $item_list_data, 'title' => $title, 'type' => 'ul', 'attributes' => array()));
+  $output .= theme_item_list(array('items' => $itemlist_data, 'title' => $title, 'type' => 'ul', 'attributes' => array()));
   $output .= '<p><a id="add_' . $type . '_link" href="?q=node/add/' . $type . '">Add</a><span id="add_' . $type . '_link_fastaction">';
  
   if ($settings['fastaction_status']) {
@@ -184,21 +184,20 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
 
   $settings['context'] = 'table';
 
-  if (empty($feature_ids)) {
+  if (empty($features)) {
     //Find all the features on the first level of the tree
     $features = request_db('feature', array('parent_id' => NULL), $settings);
-    foreach ($features as $fid => $feature) {
-      $feature_ids[$fid] = $fid;
-    }
-
   }
 
+  foreach ($features as $fid => $feature) {
+    $feature_ids[$fid] = $fid;
+  }
 
 
   $implementations = array();
   //I though about move this security in the request itself, but it would add an unnecessary db request in some case.
   if (!empty($feature_ids) && !empty($compared_ids)) {
-    $implementations = request_db('implementation', array('feature_ids' => $feature_ids, 'compare_ids' => $compared_ids), $settings);
+    $implementations = request_db('implementation', array('feature_ids' => $feature_ids, 'compared_ids' => $compared_ids), $settings);
 // array('fastaction_status' => $fastaction_status, 'compared_ids' => $compareds, 'feature_ids' => $settings['feature_ids']));
   } 
 
@@ -206,7 +205,7 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
 
   $compareds = array();
   if (!empty($compared_ids)) {
-    $compareds = request_db('compared', array('nids' => $compareds), $settings);
+    $compareds = request_db('compared', array('nids' => $compared_ids), $settings);
 /*
     $query = db_select('cache_compared', 's');
     $query->addField('s', 'nid', 'nid');
@@ -289,6 +288,7 @@ function render_rows($features_row_data, $settings) {
     $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature, $settings) . '</td>';
 
 
+
     //Add a column for each column in the table
     foreach ($feature['implementations'] as $implementation) {
       $output .= render_implementation($implementation, $feature, $settings);
@@ -308,7 +308,7 @@ function render_implementation($implementation, $feature, $settings) {
 
   if (in_array($feature['data']->state, array('published-incomplete', 'published-submitted', 'published')) || $feature == NULL) {
 
-//TODO centralize
+/*
     //Create the image link to go to the node page
     $img = theme('image', array(
       'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
@@ -323,8 +323,9 @@ function render_implementation($implementation, $feature, $settings) {
       $img_link_to_node .= add_fastaction_items('implementation', $implementation); 
     }
     $img_link_to_node .= '</span>';
+*/
 
-    $output = '<td id="implementation_' . $implementation['data']->nid . '" class="implementation_cell ' . $implementation['data']->css_class . ' implementation_compared_' . $implementation['data']->compared_id . ' implementation_feature_' . $implementation['data']->feature_id . '">' . $implementation['data']->percent . '%' . $img_link_to_node . '</td>';
+    $output = '<td id="implementation_' . $implementation['data']->nid . '" class="implementation_cell ' . $implementation['data']->css_class . ' implementation_compared_' . $implementation['data']->compared_id . ' implementation_feature_' . $implementation['data']->feature_id . '">' . wikicompare_get_supertitle_item('implementation', $implementation, $settings) . '</td>';
 
   } else {
     $output = '<td></td>';
@@ -338,10 +339,6 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 
 //  $node = $node_array['data'];
 
-
-dpm($type);
-dpm($node);
-dpm($settings);
 
 
 //  if ($type != 'feature' || $itemlist_settings['context'] != 'table') {
@@ -369,6 +366,9 @@ dpm($settings);
   $prefix = '';
   $suffix = '';
   $title = '<span class="' . $type . '_title_' . $node['data']->nid . '">' . $node['data']->title . '</span>';
+  if ($type == 'implementation') {
+    $title = $node['data']->percent . '%';
+  }
   if ($settings['context'] == 'table') {
 
     //Create the image link to go to the node page
@@ -386,9 +386,10 @@ dpm($settings);
     }
     $suffix .= '</span>';
   }
+
   if ($type == 'feature' && $settings['context'] == 'table') {
     if ($node['data']->has_children == 1){
-      $title = l($title, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node['data']->nid)), 'html' => True));
+      $title = l($title, 'get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node['data']->nid)), 'html' => True));
     }
     //Creating the first cell of the row, containing the feature details
     $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
@@ -449,7 +450,7 @@ dpm($settings);
             )
           );
 
-          $checkbox_area .= render($checkbox_link);
+          $prefix .= render($checkbox_link);
         }
       }
     } elseif ($settings['context'] == 'selectdialog') {
@@ -773,6 +774,7 @@ function build_rows_data($features_tree, $compared_ids, $implementations, $setti
 /*
  * Ajax callback cunction called by javascript to recover the compared children of the clicked compared
  */
+//DONE
 function get_itemlist_children_response($method = 'ajax') {
 
 
@@ -788,56 +790,60 @@ function get_itemlist_children_response($method = 'ajax') {
     //If we want to displayed the children
     if ($_POST['action'] == 'display') {
 
-      $nodes = request_db($_POST['type'], array('parent_id' => $_POST['node_id'], 'fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1, 'states' => $_POST['states']));
+      $settings = wikicompare_initialize_settings($_POST);
 
-      $settings = array(); //initialize_itemlist_settings($_POST['context']);
+      $nodes = request_db($_POST['type'], array('parent_id' => $_POST['node_id']),  $settings);
+//'fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1, 'states' => $_POST['states']));
 
-      $settings['context'] = $_POST['context'];
+//      $settings = array(); //initialize_itemlist_settings($_POST['context']);
+
+//      $settings['context'] = $_POST['context'];
 
 //      if (!empty($_POST['fastaction_status'])) {
-      $settings['fastaction_status'] = $_POST['fastaction_status'];
+//      $settings['fastaction_status'] = $_POST['fastaction_status'];
 //      }
 
 
 
       //Prepare the array to use as argument for the item list building function
 
-      foreach ($nodes as $key => $record) {
+      foreach ($nodes as $nid => $node) {
 
-        if ($_POST['type'] == 'compared' && $_POST['context'] == 'table') {
+        if ($_POST['type'] == 'compared' && $settings['context'] == 'table') {
           //If already displayed in the table, we check it by default
 //          if (!empty($_POST['compared_column_ids'])) {
-          if (in_array($key, $_POST['compared_column_ids'])) {
-            $nodes[$key]['data']->displayed = True;
+          if (in_array($nid, $_POST['compared_column_ids'])) {
+            $nodes[$nid]['data']->displayed = True;
           }
   //        }
 
         }
 
-        if ($_POST['type'] == 'feature' && $_POST['context'] == 'multidialog') {
+        if ($_POST['type'] == 'feature' && $settings['context'] == 'multidialog') {
 
           //TODO Verify if we can put this security in js
           if ($_POST['selected_feature_ids'] == '') {
             $_POST['selected_feature_ids'] = array();
           }
 
-          $selected_feature_ids = $_POST['selected_feature_ids'];
-          if (in_array($key, $selected_feature_ids)) {
+//          $selected_feature_ids = $_POST['selected_feature_ids'];
+          if (in_array($key, $_POST['selected_feature_ids'])) {
             $nodes[$key]['data']->displayed = True;
           }
         }
 
 
         if (module_exists('wikicompare_needs')) {
-          wikicompare_needs_wikicompare_comparative_table_prepare_itemlist($key, $nodes, $_POST);
+          wikicompare_needs_table_prepare_itemlist($nid, $nodes, $_POST);
         }
 
 
       }
-
+/*
       if (isset($_POST['forbidden_nid'])) {
         $settings['forbidden_nid'] = $_POST['forbidden_nid'];
       }
+*/
 
 /*
       $dialog = 0;
@@ -849,6 +855,7 @@ function get_itemlist_children_response($method = 'ajax') {
       }
 */
 
+
       //Building the data for the item list
       $itemlist_data = get_itemlist($_POST['type'], $nodes, $_POST['node_id'], $settings);
 
@@ -859,7 +866,7 @@ function get_itemlist_children_response($method = 'ajax') {
 //      $commands = array();
       //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
 
-      $commands = array(ajax_command_html('#'. $_POST['type'] . '_' . $_POST['context'] . '_children_' . $_POST['node_id'], $output));
+      $commands = array(ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['node_id'], $output));
       $page = array('#type' => 'ajax', '#commands' => $commands);
 
       return $page;
@@ -888,9 +895,10 @@ function get_itemlist_children_response($method = 'ajax') {
 /*
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
-function get_feature_response($method = 'ajax') {
+//DONE
+function get_feature_children_response($method = 'ajax') {
 
-  $fid = $_POST['node_id'];
+//  $fid = $_POST['node_id'];
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
@@ -898,43 +906,48 @@ function get_feature_response($method = 'ajax') {
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
-
-
+      $settings = wikicompare_initialize_settings($_POST);
+/*
       $fastaction_status = 0;
       if (!empty($_POST['fastaction_status'])) {
         $fastaction_status = $_POST['fastaction_status'];
       }
+*/
+//      $settings['context'] = 'table';
 
-      $features = request_db('feature', array('fastaction_status' => $fastaction_status, 'can_be_translated' => 1, 'states' => $_POST['states'], 'parent_id' => $fid));
+      $features = request_db('feature', array('parent_id' => $_POST['node_id']), $settings);
 
-      $features_ids = array();
+
+      $feature_ids = array();
       foreach ($features as $key => $feature) {
-        $features_ids[$key] = $key;
+        $feature_ids[$key] = $key;
       }
 
       $implementations = array();
       //We recover from javascript argument the id of the columns displayed in the table, to know the cell we have to add
       if (!empty($_POST['compared_column_ids'])) {
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status, 'compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $features_ids));
+        $implementations = request_db('implementation', array('compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
       }
       //Building the data for the table row
 
+      //TODO try to move this security in js
       if ($_POST['compared_column_ids'] == '') {
         $_POST['compared_column_ids'] = array();
       }
-      $feature_row_data = build_rows_data($features, $_POST['compared_column_ids'], $implementations, 0);
+      $feature_row_data = build_rows_data($features, $_POST['compared_column_ids'], $implementations, $settings);
 
 
-      $output = render_rows($feature_row_data, $fastaction_status);
+      $output = render_rows($feature_row_data, $settings);
 
       //Preparing the ajax commands to return to javascript
       $commands = array();
       //We add the code after the parent row. Note we can't use ajax_command_after because it adds an unwanted div
-      $commands[] = ajax_command_invoke('#feature_table_' . $fid, 'after', array($output));
+      $commands[] = ajax_command_invoke('#feature_table_' . $_POST['node_id'], 'after', array($output));
 
       //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+
       $page = array('#type' => 'ajax', '#commands' => $commands);
   
       return $page;
@@ -963,9 +976,10 @@ function get_feature_response($method = 'ajax') {
 /*
  * Ajax callback cunction called by javascript to add or remove a column in the comparative table
  */
+//DONE
 function toggle_compared_checkbox_response($method = 'ajax'){
 
-  $cid = $_POST['node_id'];
+//  $cid = $_POST['node_id'];
 
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
@@ -974,38 +988,45 @@ function toggle_compared_checkbox_response($method = 'ajax'){
     //If we want to displayed the compared children
     if ($_POST['action'] == 'display') {
 
+      $settings = wikicompare_initialize_settings($_POST);
+
+//TODO Verify that removing this security doesn't cause any problem
+//      $settings['states'] = array('draft' => 'draft', 'closed' => 'closed');
+/*
       //Recover fastaction status
       $fastaction_status = 0;
       if (!empty($_POST['fastaction_status'])) {
         $fastaction_status = $_POST['fastaction_status'];
       }
-
-
+*/
       //Recover the detail of the compared we want to add
-      $compared = request_db('compared', array('can_be_translated' => 1, 'nids' => array($cid)));
+      $compared = request_db('compared', array('nids' => array($_POST['node_id'])), $settings);
 
 
       //Add the header of the new column, with the compared detail
-      $header = '<th id="header_compared_' . $cid . '" class="header_compared" style="display:none;"><span class="compared_title_' . $cid . '">' . $compared[$cid]['data']->title . '</span></th>';
+      $header = '<th id="header_compared_' . $_POST['node_id'] . '" class="header_compared" style="display:none;"><span class="compared_title_' . $_POST['node_id'] . '">' . $compared[$_POST['node_id']]['data']->title . '</span></th>';
 
       //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
       if (!empty($_POST['feature_ids'])) {
 
-        $features = request_db('feature', array('states' => array('draft' => 'draft', 'closed' => 'closed', 'nids' => $_POST['feature_ids'])));
+        $features = request_db('feature', array('nids' => $_POST['feature_ids']), $settings);
 
         //Recover the implementation needed for the cells
-        $implementations = request_db('implementation', array('fastaction_status' => $fastaction_status, 'compared_ids' => array($cid), 'feature_ids' => $_POST['feature_ids']));
+        $implementations = request_db('implementation', array('compared_ids' => array($_POST['node_id']), 'feature_ids' => $_POST['feature_ids']), $settings);
 
 
-        if ($_POST['computed']) {
+
+        if ($settings['computed']) {
           $features_without_children = array();
           foreach ($features as $fid => $feature) {
             if ($feature['data']->has_children == 0) {
               $features_without_children[$fid] = $fid;
             }
           }
-          $features_array = build_recursive_data('feature', $features_without_children, $fastedit_status);
-          $features = build_rows_data($features_array['tree'], array($cid), $implementations, $_POST['computed']); 
+          $features = build_recursive_data('feature', $features_without_children, $settings);
+
+          $features = build_rows_data($features['tree'], array($_POST['node_id']), $implementations, $settings); 
+
 
         } else {
           $features = request_db('feature', array('nids' => $_POST['feature_ids']));
@@ -1018,11 +1039,12 @@ function toggle_compared_checkbox_response($method = 'ajax'){
         $cells = array();
         foreach ($features as $fid => $feature) {
 
-          $implementation = $implementations[$fid][$cid];
+          $implementation = $implementations[$fid][$_POST['node_id']];
 
-          $cells[$implementation['data']->feature_id] = render_implementation($implementation, $feature, $fastaction_status);
+          $cells[$implementation['data']->feature_id] = render_implementation($implementation, $feature, $settings);
         }
       }
+
 
 
       //Preparing the ajax commands to return to javascript
@@ -1030,10 +1052,11 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       //Add the new cell at the end of the header
       $commands[] = ajax_command_append('#comparative_table_header', $header);
       //Add the new cells at the end of each row
-      foreach ($cells as $key => $cell) {
-        $commands[] = ajax_command_append('#feature_table_' . $key, $cell);
+      foreach ($cells as $fid => $cell) {
+        $commands[] = ajax_command_append('#feature_table_' . $fid, $cell);
       }
-      $commands[] = ajax_command_invoke('#compared_checkbox_' . $cid, 'removeAttr', array('disabled'));
+
+      $commands[] = ajax_command_invoke('#compared_checkbox_' . $_POST['node_id'], 'removeAttr', array('disabled'));
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 
@@ -1042,7 +1065,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
       //In this case we return nothing, everything is managed on the javascript side
       $commands = array();
-      $commands[] = ajax_command_invoke('#compared_checkbox_' . $cid, 'removeAttr', array('disabled'));
+      $commands[] = ajax_command_invoke('#compared_checkbox_' . $_POST['node_id'], 'removeAttr', array('disabled'));
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
 
@@ -1056,7 +1079,8 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
 }
 
-
+//DONE
+//TODO Try to reduce the number of argument
 function get_dialog_response($context, $type, $container, $nid, $container_autocomplete, $container_id){
 
 
@@ -1064,9 +1088,9 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
 
   $output = t("<div id='dialog-content'>");
 
+  $settings = wikicompare_initialize_settings(array('context' => $context, 'states' => array('draft' => 'draft', 'closed' => 'closed')));
 
-  //Find all the features on the first level of the tree
-  $nodes = request_db($type, array('can_be_translated' => 1, 'states' => array('draft' => 'draft', 'closed' => 'closed')));
+
 
   $output .= '<div id="initialize_selected_feature_dialog_ids" style="display:none;">';
   if ($container == 'manual_selected_features') {
@@ -1080,21 +1104,24 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
   $output .= '<div id="select_container_autocomplete" style="display:none;">' . $container_autocomplete . '</div>';
   $output .= '<div id="select_container_id" style="display:none;">' . $container_id . '</div>';
 
-  $itemlist_settings = initialize_itemlist_settings($context);
+//  $itemlist_settings = initialize_itemlist_settings($context);
 
-  $itemlist_settings['context'] = $context;
-  $itemlist_settings['node_link'] = 0;
+//  $itemlist_settings['context'] = $context;
+//  $itemlist_settings['node_link'] = 0;
 
   if ($nid != 0) {
     $output .= '<div id="forbidden_nid" style="display:none;">' . $nid . '</div>';
-    $itemlist_settings['forbidden_nid'] = $nid;
+    $settings['forbidden_nid'] = $nid;
   }
 
+  //Find all the features on the first level of the tree
+  $nodes = request_db($type, array('parent_id' => NULL), $settings);
+
   //Building the data for the item list
-  $item_list_data = get_itemlist($type, $nodes, 0, $itemlist_settings);
+  $itemlist_data = get_itemlist($type, $nodes, 0, $settings);
 
 
-  $output .= theme_item_list(array('items' => $item_list_data, 'type' => 'ul', 'attributes' => array()));
+  $output .= theme_item_list(array('items' => $itemlist_data, 'type' => 'ul', 'attributes' => array()));
 
   //Add the compute button
   $submit_link = array(
@@ -1108,7 +1135,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
     ),
   );
 
-  if ($context == 'multidialog') {
+  if ($settings['context'] == 'multidialog') {
     $output .= '<p><input id="submit_dialog_button" type="submit" value="Submit" class="button"/>' . render($submit_link) . '</p>';
   }
 
@@ -1117,27 +1144,30 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
 
 }
 
-
+//DONE
+//TODO merge with submit_dialog
 function select_dialog_response($method = 'ajax'){
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
-    $res = build_recursive_data($_POST['type'], array($_POST['node_id']));
+    $settings = wikicompare_initialize_settings($_POST);
 
-    $parent = $res['data'][$_POST['node_id']]['data'];
+    $res = build_recursive_data($_POST['type'], array($_POST['node_id']), $settings);
+
+    $parent = $res['data'][$_POST['node_id']];
 
     $hidden = '';
     if ($parent) {
-      $hidden = '<input type="text" size="60" value="&quot;' . $parent->title . ' (' . $parent->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container_autocomplete']) . '[und][0][target_id]">';
+      $hidden = '<input type="text" size="60" value="&quot;' . $parent['data']->title . ' (' . $parent['data']->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container_autocomplete']) . '[und][0][target_id]">';
 
 
     }
 
     $commands = array();
-    $commands[] = ajax_command_html('#' . $_POST['container'], $parent->fulltitle);
+    $commands[] = ajax_command_html('#' . $_POST['container'], $parent['data']->fulltitle);
     $commands[] = ajax_command_html('#edit-' . $_POST['container_autocomplete'], $hidden);
-    $commands[] = ajax_command_html('#' . $_POST['container_id'], $parent->nid);
+    $commands[] = ajax_command_html('#' . $_POST['container_id'], $parent['data']->nid);
     $page = array('#type' => 'ajax', '#commands' => $commands);
     return $page;
 
@@ -1151,37 +1181,43 @@ function select_dialog_response($method = 'ajax'){
 }
 
 
+//DONE
 function submit_dialog_response($method = 'ajax'){
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
 
-    $selected_feature_ids = $_POST['selected_feature_ids'];
+//    $selected_feature_ids = $_POST['selected_feature_ids'];
 
-    $feature_array = array();
 
-    if ($selected_feature_ids) {
-      $feature_array = build_recursive_data('feature', $selected_feature_ids);
+
+    $settings = wikicompare_initialize_settings($_POST);
+    $settings['computed'] = 1;
+
+
+//    $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
+    if ($_POST['container'] == 'manual_selected_features') {
+      $settings['context'] = 'manual';
+    } else {
+      $settings['context'] = 'selected';
     }
 
-    $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
-    if ($_POST['container'] == 'manual_selected_features') {
-      $itemlist_settings['context'] = 'manual';
-    } else {
-      $itemlist_settings['context'] = 'selected';
+    $features = array('data' => array());
+    if ($_POST['selected_feature_ids']) {
+      $features = build_recursive_data('feature', $_POST['selected_feature_ids'], $settings);
     }
 
     //Building the data for the item list
-    $item_list_data = get_itemlist('feature', $feature_array['tree'], 0, $itemlist_settings);
+    $itemlist_data = get_itemlist('feature', $features['tree'], 0, $settings);
 
 
     //Render the item list
-    $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+    $output = theme_item_list(array('items' => $itemlist_data, 'title' => 'Selected features', 'type' => 'ul', 'attributes' => array()));
 
     $hidden = '<tbody>';
     $i = 0;
-    foreach ($feature_array['data'] as $feature) {
+    foreach ($features['data'] as $feature) {
       //We remove the feature if it's a parent feature. This case can happen if we add the feature to the need when it has no children, and then it become a parent.
       if (!$feature['data']->has_children) {
         $hidden .= '<tr><td>
@@ -1197,7 +1233,7 @@ function submit_dialog_response($method = 'ajax'){
     }
 
     $hidden_fastaction = '';
-    foreach ($selected_feature_ids as $feature_id) {
+    foreach ($_POST['selected_feature_ids'] as $feature_id) {
       $hidden_fastaction .= '<div class="need_feature">' . $feature_id . '</div>';
     }
 
@@ -1217,6 +1253,7 @@ function submit_dialog_response($method = 'ajax'){
 }
 
 
+
 function compute_comparative_table_response($method = 'ajax') {
 
 
@@ -1225,8 +1262,14 @@ function compute_comparative_table_response($method = 'ajax') {
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
+    $settings = wikicompare_initialize_settings($_POST);
+
+    $settings['colspan'] = $_POST['nb_compareds'];
+
     $selected_feature_ids = array();
     if (!isset($_POST['reset'])) {
+
+//TODO put this security in javascript
       if ($_POST['selected_feature_ids'] == '') {
         $_POST['selected_feature_ids'] = array();
       }
@@ -1235,9 +1278,9 @@ function compute_comparative_table_response($method = 'ajax') {
 
 
 
-  
+  //TODO y'a un todo dedans
       if (module_exists('wikicompare_needs')) {
-        wikicompare_needs_wikicompare_comparative_table_prepare_compute($selected_feature_ids, $_POST);
+        wikicompare_needs_table_prepare_compute($selected_feature_ids, $_POST);
       }
 
     }
@@ -1245,35 +1288,41 @@ function compute_comparative_table_response($method = 'ajax') {
 
 
     //If empty, javascript return a null string and not an empty array. So we need to assign it in a variable and manage the null case.
+//TODO put security in js
     $compared_columns_ids = array();
     if ($_POST['compared_column_ids']) {
       $compared_columns_ids = $_POST['compared_column_ids'];
     }
-
+/*
     $fastaction_status = 0;
     if (!empty($_POST['fastaction_status'])) {
       $fastaction_status = $_POST['fastaction_status'];
     }
+*/
 
     $commands = array();
 
     if (module_exists('wikicompare_needs')) {
-      $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need(array('fastaction_status' => $fastaction_status, 'states' => $_POST['states'])));
+      wikicompare_needs_table_send_compute($commands, $settings);
     }
 
-    $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Compareds', array('fastaction_status' => $fastaction_status, 'states' => $_POST['states'])));
+
+    $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Compareds', $settings));
 
 
-    $settings = array('fastaction_status' => $fastaction_status, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
+//    $settings = array('fastaction_status' => $fastaction_status, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
     if ($selected_feature_ids && !isset($_POST['reset'])) {
 
-      $feature_array = build_recursive_data('feature', $selected_feature_ids, $fastaction_status);
+      $features = build_recursive_data('feature', $selected_feature_ids, $settings);
 
-      $settings['feature_ids'] = $feature_array['ids'];
+//      $settings['feature_ids'] = $features['ids'];
       $settings['computed'] = 1;
-      $output = render_comparative_table($feature_array['tree'], $compared_columns_ids, $settings);
+
+
+      $output = render_comparative_table($settings, $features['tree'], $compared_columns_ids);
+
     } else {
-      $output = render_comparative_table(array(), $compared_columns_ids, $settings);
+      $output = render_comparative_table($settings, array(), $compared_columns_ids);
     }
 
 
@@ -1300,8 +1349,10 @@ function make_cleaning_response($method = 'ajax') {
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 
+    $settings = wikicompare_initialize_settings($_POST);
+
     $commands = array();
-    $update_selected_feature = false;
+    $update_selected_features = false;
 
 
     $types = array('compared', 'feature');
@@ -1311,10 +1362,11 @@ function make_cleaning_response($method = 'ajax') {
 
     foreach ($types as $type) {
 
-      if ($type == 'feature' && $_POST['computed']) {
+      if ($type == 'feature' && $settings['computed']) {
         continue;
       }
 
+//TODO put this security in js
       if ($_POST[$type . '_displayed_ids'] == '') {
         $_POST[$type . '_displayed_ids'] = array();
       }
@@ -1327,14 +1379,15 @@ function make_cleaning_response($method = 'ajax') {
 
       $nodes = array();
       if (!empty($node_ids)) {
-        $nodes = request_db($type, array('fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1, 'nids' => $node_ids));
+        $nodes = request_db($type, array('nids' => $node_ids), $settings);
+// array('fastaction_status' => $_POST['fastaction_status'], 'can_be_translated' => 1, 'nids' => $node_ids));
       }
 
 
-      $in_db_nodes = request_db($type, array('states' => $_POST['states']));
+      $in_db_nodes = request_db($type, array('parent_id' => NULL), $settings);
       $in_db_nodes_ids = array();
-      foreach ($in_db_nodes as $key => $node) {
-        $in_db_nodes_ids[$key] = $key;
+      foreach ($in_db_nodes as $nid => $node) {
+        $in_db_nodes_ids[$nid] = $nid;
       }
 
 
@@ -1345,35 +1398,35 @@ function make_cleaning_response($method = 'ajax') {
       $in_table_node_ids = array();
       $reset = False;
       //We test all nodes present in the table
-      foreach ($_POST[$type . '_ids'] as $node) {
+      foreach ($_POST[$type . '_ids'] as $node_from_table) {
 
         //Listing all node present in table in a array for later use
-        $in_table_node_ids[$node['nid']] = $node['nid'];
+        $in_table_node_ids[$node_from_table['nid']] = $node_from_table['nid'];
         //If the node has a parent in the table
-        if (isset($node['parent_id'])) {
+        if (isset($node_from_table['parent_id'])) {
           //If the parent of the node in the table is different of the parent of the node in db
-          if ($node['parent_id'] != $nodes[$node['nid']]['data']->parent_id) {
+          if ($node_from_table['parent_id'] != $nodes[$node_from_table['nid']]['data']->parent_id) {
 
             if ($type == 'feature') {
               //In the case of a feature, it means there is a structural change so better refresh the manual_selected_feature itemlist
-              $update_selected_feature = true;
+              $update_selected_features = true;
             }
             //If the parent in table is currently displaying his children, then the tested node is displayed as his child but isn't anymore, so we need to hide it
-            if (in_array($node['parent_id'], $_POST[$type . '_displayed_ids'])) {
-
-              $node1 = request_db($type, array('nids' => array($node['parent_id'])));
-              $node1 = $node1[$node['parent_id']];
-
-              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node['parent_id'], 'click', array());
+            if (in_array($node_from_table['parent_id'], $_POST[$type . '_displayed_ids'])) {
+/*
+              $parent = request_db($type, array('nids' => array($node_from_table['parent_id'])));
+              $parent = $parent[$node_from_table['parent_id']];
+*/
+              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node_from_table['parent_id'], 'click', array());
 
             }
 
 
             //If the parent of the node in db is displaying his children in the table, then the tested node is missing among the children so we need to hide the children of the parent. Also, if the tested node is now without parent, then we need to reset the table to display it.
-            if (in_array($nodes[$node['nid']]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$node['nid']]['data']->parent_id == NULL) {
+            if (in_array($nodes[$node_from_table['nid']]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$node_from_table['nid']]['data']->parent_id == NULL) {
 
-              if ($nodes[$node['nid']]['data']->parent_id != NULL) {
-                $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$node['nid']]['data']->parent_id, 'click', array());
+              if ($nodes[$node_from_table['nid']]['data']->parent_id != NULL) {
+                $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$node_from_table['nid']]['data']->parent_id, 'click', array());
 
               } else {
 
@@ -1387,11 +1440,11 @@ function make_cleaning_response($method = 'ajax') {
 
         }
 
-        if ($node['has_children'] != $nodes[$node['nid']]['data']->has_children) {
+        if ($node_from_table['has_children'] != $nodes[$node_from_table['nid']]['data']->has_children) {
 
-          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $node['nid'], wikicompare_get_supertitle_item($type, $nodes[$node['nid']], array('context' => 'table')));
-          if ($nodes[$node['nid']]['data']->has_children == 0) {
-            $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $node['nid'], 'removeClass', array('has_children'));
+          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $node_from_table['nid'], wikicompare_get_supertitle_item($type, $nodes[$node_from_table['nid']], $settings));
+          if ($nodes[$node_from_table['nid']]['data']->has_children == 0) {
+            $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $node_from_table['nid'], 'removeClass', array('has_children'));
           }
         
 
@@ -1401,7 +1454,7 @@ function make_cleaning_response($method = 'ajax') {
 
 
         //If one of the node without parent displayed in table isn't in the first level in db anymore
-        if ((!in_array($node['nid'], $in_db_nodes_ids)) && !isset($node['parent_id'])) {
+        if ((!in_array($node_from_table['nid'], $in_db_nodes_ids)) && !isset($node_from_table['parent_id'])) {
 
           $reset = True;
 
@@ -1417,7 +1470,7 @@ function make_cleaning_response($method = 'ajax') {
       } 
 
       if (!empty($_POST[$type . '_displayed_ids'])) {
-        $in_db_nodes_with_parent = request_db($type, array('states' => $_POST['states'], 'parent_id' => $_POST[$type . '_displayed_ids']));
+        $in_db_nodes_with_parent = request_db($type, array('parent_id' => $_POST[$type . '_displayed_ids']), $settings);
 
         foreach ($in_db_nodes_with_parent as $node) {
           if (!in_array($node['data']->nid, $in_table_node_ids)) {
@@ -1431,14 +1484,14 @@ function make_cleaning_response($method = 'ajax') {
       if ($reset == True) {
         switch ($type) {
           case 'compared':
-            $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Compareds', array('states' => $_POST['states'])));
+            $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Compareds', $settings));
             break;
           case 'feature':
-            $settings = array(
+/*            $settings = array(
               'fastaction_status' => $_POST['fastaction_status'],
               'computed' => 0
-            );
-            $commands[] = ajax_command_replace('#comparative_table', render_comparative_table(array(), $_POST['compared_columns_ids'], $settings));
+            );*/
+            $commands[] = ajax_command_replace('#comparative_table', render_comparative_table($settings, array(), $_POST['compared_columns_ids']));
             break;
         }
 
@@ -1447,9 +1500,7 @@ function make_cleaning_response($method = 'ajax') {
 
 
       if (module_exists('wikicompare_needs')) {
-        if ($type == 'need' && $reset == True) {
-          $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_needs_table_render_need(array('states' => $_POST['states'])));
-        }
+        wikicompare_needs_table_clean_reset($commands, $type, $reset, $settings);
       }
 
 
@@ -1461,12 +1512,12 @@ function make_cleaning_response($method = 'ajax') {
           $commands[] = ajax_command_invoke('.feature_type_' . $nid, 'html', array($node['data']->type));
           $commands[] = ajax_command_invoke('.feature_state_' . $nid, 'html', array($node['data']->state));
         }
-        if ($_POST['fastaction_status'] == 1) {
+        if ($settings['fastaction_status'] == 1) {
           $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array(add_fastaction_items($type , $node)));
         }
       }
 
-      if ($_POST['fastaction_status'] == 1) {
+      if ($settings['fastaction_status'] == 1) {
         $node = array(
           'data' => new stdClass(),
         );
@@ -1483,38 +1534,42 @@ function make_cleaning_response($method = 'ajax') {
 
       $feature_ids = array();
       foreach ($_POST['feature_ids'] as $feature) {
-        $feature_ids[$feature[0]] = $feature[0];
+        $feature_ids[$feature['nid']] = $feature['nid'];
       }
 
       $implementations = array();
 
       if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
-        $implementations = request_db('implementation', array('fastaction_status' => $_POST['fastaction_status'], 'compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $feature_ids));
+        $implementations = request_db('implementation', array('compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
       }
   
 
 
       foreach($implementations as $fid => $compareds_implementations) {
         foreach ($compareds_implementations as $cid => $implementation) {
-          $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $_POST['fastaction_status']));
+          $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $settings));
         }
       }
     }
 
 
-    if ($update_selected_feature) {
+    if ($update_selected_features) {
+      
+//TODO a tester
+/*
       $selected_feature_ids = array();
       foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
-      $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
+        $selected_feature_ids[$selected_feature_id[0]] = $selected_feature_id[0];
       }
-      $feature_array = array();
-      if ($selected_feature_ids) {
-        $feature_array = build_recursive_data('feature', $selected_feature_ids);
+*/
+      $features = array('tree' => array());
+      if ($_POST['selected_feature_ids']) {
+        $features = build_recursive_data('feature', $_POST['selected_feature_ids']);
       }
       //Building the data for the item list
-      $item_list_data = get_itemlist('feature', $feature_array['tree'], 0, array());
+      $itemlist_data = get_itemlist('feature', $features['tree'], 0, array('computed' => 1));
       //Render the item list
-      $output = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+      $output = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
       $commands[] = ajax_command_html('#selected_feature_itemlist', $output);
     }
 
@@ -1541,18 +1596,32 @@ function make_cleaning_response($method = 'ajax') {
 
 
 
-function wikicompare_initialize_settings() {
+function wikicompare_initialize_settings($args = array()) {
 
-  $settings = array(
-    'fastaction_status' => 0,
-    'context' => '',
-    'forbidden_nid' => 0,
-    'computed' => 0,
-    'can_be_translated' => 1
-  );
+  $settings = array();
+
+  foreach (array('fastaction_status', 'context', 'forbidden_nid', 'computed', 'states', 'can_be_translated') as $key) {
+
+    if (isset($args[$key])) {
+      $settings[$key] = $args[$key];
+    } else {
+      $result = 0;
+      if ($key == 'context') {
+        $result = 'table';
+      } elseif ($key == 'states') {
+        $result = array();
+      } elseif ($key == 'can_be_translated') { //TODO move can_be_translated in db_settings, 1 by default
+        $result = 1;
+      }
+      $settings[$key] = $result;
+    }
+
+  }
 
   return $settings;
 }
 
 
+//TODO node_id to nid
+//TODO conflit entre selected_feature_ids et manual_selected_feature
 ?>

@@ -663,7 +663,7 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
 function request_db($type, $db_settings = array(), $settings=array()) {
 
 
-  $res = array();
+
   $db_settings['use_nids'] = true;
 //  $settings['is_implementation_without_nids'] = false;
   $query = db_select('cache_' . $type, 'n');
@@ -743,6 +743,8 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   $result = $query->execute();
 
 
+  $res = array();
+  $need_features = array();
   foreach ($result as $record) {
 
 
@@ -761,12 +763,15 @@ function request_db($type, $db_settings = array(), $settings=array()) {
 
     if (module_exists('wikicompare_needs')) {
       if ($type == 'need') {
-        if (isset($res[$record->nid]['need_features']) || $record->need_feature_id != NULL) {
-          $node_array['need_features'][$record->need_feature_id] = $record->need_feature_id;
-        } else {
+//        if (isset($res[$record->nid]['need_features']) || $record->need_feature_id != NULL) {
+        if ($record->need_feature_id != NULL) {
+          $need_features[$record->nid][$record->need_feature_id] = $record->need_feature_id;
+        }
+/* else {
           $node_array['need_features'] = array();
-        } 
+        } */
         unset($node_array['data']->need_feature_id);
+        $node_array['need_features'] = array(); //Security to avoid made isset control later
       }
     }
 
@@ -803,6 +808,21 @@ function request_db($type, $db_settings = array(), $settings=array()) {
       $res[$record->feature_id][$record->compared_id] = $node_array;
     }
 
+  }
+
+  if (module_exists('wikicompare_needs')) {
+    foreach ($need_features as $nid => $features) {
+      $res[$nid] ['need_features'] = $features;
+    }
+/*
+    if ($type == 'need') {
+      if (isset($res[$record->nid]['need_features']) || $record->need_feature_id != NULL) {
+        $node_array['need_features'][$record->need_feature_id] = $record->need_feature_id;
+      } else {
+        $node_array['need_features'] = array();
+      } 
+      unset($node_array['data']->need_feature_id);
+    }*/
   }
 
   return $res;
