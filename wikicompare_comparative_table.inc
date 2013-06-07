@@ -362,7 +362,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       $class[] = 'computed';
     }
     $title = l($title, 'get_itemlist_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $node->nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
-//TODO move the parent id in an attr 'parent_id'.
+//TODO move the parent id in an attr 'parent_id'. ANNULE, une classe est préférable a cause des action de masse qu'on fait sur les enfants
 //TODO try move all information in the link, and no more in the items
     if ($type == 'feature' && $itemlist_settings['context'] == 'table') {
       $title = l($title, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));

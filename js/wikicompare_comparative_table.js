@@ -406,7 +406,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 /*      var patt = /[0-9]+/g;
       var nid = patt.exec(link_id);
 */
-      var nid = extract_nid(link_id);
+      var nid = extract_nid(link_id)[0];
 
   
       //Configure the ajax event
@@ -806,22 +806,25 @@ Drupal.behaviors.WikicompareComparativeTable = {
 */
 
         }
-        
+
+
+
+
+        if (send_nid == true) {
+          //Add the clicked node in argument
+          options.data.nid = nid;
+        }
+
+        if (send_type == true) {
+          options.data.type = type;
+        }
+
         if (manage_displayed_flag == true) {
           //Check if the column is already displayed
           options.data.action = '';
           if (!$('#' + link_id).hasClass('displayed')) {
             options.data.action = 'display';
           }
-        }
-
-        if (send_nid == true) {
-          //Add the clicked node in argument
-          options.data.nid = nid[0];
-        }
-
-        if (send_type == true) {
-          options.data.type = type;
         }
 
         if (send_computed == true) {
@@ -834,27 +837,27 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         if (send_compareds == true) {
           //Recover all compared columns displayed in the table to send their id to drupal
-          var compared_ids = new Array();
-          var i = 0;
+          var compared_ids = {};
+//          var i = 0;
           $('.compared_item').each(function (key, value) {
-            var column_id = $('#' + $(this).attr('id'));
-            var patt = /[0-9]+/g;
-            compared_ids[i] = patt.exec($(this).attr('id'))[0];
-            i = i + 1;
+//            var column_id = $('#' + $(this).attr('id'));
+            var cid = extract_nid($(this).attr('id'))[0];
+            compared_ids[cid] = cid; //patt.exec($(this).attr('id'))[0];
+//            i = i + 1;
           });
           //Add them in the ajax call variables
           options.data.compared_ids = compared_ids;
         }
         
         if (send_compareds_columns == true) {
-          //Recover all compared columns displayed in the table to send their id to drupal, in the right order
+          //Recover all compared columns displayed in the table to send their id to drupal, in the right order. This is why we can't use a dictionnary.
           var compared_column_ids = [];
           var i = 0;
           $('.header_compared').each(function (key, value) {
             if (!$(this).hasClass('to_remove')) {
-              var column_id = $('#' + $(this).attr('id'));
-              var patt = /[0-9]+/g;
-              compared_column_ids[i] = patt.exec($(this).attr('id'))[0];
+//              var column_id = $('#' + $(this).attr('id'));
+              var cid = extract_nid($(this).attr('id'))[0];
+              compared_column_ids[c] = cid;
               i = i + 1;
             }
           });
@@ -865,44 +868,41 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         if (send_features == true) {
           //Recover all feature row displayed in the table to send their id to drupal
-          var feature_ids = new Array();
-          var i = 0;
+          var feature_ids = {};
+//          var i = 0;
           $('.feature_row').each(function (key, value) {
-            var row_id = $('#' + $(this).attr('id'));
-            var patt = /[0-9]+/g;
-            feature_ids[i] = patt.exec($(this).attr('id'))[0];
-            i = i + 1;
+//            var row_id = $('#' + $(this).attr('id'));
+            var fid = extract_nid($(this).attr('id'))[0];
+            feature_ids[fid] = fid;
+//            i = i + 1;
           });
           //Add them in the ajax call variables
           options.data.feature_ids = feature_ids;
         }
         
-        if (send_colspan == true) {
-          options.data.colspan = $('.header_compared').length + 1;
-        }
 
         if (send_implementations == true) {
           //Recover all implementation displayed in the table to send their id to drupal
-          var implementation_ids = new Array();
-          var i = 0;
+          var implementation_ids = {};
+//          var i = 0;
           $('.implementation_cell').each(function (key, value) {
-            var cell_id = $('#' + $(this).attr('id'));
-            var patt = /[0-9]+/g;
-            implementation_ids[i] = patt.exec($(this).attr('id'))[0];
-            i = i + 1;
+//            var cell_id = $('#' + $(this).attr('id'));
+            var iid = extract_nid($(this).attr('id'))[0];
+            implementation_ids[iid] = iid; //patt.exec($(this).attr('id'))[0];
+//            i = i + 1;
           });
           //Add them in the ajax call variables
           options.data.implementation_ids = implementation_ids;
         }
 
         if (send_needs == true) {
-          var need_ids = new Array();
-          var i = 0;
+          var need_ids = {};
+//          var i = 0;
           $('.need_item').each(function (key, value) {
-            var need_id = $('#' + $(this).attr('id'));
-            var patt = /[0-9]+/g;
-            need_ids[i] = patt.exec($(this).attr('id'))[0];
-            i = i + 1;
+//            var need_id = $('#' + $(this).attr('id'));
+            var nid = extract_nid($(this).attr('id'))[0];
+            need_ids[nid] =  nid; //patt.exec($(this).attr('id'))[0];
+//            i = i + 1;
           });
           //Add them in the ajax call variables
           options.data.need_ids = need_ids;
@@ -940,6 +940,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           container = $('#select_container').text();
           options.data.container = container;
         }
+
+        if (send_colspan == true) {
+          options.data.colspan = $('.header_compared').length + 1;
+        }
+
         
         //Launch regular beforeSerialize function
         this.old_beforeSerialize(element, options);
@@ -996,17 +1001,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
                   //var need_feature_id = $('#' + $(this).attr('id'));
                   //var patt = /[0-9]+/g;
-                  feature = $(this).text();
+                  fid = $(this).text();
 
-                  need_feature_ids[feature] = feature;
+                  need_feature_ids[fid] = fid;
                   i = i + 1;
                 });
                 //Add them in the ajax call variables
                 selected_feature_ids = need_feature_ids;
 
-              }
-              if ($('#compared_link_' + nid).hasClass('displayed')) {
-                $('#compared_link_' + nid).click();
+
               }
             }
 
@@ -1041,7 +1044,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
         }
 
-//TODO maybe we can remove the colspan management on php side, this code will install it anyway
         if (auto_colspan == true) {
           colspan = $('.header_compared').length + 1;
           $('.row_auto_colspan').attr('colspan', colspan);
@@ -1060,6 +1062,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function extract_nid(link_id) {
       var patt = /[0-9]+/g;
       var nid = patt.exec(link_id);
+//TODO tester les effet si on fait le [0] directement ici
+//TODO on peut mettre les $(this).attr('id') directement
  
       return nid;
     }
@@ -1067,9 +1071,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function remove_children_tree(nid, link_prefix, children_prefix, computed) {
 
       $(children_prefix + nid).each(function(index) {
-        var patt = /[0-9]+/g;
-        var node_child_id = patt.exec($(this).attr('id'));
-        remove_children_tree(node_child_id, link_prefix, children_prefix, computed);
+//        var patt = /[0-9]+/g;
+        var child_nid = extract_nid($(this).attr('id'))[0];
+        remove_children_tree(child_nid, link_prefix, children_prefix, computed);
       });
       //TODO replace with a slideUp()
       $(children_prefix + nid).hide();
@@ -1092,6 +1096,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO verifier si on peut eviter que les appels de repli ne passe pas les ajax
 //TODO isoler le test ajax dans une fonction a part
 //TODO remplacer fastaction_status par un simple fastaction
+//TODO enlever les class / attributs inutiles dans les fonctions render
 
 
 
