@@ -283,8 +283,8 @@ function wikicompare_menu() {
   );
 
 
-  $items['get_fastaction_form_callback'] = array(
-    'page callback' => 'get_fastaction_form_response',
+  $items['wikicompare_table_fastaction_form_callback'] = array(
+    'page callback' => 'wikicompare_table_fastaction_form_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -293,8 +293,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
   
-  $items['submit_fastaction_form_callback'] = array(
-    'page callback' => 'submit_fastaction_form_response',
+  $items['wikicompare_table_fastaction_submit_callback'] = array(
+    'page callback' => 'wikicompare_table_fastaction_submit_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),

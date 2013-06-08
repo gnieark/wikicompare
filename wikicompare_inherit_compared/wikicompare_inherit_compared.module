@@ -87,6 +87,13 @@ function compute_inherit_response($method = 'ajax') {
 
 }
 
+
+/*****************************************************************
+*
+*    FORM
+*
+*****************************************************************/
+
 function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$output, $form_type, $node, $readonly) {
 
   if ($node->type == 'compared') {
@@ -95,7 +102,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
     $inherit_id = 0;
     if (isset($node->wikicompare_inherit_compared_id['und'])) {
       $inherit_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
-      $res = get_recursive_data('compared', array($inherit_id));
+      $res = build_recursive_data('compared', array($inherit_id), wikicompare_initialize_settings());
       $title = $res['data'][$inherit_id]['data']->fulltitle;
     }
 
@@ -177,7 +184,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
         if ($form['wikicompare_use_from_inherit']['und']['#default_value'] == 1) {
           $form['wikicompare_support']['und']['#default_value'] = $res->inherit_support;
-          $form['wikicompare_support']['und']['#disabled'] = TRUE;
+          $form['wikicompare_support']['und']['#disabled'] = True;
         }
       }
       $form['wikicompare_use_from_inherit']['#weight'] = -2;
@@ -195,11 +202,11 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
         if ($fastaction == 'edit') {
           if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
             $output .= ' checked="checked"';
-            $test = TRUE;
+            $test = True;
           }
         }
 
-        if ($readonly == TRUE) {
+        if ($readonly == True) {
           $output .= ' disabled="disabled"';
         }
 
@@ -219,7 +226,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
         //Disable the support field located after this one
         if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
-          $readonly = TRUE;
+          $readonly = True;
         }
       }
     }
@@ -230,7 +237,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
 function wikicompare_inherit_compared_test_form_implementation(&$test_support, $test, $node) {
 
-  if ($test == TRUE) {
+  if ($test == True) {
 
     $query = db_select('cache_implementation', 'n');
     $query->addField('c', 'inherit_compared_id', 'inherit_id');
@@ -244,15 +251,23 @@ function wikicompare_inherit_compared_test_form_implementation(&$test_support, $
     $result = $query->execute();
     foreach ($result as $record) {
       if ($record->inherit_support) {
-        $test_support = TRUE;
+        $test_support = True;
       } else { //The else because in any case, the inherited override the previous value
-        $test_support = FALSE;
+        $test_support = False;
       }
     }
 
   }
 
 }
+
+
+/*****************************************************************
+*
+*    FASTACTION
+*
+*****************************************************************/
+
 
 function wikicompare_inherit_compared_submit_element(&$node, &$donotupdate,  $_POST) {
 

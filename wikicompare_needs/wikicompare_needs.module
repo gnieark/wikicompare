@@ -84,19 +84,122 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
 
 
 
-function wikicompare_needs_build_form_settings(&$settings, &$node, &$nid, $form, $form_state) {
+/*****************************************************************
+*
+*    FORM
+*
+*****************************************************************/
+
+function wikicompare_needs_build_form_settings(&$settings, $form_state) {
 
 
   if ($form_state['node']->type == 'need') {
       $selected_feature_ids = array();
       if (isset($form_state['node']->wikicompare_features['und'])) {
         foreach ($form_state['node']->wikicompare_features['und'] as $array) {
-          $id = $array['target_id'];
-          $selected_feature_ids[$id] = $id;
+          $fid = $array['target_id'];
+          $selected_feature_ids[$fid] = $fid;
         }
       }
 
       $settings['wikicompare_needs']['selected_feature_ids'] = $selected_feature_ids;
+
+  }
+
+}
+
+
+
+function wikicompare_needs_fastaction_specific(&$output, $type, $node, $fastaction, $nid) {
+
+  if ($type == 'need') {
+
+
+    $selected_feature_itemlist = '';
+    $selected_feature_hidden = '';
+    if ($fastaction == 'edit') {
+      $selected_feature_ids = array();
+      if (isset($node->wikicompare_features['und'])) {
+        foreach ($node->wikicompare_features['und'] as $array) {
+          $fid = $array['target_id'];
+          $selected_feature_ids[fid] = $fid;
+        }
+      }
+
+      
+      $feature_array = array();
+      if ($selected_feature_ids) {
+        $settings = wikicompare_initialize_settings(array('context' => 'selected'));
+        $feature_array = build_recursive_data('feature', $selected_feature_ids, $settings);
+  
+
+//        $itemlist_settings['context'] = 'selected';
+        //Building the data for the item list
+        $itemlist_data = get_item_list('feature', $feature_array['tree'], 0, settings);
+        //Render the item list
+        $selected_feature_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+
+        
+        foreach ($selected_feature_ids as $feature_id) {
+          $selected_feature_hidden .= '<div class="need_feature">' . $feature_id . '</div>';
+        }
+        
+
+      }
+
+      
+
+    }
+
+
+    $select_feature_link = array(
+      'text' => 'Select features',
+      'title' => 'Select features',
+      'selector' => 'dialog-content',
+      'path' => 'get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
+      'id' => 'select_feature_link',
+    );
+    $output .= '<div id="form_selected_features">';
+    $output .= $selected_feature_itemlist;
+    $output .= '</div><div id="need-features" style="display:none;">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
+
+  }
+
+}
+
+
+
+/*****************************************************************
+*
+*    FASTACTION
+*
+*****************************************************************/
+
+function wikicompare_needs_fastaction_command(&$commands, $type, $nid, $output) {
+
+
+  if ($type == 'need') {
+    $commands[] = ajax_command_invoke('#need_table_children_' . $nid, 'before', array($output));
+  }
+
+}
+
+
+function wikicompare_needs_fastaction_submit_after(&$node, $type, $_POST) {
+
+
+
+  if ($type == 'need') {
+
+    $need_features = array();
+    foreach ($_POST['need_feature_ids'] as $feature_id) {
+      $array = array();
+      $array['target_id'] = $feature_id;
+      $array['target_type'] = "node";
+      $need_features[] = $array;
+    }
+    $node->wikicompare_features['und'] = $need_features;
+
 
   }
 
@@ -259,7 +362,7 @@ function wikicompare_needs_table_clean_reset(&$commands, $type, $reset, $setting
 }
 
 
-
+/*
 function wikicompare_needs_wikicompare_comparative_table_fastaction_parent(&$parent_id, $type, $node) {
 
   if ($type == 'need') {
@@ -269,92 +372,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastaction_parent(&$par
   }
 
 }
-
-function wikicompare_needs_wikicompare_comparative_table_fastaction_specific(&$output, $type, $node, $fastaction, $nid) {
-
-  if ($type == 'need') {
-
-
-    $selected_feature_itemlist = '';
-    $selected_feature_hidden = '';
-    if ($fastaction == 'edit') {
-      $selected_feature_ids = array();
-      if (isset($node->wikicompare_features['und'])) {
-        foreach ($node->wikicompare_features['und'] as $array) {
-          $id = $array['target_id'];
-          $selected_feature_ids[] = $id;
-        }
-      }
-
-      
-      $feature_array = array();
-      if ($selected_feature_ids) {
-        $feature_array = get_recursive_data('feature', $selected_feature_ids);
-  
-        $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
-        $itemlist_settings['context'] = 'selected';
-        //Building the data for the item list
-        $item_list_data = get_item_list($feature_array['tree'], 'feature', 'selected', 0, $itemlist_settings);
-        //Render the item list
-        $selected_feature_itemlist = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
-
-        
-        foreach ($selected_feature_ids as $feature_id) {
-          $selected_feature_hidden .= '<div class="need_feature">' . $feature_id . '</div>';
-        }
-        
-
-      }
-
-      
-
-    }
-
-
-    $select_feature_link = array(
-      'text' => 'Select features',
-      'title' => 'Select features',
-      'selector' => 'dialog-content',
-      'path' => 'get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
-      'id' => 'select_feature_link',
-    );
-    $output .= '<div id="form_selected_features">';
-    $output .= $selected_feature_itemlist;
-    $output .= '</div><div id="need-features" style="display:none;">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
-
-  }
-
-}
-
-function wikicompare_needs_wikicompare_comparative_table_fastaction_command(&$commands, $type, $nid, $output) {
-
-
-  if ($type == 'need') {
-    $commands[] = ajax_command_invoke('#need_table_children_' . $nid, 'before', array($output));
-  }
-
-}
-
-
-function wikicompare_needs_wikicompare_comparative_table_fastaction_submit(&$node, $type, $_POST) {
-
-
-
-  if ($type == 'need') {
-
-    $need_features = array();
-    foreach ($_POST['need_feature_ids'] as $feature_id) {
-      $array = array();
-      $array['target_id'] = $feature_id;
-      $array['target_type'] = "node";
-      $need_features[] = $array;
-    }
-    $node->wikicompare_features['und'] = $need_features;
-
-
-  }
-
-}
+*/
 
 
 

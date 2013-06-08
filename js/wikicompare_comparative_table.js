@@ -274,6 +274,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         } else {
           //Set the global variable
           fastaction = 0;
+          $('.fastaction_item').remove();
+/*
           $('.compared_add_link').remove();
           $('.compared_edit_link').remove();
           $('.compared_remove_link').remove();
@@ -284,7 +286,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.need_add_link').remove();
           $('.need_edit_link').remove();
           $('.need_remove_link').remove();
-//TODO remove all fastedit item
+*/
+
         }
         $('#make_cleaning_link').click();
         return false;
@@ -316,10 +319,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
        
      $('.form_fastaction').submit(function () {
-      var patt = /[0-9]+/g;
-      var nid = patt.exec($(this).attr('id'));
+/*      var patt = /[0-9]+/g;
+      var nid = patt.exec($(this).attr('id'));*/
 
-      $('#form_fastaction_submit_link_' + nid).click();
+      $('#form_fastaction_submit_link' + nid).click();
       return false;
     });
    
@@ -958,7 +961,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 
-
+//TODO les commantaires sont desactivé dans les donnes demo
 //TODO Voir si on peut pas réduire le nombre d'argument pour les appel simpledialog
 
 

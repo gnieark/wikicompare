@@ -10,7 +10,14 @@ function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks
  
 }
 
-function wikicompare_translation_build_form_settings(&$settings, &$node, &$nid, $form, $form_state) {
+
+/*****************************************************************
+*
+*    FORM
+*
+*****************************************************************/
+
+function wikicompare_translation_build_form_settings(&$settings, &$node, &$nid, $form_state) {
 
   
   if ($form_state['node']->language != language_default('language')) {
@@ -35,6 +42,36 @@ function wikicompare_translation_build_form_settings(&$settings, &$node, &$nid, 
 
 
 }
+
+
+
+
+function wikicompare_translation_fastaction_add_element(&$output, $tnode, $field, $name, $readonly_translation, $fastaction) {
+
+  global $language;
+  if ($language->language != language_default('language')) {
+
+    if ($fastaction == 'edit') {
+      $field['#title'] .= ' translated';
+      $field['#id'] .= '_translation';
+      $field['#attributes']['class'][] = 'translation';
+
+      $value = $tnode->$name;
+      if ($name != 'title') {
+        $value = $value['und'][0]['value'];
+      }
+      $field['#value'] = $value;
+      if ($readonly_translation == True) {
+        $field['#attributes']['disabled'] = True;
+      }
+      $output .= render($field);
+    }
+
+  }
+
+}
+
+
 
 function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
 
@@ -118,6 +155,164 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
 }
 
 
+
+function wikicompare_translation_fastaction_specific_after(&$output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation) {
+
+  global $language;
+  if ($language->language != language_default('language')) {
+    if ($fastaction == 'edit') {
+      $selectnode_field = array(
+        '#type' => 'select',
+        '#title' => t('Node to update'),
+        '#options' => array(
+          0 => 'Update main node',
+          1 => 'Update translation node',
+        ),
+        '#value' => 0,
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_selectnode_' . $nid,
+        '#attributes' => array(
+          'class' => array('form_' . $type . '_fast' . $fastaction . '_selectnode'),
+        )
+      );
+      if ($readonly == True) {
+        $selectnode_field['#value'] = 1;
+        $selectnode_field['#attributes']['disabled'] = True;
+      }
+      if ($readonly_translation == True) {
+        $selectnode_field['#attributes']['disabled'] = True;
+      }
+      $output .= render($selectnode_field);
+    }
+
+  }
+
+}
+
+
+
+/*****************************************************************
+*
+*    FASTACTION
+*
+*****************************************************************/
+
+function wikicompare_translation_fastaction_items_test(&$test, $node_array) {
+
+  global $language;
+
+  if (($language->language != language_default('language')) && ($node_array['data']->nid != 0)) {
+
+    $test_translate = False;
+    if (isset($node_array['no-edit-translate'])) {
+      $test_translate = True;
+    }
+
+    if ($test && $test_translate) {
+      $test = True;
+    } else {
+      $test = False;
+    }
+
+  }
+
+}
+
+function wikicompare_translation_fastaction_get_tnode(&$tnode, &$readonly_translation, $node) {
+
+
+  global $language;
+
+  if ($language->language != language_default('language')) {
+    $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('r', 'uid', 'uid');
+    $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
+    $query->condition('n.tnid', $node->nid);
+    $query->condition('n.language', $language->language);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $tnode = node_load($record->nid);
+      if ($GLOBALS['user']->uid != $record->uid) {
+        $readonly_translation = True;
+      }
+    }
+
+    //If the translation node wasn't already created
+    if (!isset($tnode->nid)) {
+      $tnode = new stdClass;
+      $tnode->title = '';
+
+
+    }
+
+  }
+  
+}
+
+
+function wikicompare_translation_fastaction_submit_init_tnode(&$tnode, $_POST, $fastaction) {
+
+  global $language;
+
+  if ($language->language != language_default('language')) {
+    $tnode->type = $_POST['type'];
+    $tnode->uid = $GLOBALS['user']->uid;
+    $tnode->language = $language->language;
+    $tnode->translation_source = node_load($_POST['node_id']);
+
+    if ($fastaction == 'edit') {
+
+      $query = db_select('node', 'n');
+      $query->addField('n', 'nid', 'nid');
+      $query->condition('n.tnid', $_POST['node_id']);
+      $query->condition('n.language', $language->language);
+      $result = $query->execute();
+
+      foreach ($result as $record) {
+
+        $tnode = node_load($record->nid);
+        $tnode->revision = 1;
+      }
+    }
+  }
+}
+
+function wikicompare_translation_fastaction_submit_element(&$tnode, $_POST, $field_name, $jscript_name, $fastaction) {
+
+  if ($fastaction == 'edit') {
+    global $language;
+
+    if ($language->language != language_default('language')) {
+      $value = $_POST[$jscript_name . '_translation'];
+      if ($field_name != 'title') {
+        $temp = $value;
+        $value = array();
+        $value['und'][0]['value'] = $temp;
+        $value['und'][0]['format'] = 'full_html';
+      }
+    
+      $tnode->$field_name = $value;
+    }
+  }
+
+}
+
+function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST, $fastaction) {
+
+  if ($fastaction == 'edit') {
+    global $language;
+
+    if ($language->language != language_default('language')) {
+      if ($_POST['selectnode']) {
+        $node = $tnode;
+      }
+    }
+  }
+
+}
+
+
+
 function wikicompare_translation_wikicompare_request_db(&$query, $type, $db_settings, $settings) {
 
 
@@ -173,178 +368,6 @@ function wikicompare_translation_wikicompare_request_db_build(&$node_array, $rec
 
 }
 
-function wikicompare_translation_wikicompare_fastaction_items_test(&$test, $node_array) {
-
-  global $language;
-
-  if (($language->language != language_default('language')) && ($node_array['data']->nid != 0)) {
-
-    $test_translate = False;
-    if (isset($node_array['no-edit-translate'])) {
-      $test_translate = True;
-    }
-
-    if ($test && $test_translate) {
-      $test = True;
-    } else {
-      $test = False;
-    }
-
-  }
-
-}
-
-function wikicompare_translation_wikicompare_fastaction_get_tnode(&$tnode, &$readonly_translation, $node) {
-
-
-  global $language;
-
-  if ($language->language != language_default('language')) {
-    $query = db_select('node', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->addField('r', 'uid', 'uid');
-    $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
-    $query->condition('n.tnid', $node->nid);
-    $query->condition('n.language', $language->language);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $tnode = node_load($record->nid);
-      if ($GLOBALS['user']->uid != $record->uid) {
-        $readonly_translation = True;
-      }
-    }
-
-    //If the translation node wasn't already created
-    if (!isset($tnode->nid)) {
-      $tnode = new stdClass;
-      $tnode->title = '';
-
-
-    }
-
-  }
-  
-}
-
-function wikicompare_translation_wikicompare_fastaction_add_element(&$output, $tnode, $field, $name, $readonly_translation, $fastaction) {
-
-
-
-  global $language;
-  if ($language->language != language_default('language')) {
-
-    if ($fastaction == 'edit') {
-      $field['#title'] .= ' translated';
-      $field['#id'] .= '_translation';
-      $field['#attributes']['class'][] = 'translation';
-
-      $value = $tnode->$name;
-      if ($name != 'title') {
-        $value = $value['und'][0]['value'];
-      }
-      $field['#value'] = $value;
-      if ($readonly_translation == True) {
-        $field['#attributes']['disabled'] = True;
-      }
-      $output .= render($field);
-    }
-
-  }
-
-}
-
-function wikicompare_translation_wikicompare_fastaction_specific_after(&$output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation) {
-
-  global $language;
-  if ($language->language != language_default('language')) {
-    if ($fastaction == 'edit') {
-      $selectnode_field = array(
-        '#type' => 'select',
-        '#title' => t('Node to update'),
-        '#options' => array(
-          0 => 'Update main node',
-          1 => 'Update translation node',
-        ),
-        '#value' => 0,
-        '#id' => 'form_' . $type . '_fast' . $fastaction . '_selectnode_' . $nid,
-        '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_selectnode'),
-        )
-      );
-      if ($readonly == True) {
-        $selectnode_field['#value'] = 1;
-        $selectnode_field['#attributes']['disabled'] = True;
-      }
-      if ($readonly_translation == True) {
-        $selectnode_field['#attributes']['disabled'] = True;
-      }
-      $output .= render($selectnode_field);
-    }
-
-  }
-
-}
-
-function wikicompare_translation_wikicompare_fastaction_submit_init_tnode(&$tnode, $_POST, $fastaction) {
-
-  global $language;
-
-  if ($language->language != language_default('language')) {
-    $tnode->type = $_POST['type'];
-    $tnode->uid = $GLOBALS['user']->uid;
-    $tnode->language = $language->language;
-    $tnode->translation_source = node_load($_POST['node_id']);
-
-    if ($fastaction == 'edit') {
-
-      $query = db_select('node', 'n');
-      $query->addField('n', 'nid', 'nid');
-      $query->condition('n.tnid', $_POST['node_id']);
-      $query->condition('n.language', $language->language);
-      $result = $query->execute();
-
-      foreach ($result as $record) {
-
-        $tnode = node_load($record->nid);
-        $tnode->revision = 1;
-      }
-    }
-  }
-}
-
-function wikicompare_translation_wikicompare_fastaction_submit_element(&$tnode, $_POST, $field_name, $jscript_name, $fastaction) {
-
-  if ($fastaction == 'edit') {
-    global $language;
-
-    if ($language->language != language_default('language')) {
-      $value = $_POST[$jscript_name . '_translation'];
-      if ($field_name != 'title') {
-        $temp = $value;
-        $value = array();
-        $value['und'][0]['value'] = $temp;
-        $value['und'][0]['format'] = 'full_html';
-      }
-    
-      $tnode->$field_name = $value;
-    }
-  }
-
-}
-
-function wikicompare_translation_wikicompare_fastaction_submit_after(&$node, $tnode, $_POST, $fastaction) {
-
-  if ($fastaction == 'edit') {
-    global $language;
-
-    if ($language->language != language_default('language')) {
-      if ($_POST['selectnode']) {
-        $node = $tnode;
-      }
-    }
-  }
-
-}
 
 function wikicompare_translation_wikicompare_delete_after($node) {
 
