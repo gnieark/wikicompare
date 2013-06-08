@@ -979,9 +979,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible
 
 
-//TODO remplacer les if action par des case
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
-//TODO remplacer display par un flag true, pour recuperer le keyword action
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
 //TODO fastaction item ne sont plus des displayed, retirer toute mention
 

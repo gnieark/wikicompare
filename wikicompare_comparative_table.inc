@@ -246,7 +246,7 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
 /*
 
   $output .= '<a id="add_feature_link" href="?q=node/add/feature">Add</a><span id="add_feature_link_fastaction">';
-  if ($settings['fastaction'] == 1) {
+  if ($settings['fastaction']) {
     $feature = array(
       'data' => new stdClass(),
     );
@@ -280,7 +280,7 @@ function render_rows($features_row_data, $settings) {
     if ($feature['data']->parent_id) {
         $output .= ' feature_table_child_' . $feature['data']->parent_id;
     }
-    if ($feature['data']->has_children == 1){
+    if ($feature['data']->has_children){
       $output .= ' has_children';
     }
     $output .= '"';
@@ -324,7 +324,7 @@ function render_implementation($implementation, $feature, $settings) {
     $img_link_to_node = l($img, 'node/' . $implementation['data']->nid,  array('attributes' => array('id' => 'implementation_node_link_' . $implementation['data']->nid, 'class' => array('implementation_node_link')), 'html' => True));
     $img_link_to_node .= '<span id="fastaction_items_' . $implementation['data']->nid . '">';
 
-    if ($settings['fastaction'] == 1) {
+    if ($settings['fastaction') {
       $img_link_to_node .= add_fastaction_items('implementation', $implementation); 
     }
     $img_link_to_node .= '</span>';
@@ -350,7 +350,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 
 /*
   //If the node has children, the node name will become a link calling the callback function to display his children
-  if ($node->has_children == 1){
+  if ($node->has_children){
     $class = array('list_item_link ', $type, $itemlist_settings['context']);
 
     if ($itemlist_settings['computed']) {
@@ -385,7 +385,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
     $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
 
     $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '">';
-    if ($settings['fastaction'] == 1) {
+    if ($settings['fastaction']) {
       $suffix .=  add_fastaction_items($type, $node);
     }
     $suffix .= '</span>';
@@ -396,13 +396,13 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
     $url = 'get_feature_children_callback/nojs/';
     //Creating the first cell of the row, containing the feature details
     $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
-    if ($node['data']->has_children == 1){
+    if ($node['data']->has_children){
       $suffix .= '<br/> Type : <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
     }
     $suffix .= '<br/> State : <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
   
 /*
-    if ($node['data']->has_children == 1){
+    if ($node['data']->has_children){
       $class = array('item_link ' . $type . '_link_children_' . $node['data']->nid . ' ' . $type . '_table_link');
       if ($settings['computed']) {
         $class[] = 'computed';
@@ -479,7 +479,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
     }
   }
 
-  if ($node['data']->has_children == 1){
+  if ($node['data']->has_children){
     $class = array('item_link');
 
     if ($settings['computed']) {
@@ -506,7 +506,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       $img_link_to_node = ' ' . l($img, 'node/' . $node->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
 
       $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
-      if ($itemlist_settings['fastaction'] == 1) {
+      if ($itemlist_settings['fastaction']) {
         $img_link_to_node .=  add_fastaction_items($type, $node_array);
       }
       $img_link_to_node .= '</span>';
@@ -541,7 +541,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_to_node = l($img, 'node/' . $node->tnid, array('attributes' => array('id' => 'feature_node_link_' . $node->nid, 'class' => array($type . '_node_link')), 'html' => True));
     $img_link_to_node .= '<span id="fastaction_items_' . $node->nid . '">';
-    if ($itemlist_settings['fastaction'] == 1) {
+    if ($itemlist_settings['fastaction']) {
 
       $img_link_to_node .= add_fastaction_items($type, $node_array); 
     }
@@ -550,14 +550,14 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 /*
     $title = '<span class="feature_title_' . $node->nid . '">' . $node->title . '</span>';
     //If the feature has children, the feature name will become a link calling the callback function to display his children
-    if ($node->has_children == 1){
+    if ($node->has_children){
       $title = l($title, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
     } 
 
 
     //Creating the first cell of the row, containing the feature details
     $output = $title . ' ' . $img_link_to_node  . '<br/> Weight : <span class="' . $type . '_weight_' . $node->nid . '">' .  $node->weight . '</span>';
-    if ($node->has_children == 1){
+    if ($node->has_children){
       $output .= '<br/> Type : <span class="' . $type . '_type_' . $node->nid . '">' .  $node->type . '</span>';
     }
     $output .= '<br/> State : <span class="' . $type . '_state_' . $node->nid . '">' .  $node->state . '</span>';
@@ -596,7 +596,7 @@ function get_itemlist($type, $nodes, $parent_node, $settings){
     $items[$nid]['type'] =  $type;
     $items[$nid]['context'] = $settings['context'];
     $items[$nid]['class'] = array($type . '_item');
-    if ($node['data']->has_children == 1){
+    if ($node['data']->has_children){
       $items[$nid]['class'][] = 'has_children';
     }
     if ($parent_node != 0) {
@@ -758,7 +758,7 @@ function build_rows_data($features_tree, $compared_ids, $implementations, $setti
 
       $implementation = $implementations[$fid][$cid];
 
-      if ($settings['computed'] == 1) {
+      if ($settings['computed']) {
         //The type of the feature will be used in the wikicompare_compute_percent function
         $implementation['data']->type = $feature['data']->type;
         //The weight will be used in the parent wikicompare_compute_percent function
@@ -858,8 +858,8 @@ function get_itemlist_children_response($method = 'ajax') {
         }
 
 //          $selected_feature_ids = $_POST['selected_feature_ids'];
-        if (in_array($key, $_POST['selected_feature_ids'])) {
-          $nodes[$key]['data']->displayed = True;
+        if (in_array($fid, $_POST['selected_feature_ids'])) {
+          $nodes[$fid]['data']->displayed = True;
         }
       }
 
@@ -947,8 +947,8 @@ function get_feature_children_response($method = 'ajax') {
 
 
     $feature_ids = array();
-    foreach ($features as $key => $feature) {
-      $feature_ids[$key] = $key;
+    foreach ($features as $fid => $feature) {
+      $feature_ids[$fid] = $fid;
     }
 
     $implementations = array();
@@ -1040,7 +1040,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
       if ($settings['computed']) {
         $features_without_children = array();
         foreach ($features as $fid => $feature) {
-          if ($feature['data']->has_children == 0) {
+          if (!$feature['data']->has_children) {
             $features_without_children[$fid] = $fid;
           }
         }
@@ -1464,7 +1464,7 @@ function make_cleaning_response($method = 'ajax') {
       if ($node_from_table['has_children'] != $nodes[$nid]['data']->has_children) {
 
         $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $nid, wikicompare_get_supertitle_item($type, $nodes[$nid], $settings));
-        if ($nodes[$nid]['data']->has_children == 0) {
+        if (!$nodes[$nid]['data']->has_children) {
           $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $nid, 'removeClass', array('has_children'));
         }
       
@@ -1533,12 +1533,12 @@ function make_cleaning_response($method = 'ajax') {
         $commands[] = ajax_command_invoke('.feature_type_' . $nid, 'html', array($node['data']->type));
         $commands[] = ajax_command_invoke('.feature_state_' . $nid, 'html', array($node['data']->state));
       }
-      if ($settings['fastaction'] == 1) {
+      if ($settings['fastaction']) {
         $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array(add_fastaction_items($type , $node)));
       }
     }
 
-    if ($settings['fastaction'] == 1) {
+    if ($settings['fastaction']) {
       $node = array(
         'data' => new stdClass(),
       );

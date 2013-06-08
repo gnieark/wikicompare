@@ -48,7 +48,7 @@ function compute_inherit_response($method = 'ajax') {
       }
 
       if ($inherit_id != NULL) {
-        if ($support == 1) {
+        if ($support) {
           $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', 'checked'));
         } else {
           $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('checked'));
@@ -65,7 +65,7 @@ function compute_inherit_response($method = 'ajax') {
         $support = $record->support;
       }
 
-      if ($support == 1) {
+      if ($support) {
         $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', 'checked'));
       } else {
         $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('checked'));
@@ -158,7 +158,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
     }
 
     if ($form_type == 'form') {
-      if ($res->inherit_id == NULL || $res->compared_has_children == 1 || $res->feature_has_children == 1) {
+      if ($res->inherit_id == NULL || $res->compared_has_children || $res->feature_has_children) {
         hide($form['wikicompare_use_from_inherit']);
       } else {
 
@@ -243,7 +243,7 @@ function wikicompare_inherit_compared_test_form_implementation(&$test_support, $
     $query->condition('n.nid', $node->nid);
     $result = $query->execute();
     foreach ($result as $record) {
-      if ($record->inherit_support == 1) {
+      if ($record->inherit_support) {
         $test_support = TRUE;
       } else { //The else because in any case, the inherited override the previous value
         $test_support = FALSE;
@@ -538,7 +538,7 @@ function wikicompare_inherit_compared_update_comparative_table_post(&$to_update,
 function wikicompare_inherit_compared_from_other_support(&$node) {
 
   //Work only if the compared of the implementation inherit a node and we didn't override the information in the implementation
-  if ($node->inheriting_compared_id && $node->use_from_inherit == 1) {
+  if ($node->inheriting_compared_id && $node->use_from_inherit) {
     $node->percent = $node->inheriting_implementation_cache_percent;
     $node->css_class = $node->inheriting_implementation_cache_css_class;
   }

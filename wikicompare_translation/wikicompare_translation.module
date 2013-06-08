@@ -132,7 +132,7 @@ function wikicompare_translation_wikicompare_request_db(&$query, $type, $db_sett
     $query->leftjoin('node', 't', 'n.nid = t.tnid');
     $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
 
-    if ($settings['fastaction'] == 1) {
+    if ($settings['fastaction']) {
 
       $query->addField('tr', 'uid', 'tuid');
       $query->leftjoin('node_revision', 'tr', 't.nid = tr.nid');
@@ -338,7 +338,7 @@ function wikicompare_translation_wikicompare_fastaction_submit_after(&$node, $tn
     global $language;
 
     if ($language->language != language_default('language')) {
-      if ($_POST['selectnode'] == 1) {
+      if ($_POST['selectnode']) {
         $node = $tnode;
       }
     }
