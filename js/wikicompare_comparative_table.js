@@ -205,7 +205,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 /*
     //Ajaxify the compute table link
-    $('#make_cleaning_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('#wikicompare_make_cleaning_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');

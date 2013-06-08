@@ -66,7 +66,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
+    'path' => 'wikicompare_get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -130,7 +130,7 @@ function wikicompare_needs_fastaction_specific(&$output, $type, $node, $fastacti
       $feature_array = array();
       if ($selected_feature_ids) {
         $settings = wikicompare_initialize_settings(array('context' => 'selected'));
-        $feature_array = build_recursive_data('feature', $selected_feature_ids, $settings);
+        $feature_array = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
   
 
 //        $itemlist_settings['context'] = 'selected';
@@ -156,7 +156,7 @@ function wikicompare_needs_fastaction_specific(&$output, $type, $node, $fastacti
       'text' => 'Select features',
       'title' => 'Select features',
       'selector' => 'dialog-content',
-      'path' => 'get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
+      'path' => 'wikicompare_get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
       'id' => 'select_feature_link',
     );
     $output .= '<div id="form_selected_features">';
@@ -237,7 +237,7 @@ function wikicompare_needs_table_render_need($settings=array()) {
   }
 
   //Building the data for the item list
-  $item_list_data = get_itemlist('need', $needs, 0, $itemlist_settings);
+  $item_list_data = wikicompare_build_itemlist('need', $needs, 0, $itemlist_settings);
 
   $output ="<div id='comparative_table_main_need'>";
   //Render the item list

@@ -113,7 +113,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       $parent_name = 'No parent';
       if (isset($node->wikicompare_parent_id['und'])) {
         $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
-        $res = build_recursive_data($node->type, array($parent_nid), wikicompare_initialize_settings());
+        $res = wikicompare_build_recursive_data($node->type, array($parent_nid), wikicompare_initialize_settings());
         $parent_name = $res['data'][$parent_id]['data']->fulltitle;
       }
       //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
@@ -121,7 +121,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         'text' => 'Select parent',
         'title' => 'Select parent',
         'selector' => 'dialog-content',
-        'path' => 'get_dialog_callback/selectdialog/' . $node->type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
+        'path' => 'wikicompare_get_dialog_callback/selectdialog/' . $node->type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
       );
       $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $node->type)));
 
@@ -130,7 +130,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         $title = 'No parent';
         if (isset($node->wikicompare_parent_id['und'])) {
           $parent_nid = $node->wikicompare_parent_id['und'][0]['target_id'];
-          $res = build_recursive_data($node->type, array($parent_nid), wikicompare_initialize_settings());
+          $res = wikicompare_build_recursive_data($node->type, array($parent_nid), wikicompare_initialize_settings());
           $title = $res['data'][$parent_nid]['data']->fulltitle;
         }
   */
@@ -169,7 +169,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
             'text' => 'Select parent',
             'title' => 'Select parent',
             'selector' => 'dialog-content',
-            'path' => 'get_dialog_callback/selectdialog/' . $type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
+            'path' => 'wikicompare_get_dialog_callback/selectdialog/' . $type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
           );
           $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
   */
@@ -777,7 +777,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     $commands[] = ajax_command_remove('#' . $type . '_table_supertitle_'. $_POST['node_id']);
     $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $_POST['node_id'], 'addClass', array('to_remove'));
     $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node is correctly removed');
-    $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
+    $commands[] = ajax_command_invoke('#wikicompare_make_cleaning_link', 'click', array());
 
   } elseif (!isset($from_db_record['no-edit'])) {
 
@@ -923,7 +923,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
 
       $commands[] = ajax_command_invoke('.fastaction_item:.displayed', 'removeClass', array('displayed'));
-      $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
+      $commands[] = ajax_command_invoke('#wikicompare_make_cleaning_link', 'click', array());
 
     } else {
       $commands[] = ajax_command_html('#form_fastaction_error_zone', 'Some required fields are missing.');

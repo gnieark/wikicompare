@@ -203,8 +203,8 @@ function wikicompare_menu() {
   ); 
 
 
-  $items['get_itemlist_children_callback'] = array(
-    'page callback' => 'get_itemlist_children_response',
+  $items['wikicompare_get_itemlist_children_callback'] = array(
+    'page callback' => 'wikicompare_get_itemlist_children_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -213,8 +213,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['get_feature_children_callback'] = array(
-    'page callback' => 'get_feature_children_response',
+  $items['wikicompare_get_feature_children_callback'] = array(
+    'page callback' => 'wikicompare_get_feature_children_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -223,8 +223,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['toogle_compared_checkbox_callback'] = array(
-    'page callback' => 'toggle_compared_checkbox_response',
+  $items['wikicompare_toogle_compared_checkbox_callback'] = array(
+    'page callback' => 'wikicompare_toggle_compared_checkbox_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -233,8 +233,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
   
-  $items['get_dialog_callback/%/%/%/%/%/%'] = array(
-    'page callback' => 'get_dialog_response',
+  $items['wikicompare_get_dialog_callback/%/%/%/%/%/%'] = array(
+    'page callback' => 'wikicompare_get_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(1,2,3,4,5,6),
@@ -242,8 +242,8 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table.inc',
   );
 
-  $items['select_dialog_callback'] = array(
-    'page callback' => 'select_dialog_response',
+  $items['wikicompare_select_dialog_callback'] = array(
+    'page callback' => 'wikicompare_select_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -252,8 +252,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['submit_dialog_callback'] = array(
-    'page callback' => 'submit_dialog_response',
+  $items['wikicompare_submit_dialog_callback'] = array(
+    'page callback' => 'wikicompare_submit_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -262,8 +262,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['compute_comparative_table_callback'] = array(
-    'page callback' => 'compute_comparative_table_response',
+  $items['wikicompare_compute_table_callback'] = array(
+    'page callback' => 'wikicompare_compute_table_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -272,8 +272,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['make_cleaning_callback'] = array(
-    'page callback' => 'make_cleaning_response',
+  $items['wikicompare_make_cleaning_callback'] = array(
+    'page callback' => 'wikicompare_make_cleaning_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),

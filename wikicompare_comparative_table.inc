@@ -36,7 +36,7 @@ function wikicompare_comparative_table() {
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'get_dialog_callback/multidialog/feature/manual_selected_features/0/manual_selected_features/none',
+    'path' => 'wikicompare_get_dialog_callback/multidialog/feature/manual_selected_features/0/manual_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -56,7 +56,7 @@ function wikicompare_comparative_table() {
     '#type' => 'link',
     '#title' => 'Compute',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'compute_comparative_table_callback/nojs',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
     '#id' => 'compute_table_link',
     '#attributes' => array(
       'class' => array('simple_ajaxlink'),
@@ -74,7 +74,7 @@ function wikicompare_comparative_table() {
     '#type' => 'link',
     '#title' => 'Reset table',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'compute_comparative_table_callback/nojs',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
     '#id' => 'reset_table_link',
     '#attributes' => array(
       'class' => array('simple_ajaxlink'),
@@ -89,7 +89,7 @@ function wikicompare_comparative_table() {
 
   
 
-  $output .= render_comparative_table(wikicompare_initialize_settings());
+  $output .= wikicompare_table_render_comparative_table(wikicompare_initialize_settings());
 
 
   //Add the link to go on FastAction mode
@@ -110,7 +110,7 @@ function wikicompare_comparative_table() {
     '#type' => 'link',
     '#title' => 'Clean',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'make_cleaning_callback/nojs',
+    '#href' => 'wikicompare_make_cleaning_callback/nojs',
     '#id' => 'make_cleaning_link',
     '#attributes' => array(
       'class' => array('simple_ajaxlink'),
@@ -149,7 +149,7 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 */
 
   //Building the data for the item list
-  $itemlist_data = get_itemlist($type, $nodes, 0, $settings);
+  $itemlist_data = wikicompare_build_itemlist($type, $nodes, 0, $settings);
 
   $output ="<div id='comparative_table_main_" . $type . "'>";
   //Render the item list
@@ -163,7 +163,7 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 }
 
 //DONE
-function render_comparative_table($settings, $features=array(), $compared_ids=array()){
+function wikicompare_table_render_comparative_table($settings, $features=array(), $compared_ids=array()){
 /*
   $fastaction = 0;
   if (isset($settings['fastaction'])) {
@@ -202,7 +202,7 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
 // array('fastaction' => $fastaction, 'compared_ids' => $compareds, 'feature_ids' => $settings['feature_ids']));
   } 
 
-  $features_row_data = build_rows_data($features, $compared_ids, $implementations, $settings);
+  $features_row_data = wikicompare_build_rows_data($features, $compared_ids, $implementations, $settings);
 
   $compareds = array();
   if (!empty($compared_ids)) {
@@ -235,7 +235,7 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
   $output .= '</thead>';
   $output .= '<tbody>';
 
-  $output .= render_rows($features_row_data, $settings);
+  $output .= wikicompare_table_render_rows($features_row_data, $settings);
 //  $colspan = '';
   $output .= '<tr id="feature_table_0"><td class="row_auto_colspan" ';
   if (isset($settings['colspan'])) {
@@ -264,7 +264,7 @@ function render_comparative_table($settings, $features=array(), $compared_ids=ar
 }
 
 //DONE
-function render_rows($features_row_data, $settings) {
+function wikicompare_table_render_rows($features_row_data, $settings) {
 
 
 
@@ -290,13 +290,13 @@ function render_rows($features_row_data, $settings) {
     $output .= '>';
 
 
-    $output .= '<td>' . wikicompare_get_supertitle_item('feature', $feature, $settings) . '</td>';
+    $output .= '<td>' . wikicompare_table_get_supertitle_item('feature', $feature, $settings) . '</td>';
 
 
 
     //Add a column for each column in the table
     foreach ($feature['implementations'] as $implementation) {
-      $output .= render_implementation($implementation, $feature, $settings);
+      $output .= wikicompare_table_render_implementation($implementation, $feature, $settings);
     }
     $output .= '</tr>';
   }
@@ -307,7 +307,7 @@ function render_rows($features_row_data, $settings) {
 }
 
 //DONE
-function render_implementation($implementation, $feature, $settings) {
+function wikicompare_table_render_implementation($implementation, $feature, $settings) {
 
 //  $implementation = $implementation_array['data'];
 
@@ -330,7 +330,7 @@ function render_implementation($implementation, $feature, $settings) {
     $img_link_to_node .= '</span>';
 */
 
-    $output = '<td id="implementation_' . $implementation['data']->nid . '" class="implementation_cell ' . $implementation['data']->css_class . ' implementation_compared_' . $implementation['data']->compared_id . ' implementation_feature_' . $implementation['data']->feature_id . '">' . wikicompare_get_supertitle_item('implementation', $implementation, $settings) . '</td>';
+    $output = '<td id="implementation_' . $implementation['data']->nid . '" class="implementation_cell ' . $implementation['data']->css_class . ' implementation_compared_' . $implementation['data']->compared_id . ' implementation_feature_' . $implementation['data']->feature_id . '">' . wikicompare_table_get_supertitle_item('implementation', $implementation, $settings) . '</td>';
 
   } else {
     $output = '<td></td>';
@@ -340,7 +340,7 @@ function render_implementation($implementation, $feature, $settings) {
 }
 
 //DONE
-function wikicompare_get_supertitle_item($type, $node, $settings) {
+function wikicompare_table_get_supertitle_item($type, $node, $settings) {
 
 //  $node = $node_array['data'];
 
@@ -356,7 +356,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
     if ($itemlist_settings['computed']) {
       $class[] = 'computed';
     }
-    $title = l($title, 'get_itemlist_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $node->nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
+    $title = l($title, 'wikicompare_build_itemlist_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $itemlist_settings['context'] . '_link_' . $node->nid, 'class' => $class, 'type' => $type, 'context' => $itemlist_settings['context']), 'html' => True));
 
     if ($type == 'feature' && $itemlist_settings['context'] == 'table') {
       $title = l($title, 'get_feature_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node->nid, 'class' => array($type . '_link ' . $type . '_link_children_' . $node->nid)), 'html' => True));
@@ -391,9 +391,9 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
     $suffix .= '</span>';
   }
 
-  $url = 'get_itemlist_children_callback/nojs/';
+  $url = 'wikicompare_get_itemlist_children_callback/nojs/';
   if ($type == 'feature' && $settings['context'] == 'table') {
-    $url = 'get_feature_children_callback/nojs/';
+    $url = 'wikicompare_get_feature_children_callback/nojs/';
     //Creating the first cell of the row, containing the feature details
     $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
     if ($node['data']->has_children){
@@ -407,7 +407,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       if ($settings['computed']) {
         $class[] = 'computed';
       }
-      $title = l($title, 'get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => $class, 'ntype' => 'feature', 'context' => 'table'), 'html' => True));
+      $title = l($title, 'wikicompare_get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => $class, 'ntype' => 'feature', 'context' => 'table'), 'html' => True));
     }
 */
 
@@ -453,7 +453,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
               '#type' => 'link',
               '#title' => 'toggle',
               //The link for the callback function which will display or hide the column in the table
-              '#href' => 'toogle_compared_checkbox_callback/nojs/',
+              '#href' => 'wikicompare_toogle_compared_checkbox_callback/nojs/',
               '#id' => 'compared_checkbox_link_' . $node['data']->nid,
               '#attributes' => array(
                 'class' => array('simple_ajaxlink'),
@@ -474,7 +474,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
         ));
 
         //Create the link. The html = True indicate that the title of the link contain html.
-        $prefix .= l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog')), 'html' => True)) . ' ';
+        $prefix .= l($img, 'wikicompare_select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog')), 'html' => True)) . ' ';
       }
     }
   }
@@ -522,7 +522,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       ));
 
       //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link = l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node->nid, 'class' => array('select_simple_dialog')), 'html' => True));
+      $img_link = l($img, 'wikicompare_select_dialog_callback/nojs', array('attributes' => array('id' => 'wikicompare_select_dialog_' . $node->nid, 'class' => array('select_simple_dialog')), 'html' => True));
       $checkbox_area = $img_link . ' ';
     }
 */
@@ -575,7 +575,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 /*
  * Function which will build the item list. Used in table initial building, in compared ajax callback and in modal dialog
  */
-function get_itemlist($type, $nodes, $parent_node, $settings){
+function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
 
 
 
@@ -592,7 +592,7 @@ function get_itemlist($type, $nodes, $parent_node, $settings){
 
     
     $items[$nid]['id'] = $type . '_' . $settings['context'] . '_item_' .  $nid;
-    $items[$nid]['data'] = wikicompare_get_supertitle_item($type, $node, $settings);
+    $items[$nid]['data'] = wikicompare_table_get_supertitle_item($type, $node, $settings);
     $items[$nid]['type'] =  $type;
     $items[$nid]['context'] = $settings['context'];
     $items[$nid]['class'] = array($type . '_item');
@@ -609,7 +609,7 @@ function get_itemlist($type, $nodes, $parent_node, $settings){
 
 
     if ($settings['computed'] && $node['data']->has_children) {
-       $items[$nid]['children'] = get_itemlist($type, $node['children'], $nid, $settings);
+       $items[$nid]['children'] = wikicompare_build_itemlist($type, $node['children'], $nid, $settings);
     } else {
       //After the compared, we add the div which will contain the children
       $items[$nid]['data'] .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;"></div>';
@@ -629,12 +629,12 @@ function get_itemlist($type, $nodes, $parent_node, $settings){
 
 //DONE
 
-function build_recursive_data($type, $node_ids, $settings){
+function wikicompare_build_recursive_data($type, $node_ids, $settings){
 
   $res = array();
-  $res = build_recursive_tree($type, $node_ids, $res, $settings);
+  $res = wikicompare_build_recursive_tree($type, $node_ids, $res, $settings);
 
-  $res = build_fulltitle($res, $res['tree'], '');
+  $res = wikicompare_build_fulltitle($res, $res['tree'], '');
 
   return $res;
 
@@ -642,7 +642,7 @@ function build_recursive_data($type, $node_ids, $settings){
 
 
 //DONE 
-function build_recursive_tree($type, $node_ids, $res, $settings){
+function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
 
   $parent_ids = array();
 
@@ -680,7 +680,7 @@ function build_recursive_tree($type, $node_ids, $res, $settings){
 
   //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
   if ($parent_ids){
-    $res = build_recursive_tree($type, $parent_ids, $res, $settings);
+    $res = wikicompare_build_recursive_tree($type, $parent_ids, $res, $settings);
   } else {
     unset($res['parent_ressource']);
   }
@@ -691,7 +691,7 @@ function build_recursive_tree($type, $node_ids, $res, $settings){
 
 
 //DONE
-function build_fulltitle($res, $tree, $parent_title) {
+function wikicompare_build_fulltitle($res, $tree, $parent_title) {
 
   foreach ($tree as $nid => $node) {
 
@@ -703,7 +703,7 @@ function build_fulltitle($res, $tree, $parent_title) {
 
     $res['data'][$nid]['data']->fulltitle = $fulltitle;
     if (!empty($node['children'])) {
-      $res = build_fulltitle($res, $node['children'], $fulltitle);
+      $res = wikicompare_build_fulltitle($res, $node['children'], $fulltitle);
     }
 
   }
@@ -716,7 +716,7 @@ function build_fulltitle($res, $tree, $parent_title) {
  * Function which will build the features row. Used in table initial building and in feature ajax callback
  */
 //DONE
-function build_rows_data($features_tree, $compared_ids, $implementations, $settings){
+function wikicompare_build_rows_data($features_tree, $compared_ids, $implementations, $settings){
 
 
   $rows = array();
@@ -737,7 +737,7 @@ function build_rows_data($features_tree, $compared_ids, $implementations, $setti
 
     $children = array();
     if ($feature['children']) {
-      $children = build_rows_data($feature['children'], $compared_ids, $implementations, $settings);
+      $children = wikicompare_build_rows_data($feature['children'], $compared_ids, $implementations, $settings);
     }
 
     //Since the row are not in a tree but in the end they are all at the same level, we need to use this flag to recover the true children of the node we are currently working on.
@@ -801,7 +801,7 @@ function build_rows_data($features_tree, $compared_ids, $implementations, $setti
  * Ajax callback cunction called by javascript to recover the compared children of the clicked compared
  */
 //DONE
-function get_itemlist_children_response($method = 'ajax') {
+function wikicompare_get_itemlist_children_response($method = 'ajax') {
 
 
 //  $nid = $_POST['nid'];
@@ -888,7 +888,7 @@ function get_itemlist_children_response($method = 'ajax') {
 
 
     //Building the data for the item list
-    $itemlist_data = get_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
+    $itemlist_data = wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
 
     //Rendering the item list
     $output = theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
@@ -917,7 +917,7 @@ function get_itemlist_children_response($method = 'ajax') {
  * Ajax callback cunction called by javascript to recover the feature children of the clicked feature
  */
 //DONE
-function get_feature_children_response($method = 'ajax') {
+function wikicompare_get_feature_children_response($method = 'ajax') {
 
 
 //  $fid = $_POST['nid'];
@@ -963,10 +963,10 @@ function get_feature_children_response($method = 'ajax') {
     if ($_POST['compared_column_ids'] == '') {
       $_POST['compared_column_ids'] = array();
     }
-    $feature_row_data = build_rows_data($features, $_POST['compared_column_ids'], $implementations, $settings);
+    $feature_row_data = wikicompare_build_rows_data($features, $_POST['compared_column_ids'], $implementations, $settings);
 
 
-    $output = render_rows($feature_row_data, $settings);
+    $output = wikicompare_table_render_rows($feature_row_data, $settings);
 
 
     //We add the code after the parent row. Note we can't use ajax_command_after because it adds an unwanted div
@@ -992,7 +992,7 @@ function get_feature_children_response($method = 'ajax') {
  * Ajax callback cunction called by javascript to add or remove a column in the comparative table
  */
 //DONE
-function toggle_compared_checkbox_response($method = 'ajax'){
+function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
 
 //  $cid = $_POST['nid'];
 
@@ -1044,9 +1044,9 @@ function toggle_compared_checkbox_response($method = 'ajax'){
             $features_without_children[$fid] = $fid;
           }
         }
-        $features = build_recursive_data('feature', $features_without_children, $settings);
+        $features = wikicompare_build_recursive_data('feature', $features_without_children, $settings);
 
-        $features = build_rows_data($features['tree'], array($_POST['nid']), $implementations, $settings); 
+        $features = wikicompare_build_rows_data($features['tree'], array($_POST['nid']), $implementations, $settings); 
 
 
       } else {
@@ -1062,7 +1062,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
         $implementation = $implementations[$fid][$_POST['nid']];
 
-        $cells[$implementation['data']->feature_id] = render_implementation($implementation, $feature, $settings);
+        $cells[$implementation['data']->feature_id] = wikicompare_table_render_implementation($implementation, $feature, $settings);
       }
     }
 
@@ -1100,7 +1100,7 @@ function toggle_compared_checkbox_response($method = 'ajax'){
 
 //DONE
 //TODO Try to reduce the number of argument
-function get_dialog_response($context, $type, $container, $nid, $container_autocomplete, $container_id){
+function wikicompare_get_dialog_response($context, $type, $container, $nid, $container_autocomplete, $container_id){
 
 
 
@@ -1137,7 +1137,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
   $nodes = request_db($type, array('parent_id' => NULL), $settings);
 
   //Building the data for the item list
-  $itemlist_data = get_itemlist($type, $nodes, 0, $settings);
+  $itemlist_data = wikicompare_build_itemlist($type, $nodes, 0, $settings);
 
 
   $output .= theme_item_list(array('items' => $itemlist_data, 'type' => 'ul', 'attributes' => array()));
@@ -1147,7 +1147,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
     '#type' => 'link',
     '#title' => 'Submit',
     //The callback link, /nojs is automatically replace for /ajax by drupal. The secondi argument indicate if we have to display or hide the elements
-    '#href' => 'submit_dialog_callback/nojs',
+    '#href' => 'wikicompare_submit_dialog_callback/nojs',
     '#id' => 'submitlink_dialog',
     '#attributes' => array(
       'class' => array('simple_ajaxlink'),
@@ -1166,7 +1166,7 @@ function get_dialog_response($context, $type, $container, $nid, $container_autoc
 }
 
 //DONE
-function select_dialog_response($method = 'ajax'){
+function wikicompare_select_dialog_response($method = 'ajax'){
 
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
@@ -1178,7 +1178,7 @@ function select_dialog_response($method = 'ajax'){
 
   $settings = wikicompare_initialize_settings($_POST);
 
-  $res = build_recursive_data($_POST['type'], array($_POST['nid']), $settings);
+  $res = wikicompare_build_recursive_data($_POST['type'], array($_POST['nid']), $settings);
 
   $parent = $res['data'][$_POST['nid']];
 
@@ -1202,7 +1202,7 @@ function select_dialog_response($method = 'ajax'){
 
 
 //DONE
-function submit_dialog_response($method = 'ajax'){
+function wikicompare_submit_dialog_response($method = 'ajax'){
 
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
@@ -1229,11 +1229,11 @@ function submit_dialog_response($method = 'ajax'){
 
   $features = array('data' => array());
   if ($_POST['selected_feature_ids']) {
-    $features = build_recursive_data('feature', $_POST['selected_feature_ids'], $settings);
+    $features = wikicompare_build_recursive_data('feature', $_POST['selected_feature_ids'], $settings);
   }
 
   //Building the data for the item list
-  $itemlist_data = get_itemlist('feature', $features['tree'], 0, $settings);
+  $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, $settings);
 
 
   //Render the item list
@@ -1272,7 +1272,7 @@ function submit_dialog_response($method = 'ajax'){
 
 
 
-function compute_comparative_table_response($method = 'ajax') {
+function wikicompare_compute_table_response($method = 'ajax') {
 
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
@@ -1334,16 +1334,16 @@ function compute_comparative_table_response($method = 'ajax') {
 //    $settings = array('fastaction' => $fastaction, 'states' => $_POST['states'], 'colspan' => $_POST['nb_compareds']);
   if ($selected_feature_ids && !isset($_POST['reset'])) {
 
-    $features = build_recursive_data('feature', $selected_feature_ids, $settings);
+    $features = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
 
 //      $settings['feature_ids'] = $features['ids'];
     $settings['computed'] = 1;
 
 
-    $output = render_comparative_table($settings, $features['tree'], $compared_columns_ids);
+    $output = wikicompare_table_render_comparative_table($settings, $features['tree'], $compared_columns_ids);
 
   } else {
-    $output = render_comparative_table($settings, array(), $compared_columns_ids);
+    $output = wikicompare_table_render_comparative_table($settings, array(), $compared_columns_ids);
   }
 
 
@@ -1358,7 +1358,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
 
 
-function make_cleaning_response($method = 'ajax') {
+function wikicompare_make_cleaning_response($method = 'ajax') {
 
 
 
@@ -1463,7 +1463,7 @@ function make_cleaning_response($method = 'ajax') {
 
       if ($node_from_table['has_children'] != $nodes[$nid]['data']->has_children) {
 
-        $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $nid, wikicompare_get_supertitle_item($type, $nodes[$nid], $settings));
+        $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $nid, wikicompare_table_get_supertitle_item($type, $nodes[$nid], $settings));
         if (!$nodes[$nid]['data']->has_children) {
           $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $nid, 'removeClass', array('has_children'));
         }
@@ -1512,7 +1512,7 @@ function make_cleaning_response($method = 'ajax') {
             'fastaction' => $_POST['fastaction'],
             'computed' => 0
           );*/
-          $commands[] = ajax_command_replace('#comparative_table', render_comparative_table($settings, array(), $_POST['compared_columns_ids']));
+          $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings, array(), $_POST['compared_columns_ids']));
           break;
       }
 
@@ -1568,7 +1568,7 @@ function make_cleaning_response($method = 'ajax') {
 
     foreach($implementations as $fid => $compareds_implementations) {
       foreach ($compareds_implementations as $cid => $implementation) {
-        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, render_implementation($implementation, array(), $settings));
+        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, wikicompare_table_render_implementation($implementation, array(), $settings));
       }
     }
   }
@@ -1585,10 +1585,10 @@ function make_cleaning_response($method = 'ajax') {
 */
     $features = array('tree' => array());
     if ($_POST['selected_feature_ids']) {
-      $features = build_recursive_data('feature', $_POST['selected_feature_ids']);
+      $features = wikicompare_build_recursive_data('feature', $_POST['selected_feature_ids']);
     }
     //Building the data for the item list
-    $itemlist_data = get_itemlist('feature', $features['tree'], 0, array('computed' => 1));
+    $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, array('computed' => 1));
     //Render the item list
     $output = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
     $commands[] = ajax_command_html('#selected_feature_itemlist', $output);

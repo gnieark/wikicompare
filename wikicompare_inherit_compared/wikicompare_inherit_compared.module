@@ -102,7 +102,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
     $inherit_id = 0;
     if (isset($node->wikicompare_inherit_compared_id['und'])) {
       $inherit_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
-      $res = build_recursive_data('compared', array($inherit_id), wikicompare_initialize_settings());
+      $res = wikicompare_build_recursive_data('compared', array($inherit_id), wikicompare_initialize_settings());
       $title = $res['data'][$inherit_id]['data']->fulltitle;
     }
 
@@ -115,7 +115,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
       'text' => 'Select inherited compared',
       'title' => 'Select inherited compared',
       'selector' => 'dialog-content',
-      'path' => 'get_dialog_callback/selectdialog/compared/form_selected_inherit/' . $nid . '/wikicompare-inherit-compared-id/inherit_id',
+      'path' => 'wikicompare_get_dialog_callback/selectdialog/compared/form_selected_inherit/' . $nid . '/wikicompare-inherit-compared-id/inherit_id',
     );
     $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $node->type)));
 
