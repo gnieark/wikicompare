@@ -388,7 +388,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid, 'class' => array($type . '_node_link')), 'html' => True));
+    $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
 
     $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '">';
     if ($settings['fastaction_status'] == 1) {
@@ -397,7 +397,17 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
     $suffix .= '</span>';
   }
 
+  $url = 'get_itemlist_children_callback/nojs/';
   if ($type == 'feature' && $settings['context'] == 'table') {
+    $url = 'get_feature_children_callback/nojs/';
+    //Creating the first cell of the row, containing the feature details
+    $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
+    if ($node['data']->has_children == 1){
+      $suffix .= '<br/> Type : <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
+    }
+    $suffix .= '<br/> State : <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
+  
+/*
     if ($node['data']->has_children == 1){
       $class = array('item_link ' . $type . '_link_children_' . $node['data']->nid . ' ' . $type . '_table_link');
       if ($settings['computed']) {
@@ -405,12 +415,8 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       }
       $title = l($title, 'get_feature_children_callback/nojs/',  array('attributes' => array('id' => $type . '_table_link_' . $node['data']->nid, 'class' => $class, 'ntype' => 'feature', 'context' => 'table'), 'html' => True));
     }
-    //Creating the first cell of the row, containing the feature details
-    $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
-    if ($node['data']->has_children == 1){
-      $suffix .= '<br/> Type : <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
-    }
-    $suffix .= '<br/> State : <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
+*/
+
 
 //TODO move the parent id in an attr 'parent_id'.
 //TODO try move all information in the link, and no more in the items
@@ -418,18 +424,6 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
 //TODO Merge link feature dans le reste
   } else {
 
-    if ($node['data']->has_children == 1){
-      $class = array('item_link');
-
-      if ($settings['computed']) {
-        $class[] = 'computed';
-      }
-      if ($settings['context'] == 'table') {
-        $class[] = $type . '_table_link';
-      }
-      $title = l($title, 'get_itemlist_children_callback/nojs/',  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context']), 'html' => True));
-
-    }
 
     if (in_array($settings['context'], array('table', 'multidialog')) && in_array($node['data']->state, array('published-incomplete', 'published-submitted', 'published'))) {
 
@@ -474,7 +468,7 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
               'style' => 'display:none',
             )
           );
-//dpm(render($checkbox_link));
+
           $prefix .= render($checkbox_link);
         }
       }
@@ -489,6 +483,19 @@ function wikicompare_get_supertitle_item($type, $node, $settings) {
       //Create the link. The html = True indicate that the title of the link contain html.
       $prefix .= l($img, 'select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog')), 'html' => True)) . ' ';
     }
+  }
+
+  if ($node['data']->has_children == 1){
+    $class = array('item_link');
+
+    if ($settings['computed']) {
+      $class[] = 'computed';
+    }
+    if ($settings['context'] == 'table') {
+      $class[] = $type . '_table_link';
+    }
+    $title = l($title, $url,  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context']), 'html' => True));
+
   }
 
 
@@ -593,7 +600,7 @@ function get_itemlist($type, $nodes, $parent_node, $settings){
     $items[$nid]['data'] = wikicompare_get_supertitle_item($type, $node, $settings);
     $items[$nid]['type'] =  $type;
     $items[$nid]['context'] = $settings['context'];
-    $items[$nid]['class'] = array($type . '_item', 'list_item', $settings['context']);
+    $items[$nid]['class'] = array($type . '_item');
     if ($node['data']->has_children == 1){
       $items[$nid]['class'][] = 'has_children';
     }
@@ -895,7 +902,7 @@ function get_itemlist_children_response($method = 'ajax') {
       $commands = array(ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output));
 
       $page = array('#type' => 'ajax', '#commands' => $commands);
-//dpm($page);
+
       return $page;
 
     //TODO See if we can do it in javascript
@@ -924,6 +931,7 @@ function get_itemlist_children_response($method = 'ajax') {
  */
 //DONE
 function get_feature_children_response($method = 'ajax') {
+
 
 //  $fid = $_POST['nid'];
 
@@ -976,7 +984,7 @@ function get_feature_children_response($method = 'ajax') {
       $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
 
       $page = array('#type' => 'ajax', '#commands' => $commands);
-  
+
       return $page;
 
     //If we want to collapse the feature children
@@ -1377,7 +1385,7 @@ function compute_comparative_table_response($method = 'ajax') {
 
 function make_cleaning_response($method = 'ajax') {
 
-dpm($_POST);
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method == 'ajax') {
 

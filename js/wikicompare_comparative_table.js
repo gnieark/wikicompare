@@ -7,7 +7,7 @@
       selected_feature_ids = {};
       selected_need_ids = {};
 
-//TODO faire une fonction générique pour extraire le nid  
+ 
 
 //Drupal.behaviors is the equivalent for Drupal of ready()
 Drupal.behaviors.WikicompareComparativeTable = {
@@ -20,7 +20,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
-
+//      var nid = extract_nid(link_id)[0];
 
 
       var type = $(this).attr('ntype');
@@ -30,10 +30,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       if ($(this).hasClass('computed')) {
 
         $(this).click(function() {
-/*
-          var patt = /[0-9]+/g;
-          var nid = patt.exec(link_id);
-*/
+
           var nid = extract_nid(link_id);
           if (!$(this).hasClass('displayed')) {
             $('.feature_' + context + '_child_' + nid).show();
@@ -244,6 +241,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
+//      var nid = extract_nid(link_id)[0];
 
       type = $('#dialog_type').text();
 
@@ -305,7 +303,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
-
+//      var nid = extract_nid(link_id)[0];
 
       var type = $(this).attr('type');
       var action = $(this).attr('action');
@@ -332,7 +330,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
-
+//      var nid = extract_nid(link_id)[0];
 
       var type = $(this).attr('type');
       var action = $(this).attr('action');
@@ -403,11 +401,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function build_ajax_link(link_id, object, action, type=false, context=false) {
 
       //Recover the nid by using a regular expression on the link_id
-/*      var patt = /[0-9]+/g;
-      var nid = patt.exec(link_id);
-*/
-      var nid = extract_nid(link_id)[0];
 
+      //Theses functions does not have nid and so would cause some problem. Essentially, they would disable the simple_dialog links.
+      if (action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
+        var nid = extract_nid(link_id)[0];
+      }
   
       //Configure the ajax event
       var element_settings = {};
@@ -419,7 +417,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Create the ajax event
       var ajax = new Drupal.ajax(link_id, object, element_settings);
 
-      
+
       //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal
       ajax.old_beforeSerialize = ajax.beforeSerialize;
 
@@ -527,16 +525,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_colspan = true;
           options.data.reset = true;
         }
-/*     
-        if (action == 'toogle_fastaction') {
-          manage_displayed_flag = true;
-          send_compareds = true;
-          send_features = true;
-          send_implementations = true;
-          send_needs = true;
-          make_cleaning = true;
-        }
-*/
+
         
 
         
@@ -632,8 +621,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
               if (!$(this).hasClass('to_remove')) {
 
 //                var id = $(this).attr('id');
-  /*              var patt = /[0-9]+/g;
-                compared_id = patt.exec($(this).attr('id'))[0]; */
+
                 nid = extract_nid($(this).attr('id'))[0];
                 node_ids[nid] = {};
                 //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
@@ -682,128 +670,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data[ftype + '_displayed_ids'] = node_displayed_ids;
 
           }
-/*
-          var compared_ids = new Array();
-          var i = 0;
-          $('.compared_item').each(function (key, value) {
-            //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
-            if (!$(this).hasClass('to_remove')) {
-              compared_ids[i] = {};
-              var id = $(this).attr('id');
-              cid = extract_nid(id);
-              //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-              compared_ids[i]['nid'] = cid;
-              if ($(this).parent().parent().parent().hasClass('compared_children')) {
-                pid = $(this).parent().parent().parent().attr('id');
-                compared_ids[i]['parent_id'] = extract_nid(pid);
-              }
-              compared_ids[i]['has_children'] = 0;
-              if ($(this).hasClass('has_children')) {
-                compared_ids[i]['has_children'] = 1;
-              }
-              i = i + 1;
-            }
-          });
-          //Add them in the ajax call variables
-          options.data.compared_ids = compared_ids;
 
-          var compared_displayed_ids = new Array();
-          var i = 0;
-          $('.compared_main_table').each(function (key, value) {
-
-            if ($(this).hasClass('displayed')) {
-
-//              var patt = /[0-9]+/g;
-              var id = $(this).attr('id');
-              compared_displayed_ids[i] = extract_nid(id);// patt.exec($(this).attr('id'))[0]
-              i = i + 1;
-            }
-          });
-
-          //Add them in the ajax call variables
-          options.data.compared_displayed_ids = compared_displayed_ids;
-*/
-/*
-          var feature_ids = new Array();
-          var i = 0;
-          $('.feature_row').each(function (key, value) {
-
-            feature_ids[i] = {};
-            var id = $(this).attr('id');
-            fid = extract_nid(id); //patt.exec($(this).attr('id'))[0];
-            //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-            feature_ids[i]['nid'] = fid;
-            //The only numeric value in feature row class is the parent id
-            var patt = /[0-9]+/g;
-            if (patt.test($(this).attr('class'))) {
-              //I don't know why, but I need to remake the patt, the patt.exec will otherwise not work  
-//              var patt = /[0-9]+/g;
-              var pid = $(this).attr('class');
-              feature_ids[i]['parent_id'] = extract_nid(pid); //patt.exec($(this).attr('class'));
-//               = parent_id;
-            }
-            feature_ids[i]['has_children'] = 0;
-            if ($(this).hasClass('has_children')) {
-              feature_ids[i]['has_children'] = 1;
-            }
-            i = i + 1;
-          });
-          //Add them in the ajax call variables
-          options.data.feature_ids = feature_ids;
-
-          var feature_displayed_ids = new Array();
-          var i = 0;
-          $('.feature_link').each(function (key, value) {
-            if ($(this).hasClass('displayed')) {
-//              var patt = /[0-9]+/g;
-              var id = $(this).attr('id');
-              feature_displayed_ids[i] = extract_nid(id); //patt.exec($(this).attr('id'))[0]
-              i = i + 1;
-            }
-          });
-          //Add them in the ajax call variables
-          options.data.feature_displayed_ids = feature_displayed_ids;
-
-          var need_ids = new Array();
-          var i = 0;
-          $('.need_item').each(function (key, value) {
-            //In the make cleaning function, the to_remove item are not already remove to not break the slideUp
-            if (!$(this).hasClass('to_remove')) {
-//              var patt = /[0-9]+/g;
-              need_ids[i] = {};
-              var id = $(this).attr('id');
-              nid = extract_nid(id); //patt.exec($(this).attr('id'))[0];
-              //Not using associative array because we shall not remove doublon. We need to make the security check on each element in the page.
-              need_ids[i]['nid'] = nid;
-              if ($(this).parent().parent().parent().hasClass('need_children')) {
-                pid = $(this).parent().parent().parent().attr('id');
-
-                need_ids[i]['parent_id'] = extract_nid(pid); //att.exec(parent)[0];
-
-              }
-              need_ids[i]['has_children'] = 0;
-              if ($(this).hasClass('has_children')) {
-                need_ids[i]['has_children'] = 1;
-              }
-              i = i + 1;
-            }
-          });
-          //Add them in the ajax call variables
-          options.data.need_ids = need_ids;
-
-          var need_displayed_ids = new Array();
-          var i = 0;
-          $('.list_item_link:.need').each(function (key, value) {
-            if ($(this).hasClass('displayed')) {
-//              var patt = /[0-9]+/g;
-              var id = $(this).attr('id');
-              need_displayed_ids[i] = extract_nid(id); //patt.exec($(this).attr('id'))[0]
-              i = i + 1;
-            }
-          });
-          //Add them in the ajax call variables
-          options.data.need_displayed_ids = need_displayed_ids;
-*/
 
         }
 
@@ -851,13 +718,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
         
         if (send_compareds_columns == true) {
           //Recover all compared columns displayed in the table to send their id to drupal, in the right order. This is why we can't use a dictionnary.
-          var compared_column_ids = [];
+          var compared_column_ids = {};
           var i = 0;
           $('.header_compared').each(function (key, value) {
             if (!$(this).hasClass('to_remove')) {
 //              var column_id = $('#' + $(this).attr('id'));
               var cid = extract_nid($(this).attr('id'))[0];
-              compared_column_ids[c] = cid;
+              compared_column_ids[cid] = cid;
               i = i + 1;
             }
           });
@@ -976,13 +843,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('.feature_table_child_' + nid).show();
 //TODO Les lignes s'affichent instantanement pour une raison qui m'echappe si je met un slideDown(). Utiliser la fonction suivante pour les afficher les unes apres les autres
 //http://paulirish.com/2008/sequentially-chain-your-callbacks-in-jquery-two-ways/
-/*
-          (function shownext(jq){
-            jq.eq(0).slideDown("slow", function(){
-              (jq=jq.slice(1)).length && hidenext(jq);
-            });
-          })($(children_id))
-*/
+
+//          (function shownext(jq){
+//            jq.eq(0).slideDown("slow", function(){
+//              (jq=jq.slice(1)).length && hidenext(jq);
+//            });
+//          })($(children_id))
+
             
             }
             
@@ -1026,7 +893,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           
             if (action == 'expand_row_children') {
               //Hide the children with slide animation
-              remove_children_tree(nid, '.feature_link_children_', '.feature_table_child_', false);
+              remove_children_tree(nid, '#feature_table_link_', '.feature_table_child_', false);
 
             }
           
@@ -1053,6 +920,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('#make_cleaning_link').click();
         }
 
+
       }
 
       return ajax;
@@ -1062,9 +930,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function extract_nid(link_id) {
       var patt = /[0-9]+/g;
       var nid = patt.exec(link_id);
-//TODO tester les effet si on fait le [0] directement ici
-//TODO on peut mettre les $(this).attr('id') directement
- 
+
       return nid;
     }
 
