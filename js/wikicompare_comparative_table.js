@@ -2,7 +2,7 @@
 
 
       //Set global variable
-      fastaction_status = 0;
+      fastaction = 0;
       manual_selected_feature_ids = {};
       selected_feature_ids = {};
       selected_need_ids = {};
@@ -267,13 +267,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('#toogle_fastaction_link:not(.listener_set)').addClass('listener_set').each(function () {
 
       $(this).click(function() {
-        if (fastaction_status == 0) {
+        if (fastaction == 0) {
           //Set the global variable
-          fastaction_status = 1;
+          fastaction = 1;
         //If we are hidding the items
         } else {
           //Set the global variable
-          fastaction_status = 0;
+          fastaction = 0;
           $('.compared_add_link').remove();
           $('.compared_edit_link').remove();
           $('.compared_remove_link').remove();
@@ -352,7 +352,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-      fastaction_status = settings['wikicompare_needs']['fastaction_status'];
+      fastaction = settings['wikicompare_needs']['fastaction'];
       selected_feature_ids = settings['wikicompare_needs']['selected_feature_ids'];
 
     });
@@ -429,7 +429,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.to_remove').remove();
         }
 
-        options.data.fastaction_status = fastaction_status;
+        options.data.fastaction = fastaction;
         
 
         send_nid = false;
@@ -688,9 +688,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         if (manage_displayed_flag == true) {
           //Check if the column is already displayed
-          options.data.action = '';
+//          options.data.action = '';
           if (!$('#' + link_id).hasClass('displayed')) {
-            options.data.action = 'display';
+            options.data.display = 1;
           }
         }
 
@@ -780,6 +780,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Add them in the ajax call variables
 
           options.data.selected_feature_ids = manual_selected_feature_ids;
+
         }
 
         if (send_selected_needs == true) {
@@ -959,12 +960,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 //TODO Voir si on peut pas réduire le nombre d'argument pour les appel simpledialog
-//TODO verifier si on peut eviter que les appels de repli ne passe pas les ajax
-//TODO isoler le test ajax dans une fonction a part
-//TODO remplacer fastaction_status par un simple fastaction
-//TODO enlever les class / attributs inutiles dans les fonctions render
-
-
 
 
 //TODO When we click on add a new node while not being in the default language, we must have the default language form but the node created will be in the default language.
@@ -985,13 +980,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 //TODO remplacer les if action par des case
-//TODO remplacer new Array par [], voir si pas mieux d'utiliser des objets
-//TODO Deplacer les variables globales utilisé dans ajax dans le javascript pour ne pas perturber le fonctionnement du tableau en cas de modification de la configuration
-//TODO bouger l'initialisation des variables globales dans un endroit plus sur
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
 //TODO remplacer display par un flag true, pour recuperer le keyword action
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
-//TODO deplacer autant de fonction que possible de l'after ajax dans le php. Sortir command et page de la boucle displayed, ex. toggle compared. Seul les fonctions communes à plusieurs appels doivent rester dans success.
 //TODO fastaction item ne sont plus des displayed, retirer toute mention
 
 //TODO A l'installation, le block language ne se met pas dans le contenu

@@ -129,8 +129,8 @@ function wikicompare_needs_table_render_need($settings=array()) {
   
   $itemlist_settings = wikicompare_initialize_settings();
 
-  if (isset($settings['fastaction_status'])) {
-    $itemlist_settings['fastaction_status'] = $settings['fastaction_status'];
+  if (isset($settings['fastaction'])) {
+    $itemlist_settings['fastaction'] = $settings['fastaction'];
   }
 
   //Building the data for the item list
@@ -141,7 +141,7 @@ function wikicompare_needs_table_render_need($settings=array()) {
   $output .= theme_item_list(array('items' => $item_list_data, 'title' => 'Need', 'type' => 'ul', 'attributes' => array()));
   $output .= '<p><a id="add_need_link" href="?q=node/add/need">Add</a><span id="add_need_link_fastaction">';
  
-  if ($itemlist_settings['fastaction_status']) {
+  if ($itemlist_settings['fastaction']) {
     $need = array(
       'data' => new stdClass(),
     );

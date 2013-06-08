@@ -729,7 +729,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   }
 
   if (module_exists('wikicompare_translation')) {
-    wikicompare_translation_wikicompare_request_db($query, $type, $settings);
+    wikicompare_translation_wikicompare_request_db($query, $type, $db_settings, $settings);
   }
 
   if (module_exists('wikicompare_needs')) {
@@ -791,7 +791,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
         }
 
         if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_request_db_fastaction($node_array, $record, $type, $settings);
+          wikicompare_translation_wikicompare_request_db_fastaction($node_array, $record, $type, $db_settings);
         }
       }
     }

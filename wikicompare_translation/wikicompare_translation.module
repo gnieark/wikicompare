@@ -118,21 +118,21 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
 }
 
 
-function wikicompare_translation_wikicompare_request_db(&$query, $type, $settings) {
+function wikicompare_translation_wikicompare_request_db(&$query, $type, $db_settings, $settings) {
 
 
   global $language;
 
 
 
-  if ($settings['can_be_translated'] == 1) {
+  if (!isset($db_settings['dont_translate'])) {
     $query->addField('t', 'nid', 'nid_translated');
     $query->addField('t', 'title', 'title_translated');
     $query->addField('t', 'language', 'tlanguage');
     $query->leftjoin('node', 't', 'n.nid = t.tnid');
     $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
 
-    if ($settings['fastaction_status'] == 1) {
+    if ($settings['fastaction'] == 1) {
 
       $query->addField('tr', 'uid', 'tuid');
       $query->leftjoin('node_revision', 'tr', 't.nid = tr.nid');
@@ -142,11 +142,11 @@ function wikicompare_translation_wikicompare_request_db(&$query, $type, $setting
 
 }
 
-function wikicompare_translation_wikicompare_request_db_fastaction(&$node_array, $record, $type, $nids, $settings) {
+function wikicompare_translation_wikicompare_request_db_fastaction(&$node_array, $record, $type, $nids, $db_settings) {
 
   global $language;
 
-  if ($settings['can_be_translated'] == 1) {
+  if (!isset($db_settings['dont_translate'])) {
     if ($GLOBALS['user']->uid != $record->tuid && $record->tuid != NULL && $record->tlanguage == $language->language) {
 //      if ($type != 'implementation' || isset($settings['nids'])) {
 //      if (!$settings['is_implementation_without_nids']) {

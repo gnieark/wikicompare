@@ -59,7 +59,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
     $settings = array(
       'wikicompare' => array(
-        'fastaction_status' => 0,
+        'fastaction' => 0,
       )
     );
 
