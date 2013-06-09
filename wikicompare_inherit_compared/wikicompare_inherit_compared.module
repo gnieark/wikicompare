@@ -129,7 +129,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
         '#suffix' => '<p>' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>'
   
       );
-      hide($form['wikicompare_inherit_compared_id']);
+
       $form['wikicompare_inherit_compared_id']['#attributes']['style'] = 'display:none;';
 
     }
@@ -137,7 +137,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
     if ($form_type == 'fastaction') {
       $output .= '<p><span id="container-wikicompare-inherit-compared-id">' . $title . '</span>';
       if ($readonly != True) {
-        $output .= '<span id="inherit_id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
+        $output .= '<span id="wikicompare-inherit-compared-id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
       }
 
       
@@ -269,7 +269,7 @@ function wikicompare_inherit_compared_test_form_implementation(&$test_support, $
 *****************************************************************/
 
 
-function wikicompare_inherit_compared_submit_element(&$node, &$donotupdate,  $_POST) {
+function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotupdate,  $_POST) {
 
   if ($node->type == 'compared') {
     if ($_POST['inherit_id'] != 0) {

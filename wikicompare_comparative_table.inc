@@ -1101,7 +1101,7 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
 }
 
 //DONE
-//TODO Try to reduce the number of argument
+
 function wikicompare_get_dialog_response($context, $type, $container, $nid){
 
 
@@ -1112,9 +1112,8 @@ function wikicompare_get_dialog_response($context, $type, $container, $nid){
   $settings = wikicompare_initialize_settings(array('context' => $context, 'states' => array('draft' => 'draft', 'closed' => 'closed')));
 
 
-
   $output .= '<div id="initialize_selected_feature_dialog_ids" style="display:none;">';
-  if ($container == 'manual_selected_features') {
+  if ($container == 'manual-selected-features') {
     $output .= 'manual';
   } else {
    $output .= 'form';
@@ -1267,7 +1266,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
   $commands = array();
   $commands[] = ajax_command_html('#container-' . $_POST['container'], $output);
   $commands[] = ajax_command_html('#wikicompare-features-values', $hidden);
-  $commands[] = ajax_command_html('#need-features', $hidden_fastaction);
+  $commands[] = ajax_command_html('#wikicompare-features', $hidden_fastaction);
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
@@ -1278,7 +1277,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
 
 function wikicompare_compute_table_response($method = 'ajax') {
 
-
+dpm($_POST);
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method != 'ajax') {
     $output = NOJS_MESSAGE;
@@ -1363,7 +1362,6 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
 
 function wikicompare_make_cleaning_response($method = 'ajax') {
-
 
 
 
@@ -1580,7 +1578,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
   if ($update_selected_features) {
     
-//TODO a tester
+
 /*
     $selected_feature_ids = array();
     foreach ($_POST['selected_feature_ids'] as $selected_feature_id) {
@@ -1659,5 +1657,5 @@ function wikicompare_generate_add_link($type, $settings) {
 }
 
 
-//TODO conflit entre selected_feature_ids et manual_selected_feature
+
 ?>

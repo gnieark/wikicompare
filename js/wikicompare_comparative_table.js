@@ -354,8 +354,9 @@ alert(selected_feature_dialog_ids.toSource());*/
     $('.form_fastaction').submit(function () {
 /*      var patt = /[0-9]+/g;
       var nid = patt.exec($(this).attr('id'));*/
+      var nid = extract_nid($(this).attr('id'));
 
-      $('#form_fastaction_submit_link' + nid).click();
+      $('#form_fastaction_submit_link_' + nid).click();
       return false;
     });
    
@@ -388,8 +389,8 @@ alert(selected_feature_dialog_ids.toSource());*/
 
 
     $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-      fastaction = settings['wikicompare_needs']['fastaction'];
-//TODO pourquoi fastaction?
+//      fastaction = settings['wikicompare_needs']['fastaction'];
+// pourquoi fastaction?
       from_db = settings['wikicompare_needs']['selected_feature_ids'];
 
       for (index = 0; index < from_db.length; ++index) {
@@ -431,9 +432,9 @@ alert(selected_feature_dialog_ids.toSource());*/
 
     $('.clear_link_inherit:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).click(function() {
-        $('#form_selected_inherit').html('No inherited compared');
+        $('#container-wikicompare-inherit-compared-id').html('No inherited compared');
         $('#edit-wikicompare-inherit-compared-id').html('<input type="text" size="60" value="" name="wikicompare_inherit_compared_id[und][0][target_id]">');
-        $('#inherit_id').empty();
+        $('#wikicompare-inherit-compared-id').empty();
         return false;
       });
     });
@@ -547,8 +548,10 @@ alert(selected_feature_dialog_ids.toSource());*/
 
         if (action == 'submit_dialog') {
           if ($('#initialize_selected_feature_dialog_ids').text() == 'manual') {
+
             manual_selected_feature_ids = selected_feature_dialog_ids;
             send_manual_selected_features = true;
+
           } else {
             selected_feature_ids = selected_feature_dialog_ids;
             options.data.selected_feature_ids = selected_feature_dialog_ids;
@@ -608,7 +611,7 @@ alert(selected_feature_dialog_ids.toSource());*/
           options.data.description = $('#form_' + type + '_fast' + context + '_description_' + nid).val();
           options.data.description_translation = $('#form_' + type + '_fast' + context + '_description_' + nid + '_translation').val();
           if (type == 'compared') {
-            options.data.inherit_id = $('#inherit_id').text();
+            options.data.inherit_id = $('#wikicompare-inherit-compared-id').text();
           }
           if (type == 'feature') {
             options.data.feature_type = $('#form_' + type + '_fast' + context + '_type_' + nid).val();
@@ -683,7 +686,7 @@ alert(selected_feature_dialog_ids.toSource());*/
       //               = parent_id;
                   }
                 } else {
-                  if ($(this).parent().parent().parent().hasClass('compared_children')) {
+                  if ($(this).parent().parent().parent().hasClass(ftype + '_children')) {
                     pid = $(this).parent().parent().parent().attr('id');
                     node_ids[nid]['parent_id'] = extract_nid(pid)[0];
                   }
@@ -1008,30 +1011,25 @@ alert(selected_feature_dialog_ids.toSource());*/
 
 
 
+//TODO on a encore des plantages sur le simpledialog quand on valide les fastedit, mais plus dans les autres cas.
+
 //TODO les commantaires sont desactivé dans les donnes demo
-//TODO Voir si on peut pas réduire le nombre d'argument pour les appel simpledialog
+
 
 
 //TODO When we click on add a new node while not being in the default language, we must have the default language form but the node created will be in the default language.
 
 
 
-//TODOTODO conflit entre manualy selected et feature du tableau, ajouter un contexte (table, main itemlist, manually, dialog) a tous les liens, toutes les classes, sinon on va pas s'en sortir
-// Context possible : table, manual, selectdialog, multidialog, pas autre chose
-
-
-//TODO attention les array_merge ne conservent pas les key, faire une recherche pour corriger tous les array_merge. au lieu de array_merge(array1, array2) utiliser simplement array1 + array2, ca marche
 
 
 
-//TODO in inherit compared, verifier que la mise à jour du champ use_from a l'installation ne pose pas de probleme
-//TODO In translation, mettre à jour le flag missing required field
+
 //TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible
 
 
 //TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
 //TODO renommer toutes les fonctions en les demarrant par wikicompare
-//TODO fastaction item ne sont plus des displayed, retirer toute mention
 
 //TODO A l'installation, le block language ne se met pas dans le contenu
 //TODO Dans inherit compared, dans le formulaire d'implementation, quand on active / desactive la récupération depuis l'inherit, la valeur de support n'est pas correctement récupérée. Je n'arrive pas à corriger.

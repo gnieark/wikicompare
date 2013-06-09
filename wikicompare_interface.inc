@@ -57,11 +57,11 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
     //$form['#attached']['js'][] = '/misc/progress.js';
     $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
 
-    $settings = array(
-      'wikicompare' => array(
+    $settings = array();
+/*      'wikicompare' => array(
         'fastaction' => 0,
       )
-    );
+    );*/
 
 
     if (module_exists('wikicompare_needs')) {
@@ -104,7 +104,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
     }
 
-    if ($form_type != 'fastaction' || $fastaction != 'edit') {
+    if ($form_type == 'form' || $fastaction == 'edit') {
       $parent_id = 0;
       $parent_name = 'No parent';
       if (isset($node->wikicompare_parent_id['und'])) {
@@ -741,7 +741,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
  */
 function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
-
+dpm($_POST);
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method != 'ajax') {
     $output = NOJS_MESSAGE;
@@ -813,6 +813,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
 
 
+
       if ($_POST['sequence'] != NULL) {
         $node->wikicompare_sequence['und'][0]['value'] = $_POST['sequence'];  
       } else {
@@ -826,6 +827,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
 
     }
+
 
 /*  TODO When wysiwyg will work
     $node->body['und'][0] = array(
@@ -912,7 +914,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
 
       $commands[] = ajax_command_invoke('.fastaction_item:.displayed', 'removeClass', array('displayed'));
-      $commands[] = ajax_command_invoke('#wikicompare_make_cleaning_link', 'click', array());
+      $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
 
     } else {
       $commands[] = ajax_command_html('#form_fastaction_error_zone', 'Some required fields are missing.');

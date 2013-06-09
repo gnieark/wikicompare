@@ -185,9 +185,15 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
         '#type' => 'container',
         '#id' => 'container-wikicompare-features',
         '#weight' => -2,
-        '#suffix' => '<div id="initialize_need_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>'
+//        '#suffix' => 
       
       );
+
+      global $language;
+      if ($language->language == language_default('language')) {
+        $form['container_selected_feature']['#suffix'] = '<div id="initialize_need_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
+      }
+
     }
 
     if ($form_type == 'fastaction') {
