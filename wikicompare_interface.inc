@@ -899,6 +899,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     } 
     
     $node->log = $_POST['revision'];
+    $node->comment = 2;
 
 
 

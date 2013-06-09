@@ -31,7 +31,7 @@ function feature_insert($node) {
 function compared_insert($node) {
 
 
-
+dpm($node);
   wikicompare_insert_node('compared', $node);
 }
 

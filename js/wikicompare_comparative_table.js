@@ -1013,7 +1013,7 @@ alert(selected_feature_dialog_ids.toSource());*/
 
 //TODO on a encore des plantages sur le simpledialog quand on valide les fastedit, mais plus dans les autres cas.
 
-//TODO les commantaires sont desactivé dans les donnes demo
+
 
 
 

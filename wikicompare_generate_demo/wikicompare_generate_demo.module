@@ -172,6 +172,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     }
   }
 
+  $output .= "\$node->comment = 2";
   $output .= "node_save(\$node);<br/>";
   $output .= "\$". $type . "s['new-" . $node['data']->nid . "'] = \$node->nid;<br/>";
 
