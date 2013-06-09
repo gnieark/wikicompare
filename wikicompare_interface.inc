@@ -183,25 +183,27 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       }
 
       
-      if ($form_type == 'fastaction') {
-        $sequence_field = array(
-          '#type' => 'textfield',
-          '#title' => t('Sequence'),
-          '#value' => 1,
-          '#required' => TRUE,
-          '#element_validate' => array('element_validate_integer'),
-          '#id' => 'form_' . $type . '_fast' . $fastaction . '_sequence_' . $nid,
 
-        );
-        if ($fastaction == 'edit') {
-          $sequence_field['#value'] = $node->wikicompare_sequence['und'][0]['value'];
-        }
-        if ($readonly == True) {
-          $sequence_field['#attributes']['disabled'] = True;
-        }
-        $output .= render($sequence_field);
+
+    }
+
+    if ($form_type == 'fastaction') {
+      $sequence_field = array(
+        '#type' => 'textfield',
+        '#title' => t('Sequence'),
+        '#value' => 1,
+        '#required' => TRUE,
+        '#element_validate' => array('element_validate_integer'),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_sequence_' . $nid,
+
+      );
+      if ($fastaction == 'edit') {
+        $sequence_field['#value'] = $node->wikicompare_sequence['und'][0]['value'];
       }
-
+      if ($readonly == True) {
+        $sequence_field['#attributes']['disabled'] = True;
+      }
+      $output .= render($sequence_field);
     }
 
 
@@ -679,7 +681,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
       $form = array();
       $form_state = array();
-      wikicompare_build_form('fastaction', $form, $form_state, $output, $nid, $type, $fastaction, $node, $readonly, $tnode, $readonly_translation);
+      wikicompare_build_form('fastaction', $form, $form_state, $type, $output, $nid, $fastaction, $node, $readonly, $tnode, $readonly_translation);
 
     }
     
@@ -735,6 +737,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
   }
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
+
   return $page;
 
 }
