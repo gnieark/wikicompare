@@ -27,7 +27,7 @@ function wikicompare_comparative_table() {
    );
   $output .= render($checkbox_settings);
 
-  $output .= '<div id="manual_selected_features"></div>';
+  $output .= '<div id="container-manual-selected-features"></div>';
 
 
 
@@ -36,7 +36,7 @@ function wikicompare_comparative_table() {
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'wikicompare_get_dialog_callback/multidialog/feature/manual_selected_features/0/manual_selected_features/none',
+    'path' => 'wikicompare_get_dialog_callback/multidialog/feature/manual-selected-features/0/',//manual_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -695,10 +695,10 @@ function wikicompare_build_fulltitle($res, $tree, $parent_title) {
 
   foreach ($tree as $nid => $node) {
 
-    if ($parent_path) {
-      $fulltitle = $parent_title . ' / ' . $node['data']->title;
-    } else {
-      $fulltitle = $node['data']->title;
+
+    $fulltitle = $node['data']->title;
+    if ($parent_title) {
+      $fulltitle = $parent_title . ' / ' . $fulltitle;
     }
 
     $res['data'][$nid]['data']->fulltitle = $fulltitle;
@@ -804,6 +804,7 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $implementat
 function wikicompare_get_itemlist_children_response($method = 'ajax') {
 
 
+
 //  $nid = $_POST['nid'];
 //  $type = $_POST['type'];
 //  $context = $_POST['context'];
@@ -834,8 +835,12 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
 //      $settings['fastaction'] = $_POST['fastaction'];
 //      }
 
+    if (isset($_POST['selected_feature_ids'])) {
+      if ($_POST['selected_feature_ids'] == '') {
+        $_POST['selected_feature_ids'] = array();
+      }
 
-
+    }
     //Prepare the array to use as argument for the item list building function
 
     foreach ($nodes as $nid => $node) {
@@ -853,13 +858,10 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       if ($_POST['type'] == 'feature' && $settings['context'] == 'multidialog') {
 
 
-        if ($_POST['selected_feature_ids'] == '') {
-          $_POST['selected_feature_ids'] = array();
-        }
 
 //          $selected_feature_ids = $_POST['selected_feature_ids'];
-        if (in_array($fid, $_POST['selected_feature_ids'])) {
-          $nodes[$fid]['data']->displayed = True;
+        if (in_array($nid, $_POST['selected_feature_ids'])) {
+          $nodes[$nid]['data']->displayed = True;
         }
       }
 
@@ -1100,7 +1102,7 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
 
 //DONE
 //TODO Try to reduce the number of argument
-function wikicompare_get_dialog_response($context, $type, $container, $nid, $container_autocomplete, $container_id){
+function wikicompare_get_dialog_response($context, $type, $container, $nid){
 
 
 
@@ -1120,8 +1122,8 @@ function wikicompare_get_dialog_response($context, $type, $container, $nid, $con
   $output .= '</div>';
   $output .= '<div id="dialog_type" style="display:none;">' . $type . '</div>';
   $output .= '<div id="select_container" style="display:none;">' . $container . '</div>';
-  $output .= '<div id="select_container_autocomplete" style="display:none;">' . $container_autocomplete . '</div>';
-  $output .= '<div id="select_container_id" style="display:none;">' . $container_id . '</div>';
+//  $output .= '<div id="select_container_autocomplete" style="display:none;">' . $container_autocomplete . '</div>';
+//  $output .= '<div id="select_container_id" style="display:none;">' . $container_id . '</div>';
 
 //  $itemlist_settings = initialize_itemlist_settings($context);
 
@@ -1184,15 +1186,15 @@ function wikicompare_select_dialog_response($method = 'ajax'){
 
   $hidden = '';
   if ($parent) {
-    $hidden = '<input type="text" size="60" value="&quot;' . $parent['data']->title . ' (' . $parent['data']->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container_autocomplete']) . '[und][0][target_id]">';
+    $hidden = '<input type="text" size="60" value="&quot;' . $parent['data']->title . ' (' . $parent['data']->nid .  ')&quot;" name="' . str_replace("-", "_", $_POST['container']) . '[und][0][target_id]">';
 
 
   }
 
   $commands = array();
-  $commands[] = ajax_command_html('#' . $_POST['container'], $parent['data']->fulltitle);
-  $commands[] = ajax_command_html('#edit-' . $_POST['container_autocomplete'], $hidden);
-  $commands[] = ajax_command_html('#' . $_POST['container_id'], $parent['data']->nid);
+  $commands[] = ajax_command_html('#container-' . $_POST['container'], $parent['data']->fulltitle);
+  $commands[] = ajax_command_html('#edit-' . $_POST['container'], $hidden);
+  $commands[] = ajax_command_html('#' . $_POST['container'], $parent['data']->nid);
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
 
@@ -1210,6 +1212,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
     $output = NOJS_MESSAGE;
     return $output;
   }
+
 
 
 //    $selected_feature_ids = $_POST['selected_feature_ids'];
@@ -1262,9 +1265,10 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
   }
 
   $commands = array();
-  $commands[] = ajax_command_html('#' . $_POST['container'], $output);
+  $commands[] = ajax_command_html('#container-' . $_POST['container'], $output);
   $commands[] = ajax_command_html('#wikicompare-features-values', $hidden);
   $commands[] = ajax_command_html('#need-features', $hidden_fastaction);
+
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
 

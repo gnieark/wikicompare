@@ -170,9 +170,7 @@ function wikicompare_translation_fastaction_specific_after(&$output, $type, $nod
         ),
         '#value' => 0,
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_selectnode_' . $nid,
-        '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_selectnode'),
-        )
+
       );
       if ($readonly == True) {
         $selectnode_field['#value'] = 1;

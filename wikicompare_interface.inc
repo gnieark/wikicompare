@@ -88,10 +88,6 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         '#title' => t('Title'),
         '#required' => TRUE,
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_title_' . $nid,
-        '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_title'),
-//TODO les class vraiment utile?
-        )
       );          
       if ($fastaction == 'edit') {
         $name_field['#value'] = $node->title;
@@ -113,7 +109,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       $parent_name = 'No parent';
       if (isset($node->wikicompare_parent_id['und'])) {
         $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
-        $res = wikicompare_build_recursive_data($node->type, array($parent_nid), wikicompare_initialize_settings());
+        $res = wikicompare_build_recursive_data($node->type, array($parent_id), wikicompare_initialize_settings());
         $parent_name = $res['data'][$parent_id]['data']->fulltitle;
       }
       //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
@@ -121,7 +117,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         'text' => 'Select parent',
         'title' => 'Select parent',
         'selector' => 'dialog-content',
-        'path' => 'wikicompare_get_dialog_callback/selectdialog/' . $node->type . '/form_selected_parent/' . $nid . '/wikicompare-parent-id/parent_id',
+        'path' => 'wikicompare_get_dialog_callback/selectdialog/' . $node->type . '/wikicompare-parent-id/' . $nid, // . '/wikicompare-parent-id/wikicompare-parent-id',
       );
       $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $node->type)));
 
@@ -139,7 +135,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         $form['container_selected_parent'] = array(
           'title' => array('#markup' => $parent_name),
           '#type' => 'container',
-          '#id' => 'form_selected_parent',
+          '#id' => 'container-wikicompare-parent-id',
           '#weight' => -3,
           '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
     
@@ -173,7 +169,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           );
           $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'))));
   */
-        $output .= '<p><span id="form_selected_parent">' . $parent_name . '</span>';
+        $output .= '<p><span id="container-wikicompare-parent-id">' . $parent_name . '</span>';
         if ($readonly != True) {
           $output .= '<span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
         }
@@ -190,9 +186,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           '#required' => TRUE,
           '#element_validate' => array('element_validate_integer'),
           '#id' => 'form_' . $type . '_fast' . $fastaction . '_sequence_' . $nid,
-          '#attributes' => array(
-            'class' => array('form_' . $type . '_fast' . $fastaction . '_sequence'),
-          )
+
         );
         if ($fastaction == 'edit') {
           $sequence_field['#value'] = $node->wikicompare_sequence['und'][0]['value'];
@@ -368,9 +362,6 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
           'parent-highest-percentage' => 'Parent Feature - Highest Percentage',
         ),
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_type_' . $nid,
-        '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_type'),
-        )
       );
       if ($fastaction == 'edit') {
         $type_field['#value'] = $node->wikicompare_type['und'][0]['value'];
@@ -430,9 +421,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         '#value' => $weight_default,
         '#element_validate' => array('element_validate_integer_positive_or_null'),
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_weight_' . $nid,
-        '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_weight'),
-        )
+
       );
       if ($fastaction == 'edit') {
         $weight_field['#value'] = $node->wikicompare_weight['und'][0]['value'];
@@ -463,9 +452,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         '#required' => TRUE,
         '#options' => wikicompare_state_get_options($nid, 'new'),
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_state_' . $nid,
-        '#attributes' => array(
-          'class' => array('form_' . $type . '_fast' . $fastaction . '_state'),
-        )
+
       );
       if ($fastaction == 'edit') {
         $state_field['#value'] = $node->wikicompare_state['und'][0]['value'];
@@ -488,21 +475,21 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
   }
 
+
+  if (module_exists('wikicompare_needs')) {
+    wikicompare_needs_build_form($form, $form_state, $output, $form_type, $node, $fastaction, $nid);
+  }
+
   if ($form_type == 'fastaction') {
 
 
-    if (module_exists('wikicompare_needs')) {
-      wikicompare_needs_fastaction_specific($output, $type, $node, $fastaction, $nid);
-    }
     
     $revision_field = array(
       '#type' => 'textarea',
       '#title' => t('Revision log message'),
       '#id' => 'form_' . $type . '_fast' . $fastaction . '_revision_' . $nid,
       '#value' => '',
-      '#attributes' => array(
-        'class' => array('form_' . $type . '_fast' . $fastaction . '_revision'),
-      )
+
     );
     $output .= render($revision_field);
 
@@ -611,7 +598,8 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
 
 
-  $nid = $_POST['node_id'];
+
+  $nid = $_POST['nid'];
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
@@ -741,6 +729,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
   //If we want to hide the form
   }
+
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
 
@@ -763,20 +752,20 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
   $fastaction = $_POST['fastaction'];
 
 
-  if ($_POST['node_id']) {
-    $from_db = request_db($type, array('nids' => array($_POST['node_id'])), wikicompare_initialize_settings(array('fastaction' =>  1)));
-    $from_db_record = $from_db[$_POST['node_id']];
+  if ($_POST['nid']) {
+    $from_db = request_db($type, array('nids' => array($_POST['nid'])), wikicompare_initialize_settings(array('fastaction' =>  1)));
+    $from_db_record = $from_db[$_POST['nid']];
   }
 
   $commands = array();
 
   if ($fastaction == 'remove' && !isset($from_db_record['no-remove'])) {
 
-    node_delete($_POST['node_id']);
+    node_delete($_POST['nid']);
 
-    $commands[] = ajax_command_remove('#' . $type . '_table_supertitle_'. $_POST['node_id']);
-    $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $_POST['node_id'], 'addClass', array('to_remove'));
-    $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node is correctly removed');
+    $commands[] = ajax_command_remove('#' . $type . '_table_supertitle_'. $_POST['nid']);
+    $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $_POST['nid'], 'addClass', array('to_remove'));
+    $commands[] = ajax_command_html('#form_fastaction_' . $_POST['nid'], 'The node is correctly removed');
     $commands[] = ajax_command_invoke('#wikicompare_make_cleaning_link', 'click', array());
 
   } elseif (!isset($from_db_record['no-edit'])) {
@@ -791,7 +780,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
         node_object_prepare($node);
         break;
       case 'edit':
-        $node = node_load($_POST['node_id']);
+        $node = node_load($_POST['nid']);
         $node->revision = 1;
         $node->comment = 2;
         break;
@@ -932,7 +921,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
     
   } else {
-    $commands[] = ajax_command_html('#form_fastaction_' . $_POST['node_id'], 'The node was modified by someone else before your confirmation');
+    $commands[] = ajax_command_html('#form_fastaction_' . $_POST['nid'], 'The node was modified by someone else before your confirmation');
   }
 
 

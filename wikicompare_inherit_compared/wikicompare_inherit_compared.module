@@ -115,7 +115,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
       'text' => 'Select inherited compared',
       'title' => 'Select inherited compared',
       'selector' => 'dialog-content',
-      'path' => 'wikicompare_get_dialog_callback/selectdialog/compared/form_selected_inherit/' . $nid . '/wikicompare-inherit-compared-id/inherit_id',
+      'path' => 'wikicompare_get_dialog_callback/selectdialog/compared/wikicompare-inherit-compared-id/' . $nid, // . '/wikicompare-inherit-compared-id/inherit_id',
     );
     $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $node->type)));
 
@@ -124,7 +124,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
       $form['container_selected_inherit'] = array(
         'title' => array('#markup' => $title),
         '#type' => 'container',
-        '#id' => 'form_selected_inherit',
+        '#id' => 'container-wikicompare-inherit-compared-id',
         '#weight' => -3,
         '#suffix' => '<p>' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>'
   
@@ -135,7 +135,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
     }
 
     if ($form_type == 'fastaction') {
-      $output .= '<p><span id="form_selected_inherit">' . $title . '</span>';
+      $output .= '<p><span id="container-wikicompare-inherit-compared-id">' . $title . '</span>';
       if ($readonly != True) {
         $output .= '<span id="inherit_id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
       }

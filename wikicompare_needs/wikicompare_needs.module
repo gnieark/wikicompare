@@ -21,6 +21,19 @@ function wikicompare_needs_node_info() {
 }
 
 
+
+
+
+
+
+
+
+/*****************************************************************
+*
+*    FORM
+*
+*****************************************************************/
+
 /**
  * Implements hook_form().
  * We need it to display the title in the node form
@@ -29,15 +42,12 @@ function need_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
-
-
-
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
 
   wikicompare_build_form('form', $form, $form_state);
 
-  $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
 
+/*
   $selected_feature_ids = array();
   if (isset($form_state['node']->wikicompare_features['und'])) {
     foreach ($form_state['node']->wikicompare_features['und'] as $array) {
@@ -45,20 +55,26 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
       $selected_feature_ids[$id] = $id;
     }
   }
+*/
 
-
+/*
   $selected_feature_itemlist = '';
   $feature_array = array();
   if ($selected_feature_ids) {
-    $feature_array = get_recursive_data('feature', $selected_feature_ids);
+    $settings = wikicompare_initialize_settings(array('context' => 'selected'));
+    $features = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
+
+
+//    $itemlist_data = get_item_list('feature', $feature_array['tree'], 0, settings);
+//    $feature_array = get_recursive_data('feature', $selected_feature_ids);
   
 
-    $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
-    $itemlist_settings['context'] = 'selected';
+//    $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
+//    $itemlist_settings['context'] = 'selected';
     //Building the data for the item list
-    $item_list_data = get_item_list($feature_array['tree'], 'feature', 'selected', 0, $itemlist_settings);
+    $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, $settings);
     //Render the item list
-    $selected_feature_itemlist = theme_item_list(array('items' => $item_list_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+    $selected_feature_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
   }
 
 
@@ -66,7 +82,7 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     'text' => 'Select features',
     'title' => 'Select features',
     'selector' => 'dialog-content',
-    'path' => 'wikicompare_get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
+    'path' => 'wikicompare_get_dialog_callback/multidialog/feature/form_selected_features/0/', //form_selected_features/none',
     'id' => 'select_feature_link',
 
   );
@@ -79,16 +95,10 @@ function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form
     '#suffix' => '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>'
   
   );
+*/
 
 }
 
-
-
-/*****************************************************************
-*
-*    FORM
-*
-*****************************************************************/
 
 function wikicompare_needs_build_form_settings(&$settings, $form_state) {
 
@@ -98,7 +108,7 @@ function wikicompare_needs_build_form_settings(&$settings, $form_state) {
       if (isset($form_state['node']->wikicompare_features['und'])) {
         foreach ($form_state['node']->wikicompare_features['und'] as $array) {
           $fid = $array['target_id'];
-          $selected_feature_ids[$fid] = $fid;
+          $selected_feature_ids[] = $fid;
         }
       }
 
@@ -110,58 +120,85 @@ function wikicompare_needs_build_form_settings(&$settings, $form_state) {
 
 
 
-function wikicompare_needs_fastaction_specific(&$output, $type, $node, $fastaction, $nid) {
+function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type, $node, $fastaction, $nid) {
 
-  if ($type == 'need') {
+  if ($node->type == 'need') {
+
+    if ($form_type == 'form') {
+      $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
+
+
+    }
+
 
 
     $selected_feature_itemlist = '';
     $selected_feature_hidden = '';
-    if ($fastaction == 'edit') {
-      $selected_feature_ids = array();
-      if (isset($node->wikicompare_features['und'])) {
-        foreach ($node->wikicompare_features['und'] as $array) {
-          $fid = $array['target_id'];
-          $selected_feature_ids[fid] = $fid;
-        }
+    $selected_feature_ids = array();
+    if (isset($node->wikicompare_features['und'])) {
+      foreach ($node->wikicompare_features['und'] as $array) {
+        $fid = $array['target_id'];
+        $selected_feature_ids[$fid] = $fid;
       }
+    }
 
-      
-      $feature_array = array();
-      if ($selected_feature_ids) {
-        $settings = wikicompare_initialize_settings(array('context' => 'selected'));
-        $feature_array = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
-  
+
+    $features = array();
+    if (!empty($selected_feature_ids)) {
+      $settings = wikicompare_initialize_settings(array('context' => 'selected', 'computed' => 1));
+      $features = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
+
 
 //        $itemlist_settings['context'] = 'selected';
-        //Building the data for the item list
-        $itemlist_data = get_item_list('feature', $feature_array['tree'], 0, settings);
-        //Render the item list
-        $selected_feature_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
+      //Building the data for the item list
+      $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, $settings);
+      //Render the item list
+      $selected_feature_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
 
-        
-        foreach ($selected_feature_ids as $feature_id) {
-          $selected_feature_hidden .= '<div class="need_feature">' . $feature_id . '</div>';
-        }
-        
-
+      
+      foreach ($selected_feature_ids as $feature_id) {
+        $selected_feature_hidden .= '<div class="need_feature">' . $feature_id . '</div>';
       }
-
       
 
     }
+
+    
+
+
 
 
     $select_feature_link = array(
       'text' => 'Select features',
       'title' => 'Select features',
       'selector' => 'dialog-content',
-      'path' => 'wikicompare_get_dialog_callback/multidialog/feature/form_selected_features/0/form_selected_features/none',
+      'path' => 'wikicompare_get_dialog_callback/multidialog/feature/wikicompare-features/0/',//form_selected_features/none',
       'id' => 'select_feature_link',
     );
-    $output .= '<div id="form_selected_features">';
-    $output .= $selected_feature_itemlist;
-    $output .= '</div><div id="need-features" style="display:none;">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
+
+    if ($form_type == 'form') {
+
+
+
+      $form['container_selected_feature'] = array(
+        'itemlist' => array('#markup' => $selected_feature_itemlist),
+        '#type' => 'container',
+        '#id' => 'container-wikicompare-features',
+        '#weight' => -2,
+        '#suffix' => '<div id="initialize_need_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>'
+      
+      );
+    }
+
+    if ($form_type == 'fastaction') {
+      $output .= '<div id="container-wikicompare-features">';
+      $output .= $selected_feature_itemlist;
+      $output .= '</div><div id="wikicompare-features" style="display:none;">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
+    }
+
+
+  
+ 
 
   }
 

@@ -93,7 +93,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var nid = patt.exec($(this).attr('id'))[0];
 */
       var link_id = $(this).attr('id');
-      var nid = extract_nid(link_id);
+      var nid = extract_nid(link_id)[0];
 
       //Set the onclick event
       $(this).click(function() {
@@ -118,6 +118,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           } else {
             delete selected_feature_dialog_ids[nid];
           }
+
         }
       });
     });
@@ -227,16 +228,48 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('#initialize_selected_feature_dialog_ids:not(.listener_set)').addClass('listener_set').each(function () {
 
+
         if ($(this).text() == 'manual') {
           selected_feature_dialog_ids = manual_selected_feature_ids;
         } else {
-
           selected_feature_dialog_ids = selected_feature_ids;
+/*
+//          selected_feature_dialog_ids = selected_feature_ids;
+          selected_feature_dialog_ids = {};
+          for (index = 0; index < selected_feature_ids.length; ++index) {
+            var fid = selected_feature_ids[index];
+            selected_feature_dialog_ids[fid] = [fid];
+          }*/
+
+
+/*
+        if ($(this).text() == 'manual') {
+          var feature_ids = manual_selected_feature_ids;
+        } else {
+          var feature_ids = selected_feature_ids;
+        }
+
+        selected_feature_dialog_ids = {};*/
+/*
+        for (index = 0; index < feature_ids.length; ++index) {
+          var fid = feature_ids[index];
+          selected_feature_dialog_ids[fid] = [fid];
+        }
+alert(selected_feature_dialog_ids.toSource());*/
         }
 
     });
+/*
+    $('#initialize_need_features:not(.listener_set)').addClass('listener_set').each(function () {
+
+      var from_db = settings.wikicompare_needs.selected_feature_ids;
+      for (index = 0; index < from_db.length; ++index) {
+        var fid = from_db[index];
+        selected_feature_ids[fid] = [fid];
+      }
 
 
+    });*/
     $('.selectlink_dialog:not(.ajax-processed)').addClass('ajax-processed').each(function () {
 
       //Recover the link_id used later in the functions
@@ -262,7 +295,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 */
 
-//TODO review this part
+
     //Dynamize the toogle fast edit link to display the elements add/edit/remove.
     $('#toogle_fastaction_link:not(.listener_set)').addClass('listener_set').each(function () {
 
@@ -318,7 +351,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     
 
        
-     $('.form_fastaction').submit(function () {
+    $('.form_fastaction').submit(function () {
 /*      var patt = /[0-9]+/g;
       var nid = patt.exec($(this).attr('id'));*/
 
@@ -356,33 +389,22 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       fastaction = settings['wikicompare_needs']['fastaction'];
-      selected_feature_ids = settings['wikicompare_needs']['selected_feature_ids'];
+//TODO pourquoi fastaction?
+      from_db = settings['wikicompare_needs']['selected_feature_ids'];
+
+      for (index = 0; index < from_db.length; ++index) {
+        var fid = from_db[index];
+
+        selected_feature_ids[fid] = fid;
+      }
 
     });
+
 
 
     $('#edit-wikicompare-use-from-inherit-und:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       $(this).click(function() {
         $('.compute_inherit_link').click();
-      });
-    });
-
-
-    $('.clear_link:not(.listener_set)').addClass('listener_set').each(function () {
-      $(this).click(function() {
-        $('#form_selected_parent').html('No parent');
-        $('#edit-wikicompare-parent-id').html('<input type="text" size="60" value="" name="wikicompare_parent_id[und][0][target_id]">');
-        $('#parent_id').empty();
-        return false;
-      });
-    });
-
-    $('.clear_link_inherit:not(.listener_set)').addClass('listener_set').each(function () {
-      $(this).click(function() {
-        $('#form_selected_inherit').html('No inherited compared');
-        $('#edit-wikicompare-inherit-compared-id').html('<input type="text" size="60" value="" name="wikicompare_inherit_compared_id[und][0][target_id]">');
-        $('#inherit_id').empty();
-        return false;
       });
     });
 
@@ -398,6 +420,27 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
+    $('.clear_link:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        $('#container-wikicompare-parent-id').html('No parent');
+        $('#edit-wikicompare-parent-id').html('<input type="text" size="60" value="" name="wikicompare_parent_id[und][0][target_id]">');
+        $('#wikicompare-parent-id').empty();
+        return false;
+      });
+    });
+
+    $('.clear_link_inherit:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        $('#form_selected_inherit').html('No inherited compared');
+        $('#edit-wikicompare-inherit-compared-id').html('<input type="text" size="60" value="" name="wikicompare_inherit_compared_id[und][0][target_id]">');
+        $('#inherit_id').empty();
+        return false;
+      });
+    });
+
+
+
+
 
 
     
@@ -406,7 +449,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Recover the nid by using a regular expression on the link_id
 
       //Theses functions does not have nid and so would cause some problem. Essentially, they would disable the simple_dialog links.
-      if (action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
+      if (action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
         var nid = extract_nid(link_id)[0];
       }
   
@@ -466,6 +509,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (context == 'multidialog') {
 //            options.data.dialog = true;
             options.data.selected_feature_ids = selected_feature_dialog_ids;
+
           } else if (context != 'selectdialog') {
             make_cleaning = true;
           }
@@ -497,8 +541,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_nid = true;
           send_type = true;
           send_container = true;
-          options.data.container_autocomplete = $('#select_container_autocomplete').text();
-          options.data.container_id = $('#select_container_id').text();
+//          options.data.container_autocomplete = $('#select_container_autocomplete').text();
+//          options.data.container_id = $('#select_container_id').text();
         }
 
         if (action == 'submit_dialog') {
@@ -692,7 +736,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (manage_displayed_flag == true) {
           //Check if the column is already displayed
 //          options.data.action = '';
+
+          options.data.display = 0;
           if (!$('#' + link_id).hasClass('displayed')) {
+
             options.data.display = 1;
           }
         }
