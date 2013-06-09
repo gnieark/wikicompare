@@ -1020,7 +1020,7 @@ alert(selected_feature_dialog_ids.toSource());*/
 
 
 
-//TODO dans form need, les features ne sont modifiée que une par une
+
 
 
 
@@ -1041,5 +1041,6 @@ alert(selected_feature_dialog_ids.toSource());*/
 //TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte / medium
 //TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres / critical
 //TODO achever la traduction
+//TODO dans form need, les features ne sont modifiée que une par une
 
 })(jQuery);

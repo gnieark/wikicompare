@@ -124,11 +124,6 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
 
   if ($type == 'need') {
 
-    if ($form_type == 'form') {
-      $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
-
-
-    }
 
 
 
@@ -192,6 +187,8 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
       if ($node->language == language_default('language')) {
         $form['container_selected_feature']['#suffix'] = '<div id="initialize_need_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
       }
+
+//      $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
 
     }
 

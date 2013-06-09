@@ -632,8 +632,9 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
 function wikicompare_build_recursive_data($type, $node_ids, $settings){
 
   $res = array();
+dpm($node_ids);
   $res = wikicompare_build_recursive_tree($type, $node_ids, $res, $settings);
-
+dpm($res);
   $res = wikicompare_build_fulltitle($res, $res['tree'], '');
 
   return $res;
@@ -655,12 +656,17 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
     //Check if some children of this node launched the recursive function to find this node as their parent. Then assign them as children of this node and unset the node in the array.
     if (isset($res['parent_ressource'][$nid]['children'])) {
       $node['children'] = $res['parent_ressource'][$nid]['children'];
-      //If the parent was already set on the tree by a child on a different level
-      if (isset($res['tree'][$nid])) {
 
+/*      if (isset($res['tree'][$nid])) {
+dpm($res['tree'][$nid]['children']);
+dpm($res['parent_ressource'][$nid]['children']);
         $node['children'] = $res['tree'][$nid]['children'] + $res['parent_ressource'][$nid]['children'];
-      }
+      }*/
       unset($res['parent_ressource'][$nid]);
+    }
+    //If the parent was already set on the tree by a child on a different level
+    if (isset($res['tree'][$nid])) {
+      $node['children'] = $res['tree'][$nid]['children'] + $node['children'];
     }
 
     //Build a list of all id, parent and children, to use them in implementation sql request
@@ -676,8 +682,8 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
     }
 
   }
-
-
+dpm($parent_ids);
+dpm($res);
   //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
   if ($parent_ids){
     $res = wikicompare_build_recursive_tree($type, $parent_ids, $res, $settings);
@@ -1251,12 +1257,14 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
       </td></tr>';
       $i += 1;
     }
-    
-    $hidden .= '<tr><td>
-      <input type="text" size="60" value="" name="wikicompare_features[und][' . $i . '][target_id]" >
-      </td></tr>
-      </tbody>';
+
   }
+
+  
+  $hidden .= '<tr><td>
+    <input type="text" size="60" value="" name="wikicompare_features[und][' . $i . '][target_id]" >
+    </td></tr>
+    </tbody>';
 
   $hidden_fastaction = '';
   foreach ($_POST['selected_feature_ids'] as $feature_id) {
