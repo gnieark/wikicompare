@@ -94,9 +94,9 @@ function compute_inherit_response($method = 'ajax') {
 *
 *****************************************************************/
 
-function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$output, $form_type, $node, $readonly) {
+function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$output, $form_type, $type, $node, $readonly) {
 
-  if ($node->type == 'compared') {
+  if ($type == 'compared') {
 
     $title = 'No inherited compared';
     $inherit_id = 0;
@@ -117,7 +117,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
       'selector' => 'dialog-content',
       'path' => 'wikicompare_get_dialog_callback/selectdialog/compared/wikicompare-inherit-compared-id/' . $nid, // . '/wikicompare-inherit-compared-id/inherit_id',
     );
-    $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $node->type)));
+    $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $type)));
 
     if ($form_type == 'form') {
 
@@ -146,9 +146,9 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
   }  
 }
 
-function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, &$readonly, &$test, $form_type, $node, $fastaction) {
+function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, &$readonly, &$test, $form_type, $type, $node, $fastaction) {
 
-  if ($node->type == 'implementation') {
+  if ($type == 'implementation') {
     
     $query = db_select('cache_implementation', 'n');
     $query->addField('c', 'inherit_compared_id', 'inherit_id');

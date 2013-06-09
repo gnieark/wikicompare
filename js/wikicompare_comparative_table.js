@@ -1017,11 +1017,10 @@ alert(selected_feature_dialog_ids.toSource());*/
 
 
 
-//TODO When we click on add a new node while not being in the default language, we must have the default language form but the node created will be in the default language.
 
 
 
-
+//TODO dans form need, les features ne sont modifiée que une par une
 
 
 

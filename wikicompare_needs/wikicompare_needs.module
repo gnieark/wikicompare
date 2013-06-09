@@ -44,7 +44,7 @@ function need_form($node, $form_state) {
 
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form('form', $form, $form_state);
+  wikicompare_build_form('form', $form, $form_state, 'need');
 
 
 /*
@@ -120,9 +120,9 @@ function wikicompare_needs_build_form_settings(&$settings, $form_state) {
 
 
 
-function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type, $node, $fastaction, $nid) {
+function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type, $type, $node, $fastaction, $nid) {
 
-  if ($node->type == 'need') {
+  if ($type == 'need') {
 
     if ($form_type == 'form') {
       $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
@@ -189,8 +189,7 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
       
       );
 
-      global $language;
-      if ($language->language == language_default('language')) {
+      if ($node->language == language_default('language')) {
         $form['container_selected_feature']['#suffix'] = '<div id="initialize_need_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
       }
 
@@ -384,7 +383,7 @@ function recover_features($need_ids) {
 */
   }
 
-dpm($feature_ids, 'feature_ids');
+
 
   return $feature_ids;
 

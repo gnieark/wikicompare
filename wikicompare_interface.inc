@@ -21,36 +21,40 @@ function compared_form($node, $form_state) {
 
 function wikicompare_form_compared_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form('form', $form, $form_state);
+  wikicompare_build_form('form', $form, $form_state, 'compared');
 
 }
 
 function wikicompare_form_feature_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form('form', $form, $form_state);
+  wikicompare_build_form('form', $form, $form_state, 'feature');
 
 }
 
 function wikicompare_form_implementation_node_form_alter(&$form, &$form_state, $form_id) {
 
-  wikicompare_build_form('form', $form, $form_state);
+  wikicompare_build_form('form', $form, $form_state, 'implementation');
 
 }
 
-function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$output=NULL, $nid=NULL, $type=NULL, $fastaction=NULL, $node=NULL, $readonly=NULL, $tnode=NULL, $readonly_translation=NULL) {
+function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $type=NULL, &$output=NULL, $nid=NULL, $fastaction=NULL, $node=NULL, $readonly=NULL, $tnode=NULL, $readonly_translation=NULL) {
 
 
 
   if ($form_type == 'form') {
 
-    $node = new stdClass;
+//    $node = new stdClass;
     $nid = 0;
-    if (isset($form_state['node'])) {
-      $node = $form_state['node'];
-      if (isset($node->nid)) {
-        $nid = $node->nid;
-      }
+//    if (isset($form_state['node'])) {
+    $node = $form_state['node'];
+    if (isset($node->nid)) {
+      $nid = $node->nid;
+    }
 
+//    }
+
+    if ($form_state['node']->language == 'und') {
+      $form_state['node']->language = language_default('language');
     }
 
     //$form['#attached']['js'][] = '/misc/ajax.js';
@@ -79,8 +83,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
     );
   }
 
-
-  if ($node->type != 'implementation') {
+  if ($type != 'implementation') {
 
     if ($form_type == 'fastaction') { 
       $name_field = array(
@@ -105,11 +108,13 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
     }
 
     if ($form_type == 'form' || $fastaction == 'edit') {
+
       $parent_id = 0;
       $parent_name = 'No parent';
       if (isset($node->wikicompare_parent_id['und'])) {
         $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
-        $res = wikicompare_build_recursive_data($node->type, array($parent_id), wikicompare_initialize_settings());
+
+        $res = wikicompare_build_recursive_data($type, array($parent_id), wikicompare_initialize_settings());
         $parent_name = $res['data'][$parent_id]['data']->fulltitle;
       }
       //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
@@ -117,16 +122,16 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
         'text' => 'Select parent',
         'title' => 'Select parent',
         'selector' => 'dialog-content',
-        'path' => 'wikicompare_get_dialog_callback/selectdialog/' . $node->type . '/wikicompare-parent-id/' . $nid, // . '/wikicompare-parent-id/wikicompare-parent-id',
+        'path' => 'wikicompare_get_dialog_callback/selectdialog/' . $type . '/wikicompare-parent-id/' . $nid, // . '/wikicompare-parent-id/wikicompare-parent-id',
       );
-      $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $node->type)));
+      $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $type)));
 
       if ($form_type == 'form') {
   /*
         $title = 'No parent';
         if (isset($node->wikicompare_parent_id['und'])) {
           $parent_nid = $node->wikicompare_parent_id['und'][0]['target_id'];
-          $res = wikicompare_build_recursive_data($node->type, array($parent_nid), wikicompare_initialize_settings());
+          $res = wikicompare_build_recursive_data($type, array($parent_nid), wikicompare_initialize_settings());
           $title = $res['data'][$parent_nid]['data']->fulltitle;
         }
   */
@@ -201,7 +206,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
 
     if (module_exists('wikicompare_inherit_compared')) {
-      wikicompare_inherit_compared_modify_form_no_implementation($form, $output, $form_type, $node, $readonly);
+      wikicompare_inherit_compared_modify_form_no_implementation($form, $output, $form_type, $type, $node, $readonly);
     }
 
 
@@ -304,7 +309,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
       }
 
       if (module_exists('wikicompare_inherit_compared')) {
-        wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'form', $node, $fastaction);
+        wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'form', $type, $node, $fastaction);
       }
 
     }
@@ -436,7 +441,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
   }
 
 
-  if ($node->type != 'implementation') {
+  if ($type != 'implementation') {
     if ($form_type == 'form') {
       $current_state = 'new';  
       if (isset($form['wikicompare_state']['und']['#default_value'][0])) {
@@ -477,7 +482,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
 
 
   if (module_exists('wikicompare_needs')) {
-    wikicompare_needs_build_form($form, $form_state, $output, $form_type, $node, $fastaction, $nid);
+    wikicompare_needs_build_form($form, $form_state, $output, $form_type, $type, $node, $fastaction, $nid);
   }
 
   if ($form_type == 'fastaction') {
@@ -499,7 +504,6 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, &$ou
     }
 
   }
-
 
 
 }
@@ -741,7 +745,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
  */
 function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
-dpm($_POST);
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method != 'ajax') {
     $output = NOJS_MESSAGE;

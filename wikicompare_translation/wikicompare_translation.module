@@ -25,18 +25,21 @@ function wikicompare_translation_build_form_settings(&$settings, &$node, &$nid, 
     $tnid = 0;
     if (isset($form_state['node']->tnid)) {
       $tnid = $form_state['node']->tnid;
-    } else {
+    } elseif (isset($form_state['node']->translation_source)) {
       $tnid = $form_state['node']->translation_source->nid;
+    //When we create a new node from form. We have to ensure that this is the default language which is used.
     }
 
-    $query = db_select('node', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->condition('n.tnid', $tnid);
-    $query->condition('n.language', language_default('language'));
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $node = node_load($record->nid);
-      $nid = $node->nid;
+    if ($tnid != 0) {
+      $query = db_select('node', 'n');
+      $query->addField('n', 'nid', 'nid');
+      $query->condition('n.tnid', $tnid);
+      $query->condition('n.language', language_default('language'));
+      $result = $query->execute();
+      foreach ($result as $record) {
+        $node = node_load($record->nid);
+        $nid = $node->nid;
+      }
     }
   }
 
@@ -75,7 +78,7 @@ function wikicompare_translation_fastaction_add_element(&$output, $tnode, $field
 
 function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
 
-
+dpm($form_state['node']);
 
   if ($form['nid']['#value'] == NULL && !isset($form['translation_source'])) {
     $form['language']['#default_value'] = language_default('language');
