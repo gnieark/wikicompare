@@ -413,31 +413,35 @@ function wikicompare_needs_wikicompare_comparative_table_fastaction_parent(&$par
 }
 */
 
+/*****************************************************************
+*
+*    FASTACTION
+*
+*****************************************************************/
 
-
+/**
+ * Implements hook_insert().
+ * Executed each time a need node is created.
+ *
+ * @param $node
+ *   The node object which was created.
+ */
 function need_insert($node) {
 
-
-
-  if ($node->language != language_default('language')) {
-    return;
-  }
-
+  //Call the type-agnostic function.
   wikicompare_insert_node('need', $node);
 
-
-  $feature_m2m = array();
+  //Prepare to insert the many2many cache between needs and features.
+  $features_m2m = array();
   foreach ($node->wikicompare_features['und'] as $feature) {
-
     $feature_m2m[] = array(
       'need_nid' => $node->nid,
       'feature_nid' => $feature['target_id'],
     );
   }
 
+  //Insert the data in the many2many table cache.
   $header = array('need_nid', 'feature_nid');
-
-  //Update the cache_implementation table before the compare tree computation
   if (!empty($feature_m2m)) {
     $query = db_insert('cache_need_feature_rel')->fields($header);
     foreach ($feature_m2m as $record) {
@@ -446,14 +450,23 @@ function need_insert($node) {
     $query->execute();
   }
 
-
 }
 
+
+
+/**
+ * Implements hook_delete().
+ * Executed each time a need is deleted.
+ *
+ * @param $node
+ *   The node object which will be deleted.
+ */
 function need_delete($node) {
 
+  //Call the type-agnostic function.
   wikicompare_delete_node('need', $node);
 
-
+  //Remove the many2many cache data related to the deleted need.
   db_delete('cache_need_feature_rel')
     ->condition('need_nid', $node->nid)
     ->execute();
@@ -461,29 +474,34 @@ function need_delete($node) {
 }
 
 
+
+/**
+ * Add the need flag to the array in argument.
+ *
+ * @param $array
+ *   The array to update. Passed by reference.
+ */
 function wikicompare_needs_wikicompare_node_types(&$array) {
 
+  //Update the array.
   $array[] = 'need';
 
 }
 
-function wikicompare_needs_wikicompare_cache_update_fields(&$fields, $node_revision) {
 
+
+/**
+ * Add the need flag to the array in argument.
+ *
+ * @param $array
+ *   The array to update. Passed by reference.
+ */
+function wikicompare_needs_after_update_fields($node_revision) {
+
+  //Need specific code.
   if ($node_revision->type == 'need') {
-    $fields['state'] = $node_revision->wikicompare_state['und'][0]['value'];
-  }
 
-}
-
-function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node_revision) {
-
-  if ($node_revision->type == 'need') {
-
-    $query = db_select('cache_need_feature_rel', 'f');
-    $query->addField('f', 'feature_nid', 'feature_nid');
-    $query->condition('f.need_nid', $node_revision->nid);
-    $result = $query->execute();
-
+    //Get new features.
     $new_feature_ids = array();
     if (isset($node_revision->wikicompare_features['und'])) {
       foreach ($node_revision->wikicompare_features['und'] as $feature) {
@@ -491,8 +509,13 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
       }
     }
 
-    $old_feature_ids = array();
+    //Get old features, and find the ones we need to delete.
     $to_delete = array();
+    $old_feature_ids = array();
+    $query = db_select('cache_need_feature_rel', 'f');
+    $query->addField('f', 'feature_nid', 'feature_nid');
+    $query->condition('f.need_nid', $node_revision->nid);
+    $result = $query->execute();
     foreach ($result as $record) {
       $old_feature_ids[$record->feature_nid] = $record->feature_nid;
       if (!in_array($record->feature_nid, $new_feature_ids)) {
@@ -500,6 +523,7 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
       }
     }
 
+    //Find the features we need to create.
     $to_create = array();
     foreach ($new_feature_ids as $feature_id) {
       if (!in_array($feature_id, $old_feature_ids)) {
@@ -510,6 +534,7 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
       }
     }
 
+    //Insert the new features in the cache many2many table.
     $header = array('need_nid', 'feature_nid');
     if (!empty($to_create)) {
       $query = db_insert('cache_need_feature_rel')->fields($header);
@@ -519,6 +544,7 @@ function wikicompare_needs_wikicompare_cache_after_update_fields(&$fields, $node
       $query->execute();
     }
 
+    //Delete the old features in the cache many2many table.
     if (!empty($to_delete)) {
       db_delete('cache_need_feature_rel')
         ->condition('need_nid', $node_revision->nid)

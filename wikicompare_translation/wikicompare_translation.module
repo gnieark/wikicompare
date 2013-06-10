@@ -314,6 +314,38 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST,
 
 
 
+/*****************************************************************
+*
+*    NODES
+*
+*****************************************************************/
+
+/**
+ * Remove the translation of the deleted node if the deleted node is the main language node.
+ *
+ * @param $node
+ *   The deleted node.
+ */
+function wikicompare_translation_wikicompare_delete_after($node) {
+
+  //If the node created is the main language node, and if there is translation of this node.
+  if ($node->language == language_default('language') && $node->tnid != 0) {
+    //Then we find and remove all the translation of this node.
+    $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->condition('n.tnid', $node->tnid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      if ($node->nid != $record->nid) {
+        node_delete($record->nid);
+      }
+    }
+  }
+
+}
+
+
+
 function wikicompare_translation_wikicompare_request_db(&$query, $type, $db_settings, $settings) {
 
 
@@ -370,24 +402,7 @@ function wikicompare_translation_wikicompare_request_db_build(&$node_array, $rec
 }
 
 
-function wikicompare_translation_wikicompare_delete_after($node) {
 
-
-
-  if ($node->language == language_default('language') && $node->tnid != 0) {
-    $query = db_select('node', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->condition('n.tnid', $node->tnid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      if ($node->nid != $record->nid) {
-
-        node_delete($record->nid);
-      }
-    }
-  }
-
-}
 
 
 function wikicompare_translation_wikicompare_settings_change_language_request(&$query, $new_key) {

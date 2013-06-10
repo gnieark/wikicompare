@@ -299,42 +299,92 @@ function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotu
 
 
 
-//Update inherit_compared_id in cache_compared table
+/*****************************************************************
+*
+*    NODES
+*
+*****************************************************************/
+
+/**
+ * Prepare the inherit compared specific field to insert in wikicompare cache tables.
+ *
+ * @param $fields
+ *   The fields prepared in generic function. Passed by reference.
+ *
+ * @param $type
+ *   The type of the created node.
+ *
+ * @param $node
+ *   The created node.
+ */
 function wikicompare_inherit_compared_cache_insert_fields(&$fields, $type, $node) {
 
+  //Compared specific field.
   if ($type == 'compared') {
 
-    $compared_inherit_compared = NULL;
-    if (isset($node->compared_inherit_compared['und'][0])) {
-      $compared_inherit_compared = $node->compared_inherit_compared['und'][0]['target_id'];
+    //Insert the inherit compared field in the prepared data.
+    $inherit_compared_id = NULL;
+    if (isset($node->wikicompare_inherit_compared_id['und'][0])) {
+      $inherit_compared_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
     }
+    $fields['inherit_compared_id'] = $inherit_compared_id;
 
-    $fields['inherit_compared_id'] = $compared_inherit_compared;
   }
 
 }
 
-//Update default value of use_from_inherit field when we insert an implementation
+
+
+/**
+ * Prepare the inherit compared specific field to insert in implementation object.
+ *
+ * @param $node_implementation
+ *   The implementation node which will be created. Passed by reference.
+ */
 function wikicompare_inherit_compared_insert_implementation(&$node_implementation) {
 
-  $node_implementation->implementation_use_from_inherit['und'][0]['value'] = 1;
+  //We set the value of use_from_inherit to 1 because, without user action, it must use the value of the inherited compared.
+  $node_implementation->wikicompare_use_from_inherit['und'][0]['value'] = 1;
 
 }
 
-//Update default value of use_from_inherit field in cache when we insert an implementation
+
+
+/**
+ * Prepare the inherit compared specific field to insert in implementation cache table.
+ *
+ * @param $cache_implementation
+ *   The implementation fields which will be inserted in table. Passed by reference.
+ *
+ * @param $node
+ *   The implementation node which was created.
+ */
 function wikicompare_inherit_compared_cache_implementation_fields(&$cache_implementation, $node) {
 
-  $cache_implementation['use_from_inherit'] = $node->implementation_use_from_inherit['und'][0]['value'];
+  //Insert the use_from_inherit field from the created objet.
+  $cache_implementation['use_from_inherit'] = $node->wikicompare_use_from_inherit['und'][0]['value'];
 
 }
 
-//Add the header use_from_inherit for the mass implementation insert in feature/compared creation
+
+
+/**
+ * Prepare the header for the mass insert in wikicompare cache table with the inherit compared specific fields.
+ *
+ * @param $header
+ *   The header array to modify. Passed by reference.
+ *
+ * @param $type
+ *   The type of record which will be cached.
+ */
 function wikicompare_inherit_compared_cache_fields_header(&$header, $type) {
 
+  //Compared specific field.
   if ($type == 'compared') {
     $header[] = 'inherit_compared_id';
   }
 
+  //Implementation specific field.
   if ($type == 'implementation') {
     $header[] = 'use_from_inherit';
   }
@@ -342,91 +392,121 @@ function wikicompare_inherit_compared_cache_fields_header(&$header, $type) {
 }
 
 
-//Update cache so all inherited children are now without inherit compared when we delete a compared
+
+/**
+ * Update cache so all inherited children are now without inherit compared.
+ *
+ * @param $node
+ *   The deleted node.
+ */
 function wikicompare_inherit_compared_cache_compared_delete($node) {
 
-  $query = db_select('cache_compared', 'c');
-  $query->addField('c', 'nid', 'nid');
-  $query->condition('c.inherit_compared_id', $node->nid);
-  $result = $query->execute();
+  if ($node->type == 'compared') {
 
-  $to_update = array();
-  foreach($result as $record) {
-    $to_update[$record->nid] = $record->nid;
+    //Get the compared which was inheriting the deleted node.
+    $to_update = array();
+    $query = db_select('cache_compared', 'c');
+    $query->addField('c', 'nid', 'nid');
+    $query->condition('c.inherit_compared_id', $node->nid);
+    $result = $query->execute();
+    foreach($result as $record) {
+      $to_update[$record->nid] = $record->nid;
+    }
+
+    if (!empty($to_update)) {
+      //Update the children so they no more inherit any node.
+      db_update('cache_compared')
+        ->fields(array(
+          'inherit_compared_id' => NULL,
+        ))
+        ->condition('nid', $to_update, 'IN')
+        ->execute();
+
+      //We launch the tree update on the old children.
+      wikicompare_update_compare_tree('compared', $to_update);
+    }
+
   }
 
-  if (!empty($to_update)) {
-    db_update('cache_compared')
-      ->fields(array(
-        'inherit_compared_id' => NULL,
-      ))
-      ->condition('nid', $to_update, 'IN')
-      ->execute();
-
-
-    //If some implementation were inheriting this compared, we update them
-    wikicompare_update_compare_tree('compared', $to_update);
-
-  }
-
-}
-
-
-//When we update a compared, we check if his inherit compared field has changed, and if yes we update him
-function wikicompare_inherit_compared_preupdate_compared(&$test, $node_revision, $current_node) {
-
-      if ($node_revision->wikicompare_inherit_compared_id) {
-        $node_revision_inherit = $node_revision->wikicompare_inherit_compared_id['und'][0]['target_id'];
-      } else {
-        $node_revision_inherit = NULL;
-      }
-
-      if ($current_node->wikicompare_inherit_compared_id) {
-        $current_node_inherit = $current_node->wikicompare_inherit_compared_id['und'][0]['target_id'];
-      } else {
-        $current_node_inherit = NULL;
-      }
-
-      //Update the current compared because the value of his implementation may have changed if he has no children compared
-      
-      if ($node_revision_inherit != $current_node_inherit) {
-        $test = TRUE;
-
-      }
-
 }
 
 
 
-//When we update a compared, we check if his use_from_inherit has changed, and if yes we update him
-function wikicompare_inherit_compared_preupdate_implementation(&$test, $node_revision, $current_node) {
-
-
-
-      if ($node_revision->wikicompare_use_from_inherit['und'][0]['value'] != $current_node->wikicompare_use_from_inherit['und'][0]['value']) {
-        $test = TRUE;
-
-
-
-      }
-
-}
-
-
-function wikicompare_inherit_compared_cache_update_fields(&$fields, $node_revision) {
-
+/**
+ * Trigger a tree update if the inherit_compared_id field has changed.
+ *
+ * @param $to_update
+ *   The array containing the id which will trigger a tree update. Passed by reference.
+ *
+ * @param $node_revision
+ *   The object containing the new data of the node.
+ *
+ * @param $current_node
+ *   The object containing the old data of the node.
+ */
+function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revision, $current_node) {
 
   if ($node_revision->type == 'compared') {
+    //Get inherit_id.
+    $node_revision_inherit = NULL;
+    if ($node_revision->wikicompare_inherit_compared_id) {
+      $node_revision_inherit = $node_revision->wikicompare_inherit_compared_id['und'][0]['target_id'];
+    }
+    $current_node_inherit = NULL;
+    if ($current_node->wikicompare_inherit_compared_id) {
+      $current_node_inherit = $current_node->wikicompare_inherit_compared_id['und'][0]['target_id'];
+    }
 
+    //Trigger a tree update on the updated node because the value of his implementations may have changed.  
+    if ($node_revision_inherit != $current_node_inherit) {
+      $to_update[$node_revision->nid] = $node_revision->nid;
+    }
+  }
+
+}
+
+
+
+/**
+ * Trigger a tree update if the use_from_inherit field has changed.
+ *
+ * @param $to_update
+ *   The array containing the id which will trigger a tree update. Passed by reference.
+ *
+ * @param $node_revision
+ *   The object containing the new data of the node.
+ *
+ * @param $current_node
+ *   The object containing the old data of the node.
+ */
+function wikicompare_inherit_compared_preupdate_implementation(&$to_update, $node_revision, $current_node) {
+
+  if ($node_revision->wikicompare_use_from_inherit['und'][0]['value'] != $current_node->wikicompare_use_from_inherit['und'][0]['value']) {
+    $to_update[$node_revision->nid] = $node_revision->nid;
+  }
+
+}
+
+/**
+ * Add the inherit compared module specific field in the data which will update the wikicompare cache.
+ *
+ * @param $fields
+ *   The array containing the fields which will update the cache. Passed by reference.
+ *
+ * @param $node_revision
+ *   The object containing the new data of the node.
+ */
+function wikicompare_inherit_compared_cache_update_fields(&$fields, $node_revision) {
+
+  //Compared specific field.
+  if ($node_revision->type == 'compared') {
     $inherit_id = NULL;
-
-
     if (isset($node_revision->wikicompare_inherit_compared_id['und'][0])) {
       $inherit_id = $node_revision->wikicompare_inherit_compared_id['und'][0]['target_id'];
     }
     $fields['inherit_compared_id'] = $inherit_id;
   }
-
+  //Implementation specific field.
   if ($node_revision->type == 'implementation') {
     $fields['use_from_inherit'] = $node_revision->wikicompare_use_from_inherit['und'][0]['value'];
   }
