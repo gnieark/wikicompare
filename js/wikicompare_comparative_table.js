@@ -1010,10 +1010,11 @@ alert(selected_feature_dialog_ids.toSource());*/
 
 
 /*
-1/23
+1/24
 21 fichiers
 faire les TODOS
 Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur le serveur.
+Debogage
 */
 
 //TODO on a encore des plantages sur le simpledialog quand on valide les fastedit, mais plus dans les autres cas.
