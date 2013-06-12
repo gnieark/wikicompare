@@ -42,68 +42,33 @@ function need_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
+
+
+/**
+ * Implements hook_form_TYPE_node_form_alter().
+ * This hook allow us to alter the edit form of the node.
+ */
 function wikicompare_needs_form_need_node_form_alter(&$form, &$form_state, $form_id) {
-
+  //Call type-agnostic function.
   wikicompare_build_form('form', $form, $form_state, 'need');
-
-
-/*
-  $selected_feature_ids = array();
-  if (isset($form_state['node']->wikicompare_features['und'])) {
-    foreach ($form_state['node']->wikicompare_features['und'] as $array) {
-      $id = $array['target_id'];
-      $selected_feature_ids[$id] = $id;
-    }
-  }
-*/
-
-/*
-  $selected_feature_itemlist = '';
-  $feature_array = array();
-  if ($selected_feature_ids) {
-    $settings = wikicompare_initialize_settings(array('context' => 'selected'));
-    $features = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
-
-
-//    $itemlist_data = get_item_list('feature', $feature_array['tree'], 0, settings);
-//    $feature_array = get_recursive_data('feature', $selected_feature_ids);
-  
-
-//    $itemlist_settings = initialize_itemlist_settings('feature_list_computed');
-//    $itemlist_settings['context'] = 'selected';
-    //Building the data for the item list
-    $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, $settings);
-    //Render the item list
-    $selected_feature_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
-  }
-
-
-  $select_feature_link = array(
-    'text' => 'Select features',
-    'title' => 'Select features',
-    'selector' => 'dialog-content',
-    'path' => 'wikicompare_get_dialog_callback/multidialog/feature/form_selected_features/0/', //form_selected_features/none',
-    'id' => 'select_feature_link',
-
-  );
-  
-  $form['container_selected_feature'] = array(
-    'itemlist' => array('#markup' => $selected_feature_itemlist),
-    '#type' => 'container',
-    '#id' => 'form_selected_features',
-    '#weight' => -2,
-    '#suffix' => '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>'
-  
-  );
-*/
-
 }
 
 
+
+/**
+ * Send the features of the need node to javascript file, so we can checked the features by default in the popin.
+ *
+ * @param $settings
+ *   The settings which will be send to javascript. Passed by reference.
+ *
+ * @param $form_state
+ *   The array containing information of the node.
+ */
 function wikicompare_needs_build_form_settings(&$settings, $form_state) {
 
-
   if ($form_state['node']->type == 'need') {
+
+      //Get the features of the need node.
       $selected_feature_ids = array();
       if (isset($form_state['node']->wikicompare_features['und'])) {
         foreach ($form_state['node']->wikicompare_features['und'] as $array) {
@@ -112,6 +77,7 @@ function wikicompare_needs_build_form_settings(&$settings, $form_state) {
         }
       }
 
+      //Insert the feature in the settings to send them to javascript.
       $settings['wikicompare_needs']['selected_feature_ids'] = $selected_feature_ids;
 
   }
@@ -120,15 +86,62 @@ function wikicompare_needs_build_form_settings(&$settings, $form_state) {
 
 
 
+/**
+ * Remove important need fields from translated node.
+ *
+ * @param $form
+ *   The form array which will be used by Drupal to build the node form. Passed by reference.
+ *
+ * @param $form_state
+ *   Array containing in-depth information of the node and form settings. Passed by reference.
+ * 
+ * @param $node
+ *   Object containing the detail of the node.
+ */
+function wikicompare_needs_wikicompare_translation_form(&$form, &$form_state, $node) {
+
+  if (isset($form['need_features'])) {
+    unset($form_state['node']->wikicompare_features);
+  }
+
+}
+
+
+
+/**
+ * Add the field specific to need at the end of the form.
+ *
+ * @param $form
+ *   The form array which will be used by Drupal to build the node form. Passed by reference.
+ *
+ * @param $form_state
+ *   Array containing in-depth information of the node and form settings. Passed by reference.
+ * 
+ * @param $output
+ *   The HTML code which will be inserted in the comparative table to display the fastaction form. Passed by reference.
+ *
+ * @param $form_type
+ *   Flag defining if the function is called to build a form node of a fastaction form.
+ *
+ * @param $type
+ *   The type of the consulted node.
+ *
+ * @param $node
+ *   Object containing the detail of the node.
+ *
+ * @param $fastaction
+ *   The fastaction (add or edit)
+ *
+ * @param $nid
+ *   The nid of the consulted node.
+ */
 function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type, $type, $node, $fastaction, $nid) {
 
   if ($type == 'need') {
 
-
-
-
     $selected_feature_itemlist = '';
     $selected_feature_hidden = '';
+    //Get data from object.
     $selected_feature_ids = array();
     if (isset($node->wikicompare_features['und'])) {
       foreach ($node->wikicompare_features['und'] as $array) {
@@ -137,32 +150,20 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
       }
     }
 
-
+    //Build the itemlist from the features of the object.
     $features = array();
     if (!empty($selected_feature_ids)) {
       $settings = wikicompare_initialize_settings(array('context' => 'selected', 'computed' => 1));
       $features = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
-
-
-//        $itemlist_settings['context'] = 'selected';
-      //Building the data for the item list
       $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, $settings);
       //Render the item list
       $selected_feature_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
-
-      
       foreach ($selected_feature_ids as $feature_id) {
         $selected_feature_hidden .= '<div class="need_feature">' . $feature_id . '</div>';
       }
-      
-
     }
 
-    
-
-
-
-
+    //Link which will open a popin where we can select the features.
     $select_feature_link = array(
       'text' => 'Select features',
       'title' => 'Select features',
@@ -172,24 +173,18 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
     );
 
     if ($form_type == 'form') {
-
-
-
+      //The container of the itemlist.
       $form['container_selected_feature'] = array(
         'itemlist' => array('#markup' => $selected_feature_itemlist),
         '#type' => 'container',
         '#id' => 'container-wikicompare-features',
         '#weight' => -2,
-//        '#suffix' => 
-      
       );
 
+      //The link is visible only in the main language node.
       if ($node->language == language_default('language')) {
         $form['container_selected_feature']['#suffix'] = '<div id="initialize_need_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
       }
-
-//      $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
-
     }
 
     if ($form_type == 'fastaction') {
@@ -198,13 +193,11 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
       $output .= '</div><div id="wikicompare-features" style="display:none;">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
     }
 
-
-  
- 
-
   }
 
 }
+
+
 
 
 
@@ -637,13 +630,7 @@ function wikicompare_needs_request_db_after($res, $need_features) {
 }
 
 
-function wikicompare_needs_wikicompare_translation_form(&$form, &$form_state, $node) {
 
-  if (isset($form['need_features'])) {
-    unset($form_state['node']->wikicompare_features);
-  }
-
-}
 
 
 ?>

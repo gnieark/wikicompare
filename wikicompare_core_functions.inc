@@ -682,19 +682,15 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
  *
  * @param $db_settings
  *   An associative array containing the specific informations to build the database query.
-TODO
- *   - An array for rendering the node or parent comment.
- *     - comment_node: If the comment is a reply to the node.
- *     - comment_parent: If the comment is a reply to another comment.
- *   - comment_form: The comment form as a renderable array.
+ *     - nids: The nids are directly specified.
+ *     - parent_id: We'll find the nodes by the parent id.
+ *     - compared_id: We'll find the implementations nodes with the compareds and feature ids.
+ *     - feature_id: We'll find the implementations nodes with the compareds and feature ids.
  *
  * @param $settings
  *   An associative array containing the informations about the context of the query, theses informations are often not only used in this function.
-TODO
- *   - An array for rendering the node or parent comment.
- *     - comment_node: If the comment is a reply to the node.
- *     - comment_parent: If the comment is a reply to another comment.
- *   - comment_form: The comment form as a renderable array.
+ *     - states: An array containing the state of the record to return.
+ *     - fastaction: If the fastaction mode is activated on the wikicompare table.
  *
  * @return $res
  *   An array containing all the nodes found in database.
