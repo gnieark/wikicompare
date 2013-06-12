@@ -314,6 +314,8 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST,
 
 
 
+
+
 /*****************************************************************
 *
 *    NODES
@@ -326,7 +328,7 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST,
  * @param $node
  *   The deleted node.
  */
-function wikicompare_translation_wikicompare_delete_after($node) {
+function wikicompare_translation_delete_after($node) {
 
   //If the node created is the main language node, and if there is translation of this node.
   if ($node->language == language_default('language') && $node->tnid != 0) {
@@ -346,13 +348,34 @@ function wikicompare_translation_wikicompare_delete_after($node) {
 
 
 
-function wikicompare_translation_wikicompare_request_db(&$query, $type, $db_settings, $settings) {
 
+
+/*****************************************************************
+*
+*    CORE_FUNCTIONS
+*
+*****************************************************************/
+
+/**
+ * Add the lines in the database request to recover the translated title, based on the information of the translated nodes.
+ *
+ * @param $query
+ *   The query to update. Passed by reference
+ *
+ * @param $type
+ *   The type of the request.
+ *
+ * @param db_settings
+ *   An associative array containing the specific informations to build the database query.
+ * 
+ * @param $settings
+ *   An associative array containing the informations about the context of the query.
+ */
+function wikicompare_translation_request_db(&$query, $type, $db_settings, $settings) {
 
   global $language;
 
-
-
+  //Test a flag in db_settings we can use if the translation isn't necessary.
   if (!isset($db_settings['dont_translate'])) {
     $query->addField('t', 'nid', 'nid_translated');
     $query->addField('t', 'title', 'title_translated');
@@ -360,44 +383,68 @@ function wikicompare_translation_wikicompare_request_db(&$query, $type, $db_sett
     $query->leftjoin('node', 't', 'n.nid = t.tnid');
     $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
 
+    //If we are in fastaction mode, we want to also test is the translation node can be fastedited.
     if ($settings['fastaction']) {
-
       $query->addField('tr', 'uid', 'tuid');
       $query->leftjoin('node_revision', 'tr', 't.nid = tr.nid');
     }
-
   }
 
 }
 
-function wikicompare_translation_wikicompare_request_db_fastaction(&$node_array, $record, $type, $nids, $db_settings) {
+
+
+/**
+ * Test if the translation node can be fastedit, based on the revisions author.
+ *
+ * @param $node_array
+ *   The node which will be returned. Passed by reference
+ *
+ * @param $record
+ *   The record from the database.
+ *
+ * $type
+ *   The type of the request.
+ *
+ * @param db_settings
+ *   An associative array containing the specific informations to build the database query.
+ */
+function wikicompare_translation_request_db_fastaction(&$node_array, $record, $type, $db_settings) {
 
   global $language;
 
+  //Test a flag in db_settings we can use if the translation isn't necessary.
   if (!isset($db_settings['dont_translate'])) {
+    //If the user isn't the author of all the revisions of the translation node, then he can't fastedit it.
     if ($GLOBALS['user']->uid != $record->tuid && $record->tuid != NULL && $record->tlanguage == $language->language) {
-//      if ($type != 'implementation' || isset($settings['nids'])) {
-//      if (!$settings['is_implementation_without_nids']) {
        $node_array['no-edit-translate'] = True;
-/*      } else {
-        $res[$record->feature_id][$record->compared_id]['no-edit-translate'] = True;
-      }*/
     }
   }
 
 }
 
-function wikicompare_translation_wikicompare_request_db_build(&$node_array, $record) {
+
+
+/**
+ * Replace the title from db by the translated title.
+ *
+ * @param $node_array
+ *   The node which will be returned. Passed by reference
+ *
+ * @param $record
+ *   The record from the database.
+ */
+function wikicompare_translation_request_db_build(&$node_array, $record) {
 
   global $language;
 
+  //If there is a translation node with a title.
   if (isset($record->title_translated)) {
     if ($record->title_translated != NULL && $record->tlanguage == $language->language) {
       $node_array['data']->tnid = $record->nid_translated;
       $node_array['data']->title = $record->title_translated;
     }
   }
-
 
 }
 

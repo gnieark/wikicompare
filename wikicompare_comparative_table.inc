@@ -1388,7 +1388,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
   $types = array('compared', 'feature');
   if (module_exists('wikicompare_needs')) {
-    wikicompare_needs_wikicompare_node_types($types);
+    wikicompare_needs_node_types($types);
   }
 
   foreach ($types as $type) {

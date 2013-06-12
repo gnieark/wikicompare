@@ -1,4 +1,5 @@
 <?php
+//READY
 
 /**
  * @file
@@ -78,7 +79,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     }
 
     if (module_exists('wikicompare_inherit_compared')) {
-      //TODO
+      //Add the requests to recover the inherited implementation.
       wikicompare_inherit_compared_update_main_query($query);
     }
 
@@ -185,7 +186,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
     }
 
-    //Assign children to each node to compute. 
+    //Assign children to each node to compute.
     $to_update = array();
     foreach($nodes as $node) {
       $node->through_feature_childs = array();
@@ -243,8 +244,8 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     }
 
     if (module_exists('wikicompare_inherit_compared')) {
-      //TODO
-      wikicompare_inherit_compared_update_comparative_table_preparation($nids, $nodes, $type);
+      //Compute the inherited implementation if not already done, and get inheriting children.
+      wikicompare_inherit_compared_update_comparative_table_preparation($nodes, $type, $nids);
     }
 
     //Recover the existing cache value only now and not in the first SQL request, because their value may be updated during the children update.
@@ -297,7 +298,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
 
       if (module_exists('wikicompare_inherit_compared')) {
-        //TODO
+        //Return the data computed according to the inherited implementation.
         wikicompare_inherit_compared_from_other_support($node);
       }
     //If the feature is of type weighted average, it'll use the children through feature axis to compute the percent
@@ -341,7 +342,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
 
       if (module_exists('wikicompare_inherit_compared')) {
-        //TODO
+        //Add in the implementation to update the implementation which inherit the current implementation.
         wikicompare_inherit_compared_update_comparative_table_post($to_update, $node);
       }
 
@@ -422,7 +423,6 @@ function wikicompare_compute_percent($node, $through_feature_childs) {
 
       //Compute the value. We round the percent to 4 because it's the precision in database.
       $node->percent = round(($total / $count),4);
-      $node->css_class = find_css_class($node->percent);
 
     //If the feature is of type highest percentage, it'll take the maximum value of the children.
     } elseif ($node->type == 'parent-highest-percentage') {
@@ -504,7 +504,7 @@ function wikicompare_flush_caches() {
 
   if (module_exists('wikicompare_needs')) {
     //Add need type.
-    wikicompare_needs_wikicompare_node_types($types);
+    wikicompare_needs_node_types($types);
   }
 
 
@@ -512,7 +512,7 @@ function wikicompare_flush_caches() {
 
     //Delete all data in the type cache.
     db_delete('cache_' . $type)
-      ->execute();   
+      ->execute();
 
     //Get all data from node and field_revision_* tables.
     $query = db_select('node', 'n');
@@ -544,8 +544,8 @@ function wikicompare_flush_caches() {
     //Only the main language nodes are concerned.
     $query->condition('n.language', language_default('language'));
     if (module_exists('wikicompare_inherit_compared')) {
-      //TODO
-      wikicompare_inherit_compared_flush_select_compared($query, $type);
+      //Search for the inhehrit compared specific fields in the flush tables function.
+      wikicompare_inherit_compared_flush_select($query, $type);
     }
     $result = $query->execute();
 
@@ -579,8 +579,8 @@ function wikicompare_flush_caches() {
         $to_insert[$record->nid]['weight'] = $record->weight;
       }
       if (module_exists('wikicompare_inherit_compared')) {
-        //TODO
-        wikicompare_inherit_compared_flush_cache_compared($to_insert, $record, $type);
+        //Prepare the inherit compared specific fields in the flush tables function.
+        wikicompare_inherit_compared_flush_cache($to_insert, $record, $type);
       }
     }
 
@@ -589,7 +589,7 @@ function wikicompare_flush_caches() {
       foreach ($parent_array as $pid => $parent) {
         $to_insert[$pid]['has_children'] = 1;
       }
-    
+
       if ($type == 'feature') {
         //Later, we will launch the update_compare_table with only the feature without children, this will be enough to compute the whole tree.
         $feature_without_children = array();
@@ -612,14 +612,14 @@ function wikicompare_flush_caches() {
     } else {
       $header[] = 'compared_id';
       $header[] = 'feature_id';
-      $header[] = 'support'; 
+      $header[] = 'support';
     }
     if ($type == 'feature') {
       $header[] = 'type';
       $header[] = 'weight';
     }
     if (module_exists('wikicompare_inherit_compared')) {
-      //TODO
+      //Add inherit compared specific headers.
       wikicompare_inherit_compared_cache_fields_header($header, $type);
     }
 
@@ -687,7 +687,7 @@ TODO
  *     - comment_node: If the comment is a reply to the node.
  *     - comment_parent: If the comment is a reply to another comment.
  *   - comment_form: The comment form as a renderable array.
- * 
+ *
  * @param $settings
  *   An associative array containing the informations about the context of the query, theses informations are often not only used in this function.
 TODO
@@ -729,7 +729,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
         $state = array_merge($state, array('rejected', 'disactivated'));
       }
       $query->condition('n.state', $state, 'in');
-    } 
+    }
     //The returned nodes are ordered by the sequence field.
     $query->orderby('n.sequence, n.title');
   //Implementation specific fields.
@@ -751,11 +751,13 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $query->condition('n.nid', $db_settings['nids'], 'in');
   }
 
+  //Feature specific fields.
   if ($type == 'feature') {
     $query->addField('n', 'type', 'type');
     $query->addField('n', 'weight', 'weight');
   }
 
+  //If fastaction mode is triggered, then we need to recover all the revision of the nodes to test if the user is the author of all the revisions. Otherwise, he will not be able to fastedit the node.
   if (isset($settings['fastaction_status'])) {
     if ($settings['fastaction_status'] == 1) {
       $query->addField('r', 'uid', 'uid');
@@ -763,25 +765,26 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     }
   }
 
-
-
-
   if (module_exists('wikicompare_inherit_compared')) {
-    wikicompare_inherit_compared_wikicompare_request_db($query, $type);
+    //Add inherit compared specific fields.
+    wikicompare_inherit_compared_request_db($query, $type);
   }
 
   if (module_exists('wikicompare_translation')) {
-    wikicompare_translation_wikicompare_request_db($query, $type, $db_settings, $settings);
+    //Add the lines in the database request to recover the translated title, based on the information of the translated nodes.
+    wikicompare_translation_request_db($query, $type, $db_settings, $settings);
   }
 
   if (module_exists('wikicompare_needs')) {
+    //Need specific fields.
+    wikicompare_needs_request_db($query, $type);
     if ($type == 'need') {
       $query->addField('nf', 'feature_nid', 'need_feature_id');
       $query->leftjoin('cache_need_feature_rel', 'nf', 'n.nid = nf.need_nid');
     }
   }
 
-
+  //Launch the request
   $result = $query->execute();
 
 
@@ -789,61 +792,37 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   $need_features = array();
   foreach ($result as $record) {
 
-
+    //Start building the ressource which will be returned for this node.
     $node_array = array(
+      //All data returned by the request are stored in this object.
       'data' => $record,
       'children' => array(),
     );
-//    if ($type != 'implementation' || isset($settings['nids'])) {
-/*    if (!$settings['is_implementation_without_nids']) {
-      $res[$record->nid]['data'] = $record;
-      $res[$record->nid]['children'] = array();
-    } else {
-
-      $res[$record->feature_id][$record->compared_id]['data'] = $record;
-    }*/
 
     if (module_exists('wikicompare_needs')) {
-      if ($type == 'need') {
-//        if (isset($res[$record->nid]['need_features']) || $record->need_feature_id != NULL) {
-        if ($record->need_feature_id != NULL) {
-          $need_features[$record->nid][$record->need_feature_id] = $record->need_feature_id;
-        }
-/* else {
-          $node_array['need_features'] = array();
-        } */
-        unset($node_array['data']->need_feature_id);
-        $node_array['need_features'] = array(); //Security to avoid made isset control later
-      }
+      //Recover all need_features in an array to use them later.
+      wikicompare_needs_request_db_build($node_array, $need_features, $record, $type);
     }
 
-    if (isset($settings['fastaction_status'])) {
-      if ($settings['fastaction_status'] == 1) {
+    if ($settings['fastaction'] == 1) {
+      //If the node was created by or have some revision from other users, current user will not be able to fastaction it.
+      if ($GLOBALS['user']->uid != $record->uid) {
+        $node_array['no-edit'] = True;
+        $node_array['no-remove'] = True;
+      }
 
-        //If the node was created by or have some revision from other users, current user will not be able to fastaction it
-        if ($GLOBALS['user']->uid != $record->uid) {
-//          if ($type != 'implementation' || isset($settings['nids'])) {
-//          if (!$settings['is_implementation_without_nids']) {
-          $node_array['no-edit'] = True;
-          $node_array['no-remove'] = True;
-/*          } else {
-            $res[$record->feature_id][$record->compared_id]['no-edit'] = True;
-            $res[$record->feature_id][$record->compared_id]['no-remove'] = True;
-          }*/
-        }
-
-        if (module_exists('wikicompare_translation')) {
-          wikicompare_translation_wikicompare_request_db_fastaction($node_array, $record, $type, $db_settings);
-        }
+      if (module_exists('wikicompare_translation')) {
+        //Test if the translation node can be fastedit
+        wikicompare_translation_request_db_fastaction($node_array, $record, $type, $db_settings);
       }
     }
-
 
     if (module_exists('wikicompare_translation')) {
-      wikicompare_translation_wikicompare_request_db_build($node_array, $record);
+      //Replace the title from db by the translated title
+      wikicompare_translation_request_db_build($node_array, $record);
     }
 
-//    if (!$settings['is_implementation_without_nids']) {
+    //Assign the node_array to $res with the nid as key, except it's an implementation we found thanks to the compared and feature ids.
     if ($type != 'implementation' || isset($settings['nids'])) {
       $res[$record->nid] = $node_array;
     } else {
@@ -853,24 +832,12 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   }
 
   if (module_exists('wikicompare_needs')) {
-    foreach ($need_features as $nid => $features) {
-      $res[$nid] ['need_features'] = $features;
-    }
-/*
-    if ($type == 'need') {
-      if (isset($res[$record->nid]['need_features']) || $record->need_feature_id != NULL) {
-        $node_array['need_features'][$record->need_feature_id] = $record->need_feature_id;
-      } else {
-        $node_array['need_features'] = array();
-      } 
-      unset($node_array['data']->need_feature_id);
-    }*/
+    //Assign node features to the $res. We couldn't do it  while we were parsing the records.
+    wikicompare_needs_request_db_after($res, $need_features);
   }
 
   return $res;
 
-
 }
-
 
 ?>

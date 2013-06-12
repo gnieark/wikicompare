@@ -415,7 +415,7 @@ function wikicompare_needs_wikicompare_comparative_table_fastaction_parent(&$par
 
 /*****************************************************************
 *
-*    FASTACTION
+*    NODES
 *
 *****************************************************************/
 
@@ -433,11 +433,13 @@ function need_insert($node) {
 
   //Prepare to insert the many2many cache between needs and features.
   $features_m2m = array();
-  foreach ($node->wikicompare_features['und'] as $feature) {
-    $feature_m2m[] = array(
-      'need_nid' => $node->nid,
-      'feature_nid' => $feature['target_id'],
-    );
+  if (isset($node->wikicompare_features['und'])) {
+    foreach ($node->wikicompare_features['und'] as $feature) {
+      $feature_m2m[] = array(
+        'need_nid' => $node->nid,
+        'feature_nid' => $feature['target_id'],
+      );
+    }
   }
 
   //Insert the data in the many2many table cache.
@@ -481,7 +483,7 @@ function need_delete($node) {
  * @param $array
  *   The array to update. Passed by reference.
  */
-function wikicompare_needs_wikicompare_node_types(&$array) {
+function wikicompare_needs_node_types(&$array) {
 
   //Update the array.
   $array[] = 'need';
@@ -555,6 +557,85 @@ function wikicompare_needs_after_update_fields($node_revision) {
   }
 
 }
+
+
+
+
+
+/*****************************************************************
+*
+*    CORE_FUNCTIONS
+*
+*****************************************************************/
+
+/**
+ * Add the needs specific fields in db request.
+ *
+ * @param $query
+ *   The query to update. Passed by reference.
+ *
+ * @param $type
+ *   The type of the request.
+ */
+function wikicompare_needs_request_db($query, $type) {
+  if ($type == 'need') {
+    $query->addField('nf', 'feature_nid', 'need_feature_id');
+    $query->leftjoin('cache_need_feature_rel', 'nf', 'n.nid = nf.need_nid');
+  }
+}
+
+
+
+/**
+ * Recover all need_features in an array to use them later.
+ *
+ * @param $node_array
+ *   The node which will be returned. Passed by reference.
+ *
+ * @param $need_features
+ *   The array containing the need_features we will use later. Passed by reference.
+ *
+ * @param $record
+ *   The record from the database.
+ *
+ * $type
+ *   The type of the request.
+ */
+function wikicompare_needs_request_db_build($node_array, $need_features, $record, $type) {
+
+  if ($type == 'need') {
+
+    if ($record->need_feature_id != NULL) {
+      $need_features[$record->nid][$record->need_feature_id] = $record->need_feature_id;
+    }
+
+    unset($node_array['data']->need_feature_id);
+    //Security to avoid to make isset control later.
+    $node_array['need_features'] = array(); 
+
+  }
+
+}
+
+
+
+/**
+ * Assign node features to the $res. We couldn't do it  while we were parsing the records.
+ *
+ * @param $res
+ *   The ressource which will be returned. Passed by reference.
+ *
+ * @param $need_features
+ *   The array we build before while we were parsing the records.
+ */
+function wikicompare_needs_request_db_after($res, $need_features) {
+
+  foreach ($need_features as $nid => $features) {
+    $res[$nid]['need_features'] = $features;
+  }
+
+}
+
 
 function wikicompare_needs_wikicompare_translation_form(&$form, &$form_state, $node) {
 

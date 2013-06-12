@@ -1,4 +1,5 @@
-<?php//READY
+<?php
+//READY
 
 /**
  * @file
@@ -414,7 +415,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
       if (module_exists('wikicompare_needs')) {
         //Add need type.
-        wikicompare_needs_wikicompare_node_types($types);
+        wikicompare_needs_node_types($types);
       }
 
       //Verify that the parent_id field must be checked, based on his type.
@@ -531,7 +532,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     if (module_exists('wikicompare_needs')) {
       //Add need type.
-      wikicompare_needs_wikicompare_node_types($types);
+      wikicompare_needs_node_types($types);
     }
 
     //Verify that the node must be checked, based on his type.
@@ -593,9 +594,9 @@ function wikicompare_revisionapi($op, $node_revision) {
     //Trigger a tree update on all the marked nodes.
     if ($node_nids) {
       //Trigger the tree update.
-      wikicompare_update_compare_tree($type, $node_nids);
+      wikicompare_update_compare_tree($node_revision->type, $node_nids);
       //Unmark the nodes.
-      db_update('cache_' . $type)
+      db_update('cache_' . $node_revision->type)
         ->fields(array(
           'to_update' => 0,
         ))

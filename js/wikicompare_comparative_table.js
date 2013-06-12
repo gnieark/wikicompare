@@ -1010,7 +1010,7 @@ alert(selected_feature_dialog_ids.toSource());*/
 
 
 /*
-1/24
+2/24
 21 fichiers
 faire les TODOS
 Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur le serveur.
@@ -1028,7 +1028,8 @@ Debogage
 
 
 
-
+//TODO les fastremove n'apparaissent plus
+//TODO les needs ne sont plus traduits
 
 //TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible
 
