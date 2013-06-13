@@ -207,8 +207,24 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
 *
 *****************************************************************/
 
-function wikicompare_needs_fastaction_command(&$commands, $type, $nid, $output) {
 
+
+/**
+ * Add the fastaction form after the need item.
+ * 
+ * @param $commands
+ *   The commands which will be send to javascript. Passed by reference.
+ *
+ * @param $type
+ *   The type of the node.
+ *
+ * @param $nid
+ *   The nid of the node.
+ *
+ * @param output
+ *   The generated form.
+ */
+function wikicompare_needs_fastaction_command(&$commands, $type, $nid, $output) {
 
   if ($type == 'need') {
     $commands[] = ajax_command_invoke('#need_table_children_' . $nid, 'before', array($output));
@@ -217,12 +233,22 @@ function wikicompare_needs_fastaction_command(&$commands, $type, $nid, $output) 
 }
 
 
+
+/**
+ * Assign need specific fields.
+ *
+ * @param $node
+ *   The node which will be submitted. Passed by reference.
+ *
+ * @param $type
+ *   The type of the node.
+ *
+ * @param $_POST
+ *   Variables from javascript.
+ */
 function wikicompare_needs_fastaction_submit_after(&$node, $type, $_POST) {
 
-
-
   if ($type == 'need') {
-
     $need_features = array();
     foreach ($_POST['need_feature_ids'] as $feature_id) {
       $array = array();
@@ -231,11 +257,12 @@ function wikicompare_needs_fastaction_submit_after(&$node, $type, $_POST) {
       $need_features[] = $array;
     }
     $node->wikicompare_features['und'] = $need_features;
-
-
   }
 
 }
+
+
+
 
 
 /*****************************************************************

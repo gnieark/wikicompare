@@ -1,4 +1,5 @@
 <?php
+//READY
 
 /**
  * @file
@@ -104,7 +105,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
     if (module_exists('wikicompare_translation')) {
       //Get the main language node if we are consulting a translation node.
-      wikicompare_translation_build_form_settings($settings, $node, $nid, $form_state);
+      wikicompare_translation_build_form_settings($node, $nid, $form_state);
     }
 
     //Send the needed variables to the javascript.
@@ -517,6 +518,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
     $output .= render($revision_field);
 
     if (module_exists('wikicompare_translation')) {
+      //Add the selected field which will allow to select the node which will be submited, main language node or translation.
       wikicompare_translation_fastaction_specific_after($output, $type, $node, $fastaction, $nid, $readonly, $readonly_translation);
     }
 
@@ -527,16 +529,26 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
 
 
+
+/**
+ * Return the html code of the fastaction items to display on the comparative table.
+ * 
+ * @param $type
+ *   The type of the node.
+ *
+ * @param $node_array
+ *   The node for which we want to display the fastaction item.
+ */
 function add_fastaction_items($type, $node_array){
 
-
+  //The space between the node detail and the fastaction items.
   $output = ' ';
-
   $nid = $node_array['data']->nid;
 
-  
+  //If the node is an implementation, then we can only fastedit the item, not fastadd or fastremove.  
   if ($type == 'implementation') {
     
+    //Unless the database say the user can't fastedit the node, for exemple if he's not the author of some of the revisions.
     if (!isset($node_array['no-edit'])) {   
       //Create the image link to edit the node
       $img = theme('image', array(
@@ -549,8 +561,9 @@ function add_fastaction_items($type, $node_array){
       $output .= $img_link_to_edit;
     }
   
+  //We can fastadd / fastedit / fastremove all the other node types.
   } else {
-    //Create the image link to add a new children
+    //Create the image link to add a new node.
     $img = theme('image', array(
       'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
       'alt' => t('Link to add children ') . $type . ' ' . $nid,
@@ -560,20 +573,20 @@ function add_fastaction_items($type, $node_array){
     $img_link_to_add = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastaction_item '), 'type' => $type, 'action' => 'add'), 'html' => True));
     $output .= $img_link_to_add;
 
-
+    //Test if we can fastedit the item, based on the information of the database query function.
     $test = False;
     if (isset($node_array['no-edit']) || $nid == 0) {
       $test = True;
     }
 
-
-
     if (module_exists('wikicompare_translation')) {
+      //If the user can fastedit the main language node or the translation node, then the fastedit item must be displayed.
       wikicompare_translation_fastaction_items_test($test, $node_array);
     }
 
+    //If the user can display the fastedit item.
     if ($test == False) {
-      //Create the image link to edit the node
+      //Create the image link to edit the node.
       $img = theme('image', array(
         'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
         'alt' => t('Link to edit ') . $type . ' ' . $nid,
@@ -583,8 +596,9 @@ function add_fastaction_items($type, $node_array){
       $img_link_to_edit = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastaction_item '), 'type' => $type, 'action' => 'edit'), 'html' => True));
       $output .= $img_link_to_edit;
 
+      //If the user can display the fastremove item.
       if (!isset($node_array['no-remove'])) {
-        //Create the image link to remove the node
+        //Create the image link to remove the node.
         $img = theme('image', array(
           'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
           'alt' => t('Link to remove ') . $type . ' ' . $nid,
@@ -597,15 +611,23 @@ function add_fastaction_items($type, $node_array){
     }
   }
 
+  //Return the html code.
   return $output;
 
 }
 
-/*
- * Ajax callback cunction called by javascript to display the fastaction form
+
+
+/**
+ * Ajax callback function called by javascript to display the fastaction form.
+ * 
+ * @param $method
+ *   Indicate if the call was made with javascript or if it's a simple browser call.
+ *
+ * @return $page
+ *   Array containing the instructions for the javascript.
  */
 function wikicompare_table_fastaction_form_response($method = 'ajax'){
-
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method != 'ajax') {
@@ -613,27 +635,19 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
     return $output;
   }
 
-
-
-
-
-
-
+  //Get some variables from javascript.
   $nid = $_POST['nid'];
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
 
   $commands = array();
-
-
-
-
-  //If we want to displayed the compared children
+  //If we want to display the form.
   if ($_POST['display']) {
 
     $output = '';
 
+    //Define if we want to display the form after an itemlist or after a row in the table.
     $display_type = 'itemlist';
     if (in_array($type, array('feature','implementation'))) {
       $display_type = 'row_table';
@@ -641,38 +655,38 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
     if ($display_type == 'row_table') {
       $colspan = '';
+      //Automatically adjust to the size of the table.
       if (isset($_POST['colspan'])) {
         $colspan = 'colspan="' . $_POST['colspan'] . '"';
       }
       $output .= '<tr id="form_fastaction_' . $nid . '" class="form_fastaction"><td class="row_auto_colspan" ' . $colspan . '>';
     }
-    
     $output .= '<form id="form_fastaction_' . $nid . '" class="form_fastaction">';
     
-    
-  
+    //If we want to fastremove the node.
     if ($fastaction == 'remove') {
-    
+      //Display a confirmation message
       $label = array(
         '#markup' => t('Do you really want to remove this ') . $type . '<br/>',
       );
       $output .= render($label);
     
-    
+    //Else, display the form.
     } else {
     
-      
+      //Preparing the new object, in case of a node creation.      
       $node = new stdClass;
       $node->type = $type;
       $readonly = False;
       $tnode = new stdClass;
       $readonly_translation = False;        
             
+      //If we are fastediting the node, we load its informations from database.
       if ($fastaction == 'edit') {
-  
+        //Load node from database.
         $node = node_load($nid);
 
-
+        //Test if we can fastedit the main language node.
         $query = db_select('node_revision', 'n');
         $query->addField('n', 'nid', 'nid');
         $query->addField('n', 'uid', 'uid');
@@ -684,23 +698,27 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
           }
         }
 
-
         if (module_exists('wikicompare_translation')) {
+          //Get tnode and test if we can fastedit it.
           wikicompare_translation_fastaction_get_tnode($tnode, $readonly_translation, $node);
         }
         
+      //If we are just fastadding a node, then we insert an hidden span containing the id of the parent.
       } else {
         $output .= '<span id="parent_id" style="display:none;">' . $nid . '</span>';
       }
 
       $form = array();
       $form_state = array();
+      //Call the generic function which will build the form. $output will be updated with the form.
       wikicompare_build_form('fastaction', $form, $form_state, $type, $output, $nid, $fastaction, $node, $readonly, $tnode, $readonly_translation);
 
     }
     
+    //Add an error zone which will be filled if we badly submit the form.
     $output .= '<div id="form_fastaction_error_zone"></div>';
 
+    //Add the submit button, followed by his hidden ajax link.
     $output .= '<input id="form_fastaction_submit_' . $nid . '" type="submit" value="Confirm" class="form_fastaction_submit button"/>';
     $submit_link = array(
       '#type' => 'link',
@@ -715,6 +733,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
       )
     );
     $output .= render($submit_link);
+    //Add the cancel button.
     $output .= '<input id="form_fastaction_cancel_ ' . $nid . '" type="button" value="Cancel" class="form_fastaction_cancel button"/>';
     $output .= '</form>';
     
@@ -722,10 +741,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
       $output .= '</td></tr>';
     }
 
-
-
-
-    //Insert the form in the page. Note we can't use ajax_command_before or ajax_command_after because it adds an unwanted div
+    //Insert the form in the page. Note we can't use ajax_command_before or ajax_command_after because it adds an unwanted div.
     switch ($type) {
       case ('compared'):
         $commands[] = ajax_command_invoke('#compared_table_children_' . $nid, 'before', array($output));
@@ -738,8 +754,8 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
         break;
     }
 
-
     if (module_exists('wikicompare_needs')) {
+      //Add the fastaction form after the need item.
       wikicompare_needs_fastaction_command($commands, $type, $nid, $output);
     }
 
@@ -747,21 +763,26 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
     $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
 
 
-  //If we want to hide the form
   }
 
+  //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
-
   return $page;
 
 }
 
 
-/*
- * Ajax callback function called by javascript when we submit one of the fastaction form.
+
+/**
+ * Ajax callback function called by javascript to submit the fastaction form.
+ * 
+ * @param $method
+ *   Indicate if the call was made with javascript or if it's a simple browser call.
+ *
+ * @return $page
+ *   Array containing the instructions for the javascript.
  */
 function wikicompare_table_fastaction_submit_response($method = 'ajax'){
-
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method != 'ajax') {
@@ -769,51 +790,63 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     return $output;
   }
 
+  //Get some variables from javascript.
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
-
+  //If we are not fastadding, we get the information from database to proceed an ultimate check of the user right. This should protect us from firebug hacking.
+  $from_db_record = array();
   if ($_POST['nid']) {
     $from_db = request_db($type, array('nids' => array($_POST['nid'])), wikicompare_initialize_settings(array('fastaction' =>  1)));
     $from_db_record = $from_db[$_POST['nid']];
   }
 
   $commands = array();
-
+  //If we are fastremoving, and if the user has the right for it.
   if ($fastaction == 'remove' && !isset($from_db_record['no-remove'])) {
 
+    //Delete the node.
     node_delete($_POST['nid']);
 
+    //Remove the item in table.
     $commands[] = ajax_command_remove('#' . $type . '_table_supertitle_'. $_POST['nid']);
     $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $_POST['nid'], 'addClass', array('to_remove'));
+    //Display a confirmatio message.
     $commands[] = ajax_command_html('#form_fastaction_' . $_POST['nid'], 'The node is correctly removed');
+    //Call the cleaning function.
     $commands[] = ajax_command_invoke('#wikicompare_make_cleaning_link', 'click', array());
 
+  //If we are fastadding / fasteditting and the user has the right for it.
   } elseif (!isset($from_db_record['no-edit'])) {
 
     $missing_field = FALSE;
 
     switch ($fastaction) {
+      //Create a new node.
       case 'add':
         $node = new stdClass();
         $node->type = $type;
         $node->language = language_default('language');
         node_object_prepare($node);
+        $node->comment = 2;
         break;
+      //Load the actual node, and say we are creating a new revision.
       case 'edit':
         $node = node_load($_POST['nid']);
         $node->revision = 1;
-        $node->comment = 2;
         break;
     }
 
     $tnode = new stdClass();
 
     if (module_exists('wikicompare_translation')) {
+      //Initiate the tnode according to the information from javascript.
       wikicompare_translation_fastaction_submit_init_tnode($tnode, $_POST, $fastaction);
     } 
 
+    //Fields relatives to all node type except implementation.
     if ($type != 'implementation') {
+      //Assign the field, or mark the field as missing if empty.
       if ($_POST['title'] != NULL) {
         $node->title = $_POST['title'];
       } else {
@@ -821,26 +854,26 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
 
       if (module_exists('wikicompare_translation')) {
+        //Add the translated fields in the node which will be submited.
         wikicompare_translation_fastaction_submit_element($tnode, $_POST, 'title', 'title', $fastaction);
       } 
 
+      //Assign parent.
       if ($_POST['parent_id'] != 0) {
-
             $node->wikicompare_parent_id['und'][0]['target_id'] = $_POST['parent_id'];
             $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
-        
       } else {
         $node->wikicompare_parent_id['und'] = NULL;
       }
 
-
-
+      //Assign sequence.
       if ($_POST['sequence'] != NULL) {
         $node->wikicompare_sequence['und'][0]['value'] = $_POST['sequence'];  
       } else {
         $missing_field = TRUE;
       }
 
+      //Assign state.
       if ($_POST['state'] != NULL) {
         $node->wikicompare_state['und'][0]['value'] = $_POST['state'];  
       } else {
@@ -848,7 +881,6 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
 
     }
-
 
 /*  TODO When wysiwyg will work
     $node->body['und'][0] = array(
@@ -859,16 +891,18 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
     if (module_exists('wikicompare_translation')) {
       wikicompare_translation_wikicompare_fastaction_submit_element($tnode, $_POST, 'body', 'description');
-    } 
-
-*/
+    } */
 
     $donotupdate = False;
     if (module_exists('wikicompare_inherit_compared')) {
+      //Assign inherit compared specific fields.
       wikicompare_inherit_compared_fastaction_submit_element($node, $donotupdate, $_POST);
     }
     
+    //Feature specific fields.
     if ($type == 'feature') {
+
+      //Assign type field.
       if ($_POST['feature_type'] != NULL) {
         $node->wikicompare_type['und'][0]['value'] = $_POST['feature_type'];
       } else {
@@ -884,17 +918,19 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       } 
 
 */
-      
+
+      //Assign weight field.      
       if ($_POST['weight'] != NULL) {
         $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];        
       } else {
         $missing_field = True;
       }
       
-      
     }
     
+    //Implementation specific field.
     if ($type == 'implementation') {
+      //Assign support field.
       if ($donotupdate == False) {
           if ($_POST['support'] == 'true') {
             $node->wikicompare_support['und'][0]['value'] = 1;
@@ -904,29 +940,29 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
     }
 
-
     if (module_exists('wikicompare_needs')) {
+      //Assign need specific fields.
       wikicompare_needs_fastaction_submit_after($node, $type, $_POST);
     }
 
-
-
     if (module_exists('wikicompare_translation')) {
+      //Replace the node submitted by the tnode if it's the choice of the user.
       wikicompare_translation_fastaction_submit_after($node, $tnode, $_POST, $fastaction);
     } 
     
+    //Assign the revision message.
     $node->log = $_POST['revision'];
-    $node->comment = 2;
 
-
-
-
+    //If no required field are missing.
     if ($missing_field == FALSE) {
 
+      //We save the new revision.
       node_save($node);
   
+      //We auto publish the latest submitted revision of the node.
       _revisioning_publish_latest_revision($node);
 
+      //If the submitted node isn't in published state, then we ensure that his state is displayed in the table so the user can immmediately see the node.
       if ($type != 'implementation') {
         if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
           $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
@@ -935,20 +971,23 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
         }
       }
 
-      $commands[] = ajax_command_invoke('.fastaction_item:.displayed', 'removeClass', array('displayed'));
+      //Clean the table, it'll remove the fastaction form.
       $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
+      //Ensure we can reopen the form by clicking on the fastaction item.
+      $commands[] = ajax_command_invoke('.fastaction_item:.displayed', 'removeClass', array('displayed'));
 
+    //If a required field is missing.
     } else {
+      //Display an error message in error zone.
       $commands[] = ajax_command_html('#form_fastaction_error_zone', 'Some required fields are missing.');
     }
 
-
-    
+  //If the security test failed.    
   } else {
     $commands[] = ajax_command_html('#form_fastaction_' . $_POST['nid'], 'The node was modified by someone else before your confirmation');
   }
 
-
+  //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
 
@@ -958,18 +997,32 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
 
 
-
+/**
+ * Get the possible value of the state, by checking the user rights and the actual state.
+ *
+ * @param $nid
+ *   The nid of the node.
+ *
+ * @param $current_state
+ *   The actual state of the node.
+ *
+ * @return $options
+ *   Array containing the options available in the select field.
+ */
 function wikicompare_state_get_options($nid, $current_state) {
 
   $user = $GLOBALS['user'];
 
+  //Get the options in constant.
   $label_options = unserialize(WIKICOMPARE_STATE_OPTIONS);  
 
+  //Check if the user have power right on the node.
   $has_right = False;
   if (wikicompare_test_access_node('test', $nid, $user->uid)  || user_access('moderate wikicompare', $user) || $user->uid == 1) {
     $has_right = True;
   }
 
+  //Add item to options array, following the current state of the node.
   $options = array();
 
   if ($current_state == 'new') {
@@ -1005,8 +1058,8 @@ function wikicompare_state_get_options($nid, $current_state) {
 
   return $options;
 
-
 }
+
 
 
 
@@ -1014,7 +1067,7 @@ function wikicompare_state_get_options($nid, $current_state) {
 /**
  * Implements hook_revisioning_access_node().
  * Check _revisioning_access_node_revision and revisioning_user_node_access in revisioning.module for more information
- * We need to add :
+ * We need to add the hook in community module:
  * $tests = module_invoke_all('revisioning_access_node', $node_op, $revision_op, $node);
  * foreach ($tests as $test) {
  *   if ($test == False) {
@@ -1027,20 +1080,33 @@ function wikicompare_state_get_options($nid, $current_state) {
  *
  * It would be better to implement this hook in revisioning_user_node_access, but this function is poorly designed. It return during the whole function, we suggest to move only one return at the end and insert the hook just before.
  * Since auto-publish use directly revisioning_user_node_access, we can't alter his result. Therefore, we can't use the auto-publish feature for now because since everyone has the publish revision right, everyone will auto-publish even those who are not power users.
+ *
+ * @param $node_op
+ *   
+ * @param $revision_op
+ *   Indicate which operation the module is doing, and so the access right to check.
+ *
+ * @param $node
+ *   The object node we try to access.
+ * 
+ * @return $test or $users
+ *   Return either a boolean to give or not access, or an array with the users of the node.
  */ 
 function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
-
+  //Only the access right relative to publishing need to be check.
   if ($revision_op == 'publish revisions') {
 
     $uid = $GLOBALS['user']->uid;
 
     $test = False;
-    if (isset($node->nid)) { //Manage case when we create the node
+    //There is no problem when we create the node because there is no revision to publish yet.
+    if (isset($node->nid)) { 
+      //Call the generic function which will test the access to the node.
       $test = wikicompare_test_access_node('test', $node->nid, $uid);
     }
 
-
+    //Return the boolean to revisionning module.
     if (($test == False) && ($uid != 1)) {
       return False;
     } else {
@@ -1049,10 +1115,24 @@ function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
   }
 
-
-
 }
 
+
+
+/**
+ * Generic function which will test the power users of a node to either give access to publish right or return the users to the children of the node.
+ * 
+ * @param $action
+ *   The reason we call the function, either a boolean test or to get the users of the node.
+ * 
+ * @param $nid
+ *   The nid of the node.
+ * 
+ * @param $uid
+ *   The uid to test
+ *
+ * @return
+ */
 function wikicompare_test_access_node($action, $nid, $uid=NULL) {
 
     $test = False;
@@ -1062,23 +1142,27 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
       return False;
     }
 
+    //The moderator get instant access.
     if (user_access('moderate wikicompare')) {
       $test = True;
     }
 
-
+    //Get the users linked to the node from parents.
     $query = db_select('node', 'n');
     $query->addField('f', 'wikicompare_user_from_parent_ids_target_id', 'uid');
     $query->join('field_revision_wikicompare_user_from_parent_ids', 'f', 'n.vid = f.revision_id');
     $query->condition('n.nid', $nid);
     if ($action == 'test') {
+      //Test our user.
       $query->condition('f.wikicompare_user_from_parent_ids_target_id', $uid);
     }
     $result = $query->execute();
     foreach ($result as $record) {
       if ($action == 'test') {
+        //Grant access if the user is in the node.
         $test = True;
       } else {
+          //Return the users.
           $users[$record->uid] = array(
             'entity_type' => 'node',
             'bundle' => '',
@@ -1092,19 +1176,22 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
       }
     }
 
-
+    //Get the users directly linked in the node.
     $query = db_select('node', 'n');
     $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
     $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
     $query->condition('n.nid', $nid);
     if ($action == 'test') {
+      //Test our user.
       $query->condition('f.wikicompare_user_ids_target_id', $uid);
     }
     $result = $query->execute();
     foreach ($result as $record) {
       if ($action == 'test') {
+        //Grant access if the user is in the node.
         $test = True;
       } else {
+          //Return the users.
           $users[$record->uid] = array(
             'entity_type' => 'node',
             'bundle' => '',
@@ -1118,8 +1205,7 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
       }
     }
 
-  
-
+    //Return the result.
     if ($action == 'test') {
       return $test;
     } else {
@@ -1127,9 +1213,5 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
     }
 
 }
-
-
-
-
 
 ?>

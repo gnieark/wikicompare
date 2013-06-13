@@ -275,33 +275,58 @@ function wikicompare_translation_fastaction_specific_after(&$output, $type, $nod
 *
 *****************************************************************/
 
+
+
+/**
+ * If the user can fastedit the main language node or the translation node, then the fastedit item must be displayed.
+ * 
+ * @param $test
+ *   Boolean. Return True if the user must not be able to fastedit the item. Passed by reference.
+ *
+ * @param $node_array
+ *   Array containing the detail of the node.
+ */
 function wikicompare_translation_fastaction_items_test(&$test, $node_array) {
 
   global $language;
 
+  //If there is a tranalation node, and we are not creating a new main language node.
   if (($language->language != language_default('language')) && ($node_array['data']->nid != 0)) {
-
+    //Then the test is false only if the user has no right on the main language node AND the translation node.
     $test_translate = False;
     if (isset($node_array['no-edit-translate'])) {
       $test_translate = True;
     }
-
     if ($test && $test_translate) {
       $test = True;
     } else {
       $test = False;
     }
-
   }
 
 }
 
-function wikicompare_translation_fastaction_get_tnode(&$tnode, &$readonly_translation, $node) {
 
+
+/**
+ * Get tnode and test if we can fastedit it.
+ * 
+ * @param $tnode
+ *   Object containing the detail of the translation node. Passed by reference.
+ *
+ * @param $readonly_translation
+ *   Boolean indicated if we can fastedit the translation node. Passed by reference.
+ *
+ * @param $node
+ *   Object containing the detail of the main language node.
+ */
+function wikicompare_translation_fastaction_get_tnode(&$tnode, &$readonly_translation, $node) {
 
   global $language;
 
+  //If the language of the user isn't the main language node.
   if ($language->language != language_default('language')) {
+    //Then get the translation node of the user.
     $query = db_select('node', 'n');
     $query->addField('n', 'nid', 'nid');
     $query->addField('r', 'uid', 'uid');
@@ -311,53 +336,86 @@ function wikicompare_translation_fastaction_get_tnode(&$tnode, &$readonly_transl
     $result = $query->execute();
     foreach ($result as $record) {
       $tnode = node_load($record->nid);
+      //Test if the user can fastedit it.
       if ($GLOBALS['user']->uid != $record->uid) {
         $readonly_translation = True;
       }
     }
 
-    //If the translation node wasn't already created
+    //If the translation node wasn't already created.
     if (!isset($tnode->nid)) {
       $tnode = new stdClass;
       $tnode->title = '';
-
-
     }
-
   }
   
 }
 
 
+
+/**
+ * Initiate the tnode according to the information from javascript.
+ * 
+ * @param $tnode
+ *   Object containing the detail of the translation node. Passed by reference.
+ *
+ * @param $_POST
+ *   Variables from javascript.
+ *
+ * @param $fastaction
+ *   The fastaction (add or edit)
+ */
 function wikicompare_translation_fastaction_submit_init_tnode(&$tnode, $_POST, $fastaction) {
 
   global $language;
 
+  //Initiate the tnode only is the language of the user is not the main language.
   if ($language->language != language_default('language')) {
     $tnode->type = $_POST['type'];
     $tnode->uid = $GLOBALS['user']->uid;
     $tnode->language = $language->language;
+    //Indicate that the node which will be created is a translation of the main node.
     $tnode->translation_source = node_load($_POST['node_id']);
 
+    //Get information of the tnode from database if the node already exist.
     if ($fastaction == 'edit') {
-
       $query = db_select('node', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->condition('n.tnid', $_POST['node_id']);
       $query->condition('n.language', $language->language);
       $result = $query->execute();
-
       foreach ($result as $record) {
-
         $tnode = node_load($record->nid);
         $tnode->revision = 1;
       }
     }
   }
+
 }
 
+
+
+/**
+ * Add the translated fields in the node which will be submited.
+ * 
+ * @param $tnode
+ *   Object containing the detail of the translation node. Passed by reference.
+ *
+ * @param $_POST
+ *   Variables from javascript.
+ *
+ * @param $field_name
+ *   The name of the submitted field.
+ *
+ * @param $jscript_name
+ *   The name of the field in javascript, so we can retrieve the value in $_POST.
+ *
+ * @param $fastaction
+ *   The fastaction (add or edit)
+ */
 function wikicompare_translation_fastaction_submit_element(&$tnode, $_POST, $field_name, $jscript_name, $fastaction) {
 
+  //We add the translated fields only if the main language node is already created.
   if ($fastaction == 'edit') {
     global $language;
 
@@ -369,23 +427,43 @@ function wikicompare_translation_fastaction_submit_element(&$tnode, $_POST, $fie
         $value['und'][0]['value'] = $temp;
         $value['und'][0]['format'] = 'full_html';
       }
-    
       $tnode->$field_name = $value;
     }
+
   }
 
 }
 
+
+
+/**
+ * Replace the node submitted by the tnode if it's the choice of the user.
+ * 
+ * @param $node
+ *   Object containing the detail of the node which will be submitted. Passed by reference.
+ *
+ * @param $tnode
+ *   Object containing the detail of the translation node.
+ *
+ * @param $_POST
+ *   Variables from javascript.
+ *
+ * @param $fastaction
+ *   The fastaction (add or edit)
+ */
 function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST, $fastaction) {
 
+  //We work on the translated node only if the main language node is already created.
   if ($fastaction == 'edit') {
     global $language;
 
     if ($language->language != language_default('language')) {
+      //Replace the node by the tnode if we selected the tnode in the select field.
       if ($_POST['selectnode']) {
         $node = $tnode;
       }
     }
+
   }
 
 }

@@ -372,12 +372,23 @@ function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$for
 *
 *****************************************************************/
 
-
+/**
+ * Assign inherit compared specific fields.
+ *
+ * @param $node
+ *   The node which will be submitted. Passed by reference.
+ *
+ * @param $donotupdate
+ *   Boolean indicated if the support field must be updated later. Passed by reference.
+ *
+ * @param $_POST
+ *   Variables from javascript.
+ */
 function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotupdate,  $_POST) {
 
+  //Compared specific fields.
   if ($node->type == 'compared') {
     if ($_POST['inherit_id'] != 0) {
-
           $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $_POST['inherit_id'];
           $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
       
@@ -386,18 +397,16 @@ function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotu
     }
   }
 
-
+  //Implementation specific fields.
   if ($node->type == 'implementation') {
-
     if ($_POST['use_from_inherit'] == 'true') {
       $node->wikicompare_use_from_inherit['und'][0]['value'] = 1;
+      //If we use from the inherited implementation, then we do not update the support field of the node.
       $donotupdate = True;
     } else {
       $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
-
     }
   }
-
 
 }
 
