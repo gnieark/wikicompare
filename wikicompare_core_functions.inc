@@ -754,8 +754,8 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   }
 
   //If fastaction mode is triggered, then we need to recover all the revision of the nodes to test if the user is the author of all the revisions. Otherwise, he will not be able to fastedit the node.
-  if (isset($settings['fastaction_status'])) {
-    if ($settings['fastaction_status'] == 1) {
+  if (isset($settings['fastaction'])) {
+    if ($settings['fastaction'] == 1) {
       $query->addField('r', 'uid', 'uid');
       $query->leftjoin('node_revision', 'r', 'n.nid = r.nid');
     }
