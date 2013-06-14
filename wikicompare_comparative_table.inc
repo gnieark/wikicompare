@@ -66,7 +66,7 @@ function wikicompare_comparative_table() {
     ),
   );
   $output .= '<p><input id="compute_table_button" type="submit" link="compute_table_link" value="Compute table" class="button wikicompare_button"/>' . render($compute_link);
- 
+
   //Add the reset link.
   $reset_link = array(
     '#type' => 'link',
@@ -82,7 +82,7 @@ function wikicompare_comparative_table() {
 
   //Generate the main compared itemlist.
   $output .= wikicompare_table_render_main_itemlist('compared', 'Compareds', wikicompare_initialize_settings());
-  
+
   //Generate the comparative table.
   $output .= wikicompare_table_render_comparative_table(wikicompare_initialize_settings());
 
@@ -196,7 +196,7 @@ function wikicompare_table_render_comparative_table($settings, $features=array()
   if (!empty($feature_ids) && !empty($compared_ids)) {
     //Get the needed implementation thanks to feature and compared ids.
     $implementations = request_db('implementation', array('feature_ids' => $feature_ids, 'compared_ids' => $compared_ids), $settings);
-  } 
+  }
 
   //Build recursively the features data and compute them if necessary.
   $features_row_data = wikicompare_build_rows_data($features, $compared_ids, $implementations, $settings);
@@ -298,10 +298,10 @@ function wikicompare_table_render_rows($features_row_data, $settings) {
  *
  * @param $implementation
  *   The implementation to render.
- * 
+ *
  * @param feature
  *   The detail of the feature of the implementation.
- * 
+ *
  * @param $settings
  *   The context of the implementation.
  *
@@ -346,7 +346,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
 
   //Get the title of the item, which can be a translated title.
   $title = '<span class="' . $type . '_title_' . $node['data']->nid . '">' . $node['data']->title . '</span>';
-  
+
   //An implementation has no title, we simply display his percentage.
   if ($type == 'implementation') {
     $title = $node['data']->percent . '%';
@@ -387,7 +387,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
       $suffix .= '<br/> Type : <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
     }
     $suffix .= '<br/> State : <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
-  
+
   //In this case, we are in an itemlist.
   } else {
 
@@ -578,7 +578,7 @@ function wikicompare_build_recursive_data($type, $node_ids, $settings){
  *
  * @param $res
  *   The array we want to update.
- * 
+ *
  * @param $settings
  *   The context of the build.
  *
@@ -607,7 +607,7 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
 
     //Keep all ids and object outside of the tree, for other uses.
     $res['ids'][$nid] = $nid;
-    $res['data'][$nid] = $node; 
+    $res['data'][$nid] = $node;
 
     //If the node has parent, assign him in the parent array and tell the recursive function to find the parent next time. Else, set the node as in the root of the array.
     if ($node['data']->parent_id) {
@@ -625,7 +625,7 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
   } else {
     unset($res['parent_ressource']);
   }
-  
+
   return $res;
 
 }
@@ -637,7 +637,7 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
  *
  * @param $res
  *   The array we want to update.
- * 
+ *
  * @param $tree
  *   The data previously built.
  *
@@ -681,8 +681,8 @@ function wikicompare_build_fulltitle($res, $tree, $parent_title) {
  *   The nids of the compared nodes displayed in the table, so we can assign the implementations to each rows.
  *
  * @param $implementations
- *   The implementations details we previously extracted from database. 
- * 
+ *   The implementations details we previously extracted from database.
+ *
  * @param $settings
  *   The context of the build.
  *
@@ -836,7 +836,7 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
     //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
     $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
 
-  } 
+  }
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -900,7 +900,7 @@ function wikicompare_get_feature_children_response($method = 'ajax') {
     //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
     $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
 
-  } 
+  }
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -954,7 +954,7 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
 
       //If the table was computed, then we need to compute the implementation of the compared, with the displayed features.
       if ($settings['computed']) {
-        
+
         //We will use only the feature without childre for the computation.
         $features_without_children = array();
         foreach ($features as $fid => $feature) {
@@ -1248,7 +1248,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
       wikicompare_needs_table_prepare_compute($selected_feature_ids, $_POST);
     }
   }
-  
+
   $commands = array();
 
   if (module_exists('wikicompare_needs')) {
@@ -1267,7 +1267,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
     $settings['computed'] = 1;
     //Render and compute the table.
     $output = wikicompare_table_render_comparative_table($settings, $features['tree'], $compared_columns_ids);
- 
+
   //Else, just reset the table.
   } else {
     $output = wikicompare_table_render_comparative_table($settings, array(), $compared_columns_ids);
@@ -1333,7 +1333,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     foreach ($_POST[$type . '_ids'] as $nid => $node) {
       $node_ids[$nid] = $nid;
     }
-  
+
     //Get the details from database of all the nodes displayed in the table.
     $nodes = array();
     if (!empty($node_ids)) {
@@ -1405,7 +1405,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
       if (!in_array($nid, $in_table_node_ids)) {
         $reset = True;
       }
-    } 
+    }
 
     //We get from database all the children of the parent which are currently displaying his children. If one children is missing on the table, then we force the concerned parent to hide his children.
     if (!empty($_POST[$type . '_displayed_ids'])) {
