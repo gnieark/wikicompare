@@ -1,0 +1,11 @@
+TODO : The goal of this module is to be able to select a compared as element of another compared.
+
+For exemple, let's take ERP exemple.
+
+The wikicompare on ERP may have the feature "Programmatic language", which is of type "inherit tree".
+
+We may have a specific compared tree, which contain the compared "Python", "PHP", etc... with some value in the children of the feature "Programmatic language".
+
+Then let's take the ERP OpenERP, in the implementation OpenERP - Programmatic language, we can specify a compared, for exemple Python. Then in this case, the percent of OpenERP - Programmatic language will be the percent of Python - Programmatic language.
+
+What is really important with this idea, is the fast we should be able to inherit compared of another wikicompare. Then for exemple we can have a wikicompare on the ERP which inherit another wikicompare on Programmatic language for a part of his table. This will encourage collaboration between wikicompare and favorise the creation of "meta" wikicompares.

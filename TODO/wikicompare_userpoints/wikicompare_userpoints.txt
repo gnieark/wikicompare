@@ -1,0 +1,5 @@
+Goal : Use the userpoints system of drupal to rewars the most contributive users.
+
+For exemple let's take a user on a wikicompare ERP. If he greatly contribute, he'll have more point and if this wikicompare gains some notoriety, these userpoints may became quite interesting to put in a CV.
+
+Also, it can become some way to control the vote system. The users with more userpoints will have more points.
