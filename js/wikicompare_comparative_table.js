@@ -173,6 +173,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
+    /*
+     * Launch a cleaning ajax call when we check a state checkbox, to reset the tables if necessary.
+     */
+    $('.state_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
+      //Set the onclick event
+      $(this).click(function() {
+        $('#make_cleaning_link').click(); 
+      });
+    });
+
+
+
 
 
     /*
@@ -951,7 +963,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 /*
-5/24
+6/24
 21 fichiers
 faire les TODOS
 Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur le serveur.

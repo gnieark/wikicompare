@@ -271,147 +271,136 @@ function wikicompare_needs_fastaction_submit_after(&$node, $type, $_POST) {
 *
 *****************************************************************/
 
-function wikicompare_needs_comparative_table_main_output(&$output) {
-
-
-  $output .= wikicompare_table_render_main_itemlist('need', 'Needs', wikicompare_initialize_settings()); //wikicompare_needs_table_render_need();
-
-}
 /*
-function wikicompare_needs_table_render_need($settings=array()) {
-
-  $db_settings = array('can_be_translated' => 1);
-  if (isset($settings['states'])) {
-    $db_settings['states'] = $settings['states'];
-  }
-
-  //Find all the compared on the first level of the tree
-  $needs = request_db('need', $db_settings);
-
-  
-  $itemlist_settings = wikicompare_initialize_settings();
-
-  if (isset($settings['fastaction'])) {
-    $itemlist_settings['fastaction'] = $settings['fastaction'];
-  }
-
-  //Building the data for the item list
-  $item_list_data = wikicompare_build_itemlist('need', $needs, 0, $itemlist_settings);
-
-  $output ="<div id='comparative_table_main_need'>";
-  //Render the item list
-  $output .= theme_item_list(array('items' => $item_list_data, 'title' => 'Need', 'type' => 'ul', 'attributes' => array()));
-  $output .= '<p><a id="add_need_link" href="?q=node/add/need">Add</a><span id="add_need_link_fastaction">';
- 
-  if ($itemlist_settings['fastaction']) {
-    $need = array(
-      'data' => new stdClass(),
-    );
-    $need['data']->nid = 0;
-    $output .= add_fastaction_items('need' , $need);
-  }
-  $output .= '</span></p>';
-  $output .= '<div id="need_table_children_0"></div>';
-  $output .="</div>";
-
-  return $output;
-
+ * Generate the main need itemlist in the wikicompare table.
+ *
+ * @param $output
+ *   The html code which will be send to the user. Passed by reference.
+ */
+function wikicompare_needs_comparative_table_main_output(&$output) {
+  //Call the generic function which generate the main itemlist.
+  $output .= wikicompare_table_render_main_itemlist('need', 'Needs', wikicompare_initialize_settings());
 }
-*/
 
+
+
+/*
+ * Auto check the already selected needs in main table.
+ *
+ * @param $nid
+ *   The nid of the tested node.
+ *
+ * @param $nodes
+ *   The nodes array which contains the data which will be used in the render itemlist function.
+ *
+ * @param $_POST
+ *   The data coming from the javascript.
+ */
 function wikicompare_needs_table_prepare_itemlist($nid, &$nodes, $_POST) {
 
   if (!empty($_POST['selected_need_ids'])) {
-/*
-    $selected_need_ids = array();
-    foreach ($_POST['selected_need_ids'] as $selected_need_id) {
-      $selected_need_ids[$selected_need_id] = $selected_need_id;
-    }
-*/
+    //If the node is in the global variable of the javascript, we mark it to be checked.
     if (in_array($nid, $_POST['selected_need_ids'])) {
       $nodes[$nid]['data']->displayed = True;
     }
-
   }
 
 }
 
+
+
+/*
+ * Add the features of the needs to the features which will be used to compute the comparative table.
+ *
+ * @param $selected_feature_ids
+ *   Array containing the features which will be used to compute the comparative table.
+ *
+ * @param $_POST
+ *   The data coming from the javascript.
+ */
 function wikicompare_needs_table_prepare_compute(&$selected_feature_ids, $_POST) {
 
   if (!empty($_POST['selected_need_ids'])) {
-
-
-    $selected_feature_ids += recover_features($_POST['selected_need_ids']);
-/*
-    $fids = recover_features($_POST['selected_need_ids']);
-
-    foreach ($feature_ids as $feature_id) {
-      $selected_feature_ids[$feature_id] = $feature_id;
-    }
-*/
-
+    //Call the recursive function to add the features. The function must be recursive because we only have the nids of the needs at the base of the tree, and we must also include the features of their parents.
+    $selected_feature_ids += wikicompare_needs_recover_features($_POST['selected_need_ids']);
   }
 
 }
 
 
-function recover_features($need_ids) {
-
-
 
 /*
-  $query = db_select('cache_need', 'n');
-  $query->addField('n', 'nid', 'nid');
-  $query->addField('n', 'parent_id', 'parent_id');
-  $query->addField('f', 'feature_nid', 'feature_id');
-  $query->leftjoin('cache_need_feature_rel', 'f', 'n.nid = f.need_nid');
-  $query->condition('n.nid', $need_ids, 'in');
-  $result = $query->execute();  
-*/
+ * Extract features from needs.
+ *
+ * @param $need_ids
+ *   The ids of the needs we want to get the features.
+ * 
+ * @return $feature_ids
+ *   The ids of the feature we will use for the computation.
+ */
+function wikicompare_needs_recover_features($need_ids) {
+
+  //Get the details of the selected needs.
   $needs = request_db('need', array('nids' => $need_ids), array());
 
 
   $feature_ids = array();
   $parent_ids = array();
   foreach ($needs as $need) {
-
-
+    //Get features.
+    foreach ($need['need_features'] as $fid) {
+      $feature_ids[$fid] = $fid;
+    }
+    //Get parent for the recursive call.
     if ($need['data']->parent_id != NULL) {
       $parent_ids[$need['data']->parent_id] = $need['data']->parent_id;
     }
-
-    //Prevent sending a null value if the need has no feature. We can't do it directly in the sql query through a where clause because we need to get the parent even if the node has no feature
-    foreach ($need['need_features'] as $fid) {
-//      if ($need['data']->feature_id != NULL) {
-        $feature_ids[$fid] = $fid;
-//      }
-    }
   }
-//TODO Block if parent is disactivated, probably best block the checkbox for children in get_item_list function
+
   if (!empty($parent_ids)) {
+    //Recursive call.
     $feature_ids += recover_features($parent_ids);
-/*
-    $feature_from_parent_ids = recover_features($parent_ids);
-
-
-    foreach ($feature_from_parent_ids as $feature_id) {
-      $feature_ids[$feature_id] = $feature_id;
-    }
-*/
   }
-
-
 
   return $feature_ids;
 
 }
 
-function wikicompare_needs_table_send_compute(&$commands, $settings) {
 
+
+/*
+ * Add commmand to reset the need part of the table.
+ *
+ * @param $commands
+ *   The commands which will be send to the javascript.
+ * 
+ * @param $settings
+ *   The context of the ajax call.
+ */
+function wikicompare_needs_table_send_compute(&$commands, $settings) {
+  
+  //Command to reset table.
   $commands[] = ajax_command_replace('#comparative_table_main_need', wikicompare_table_render_main_itemlist('need', 'Needs', $settings));
 
 }
 
+
+
+/*
+ * Add commmand to reset the need part of the table.
+ *
+ * @param $commands
+ *   The commands which will be send to the javascript.
+ *
+ * @param $type
+ *   The type of the node
+ *
+ * @param $reset
+ *   If we wan to reset the need
+ * 
+ * @param $settings
+ *   The context of the ajax call.
+ */
 function wikicompare_needs_table_clean_reset(&$commands, $type, $reset, $settings) {
 
   if ($type == 'need' && $reset == True) {
@@ -421,17 +410,8 @@ function wikicompare_needs_table_clean_reset(&$commands, $type, $reset, $setting
 }
 
 
-/*
-function wikicompare_needs_wikicompare_comparative_table_fastaction_parent(&$parent_id, $type, $node) {
 
-  if ($type == 'need') {
-    if (isset($node->wikicompare_parent_id['und'])) {
-      $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
-    }
-  }
 
-}
-*/
 
 /*****************************************************************
 *
