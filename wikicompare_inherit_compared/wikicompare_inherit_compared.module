@@ -1,10 +1,25 @@
 <?php
 
+/**
+ * @file
+ * Define the function relative to the inherit compared.
+ */
 
+
+
+/*****************************************************************
+*
+*    MODULE
+*
+*****************************************************************/
+
+/**
+ * Implements hook_menu().
+ * Add an ajax callback.
+ */
 function wikicompare_inherit_compared_menu() {
 
   $items = array();
-
 
   $items['compute_inherit_callback'] = array(
     'page callback' => 'compute_inherit_response',
@@ -20,152 +35,213 @@ function wikicompare_inherit_compared_menu() {
 }
 
 
+
+/**
+ * Ajax callback function called by javascript.
+ *
+ * @param $method
+ *   Indicate if the call was made with javascript or if it's a simple browser call.
+ *
+ * @param $_POST
+ *   The variables send by the javascript.
+ *
+ * @return $page
+ *   Array containing the instructions for the javascript.
+ */
 function compute_inherit_response($method = 'ajax') {
 
-  if ($method == 'ajax') {
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($method != 'ajax') {
+    $output = NOJS_MESSAGE;
+    return $output;
+  }
 
+  $commands = array();
 
+  if ($_POST['use_from_inherit'] == 'true') {
 
-    $commands = array();
+    $inherit_id = NULL;
+    $support = 0;
 
+    $query = db_select('cache_implementation', 'n');
+    $query->addField('c', 'inherit_compared_id', 'inherit_id');
+    $query->addField('ci', 'support', 'support');
+    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND ci.feature_id = n.feature_id');
+    $query->condition('n.nid', $_POST['node_id']);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $inherit_id = $record->inherit_id;
+      $support = $record->support;
+    }
 
-    if ($_POST['use_from_inherit'] == 'true') {
-
-
-      $inherit_id = NULL;
-      $support = 0;
-
-      $query = db_select('cache_implementation', 'n');
-      $query->addField('c', 'inherit_compared_id', 'inherit_id');
-      $query->addField('ci', 'support', 'support');
-      $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-      $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND ci.feature_id = n.feature_id');
-      $query->condition('n.nid', $_POST['node_id']);
-      $result = $query->execute();
-      foreach ($result as $record) {
-        $inherit_id = $record->inherit_id;
-        $support = $record->support;
-      }
-
-      if ($inherit_id != NULL) {
-        if ($support) {
-          $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', 'checked'));
-        } else {
-          $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('checked'));
-        }
-        $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('disabled', 'disabled'));
-      }
-
-    } else {
-      $query = db_select('cache_implementation', 'n');
-      $query->addField('n', 'support', 'support');
-      $query->condition('n.nid', $_POST['node_id']);
-      $result = $query->execute();
-      foreach ($result as $record) {
-        $support = $record->support;
-      }
-
+    if ($inherit_id != NULL) {
       if ($support) {
         $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', 'checked'));
       } else {
         $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('checked'));
       }
-      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('disabled'));
-
+      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('disabled', 'disabled'));
     }
-    
 
-    $page = array('#type' => 'ajax', '#commands' => $commands);
-    return $page;
-
-  //If javascript isn't enabled, we redirect to an error page.
   } else {
-    $output = t("You need to activate javascript to use the comparative table."); //TO DO put this message in constant
-    return $output;
+    $query = db_select('cache_implementation', 'n');
+    $query->addField('n', 'support', 'support');
+    $query->condition('n.nid', $_POST['node_id']);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $support = $record->support;
+    }
+
+    if ($support) {
+      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'attr', array('checked', 'checked'));
+    } else {
+      $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('checked'));
+    }
+    $commands[] = ajax_command_invoke('#edit-wikicompare-support-und', 'removeAttr', array('disabled'));
+
   }
 
+  $page = array('#type' => 'ajax', '#commands' => $commands);
+  return $page;
 
 }
+
+
+
 
 
 /*****************************************************************
 *
-*    FORM
+*    CORE_FUNCTIONS
 *
 *****************************************************************/
 
 /**
- * Add the fields relative to inherit compared in compared node.
- * 
- * @param $form
- *   The form array which will be used by Drupal to build the node form. Passed by reference.
+ * Update the main query of wikicompare_update_compare_tree to add some fields we will need later.
  *
- * @param $output
- *   The HTML code which will be inserted. Passed by reference
- *
- * @param $form_type
- *   Flag defining if the function is called to build a form node of a fastaction form.
- *
- * @param $type
- *   The type of the consulted node.
- * 
- * @param $node
- *   Object containing the detail of the node.
- *
- * @param $readonly
- *   Flag indicated if the user can modify the node.
+ * @param $query
+ *   The query to update. Passed by reference.
  */
-function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$output, $form_type, $type, $node, $nid, $readonly) {
+function wikicompare_inherit_compared_update_main_query(&$query) {
 
-  //Compared specific field.
-  if ($type == 'compared') {
+  $query->addField('fs', 'use_from_inherit', 'use_from_inherit');
+  //Recover the percent value of the inherited implementation
+  $query->addField('nc', 'inherit_compared_id', 'inheriting_compared_id');
+  $query->addField('ncinc', 'nid', 'inheriting_implementation_nid');
+  $query->addField('ncincctc', 'nid', 'inheriting_implementation_cache_nid');
+  $query->addField('ncincctc', 'percent', 'inheriting_implementation_cache_percent');
+  $query->addField('ncincctc', 'css_class', 'inheriting_implementation_cache_css_class');
 
-    $inherit_id = 0;
-    //Default message.
-    $title = 'No inherited compared';
-    //Get inherited node detail.
-    if (isset($node->wikicompare_inherit_compared_id['und'])) {
-      $inherit_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
-      //We use wikicompare_build_recursive_data() to build the full title of the inherited node.
-      $res = wikicompare_build_recursive_data('compared', array($inherit_id), wikicompare_initialize_settings());
-      $title = $res['data'][$inherit_id]['data']->fulltitle;
+  $query->leftjoin('cache_implementation', 'ncinc', 'nc.inherit_compared_id = ncinc.compared_id'); //Get implementation of the inherit compared node
+  $query->leftjoin('cache_comparative_table', 'ncincctc', 'ncinc.nid = ncincctc.nid');  //Get the percent of the inherited implementation
+
+  $query->where('ncinc.feature_id = fs.feature_id OR nc.inherit_compared_id IS NULL'); //We keep only the implementation of the inherit compared node which has the same feature than the implementation.
+
+}
+
+
+
+/**
+ * Prepare the variables before the node computation.
+ * Essentially check if we have the percent of the inherited implementation and recover the children through inherit we will update after the computation.
+ *
+ * @param $nodes
+ *   The object returned by the initial sql request, that we need to complete. Passed by reference.
+ *
+ * @param type
+ *   The type of the nids update by update_compare_tree function.
+ *
+ * @param $nids
+ *   The nids of the nodes to update.
+ */
+function wikicompare_inherit_compared_update_comparative_table_preparation(&$nodes, $type, $nids) {
+
+    //Mark to update the inherited implementation without cache percent
+    $to_update = array();
+    foreach($nodes as $node) {
+      if ($node->inheriting_compared_id) {
+        if (!$node->inheriting_implementation_cache_nid) {
+          $to_update[$node->inheriting_implementation_nid] = $node->inheriting_implementation_nid;
+        }
+      }
     }
 
-    //Link which will open a popin where we can select the inherited node.
-    $select_inherit_link = array(
-      'text' => 'Select inherited compared',
-      'title' => 'Select inherited compared',
-      'selector' => 'dialog-content',
-      'path' => 'wikicompare_get_dialog_callback/selectdialog/compared/wikicompare-inherit-compared-id/' . $nid,
-    );
-    //Link which will reset the parent.
-    $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $type)));
-
-    //Add an array which will be generated by drupal with the items relatives to the inherited.
-    if ($form_type == 'form') {
-      //Container which will contain the inherited name.
-      $form['container_selected_inherit'] = array(
-        'title' => array('#markup' => $title),
-        '#type' => 'container',
-        '#id' => 'container-wikicompare-inherit-compared-id',
-        '#weight' => -3,
-         //We add the link after the container.
-        '#suffix' => '<p>' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>'
-      );
-      //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the inherited node.
-      $form['wikicompare_inherit_compared_id']['#attributes']['style'] = 'display:none;';
+    //Recover the missing cache percent
+    if (!empty($to_update)) {
+      //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop. There is a security in the interface (in select popin) but not in this update code.
+      $res = wikicompare_update_compare_tree('implementation', $to_update);
+      foreach($nodes as $node) {
+        if (isset($res[$node->inheriting_implementation_nid])) {
+          $node->inheriting_implementation_cache_nid = $node->inheriting_implementation_nid;
+          $node->inheriting_implementation_cache_percent = $res[$node->inheriting_implementation_nid]['percent'];
+          $node->inheriting_implementation_cache_css_class = $res[$node->inheriting_implementation_nid]['css_class'];
+        }
+      }
     }
 
-    //Add the HTML code relative to the inherited node.
-    if ($form_type == 'fastaction') {
-      //Container with the inherited name.
-      $output .= '<p><span id="container-wikicompare-inherit-compared-id">' . $title . '</span>';
-      if ($readonly != True) {
-        //Span with the inherit_id, which will be recovered by the submit function and updated by javascript. Followed by the link.
-        $output .= '<span id="wikicompare-inherit-compared-id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
-      }      
+    //Recover children_through_inherit, so we can update them at the end of wikicompare_update_compare_tree
+    $res_search_inherit_compared_children = '';
+    foreach($nodes as $node) {
+      if ($res_search_inherit_compared_children) {
+        $res_search_inherit_compared_children = $res_search_inherit_compared_children . ',';
+      }
+      $res_search_inherit_compared_children = $res_search_inherit_compared_children . "('" . $node->fid . "','" . $node->cid . "')";
     }
 
+    $through_inherit_childs = array();
+    if (($type == 'compared' && !empty($nids)) || $res_search_inherit_compared_children) {
+      $query = db_select('cache_implementation', 'i');
+      $query->addField('i', 'nid', 'nid');
+      $query->addField('i', 'feature_id', 'fid');
+      $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
+      $query->join('cache_feature', 'nf', 'i.feature_id = nf.nid');
+      $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
+      //Only the implementation which has no children on both axis will be updated because only them can have their percent updated by inheritance
+      $query->condition('nf.has_children', 0);
+      $query->condition('nc.has_children', 0);
+
+      switch ($type) {
+        case "compared":
+          $query->condition('nc.inherit_compared_id', $nids, 'IN');
+          break;
+        default:
+          $query->where('(i.feature_id, nc.inherit_compared_id) IN (' . $res_search_inherit_compared_children . ')');
+          break;
+      }
+      $result = $query->execute();
+
+      foreach($result as $record) {
+        //We assign the children implementation in a array with fid and cid as key so their parents can recover them with fid and cid key
+        $through_inherit_childs[$record->fid][$record->inherit_compared_id][$record->nid] = $record;
+      }
+    }
+
+    //Assign children to each node to compute.
+    foreach($nodes as $node) {
+      $node->through_inherit_childs = array();
+      if (isset($through_inherit_childs[$node->fid][$node->cid])) {
+        //Assign the children thanks to fid and cid key
+        $node->through_inherit_childs = $through_inherit_childs[$node->fid][$node->cid];
+      }
+    }
+
+}
+
+
+
+/**
+ * Return the data computed according to the inherited implementation.
+ *
+ * @param $node
+ *   The node to compute. Passed by reference.
+ */
+function wikicompare_inherit_compared_from_other_support(&$node) {
+
+  //Work only if the compared of the implementation inherit a node and we didn't override the information in the implementation.
+  if ($node->inheriting_compared_id && $node->use_from_inherit) {
+    $node->percent = $node->inheriting_implementation_cache_percent;
+    $node->css_class = $node->inheriting_implementation_cache_css_class;
   }
 
 }
@@ -173,124 +249,46 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
 
 
 /**
- * Add the fields relative to inherit compared in implementation node.
- * 
- * @param $form
- *   The form array which will be used by Drupal to build the node form. Passed by reference.
+ * Add in the implementation to update the implementation which inherit the current implementation.
  *
- * @param $output
- *   The HTML code which will be inserted. Passed by reference
+ * @param $to_update
+ *   The array containing the implementation which will be updated by the recursive function. Passed by reference.
  *
- * @param $readonly
- *   Flag indicated if the user can modify the node. Passed by reference.
+ * @param $node
+ *   The node we are currently checking.
+ */
+function wikicompare_inherit_compared_update_comparative_table_post(&$to_update, $node) {
+
+  if (!empty($node->through_inherit_childs)) {
+    //Add all inheriting children in the nodes to update list.
+    foreach($node->through_inherit_childs as $child) {
+      $to_update[$child->nid] = $child->nid;
+    }
+  }
+
+}
+
+
+
+/**
+ * Search for the inhehrit compared specific fields in the flush tables function.
  *
- * @param $test
-*   Test if the support field must be checked by default. Passed by reference.
- *
- * @param $form_type
- *   Flag defining if the function is called to build a form node of a fastaction form.
+ * @param $query
+ *   The query to update. Passed by reference.
  *
  * @param $type
- *   The type of the consulted node.
- * 
- * @param $node
- *   Object containing the detail of the node.
- *
- * @param $fastaction
- *   The fastaction (add or edit)
+ *   The type of the nodes we are searching for.
  */
-function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, &$readonly, &$test, $form_type, $type, $node, $fastaction) {
+function wikicompare_inherit_compared_flush_select(&$query, $type) {
+
+  if ($type == 'compared') {
+    $query->addField('nic', 'wikicompare_inherit_compared_id_target_id', 'inherit_compared_id');
+    $query->leftjoin('field_revision_wikicompare_inherit_compared_id', 'nic', 'n.vid = nic.revision_id');
+  }
 
   if ($type == 'implementation') {
-    
-    //Get details of the inherited implementation.
-    $query = db_select('cache_implementation', 'n');
-    $query->addField('c', 'inherit_compared_id', 'inherit_id');
-    $query->addField('c', 'has_children', 'compared_has_children');
-    $query->addField('f', 'has_children', 'feature_has_children');
-    $query->addField('ci', 'support', 'inherit_support');
-    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
-    $query->condition('n.nid', $node->nid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $res = $record;
-    }
-
-    if ($form_type == 'form') {
-
-      //If there is no inherited compared or if we are not at the root of the tree, we don't need the use_from_inherit field.
-      if ($res->inherit_id == NULL || $res->compared_has_children || $res->feature_has_children) {
-        hide($form['wikicompare_use_from_inherit']);
-      } else {
-
-        //Hidden link which will refresh in ajax the data when we click on use_from_inherit checkbox.
-        $reset_link = array(
-          '#type' => 'link',
-          '#title' => 'compute inherit',
-          '#href' => 'compute_inherit_callback/nojs',
-          '#id' => 'compute_inherit_link_' . $node-> nid,
-          '#attributes' => array(
-            'class' => array('compute_inherit_link'),
-            'style' => 'display:none',
-          ),
-        );
-        //Add the link after the Drupal field.
-        $form['wikicompare_use_from_inherit']['und']['#suffix'] = render($reset_link);
-        //If use_from_inherit is checked at the generation of the form, then the value of support field if the value of the inherited implementation.
-        if ($form['wikicompare_use_from_inherit']['und']['#default_value'] == 1) {
-          $form['wikicompare_support']['und']['#default_value'] = $res->inherit_support;
-          $form['wikicompare_support']['und']['#disabled'] = True;
-        }
-      }
-
-      //Move use_from_inherit before support field.
-      $form['wikicompare_use_from_inherit']['#weight'] = -2;
-
-    }
-
-    if ($form_type == 'fastaction') {
-
-      if ($res->inherit_id != NULL) {
-        //I wasn't able to use the renderable array, so I coded directly in html.
-        $output .= '<input class="form_implementation_fastaction_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
-
-        //Recover value from database.
-        if ($fastaction == 'edit') {
-          if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
-            $output .= ' checked="checked"';
-            $test = True;
-          }
-        }
-
-        //If the user do not have rights on the node.
-        if ($readonly == True) {
-          $output .= ' disabled="disabled"';
-        }
-
-        //Hidden link which will refresh in ajax the data when we click on use_from_inherit checkbox.
-        $reset_link = array(
-          '#type' => 'link',
-          '#title' => 'compute inherit',
-          '#href' => 'compute_inherit_callback/nojs',
-          '#id' => 'compute_inherit_link_' . $node-> nid,
-          '#attributes' => array(
-            'class' => array('compute_inherit_link'),
-            'style' => 'display:none',
-          ),
-        );
-
-        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_implementation_fastaction_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
-
-        //Disable the support field located after this one
-        if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
-          $readonly = True;
-        }
-      }
-
-    }
-
+    $query->addField('nu', 'wikicompare_use_from_inherit_value', 'use_from_inherit');
+    $query->leftjoin('field_revision_wikicompare_use_from_inherit', 'nu', 'n.vid = nu.revision_id');
   }
 
 }
@@ -298,117 +296,52 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
 
 /**
- * Test if the support field must be checked.
- * 
- * @param $test_support
- *   If this test is True, the support field will be checked. Passed by reference.
+ * Prepare the inherit compared specific fields in the flush tables function.
  *
- * @param $test
- *   Boolean indicated that the value of the inherited implementation must be used.
- * 
- * @param $node
- *   Object containing the detail of the node.
+ * @param $to_insert
+ *   Array containing the data of the record which will be inserted. Passed by reference.
+ *
+ * @param $record
+ *   The record we are currently checking
+ *
+ * @param $type
+ *   The type of the node
  */
-function wikicompare_inherit_compared_test_form_implementation(&$test_support, $test, $node) {
+function wikicompare_inherit_compared_flush_cache(&$to_insert, $record, $type) {
 
-  //If we have to use the value from inherited implementation.
-  if ($test == True) {
-
-    //Get inherited implementation details .
-    $query = db_select('cache_implementation', 'n');
-    $query->addField('c', 'inherit_compared_id', 'inherit_id');
-    $query->addField('c', 'has_children', 'compared_has_children');
-    $query->addField('f', 'has_children', 'feature_has_children');
-    $query->addField('ci', 'support', 'inherit_support');
-    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
-    $query->condition('n.nid', $node->nid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      if ($record->inherit_support) {
-        $test_support = True;
-      //The else because in any case, the inherited override the previous value
-      } else { 
-        $test_support = False;
-      }
-    }
-
+  if ($type == 'compared') {
+    $to_insert[$record->nid]['inherit_compared_id'] = $record->inherit_compared_id;
   }
 
+  if ($type == 'implementation') {
+    $to_insert[$record->nid]['use_from_inherit'] = $record->use_from_inherit;
+  }
 }
 
 
 
 /**
- * Remove important inherit compared fields from translated node.
+ * Add inherit compared specific fields in db request.
  *
- * @param $form
- *   The form array which will be used by Drupal to build the node form. Passed by reference.
+ * @param $query
+ *   The query to update. Passed by reference.
  *
- * @param $form_state
- *   Array containing in-depth information of the node and form settings. Passed by reference.
- *
- * @param $node
- *   Object containing the detail of the node.
+ * @param $type
+ *   The type of the request.
  */
-function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$form_state, $node) {
+function  wikicompare_inherit_compared_request_db(&$query, $type) {
 
-  if (isset($form['wikicompare_inherit_compared_id'])) {
-    $form['container_selected_inherit'] = $form['container_selected_inherit']['title'];
-    unset($form['wikicompare_inherit_compared_id']);
-    unset($form_state['node']->wikicompare_inherit_compared_id);
+  if ($type == 'compared') {
+    $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
+  }
+
+  if ($type == 'implementation') {
+    $query->addField('n', 'use_from_inherit', 'use_from_inherit');
   }
 
 }
 
 
-
-
-
-/*****************************************************************
-*
-*    FASTACTION
-*
-*****************************************************************/
-
-/**
- * Assign inherit compared specific fields.
- *
- * @param $node
- *   The node which will be submitted. Passed by reference.
- *
- * @param $donotupdate
- *   Boolean indicated if the support field must be updated later. Passed by reference.
- *
- * @param $_POST
- *   Variables from javascript.
- */
-function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotupdate,  $_POST) {
-
-  //Compared specific fields.
-  if ($node->type == 'compared') {
-    if ($_POST['inherit_id'] != 0) {
-          $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $_POST['inherit_id'];
-          $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
-      
-    } else {
-          $node->wikicompare_inherit_compared_id['und'] = NULL;
-    }
-  }
-
-  //Implementation specific fields.
-  if ($node->type == 'implementation') {
-    if ($_POST['use_from_inherit'] == 'true') {
-      $node->wikicompare_use_from_inherit['und'][0]['value'] = 1;
-      //If we use from the inherited implementation, then we do not update the support field of the node.
-      $donotupdate = True;
-    } else {
-      $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
-    }
-  }
-
-}
 
 
 
@@ -570,7 +503,7 @@ function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revi
       $current_node_inherit = $current_node->wikicompare_inherit_compared_id['und'][0]['target_id'];
     }
 
-    //Trigger a tree update on the updated node because the value of his implementations may have changed.  
+    //Trigger a tree update on the updated node because the value of his implementations may have changed.
     if ($node_revision_inherit != $current_node_inherit) {
       $to_update[$node_revision->nid] = $node_revision->nid;
     }
@@ -600,6 +533,8 @@ function wikicompare_inherit_compared_preupdate_implementation(&$to_update, $nod
 
 }
 
+
+
 /**
  * Add the inherit compared module specific field in the data which will update the wikicompare cache.
  *
@@ -628,137 +563,254 @@ function wikicompare_inherit_compared_cache_update_fields(&$fields, $node_revisi
 
 
 
+
+
 /*****************************************************************
 *
-*    CORE_FUNCTIONS
+*    FORM
 *
 *****************************************************************/
 
 /**
- * Update the main query of wikicompare_update_compare_tree to add some fields we will need later.
+ * Add the fields relative to inherit compared in compared node.
  *
- * @param $query
- *   The query to update. Passed by reference.
+ * @param $form
+ *   The form array which will be used by Drupal to build the node form. Passed by reference.
+ *
+ * @param $output
+ *   The HTML code which will be inserted. Passed by reference
+ *
+ * @param $form_type
+ *   Flag defining if the function is called to build a form node of a fastaction form.
+ *
+ * @param $type
+ *   The type of the consulted node.
+ *
+ * @param $node
+ *   Object containing the detail of the node.
+ *
+ * @param $readonly
+ *   Flag indicated if the user can modify the node.
  */
-function wikicompare_inherit_compared_update_main_query(&$query) {
+function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$output, $form_type, $type, $node, $nid, $readonly) {
 
-  $query->addField('fs', 'use_from_inherit', 'use_from_inherit');
-  //Recover the percent value of the inherited implementation
-  $query->addField('nc', 'inherit_compared_id', 'inheriting_compared_id');
-  $query->addField('ncinc', 'nid', 'inheriting_implementation_nid');
-  $query->addField('ncincctc', 'nid', 'inheriting_implementation_cache_nid');
-  $query->addField('ncincctc', 'percent', 'inheriting_implementation_cache_percent');
-  $query->addField('ncincctc', 'css_class', 'inheriting_implementation_cache_css_class');
+  //Compared specific field.
+  if ($type == 'compared') {
 
-  $query->leftjoin('cache_implementation', 'ncinc', 'nc.inherit_compared_id = ncinc.compared_id'); //Get implementation of the inherit compared node
-  $query->leftjoin('cache_comparative_table', 'ncincctc', 'ncinc.nid = ncincctc.nid');  //Get the percent of the inherited implementation
+    $inherit_id = 0;
+    //Default message.
+    $title = 'No inherited compared';
+    //Get inherited node detail.
+    if (isset($node->wikicompare_inherit_compared_id['und'])) {
+      $inherit_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
+      //We use wikicompare_build_recursive_data() to build the full title of the inherited node.
+      $res = wikicompare_build_recursive_data('compared', array($inherit_id), wikicompare_initialize_settings());
+      $title = $res['data'][$inherit_id]['data']->fulltitle;
+    }
 
-  $query->where('ncinc.feature_id = fs.feature_id OR nc.inherit_compared_id IS NULL'); //We keep only the implementation of the inherit compared node which has the same feature than the implementation.
+    //Link which will open a popin where we can select the inherited node.
+    $select_inherit_link = array(
+      'text' => 'Select inherited compared',
+      'title' => 'Select inherited compared',
+      'selector' => 'dialog-content',
+      'path' => 'wikicompare_get_dialog_callback/selectdialog/compared/wikicompare-inherit-compared-id/' . $nid,
+    );
+    //Link which will reset the parent.
+    $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $type)));
+
+    //Add an array which will be generated by drupal with the items relatives to the inherited.
+    if ($form_type == 'form') {
+      //Container which will contain the inherited name.
+      $form['container_selected_inherit'] = array(
+        'title' => array('#markup' => $title),
+        '#type' => 'container',
+        '#id' => 'container-wikicompare-inherit-compared-id',
+        '#weight' => -3,
+         //We add the link after the container.
+        '#suffix' => '<p>' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>'
+      );
+      //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the inherited node.
+      $form['wikicompare_inherit_compared_id']['#attributes']['style'] = 'display:none;';
+    }
+
+    //Add the HTML code relative to the inherited node.
+    if ($form_type == 'fastaction') {
+      //Container with the inherited name.
+      $output .= '<p><span id="container-wikicompare-inherit-compared-id">' . $title . '</span>';
+      if ($readonly != True) {
+        //Span with the inherit_id, which will be recovered by the submit function and updated by javascript. Followed by the link.
+        $output .= '<span id="wikicompare-inherit-compared-id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
+      }
+    }
+
+  }
 
 }
 
 
 
 /**
- * Prepare the variables before the node computation. 
- * Essentially check if we have the percent of the inherited implementation and recover the children through inherit we will update after the computation.
+ * Add the fields relative to inherit compared in implementation node.
  *
- * @param $nodes
- *   The object returned by the initial sql request, that we need to complete. Passed by reference.
+ * @param $form
+ *   The form array which will be used by Drupal to build the node form. Passed by reference.
  *
- * @param type
- *   The type of the nids update by update_compare_tree function.
+ * @param $output
+ *   The HTML code which will be inserted. Passed by reference
  *
- * @param $nids
- *   The nids of the nodes to update.
+ * @param $readonly
+ *   Flag indicated if the user can modify the node. Passed by reference.
+ *
+ * @param $test
+*   Test if the support field must be checked by default. Passed by reference.
+ *
+ * @param $form_type
+ *   Flag defining if the function is called to build a form node of a fastaction form.
+ *
+ * @param $type
+ *   The type of the consulted node.
+ *
+ * @param $node
+ *   Object containing the detail of the node.
+ *
+ * @param $fastaction
+ *   The fastaction (add or edit)
  */
-function wikicompare_inherit_compared_update_comparative_table_preparation(&$nodes, $type, $nids) {
+function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, &$readonly, &$test, $form_type, $type, $node, $fastaction) {
 
-    //Mark to update the inherited implementation without cache percent
-    $to_update = array();
-    foreach($nodes as $node) {
-      if ($node->inheriting_compared_id) {
-        if (!$node->inheriting_implementation_cache_nid) {
-          $to_update[$node->inheriting_implementation_nid] = $node->inheriting_implementation_nid;
+  if ($type == 'implementation') {
+
+    //Get details of the inherited implementation.
+    $query = db_select('cache_implementation', 'n');
+    $query->addField('c', 'inherit_compared_id', 'inherit_id');
+    $query->addField('c', 'has_children', 'compared_has_children');
+    $query->addField('f', 'has_children', 'feature_has_children');
+    $query->addField('ci', 'support', 'inherit_support');
+    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
+    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
+    $query->condition('n.nid', $node->nid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $res = $record;
+    }
+
+    if ($form_type == 'form') {
+
+      //If there is no inherited compared or if we are not at the root of the tree, we don't need the use_from_inherit field.
+      if ($res->inherit_id == NULL || $res->compared_has_children || $res->feature_has_children) {
+        hide($form['wikicompare_use_from_inherit']);
+      } else {
+
+        //Hidden link which will refresh in ajax the data when we click on use_from_inherit checkbox.
+        $reset_link = array(
+          '#type' => 'link',
+          '#title' => 'compute inherit',
+          '#href' => 'compute_inherit_callback/nojs',
+          '#id' => 'compute_inherit_link_' . $node-> nid,
+          '#attributes' => array(
+            'class' => array('compute_inherit_link'),
+            'style' => 'display:none',
+          ),
+        );
+        //Add the link after the Drupal field.
+        $form['wikicompare_use_from_inherit']['und']['#suffix'] = render($reset_link);
+        //If use_from_inherit is checked at the generation of the form, then the value of support field if the value of the inherited implementation.
+        if ($form['wikicompare_use_from_inherit']['und']['#default_value'] == 1) {
+          $form['wikicompare_support']['und']['#default_value'] = $res->inherit_support;
+          $form['wikicompare_support']['und']['#disabled'] = True;
         }
       }
+
+      //Move use_from_inherit before support field.
+      $form['wikicompare_use_from_inherit']['#weight'] = -2;
+
     }
 
-    //Recover the missing cache percent
-    if (!empty($to_update)) {
-      //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop. There is a security in the interface (in select popin) but not in this update code.
-      $res = wikicompare_update_compare_tree('implementation', $to_update);
-      foreach($nodes as $node) {
-        if (isset($res[$node->inheriting_implementation_nid])) {
-          $node->inheriting_implementation_cache_nid = $node->inheriting_implementation_nid;
-          $node->inheriting_implementation_cache_percent = $res[$node->inheriting_implementation_nid]['percent'];
-          $node->inheriting_implementation_cache_css_class = $res[$node->inheriting_implementation_nid]['css_class'];
-        }    
+    if ($form_type == 'fastaction') {
+
+      if ($res->inherit_id != NULL) {
+        //I wasn't able to use the renderable array, so I coded directly in html.
+        $output .= '<input class="form_implementation_fastaction_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
+
+        //Recover value from database.
+        if ($fastaction == 'edit') {
+          if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
+            $output .= ' checked="checked"';
+            $test = True;
+          }
+        }
+
+        //If the user do not have rights on the node.
+        if ($readonly == True) {
+          $output .= ' disabled="disabled"';
+        }
+
+        //Hidden link which will refresh in ajax the data when we click on use_from_inherit checkbox.
+        $reset_link = array(
+          '#type' => 'link',
+          '#title' => 'compute inherit',
+          '#href' => 'compute_inherit_callback/nojs',
+          '#id' => 'compute_inherit_link_' . $node-> nid,
+          '#attributes' => array(
+            'class' => array('compute_inherit_link'),
+            'style' => 'display:none',
+          ),
+        );
+
+        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_implementation_fastaction_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
+
+        //Disable the support field located after this one
+        if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
+          $readonly = True;
+        }
       }
+
     }
 
-    //Recover children_through_inherit, so we can update them at the end of wikicompare_update_compare_tree
-    $res_search_inherit_compared_children = '';
-    foreach($nodes as $node) {
-      if ($res_search_inherit_compared_children) {
-        $res_search_inherit_compared_children = $res_search_inherit_compared_children . ',';
-      }
-      $res_search_inherit_compared_children = $res_search_inherit_compared_children . "('" . $node->fid . "','" . $node->cid . "')";
-    }
-
-    $through_inherit_childs = array();
-    if (($type == 'compared' && !empty($nids)) || $res_search_inherit_compared_children) {
-      $query = db_select('cache_implementation', 'i');
-      $query->addField('i', 'nid', 'nid');
-      $query->addField('i', 'feature_id', 'fid');
-      $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
-      $query->join('cache_feature', 'nf', 'i.feature_id = nf.nid');
-      $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
-      //Only the implementation which has no children on both axis will be updated because only them can have their percent updated by inheritance
-      $query->condition('nf.has_children', 0); 
-      $query->condition('nc.has_children', 0);
-
-      switch ($type) {
-        case "compared":
-          $query->condition('nc.inherit_compared_id', $nids, 'IN');
-          break;
-        default:
-          $query->where('(i.feature_id, nc.inherit_compared_id) IN (' . $res_search_inherit_compared_children . ')');
-          break;
-      }
-      $result = $query->execute();
-      
-      foreach($result as $record) {
-        //We assign the children implementation in a array with fid and cid as key so their parents can recover them with fid and cid key
-        $through_inherit_childs[$record->fid][$record->inherit_compared_id][$record->nid] = $record;
-      }
-    }
-
-    //Assign children to each node to compute.
-    foreach($nodes as $node) {
-      $node->through_inherit_childs = array();
-      if (isset($through_inherit_childs[$node->fid][$node->cid])) {
-        //Assign the children thanks to fid and cid key
-        $node->through_inherit_childs = $through_inherit_childs[$node->fid][$node->cid];
-      }
-    }
+  }
 
 }
 
 
 
 /**
- * Return the data computed according to the inherited implementation.
+ * Test if the support field must be checked.
+ *
+ * @param $test_support
+ *   If this test is True, the support field will be checked. Passed by reference.
+ *
+ * @param $test
+ *   Boolean indicated that the value of the inherited implementation must be used.
  *
  * @param $node
- *   The node to compute. Passed by reference.
+ *   Object containing the detail of the node.
  */
-function wikicompare_inherit_compared_from_other_support(&$node) {
+function wikicompare_inherit_compared_test_form_implementation(&$test_support, $test, $node) {
 
-  //Work only if the compared of the implementation inherit a node and we didn't override the information in the implementation.
-  if ($node->inheriting_compared_id && $node->use_from_inherit) {
-    $node->percent = $node->inheriting_implementation_cache_percent;
-    $node->css_class = $node->inheriting_implementation_cache_css_class;
+  //If we have to use the value from inherited implementation.
+  if ($test == True) {
+
+    //Get inherited implementation details .
+    $query = db_select('cache_implementation', 'n');
+    $query->addField('c', 'inherit_compared_id', 'inherit_id');
+    $query->addField('c', 'has_children', 'compared_has_children');
+    $query->addField('f', 'has_children', 'feature_has_children');
+    $query->addField('ci', 'support', 'inherit_support');
+    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
+    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
+    $query->condition('n.nid', $node->nid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      if ($record->inherit_support) {
+        $test_support = True;
+      //The else because in any case, the inherited override the previous value
+      } else {
+        $test_support = False;
+      }
+    }
+
   }
 
 }
@@ -766,97 +818,75 @@ function wikicompare_inherit_compared_from_other_support(&$node) {
 
 
 /**
- * Add in the implementation to update the implementation which inherit the current implementation.
+ * Remove important inherit compared fields from translated node.
  *
- * @param $to_update
- *   The array containing the implementation which will be updated by the recursive function. Passed by reference.
+ * @param $form
+ *   The form array which will be used by Drupal to build the node form. Passed by reference.
+ *
+ * @param $form_state
+ *   Array containing in-depth information of the node and form settings. Passed by reference.
  *
  * @param $node
- *   The node we are currently checking.
+ *   Object containing the detail of the node.
  */
-function wikicompare_inherit_compared_update_comparative_table_post(&$to_update, $node) {
+function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$form_state, $node) {
 
-  if (!empty($node->through_inherit_childs)) {
-    //Add all inheriting children in the nodes to update list.
-    foreach($node->through_inherit_childs as $child) {
-      $to_update[$child->nid] = $child->nid;
+  if (isset($form['wikicompare_inherit_compared_id'])) {
+    $form['container_selected_inherit'] = $form['container_selected_inherit']['title'];
+    unset($form['wikicompare_inherit_compared_id']);
+    unset($form_state['node']->wikicompare_inherit_compared_id);
+  }
+
+}
+
+
+
+
+
+/*****************************************************************
+*
+*    FASTACTION
+*
+*****************************************************************/
+
+/**
+ * Assign inherit compared specific fields.
+ *
+ * @param $node
+ *   The node which will be submitted. Passed by reference.
+ *
+ * @param $donotupdate
+ *   Boolean indicated if the support field must be updated later. Passed by reference.
+ *
+ * @param $_POST
+ *   Variables from javascript.
+ */
+function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotupdate,  $_POST) {
+
+  //Compared specific fields.
+  if ($node->type == 'compared') {
+    if ($_POST['inherit_id'] != 0) {
+          $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $_POST['inherit_id'];
+          $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
+
+    } else {
+          $node->wikicompare_inherit_compared_id['und'] = NULL;
+    }
+  }
+
+  //Implementation specific fields.
+  if ($node->type == 'implementation') {
+    if ($_POST['use_from_inherit'] == 'true') {
+      $node->wikicompare_use_from_inherit['und'][0]['value'] = 1;
+      //If we use from the inherited implementation, then we do not update the support field of the node.
+      $donotupdate = True;
+    } else {
+      $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
     }
   }
 
 }
 
-
-
-/**
- * Search for the inhehrit compared specific fields in the flush tables function.
- *
- * @param $query
- *   The query to update. Passed by reference.
- *
- * @param $type
- *   The type of the nodes we are searching for.
- */
-function wikicompare_inherit_compared_flush_select(&$query, $type) {
-
-  if ($type == 'compared') {
-    $query->addField('nic', 'wikicompare_inherit_compared_id_target_id', 'inherit_compared_id');
-    $query->leftjoin('field_revision_wikicompare_inherit_compared_id', 'nic', 'n.vid = nic.revision_id');
-  }
-
-  if ($type == 'implementation') {
-    $query->addField('nu', 'wikicompare_use_from_inherit_value', 'use_from_inherit');
-    $query->leftjoin('field_revision_wikicompare_use_from_inherit', 'nu', 'n.vid = nu.revision_id');
-  }
-
-}
-
-
-
-/**
- * Prepare the inherit compared specific fields in the flush tables function.
- *
- * @param $to_insert
- *   Array containing the data of the record which will be inserted. Passed by reference.
- *
- * @param $record
- *   The record we are currently checking
- * 
- * @param $type
- *   The type of the node
- */
-function wikicompare_inherit_compared_flush_cache(&$to_insert, $record, $type) {
-
-  if ($type == 'compared') {
-    $to_insert[$record->nid]['inherit_compared_id'] = $record->inherit_compared_id;
-  }
-
-  if ($type == 'implementation') {
-    $to_insert[$record->nid]['use_from_inherit'] = $record->use_from_inherit;
-  }
-}
-
-
-
-/**
- * Add inherit compared specific fields in db request.
- *
- * @param $query
- *   The query to update. Passed by reference.
- *
- * @param $type
- *   The type of the request.
- */
-function  wikicompare_inherit_compared_request_db(&$query, $type) {
-
-  if ($type == 'compared') {
-    $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
-  }
-
-  if ($type == 'implementation') {
-    $query->addField('n', 'use_from_inherit', 'use_from_inherit');
-  }
-
-}
 
 
 
@@ -867,7 +897,7 @@ function  wikicompare_inherit_compared_request_db(&$query, $type) {
 *
 *****************************************************************/
 
-/** 
+/**
  * Export inherit compared.
  *
  * @param $output
@@ -901,7 +931,7 @@ function wikicompare_inherit_compared_demo_export(&$output) {
 
 
 
-/** 
+/**
  * Modify sql request of the implementation export.
  *
  * @param $query
@@ -914,7 +944,7 @@ function wikicompare_inherit_compared_demo_export_implementation_request(&$query
 
 
 
-/** 
+/**
  * Export implementation specific fields.
  *
  * @param $output
@@ -932,7 +962,7 @@ function wikicompare_inherit_compared_demo_export_implementation_render(&$output
 
 
 
-/** 
+/**
  * Display inherit compared specific fields in the generate demo form.
  *
  * @param $form
@@ -947,8 +977,8 @@ function wikicompare_inherit_compared_demo_form(&$form) {
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
-  );  
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
+  );
 
   $form['demo_fieldset']['implementation_use_from_inherit_chance'] = array(
     '#type' => 'textfield',
@@ -957,14 +987,14 @@ function wikicompare_inherit_compared_demo_form(&$form) {
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
-  );  
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
+  );
 
 }
 
 
 
-/** 
+/**
  * Generate inherit compared demo data.
  *
  * @param $form_state
@@ -975,7 +1005,7 @@ function wikicompare_inherit_compared_demo_form(&$form) {
  */
 function wikicompare_inherit_compared_demo_submit_generate($form_state, $compareds_created) {
 
-  if (!empty($compareds_created) && $form_state['input']['compared_inherit_chance'] != 0) { 
+  if (!empty($compareds_created) && $form_state['input']['compared_inherit_chance'] != 0) {
 
     $compared_without_children = array();
     $query = db_select('cache_compared', 'c');
@@ -986,23 +1016,19 @@ function wikicompare_inherit_compared_demo_submit_generate($form_state, $compare
       $compared_without_children[$record->nid] = $record->nid;
     }
 
-
-
     foreach ($compared_without_children as $cid) {
       if (rand(1, $form_state['input']['compared_inherit_chance']) == $form_state['input']['compared_inherit_chance']) {
         $inherit_compared_id = 0;
         while ($inherit_compared_id == 0 || $inherit_compared_id == $cid) {
           $inherit_compared_id = array_rand($compared_without_children);
         }
-        
 
         $node = node_load($cid);
         $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $inherit_compared_id;
         $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
-  
+
         $node->revision = TRUE;
         $node->revision_moderation = TRUE;
-
 
         node_save($node);
 
@@ -1010,7 +1036,7 @@ function wikicompare_inherit_compared_demo_submit_generate($form_state, $compare
 
         //Security against loop, we don't want that two compared inherit each other
         unset($compared_without_children[$cid]);
-          
+
       }
     }
 
@@ -1020,24 +1046,24 @@ function wikicompare_inherit_compared_demo_submit_generate($form_state, $compare
 
 
 
-/** 
+/**
  * Modify implementation query.
  *
  * @param $query
  *   The implementatio query.
  */
 function wikicompare_inherit_compared_demo_submit_implementation_query(&$query) {
-  $query->addField('c', 'inherit_compared_id', 'inherit_compared_id');    
+  $query->addField('c', 'inherit_compared_id', 'inherit_compared_id');
 }
 
 
 
-/** 
+/**
  * Modify inherit compared specific field.
  *
  * @param $node
  *   The node we are modifying.
- * 
+ *
  * @param $modified
  *   Flag indicated that the node was modified.
  *
@@ -1055,6 +1081,5 @@ function wikicompare_inherit_compared_demo_submit_implementation(&$node, &$modif
   }
 
 }
-
 
 ?>

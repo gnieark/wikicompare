@@ -7,13 +7,12 @@
 
 
 
-
 /**
  * Implements hook_schema()
- * This hook allow us to create some table in database
+ * Add the inherit compared fields in cache tables.
  */
 function wikicompare_inherit_compared_schema_alter(&$schema) {
-  
+
   $schema['cache_compared']['fields']['inherit_compared_id'] = array(
       'description' => 'The inherited id of the compared node',
       'type' => 'int',
@@ -25,7 +24,6 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
     'columns' => array('inherit_compared_id' => 'nid'),
   );
 
-
   $schema['cache_implementation']['fields']['use_from_inherit'] = array(
       'description' => "Boolean indicated if we should use the data from the inherited compared",
       'type' => 'int',
@@ -33,7 +31,6 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
       'not null' => TRUE,
       'default' => 1,
   );
-
 
 }
 
@@ -49,21 +46,14 @@ function wikicompare_inherit_compared_install() {
 
   // Ensure that new node type is available.
   node_types_rebuild();
-  
 
 
-
-  /*
-   * Create inherit compared field
-   */ 
-
-
+  //Add index in cache table.
   $schema = drupal_get_schema('cache_compared');
   db_add_field('cache_compared', 'inherit_compared_id', $schema['fields']['inherit_compared_id']);
   db_add_index('cache_compared', 'inherit_compared_id', array('inherit_compared_id'));
 
-
-
+  //Add field.
   $field = array(
     'field_name' => 'wikicompare_inherit_compared_id',
     'type' => 'entityreference',
@@ -80,7 +70,6 @@ function wikicompare_inherit_compared_install() {
     'entity_type' => 'node',
     'bundle' => 'compared',
     'label' => 'Inherit Compared',
-    'description' => 'TODO : Si ce champ est rempli, alors toutes les features deja present dans le logiciel herite seront egalement present dans celui-ci. Neanmoins via un code couleur legerement different, plus leger pour marquer la difference.',
     'widget' => array(
       'type' => 'entityreference_autocomplete',
     ),
@@ -91,19 +80,11 @@ function wikicompare_inherit_compared_install() {
   );
   field_create_instance($instance);
 
-
-
-
-  /*
-   * Create use_from_inherit implementation field
-   */
-
-
+  //Add index in the cache table.
   $schema = drupal_get_schema('cache_implementation');
   db_add_field('cache_implementation', 'use_from_inherit', $schema['fields']['use_from_inherit']);
 
-
-
+  //Add field.
   $field = array(
     'field_name' => 'wikicompare_use_from_inherit',
     'type' => 'list_boolean',
@@ -135,9 +116,8 @@ function wikicompare_inherit_compared_install() {
   field_create_instance($instance);
 
 
-  //Set use_from_inherit of old implementation to 1
+  //Set use_from_inherit of old implementations to 1.
   $implementations = db_query("SELECT nid FROM node WHERE type = 'implementation'");
-
   foreach($implementations as $item) {
     $node = node_load($item->nid);
     $node->implementation_use_from_inherit['und'][0]['value'] = 1;
@@ -151,9 +131,9 @@ function wikicompare_inherit_compared_install() {
     ))
     ->execute();
 
-
-
 }
+
+
 
 /**
  * Implements hook_uninstall().
@@ -161,15 +141,13 @@ function wikicompare_inherit_compared_install() {
  */
 function wikicompare_inherit_compared_uninstall() {
 
-
+  //Remove field in cache.
   db_drop_field('cache_compared', 'inherit_compared_id');
   db_drop_index('cache_compared', 'inherit_compared_id');
   field_delete_field('wikicompare_inherit_compared_id');
 
   db_drop_field('cache_implementation', 'use_from_inherit');
   field_delete_field('wikicompare_use_from_inherit');
-
-
 
   // Purge all field information
   // api.drupal.org/api/function/field_purge_batch/7
