@@ -48,24 +48,18 @@ function wikicompare_node_info() {
     'feature' => array(
       'name' => t('Feature'),
       'base' => 'feature',
-      'description' => t('TODO : Feature description'),
-      'help' => t('TODO : Features submission guidelines'),
       'title_label' => t('Title'),
     ),
 
     'compared' => array(
       'name' => t('Compared'),
       'base' => 'compared',
-      'description' => t('TODO'),
-      'help' => t('TODO'),
       'title_label' => t('Title'),
     ),
 
     'implementation' => array(
       'name' => t('Implementation'),
       'base' => 'implementation',
-      'description' => t('TODO'),
-      'help' => t('TODO'),
       'title_label' => t('Title'),
     ),
 

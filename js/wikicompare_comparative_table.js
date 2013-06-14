@@ -963,7 +963,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 /*
-7/24
+9/24
 21 fichiers
 faire les TODOS
 Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur le serveur.
@@ -976,7 +976,7 @@ Debogage
 
 
 
-
+  //INSTALL TIP : Install last full version of ckeditor in sites/all/libraries and in the modules/ckeditor/ckeditor.
 
 
 

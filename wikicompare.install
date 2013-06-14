@@ -7,14 +7,13 @@
 
 
 
-
 /**
  * Implements hook_schema()
- * This hook allow us to create some table in database
+ * This hook allow us to create some table in database.
  */
 function wikicompare_schema() {
 
-  //Create cache table for the comparative_table computation, so percent and css_class are computed at each change on feature/compared/implementation and not at each read of the comparative table
+  //Create cache table for the comparative_table computation, so percent and css_class are computed at each change on feature/compared/implementation and not at each read of the comparative table.
   $schema['cache_comparative_table'] = array(
 
     'description' => 'Cache table for comparative table',
@@ -47,24 +46,22 @@ function wikicompare_schema() {
 
   );
 
-  /*
+  /**
    * Create cache tables for feature, compared and implementation records.
    * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
    * This will allow us to make far less join in sql query on comparative table computation.
    */
-
   foreach (array('compared', 'feature', 'implementation') as $type) {
-
     $schema['cache_' . $type] = wikicompare_node_schema($type);
-
   }
-
 
   return $schema;
 
 }
 
-
+/** 
+ * Generic function to create table for each node type.
+ */
 function wikicompare_node_schema($type) {
 
   $schema = array();
@@ -146,8 +143,8 @@ function wikicompare_node_schema($type) {
 
   }
 
-
   switch ($type) {
+    //Feature specific fields.
     case 'feature':
       $schema['fields']['type'] = array(
         'description' => 'The type of the feature node',
@@ -174,14 +171,6 @@ function wikicompare_node_schema($type) {
       break;
   }
 
-
-  foreach (module_implements('wikicompare_install_node_schema') as $module) {
-    $function = $module . '_wikicompare_install_node_schema';
-    $function($schema, $type);
-  }
-
-
-
   $schema['fields']['to_update'] = array(
     'description' => "Boolean indicated if this node should be updated as soon as possible",
     'type' => 'int',
@@ -198,23 +187,16 @@ function wikicompare_node_schema($type) {
 
 /**
  * Implements hook_install().
- * This function is called only once at the module installation
+ * This function is called only once at the module installation.
  */
 function wikicompare_install() {
 
   $t = get_t();
 
-  // Ensure that new node type is available.
+  // Ensure that new node types is available.
   node_types_rebuild();
 
- 
-
-
-
-
-
-
-
+  //Create the body field. We can't use the drupal function because we want a description without summary field.
   $field = field_info_field('body');
   if (empty($field)) {
     $field = array(
@@ -225,6 +207,7 @@ function wikicompare_install() {
     field_create_field($field);
   }
 
+  //Create wikicompare fields.
   $field = array(
     'field_name' => 'wikicompare_parent_id',
     'type' => 'entityreference',
@@ -243,8 +226,6 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-
-
   $field = array(
     'field_name' => 'wikicompare_feature_id',
     'type' => 'entityreference',
@@ -255,7 +236,6 @@ function wikicompare_install() {
     ),
   );
   field_create_field($field);
-
 
   $field = array(
     'field_name' => 'wikicompare_compared_id',
@@ -268,8 +248,6 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-
-  //Create support field
   $field = array(
     'field_name' => 'wikicompare_support',
     'type' => 'list_boolean',
@@ -283,7 +261,6 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-  //Create protected field
   $field = array(
     'field_name' => 'wikicompare_protected',
     'type' => 'list_boolean',
@@ -297,7 +274,6 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-  //Create Proofs field
   $field = array(
     'field_name' => 'wikicompare_proofs',
     'type' => 'text',
@@ -307,8 +283,6 @@ function wikicompare_install() {
     ),
   );
   field_create_field($field);
-
-
 
   $field = array(
     'field_name' => 'wikicompare_type',
@@ -323,7 +297,6 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-  //Create validation guidelines field
   $field = array(
     'field_name' => 'wikicompare_guidelines',
     'type' => 'text_with_summary',
@@ -331,16 +304,12 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-
-  //Create weight field
   $field = array(
     'field_name' => 'wikicompare_weight',
     'type' => 'number_integer',
     'cardinality' => 1
   );
   field_create_field($field);
-
-
 
   $field = array(
     'field_name' => 'wikicompare_user_ids',
@@ -358,13 +327,10 @@ function wikicompare_install() {
     'cardinality' => -1,
     'settings' => array(
       'target_type' => 'user',
-
     ),
   );
   field_create_field($field);
 
-
-  //Create state field
   $field = array(
     'field_name' => 'wikicompare_state',
     'type' => 'list_text',
@@ -375,30 +341,27 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-
   foreach (array('compared', 'feature', 'implementation') as $type) {
-
+    //Generic function.
     wikicompare_node_install($type);
-
   }
 
-
-  //Set module default settings
+  //Set module default settings.
   variable_set('wikicompare_update_compared', 'no-update');
 
   variable_set('revisioning_edit_callback', 1);
 
+  //Create wikicompare specific role.
   foreach (array('wikicompare_admin', 'moderator') as $name) {
-
     $role = new stdClass();
     $role->name = $name;
     user_role_save($role);
-
   }
 
-
+  //Assign permission to role.
   foreach (array('wikicompare_admin', 'moderator', 'authenticated user') as $role_name) {
 
+    //Permissions for all users.
     $permissions = array(
       'access comments' => TRUE,
       'post comments' => TRUE,
@@ -425,6 +388,7 @@ function wikicompare_install() {
       'cancel account' => TRUE,
     );
 
+    //Permissions for moderators.
     if ($role_name != 'authenticated user') {
       $permissions = array_merge($permissions, array(
         'administer comments' => TRUE,
@@ -437,19 +401,21 @@ function wikicompare_install() {
       ));
     }
 
+    //Permissions for wikicompare administrator.
     if ($role_name == 'wikicompare_admin') {
       $permissions = array_merge($permissions, array(
         'administer wikicompare' => TRUE,
       ));
     }
 
-
+    //Assign prepared permissions.
     $role = user_role_load_by_name($role_name);
     $rid = $role->rid;
     user_role_change_permissions($rid, $permissions);
 
   }
 
+  //Create a text format specific to wikicompare.
   $wikicompare_text_format = array(
     'format' => 'wikicompare_text_format',
     'name' => 'Wikicompare text format',
@@ -460,6 +426,7 @@ function wikicompare_install() {
         'weight' => 0,
         'status' => 1,
         'settings' => array(
+          //Filter html tag with a white list.
           'allowed_html' => '<a> <em> <strong> <u> <s> <img> <cite> <blockquote> <caption> <code> <ul> <ol> <li> <dl> <dt> <dd> <sub> <sup> <table> <tbody> <tr> <td> <hr>',
           'filter_html_help' => 1,
           'filter_html_nofollow' => 0,
@@ -479,22 +446,18 @@ function wikicompare_install() {
   $wikicompare_text_format = (object) $wikicompare_text_format;
   filter_format_save($wikicompare_text_format);
 
-  // Set the fallback format to plain text.
+  //Set the format by default to the wikicompare format.
   variable_set('filter_fallback_format', $wikicompare_text_format->format);
 
-
-  //INSTALL TIP : Install last full version of ckeditor in sites/all/libraries and in the modules/ckeditor/ckeditor.
+  //Create a specific ckeditor format for wikicompare.
   db_insert('ckeditor_input_format')->fields(array("name" => "Wikicompare", "format" => $wikicompare_text_format->format))->execute();
-
   //insert settings for default role
   $arr = array();
   $arr['filebrowser'] = 'none';
   $arr['quickupload'] = 'f';
-
   //security
   $arr['ss'] = "2";
   $arr['filters']['filter_html'] = 1;
-
   //appearance
   $arr['default'] = "t";
   $arr['show_toggle'] = "f";
@@ -520,7 +483,6 @@ function wikicompare_install() {
   $arr['lang'] = "en";
   $arr['auto_lang'] = "t";
   $arr['language_direction'] = "default";
-
   //output
   $arr['enter_mode'] = "p";
   $arr['shift_enter_mode'] = "br";
@@ -529,11 +491,9 @@ function wikicompare_install() {
   $arr['format_output'] = "t";
   $arr['custom_formatting'] = "f";
   $arr['formatting']['custom_formatting_options'] = array('indent' => 'indent', 'breakBeforeOpen' => 'breakBeforeOpen', 'breakAfterOpen' => 'breakAfterOpen', 'breakAfterClose' => 'breakAfterClose');
-
   //css
   $arr['css_mode'] = "none";
   $arr['css_path'] = variable_get("ckeditor_stylesheet", "");
-
   //upload
   //get permissions here like in _update_role_permissions
   $arr['filebrowser'] = "imce";
@@ -541,20 +501,16 @@ function wikicompare_install() {
   $arr['ckeditor_load_method'] = "ckeditor.js";
   $arr['ckeditor_load_time_out'] = 0;
   $arr['scayt_autoStartup'] = "f";
-
   //advanced options
   $arr['html_entities'] = "f";
-
   db_insert('ckeditor_settings')->fields(array("name" => "Wikicompare", "settings" => serialize($arr)))->execute();
 
-
+  //Create IMCE profile for wikicompare.
   require_once drupal_get_path('module', 'imce') . '/inc/imce.core.profiles.inc';
-
   $imce_profiles = variable_get('imce_profiles', array());
   $imce_profiles['wikicompare_user'] = imce_construct_profile('Wikicompare User', 1, 1, 2, 0, 'gif png jpg jpeg', '1200x1200', 1, array(array('users/%uid', 1, 1, 1, 1, 1, 1), array('users', 1, 1, 0, 0, 0, 0)), array(array('Small', '90x90', 'small_', ''), array('Medium', '120x120', 'medium_', ''), array('Large', '180x180', 'large_', '')));
   $imce_profiles['wikicompare_admin'] = imce_construct_profile('Wikicompare Admin', 1, 0, 0, 0, '*', '1200x1200', 10, array(array('users', 1, 1, 1, 1, 1, 1)), array(array('Small', '90x90', 'small_', ''), array('Medium', '120x120', 'medium_', ''), array('Large', '180x180', 'large_', '')));
   variable_set('imce_profiles', $imce_profiles);
-
   variable_set('imce_roles_profiles', array(
     user_role_load_by_name('wikicompare_admin')->rid => array(
       'weight' => 0,
@@ -574,20 +530,19 @@ function wikicompare_install() {
     )));
   variable_set('imce_settings_replace', 2);
 
-
-
-
 }
 
 
 
+/** 
+ * Generic function to create table for each node type.
+ *
+ * @param $type
+ *   The type of the nodes.
+ */
 function wikicompare_node_install($type) {
 
   $t = get_t();
-
-
-
-
 
   //Set variables
   variable_set('node_options_' . $type, array('status','revision','revision_moderation'));
@@ -628,7 +583,7 @@ function wikicompare_node_install($type) {
   );
   field_create_instance($instance);
   
-
+  //Assign wikicompare fields to node types.
   if ($type != 'implementation') {
     $instance = array(
       'field_name' => 'wikicompare_parent_id',
@@ -644,7 +599,6 @@ function wikicompare_node_install($type) {
       ),
     );
     field_create_instance($instance);
-
 
     $instance = array(
       'field_name' => 'wikicompare_sequence',
@@ -668,7 +622,7 @@ function wikicompare_node_install($type) {
       'entity_type' => 'node',
       'bundle' => $type,
       'label' => 'State',
-      'description' => 'TODO : State',
+      'description' => 'TODO',
       'required' => 1,
       'default_value' => array(
         0 => array(
@@ -713,15 +667,11 @@ function wikicompare_node_install($type) {
 
   } else {
 
-    //Create feature field
-
-
     $instance = array(
       'field_name' => 'wikicompare_feature_id',
       'entity_type' => 'node',
       'bundle' => 'implementation',
       'label' => 'Feature',
-      'description' => 'TODO : La fonctionnalite supporte, je pense que ce sera la peine de laisser une description. Ce champ sera grise pour tous.',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
       ),
@@ -733,14 +683,11 @@ function wikicompare_node_install($type) {
     );
     field_create_instance($instance);
 
-
-
     $instance = array(
       'field_name' => 'wikicompare_compared_id',
       'entity_type' => 'node',
       'bundle' => 'implementation',
       'label' => 'Compared',
-      'description' => 'TODO : Le software qui supporte la fonctionnalite. Pas la peine de laisser une description, le champ sera grise pour tous.',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
       ),
@@ -759,7 +706,6 @@ function wikicompare_node_install($type) {
       'entity_type' => 'node',
       'bundle' => 'implementation',
       'label' => 'Support',
-      'description' => 'TODO : Ce champ n\'est visible que si la feature n\'est pas un parent feature',
       'default_value' => array(
         0 => array(
           'value' => 0,
@@ -776,7 +722,6 @@ function wikicompare_node_install($type) {
       'entity_type' => 'node',
       'bundle' => 'implementation',
       'label' => 'Protected?',
-      'description' => 'TODO',
       'default_value' => array(
         0 => array(
           'value' => 0,
@@ -788,13 +733,11 @@ function wikicompare_node_install($type) {
     );
     field_create_instance($instance);
 
-
     $instance = array(
       'field_name' => 'wikicompare_proofs',
       'entity_type' => 'node',
       'bundle' => 'implementation',
       'label' => 'Proofs',
-      'description' => 'TODO : chaque texte sera une url qui pointera vers une video/screenshot prouvant le support de la fonctionnalité. Si le champ est vide, le code couleur sur la page sera différent et allégé. Les modérateurs seront encouragé dans cette description à supprimer les preuves non valables.',
       'widget' => array(
         'settings' => array(
           'size' => '255',
@@ -804,56 +747,15 @@ function wikicompare_node_install($type) {
     );
     field_create_instance($instance);
 
-
   }
 
   if ($type == 'feature') {
-
-
 
     $instance = array(
       'field_name' => 'wikicompare_type',
       'entity_type' => 'node',
       'bundle' => 'feature',
       'label' => 'Type',
-      'description' => 'TODO : Type de validation
-
-Not a parent feature : Une feature qui n\'a pas d\'enfant. Retourne soit 0% soit 100%.
-Affichage : 
-Valeur du champ "texte à afficher dans cellule"
-Pourcentage retourné
-
-Parent Feature - Moyenne Pondérée : Parent le plus classique, retourne la moyenne des pourcentage enfant pondéré par le champ weight. 
-Affichage : 
-Valeur du champ "texte à afficher dans cellule"
-Pourcentage retourné
-Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants). Bon la formule est mauvaise, faut que je retrouve la vraie formule pour la moyenne pondérée.
-
-Parent Feature - Pourcentage le plus haut : Ce parent retourne le pourcentage le plus haut parmis les pourcentage retourné par ses enfants. Ce type de champ sert à indiquer qu\'on a fait un choix, et les enfants indiquent les différents choix possible qui peuvent servir à valider cette feature parent.
-Par contre tous les choix ne se valent pas forcément, du coup le champ weight pour ses direct child feature va prendre une autre signification : Il va indiquer la valeur du choix, sous forme de pourcentage.
-Pourcentage retourné sera alors : % du child feature * (weight / 100). On fait le calcul pour chaque enfant et on retourne la valeur la plus haute.
-Affichage : 
-Valeur du champ "texte à afficher dans cellule"
-Pourcentage retourné
-
-
-Link : Cette feature sert à établir un lien avec un autre software. Dans ce cas, les features enfants finale vont avoir une liste d\'entity reference pointant vers software au lieu de la liste "supporté - non supportée".
-Les feature parent  mais child de cette feature vont afficher le pourcentage pour chacun des software cité par un enfant. Cette feature se calculera forcément par moyenne pondérée, mais les parent child de cette feature peuvent être en highest percentage.
-Si pour un des logiciels, le pourcentage calculé pour tous les enfants est égal à 100%, alors le lien entre le software et le software lié est établie. 
-Dans ce cas, toutes les features du logiciel lié deviennent supportés par le software mais via un code couleur spécifique. (ex : violet).
-Affichage : 
-Lien fort : Nom des logiciels dont le lien est effectif
-Lien faible : Nom des logigiels cité dans les enfants mais dont le lien n\'est pas effectif, avec le pourcentage calculé
-Pourcentage retourné : Pourcentage du plus fort logiciel lié (Donc 100% si on a un lien effectif).
-
-
-
-Deprecated :
-Possibilities List : En fonction du choix de la retourne, retourne le pourcentage correspondant.
-Affichage : 
-Choix de la liste.
-Pourcentage retourné
-Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants) * (pourcentage du choix)',
       'required' => 1,
       'default_value' => array(
         0 => array(
@@ -866,15 +768,11 @@ Retourné : ((poids enfant * pourcentage retourné par enfant) * n enfants) * (pou
     );
     field_create_instance($instance);
 
-
-
     $instance = array(
       'field_name' => 'wikicompare_guidelines',
       'entity_type' => 'node',
       'bundle' => 'feature',
       'label' => 'Validation Guidelines',
-      'description' => 'TODO : Le texte decrivant  precisement dans quelles conditions on peut on non valider le support de la feature dans le logiciel.
-Ce texte doit s\'afficher dans le formulaire de la cellule quand on renseigne le support de la feature',
       'widget' => array('type' => 'text_textarea_with_summary'),
       'settings' => array('display_summary' => FALSE),
       'widget' => array(
@@ -893,15 +791,11 @@ Ce texte doit s\'afficher dans le formulaire de la cellule quand on renseigne le
     );
     field_create_instance($instance);
 
-
-
     $instance = array(
       'field_name' => 'wikicompare_weight',
       'entity_type' => 'node',
       'bundle' => 'feature',
       'label' => 'Weight',
-      'description' => 'TODO : Poids indiquant l\'importance de la fonctionnalite. J\'ai envisage un moment de faire un poids par fonctionnalite au niveau du secteur d\'activite mais c\'etait pas jouable. La contrepartie, c\'est que tout le monde, tous les secteurs, de tous les pays, devront s\'organiser suffisamment.
-Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf description de l\'autre champ',
       'required' => 1,
       'default_value' => array(
         0 => array(
@@ -916,59 +810,48 @@ Si le parent est en calcul "highest percentage" l\'utilite de weight change. Cf 
 
   }
 
-
-
 }
+
 
 
 /**
  * Implements hook_uninstall().
- * This function is called at the module uninstallation
+ * This function is called at the module uninstallation.
  */
 function wikicompare_uninstall() {
-
 
   //Delete module settings variable
   variable_del('wikicompare_update_compared');
 
-
-
-
   //Delete all nodes of feature type.
-
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
   $result = db_query($sql, array(':type' => 'feature'));
   $nids = array();
   foreach ($result as $row) {
     $nids[] = $row->nid;
   }
-
   node_delete_multiple($nids);
 
   //Delete all nodes of compared type.
-
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
   $result = db_query($sql, array(':type' => 'compared'));
   $nids = array();
   foreach ($result as $row) {
     $nids[] = $row->nid;
   }
-
   node_delete_multiple($nids);
 
 
   //Delete all nodes of implementation type.
-
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
   $result = db_query($sql, array(':type' => 'implementation'));
   $nids = array();
   foreach ($result as $row) {
     $nids[] = $row->nid;
   }
-
   node_delete_multiple($nids);
 
-
+  //Purge variables.
   foreach (array('compared', 'feature', 'implementation') as $type) {
 
     variable_del('node_options_' . $type);
@@ -990,8 +873,7 @@ function wikicompare_uninstall() {
 
   }
 
-  //Delete feature content type.
-
+  //Delete fields.
   field_delete_field('wikicompare_parent_id');
   field_delete_field('wikicompare_user_ids');
   field_delete_field('wikicompare_user_from_parent_ids');
@@ -1013,9 +895,8 @@ function wikicompare_uninstall() {
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_feature'));
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_implementation'));
 
-
+  //Remove wikicompare text format.
   filter_format_disable('wikicompare_text_format');
-  
   db_delete('filter')
     ->condition('format', 'wikicompare_text_format')
     ->execute();
@@ -1023,6 +904,7 @@ function wikicompare_uninstall() {
     ->condition('format', 'wikicompare_text_format')
     ->execute();
 
+  //Remove wikicompare ckeditor format.
   db_delete('ckeditor_input_format')
     ->condition('name', 'Wikicompare')
     ->execute();
@@ -1030,24 +912,21 @@ function wikicompare_uninstall() {
     ->condition('name', 'Wikicompare')
     ->execute();
 
-
+  //Remove wikicompare imce profile.
   $imce_profiles = variable_get('imce_profiles', array());
   unset($imce_profiles['wikicompare_user']);
   unset($imce_profiles['wikicompare_admin']);
   variable_set('imce_profiles', $imce_profiles);
-   
   variable_del('imce_roles_profiles');
 
+  //Delete role.
   user_role_delete('wikicompare_admin');
   user_role_delete('moderator');
 
 
-
   // Purge all field information
   // api.drupal.org/api/function/field_purge_batch/7
-
   field_purge_batch(1000);
-
   drupal_flush_all_caches();
 
 }
