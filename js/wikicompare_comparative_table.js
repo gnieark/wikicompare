@@ -963,7 +963,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
 /*
-6/24
+7/24
 21 fichiers
 faire les TODOS
 Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur le serveur.

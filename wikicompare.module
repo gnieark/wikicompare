@@ -1,12 +1,15 @@
 <?php
 
-
-require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_nodes.inc';
+/**
+ * Include the other files.
+ */
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_core_functions.inc';
+require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_nodes.inc';
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparative_table.inc';
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_interface.inc';
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.views_default.inc';
 
+//Constant containing all state values.
 define('WIKICOMPARE_STATE_OPTIONS', serialize(array(
         'new' => 'New',
         'incomplete' => 'Incomplete',
@@ -18,7 +21,12 @@ define('WIKICOMPARE_STATE_OPTIONS', serialize(array(
         'disactivated' => 'Disactivated',
       )));
 
-//The help page of the module
+
+
+/**
+ * Implements hook_help().
+ * This function create the help page for the module.
+ */
 function wikicompare_help($path, $arg) {
 
   switch ($path) {
@@ -30,155 +38,50 @@ function wikicompare_help($path, $arg) {
 }
 
 
-//The configuration page of the module
-function wikicompare_admin() {
 
-  $form = array();
-
-  $languages = array();
-  foreach (language_list() as $key => $language) {
-    $languages[$key] = $language->name;
-  }
-
-  $form['manage_users'] = array(
-    '#type' => 'link',
-    '#title' => 'Manage users',
-    '#href' => 'admin/people',
-  );
-
-  //Display the select button for managing the compared parent update
-  $form['wikicompare_main_language'] = array(
-    '#type' => 'select',
-    '#title' => t('Main language'),
-    '#options' => $languages,
-    '#default_value' => language_default('language'),
-    '#description' => t("Define the main language of the website."),
-    '#required' => TRUE,
-  );
-
-  $form['temp'] = array(
-    '#markup' => 'test' . language_default('language'),
-  );
-
-
-  //Display the select button for managing the compared parent update
-  $form['wikicompare_update_compared'] = array(
-    '#type' => 'select',
-    '#title' => t('Manage parent compared?'),
-    '#options' => array(
-      'no-update' => t("No update"),
-      'update' => t("Update"),
+/**
+ * Implements hook_node_info().
+ * This function create the new node types we need for the module.
+ */
+function wikicompare_node_info() {
+  return array(
+    'feature' => array(
+      'name' => t('Feature'),
+      'base' => 'feature',
+      'description' => t('TODO : Feature description'),
+      'help' => t('TODO : Features submission guidelines'),
+      'title_label' => t('Title'),
     ),
-    '#default_value' => variable_get('wikicompare_update_compared', 'no-update'),
-    '#description' => t("Define if the parent compared can also have their own percentage support.<br/> 
-In this case, the parent compared will support all the implementation of his children compared, and we will be able to select the parent compared in the comparative table.<br/>
-<br/>
-Activate this feature can take some time, because the cache table need to be recomputed."),
-    '#required' => TRUE,
+
+    'compared' => array(
+      'name' => t('Compared'),
+      'base' => 'compared',
+      'description' => t('TODO'),
+      'help' => t('TODO'),
+      'title_label' => t('Title'),
+    ),
+
+    'implementation' => array(
+      'name' => t('Implementation'),
+      'base' => 'implementation',
+      'description' => t('TODO'),
+      'help' => t('TODO'),
+      'title_label' => t('Title'),
+    ),
+
+
   );
-
-  //Display the button to flush the caches
-  $form['flush_caches'] = array(
-    '#type' => 'submit',
-    '#suffix' => '<br/>If you ever corrupt your data, you can use this button to recompute all the percentages.<br/>This operation may take some time.',
-    '#value' => t('Flush caches'),
-    '#button_type' => 'button',
-    '#submit' => array('wikicompare_flush_caches'),
-  );
-
-  $form['#submit'][] = 'submit_settings';
-
-  if (module_exists('wikicompare_generate_demo')) {
-    wikicompare_generate_demo_wikicompare_settings_page($form);
-  }
-
-  return system_settings_form($form);
-
 }
 
-//This function handels the submit of the settings form.
-function submit_settings($form, $form_state) {
 
-  if ($form_state['input']['wikicompare_main_language'] != language_default('language')) {
-
-    $languages = language_list();
-    $old_key = language_default('language');
-    $new_key = $form_state['input']['wikicompare_main_language'];
-
-    $old_ids = array();
-    $res = array();
-
-    $types = array('compared', 'feature', 'implementation');
-
-
-    if (module_exists('wikicompare_needs')) {
-      wikicompare_needs_node_types($array);
-    }
-
-    $query = db_select('node', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->addField('n', 'vid', 'vid');
-    $query->condition('n.language', $old_key);
-    $query->condition('n.type', $types, 'in');
-
-
-    if (module_exists('wikicompare_translation')) {
-      wikicompare_translation_wikicompare_settings_change_language_request($query, $new_key);
-    }
-
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $old_ids[$record->nid] = $record->nid;
-      $res[$record->nid] = $record;
-    }
-
-
-    if (module_exists('wikicompare_translation')) {
-      wikicompare_translation_wikicompare_settings_change_language($old_ids, $res);
-    }
-
-    if (!empty($old_ids)) {
-      db_update('node')
-        ->fields(array(
-          'language' => $new_key,
-        ))
-        ->condition('nid', $old_ids, 'IN')
-        ->execute();
-    }
-
-    variable_set('language_default', $languages[$new_key]);
-
-  }
-
-  if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
-    wikicompare_flush_caches();
-  }
-
-  //Allow others modules to modify the action when we submit the settings page
-  foreach (module_implements('wikicompare_submit_settings_page') as $module) {
-    $function = $module . '_wikicompare_submit_settings_page';
-    $function($form, $form_state);
-  }
-
-}
 
 /**
  * Implements hook_menu().
- * This function create new menu in Drupal
+ * This function create new menu in Drupal and also declare the ajax callback.
  */
 function wikicompare_menu() {
 
   $items = array();
-
-  //Enable module settings page
-  $items['admin/config/wikicompare'] = array(
-    'title' => 'Wikicompare module settings',
-    'description' => 'Wikicompare module settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('wikicompare_admin'),
-    'access arguments' => array('administer wikicompare'),
-    'type' => MENU_NORMAL_ITEM,
-   );
 
   //Enable comparative table URL
   $items['compare'] = array(
@@ -191,18 +94,19 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table.inc',
   );
 
-
+  //Add an access to wikicompare admin page in the main menu.
   $items['admin/config/wikicompare'] = array(
     'title' => 'Administration',
     'description' => 'Wikicompare Administration',
     'page callback' => 'drupal_get_form',
+    //Only the wikiadmin can access the page.
     'page arguments' => array('wikicompare_admin'),
     'access arguments' => array('administer wikicompare'),
     'menu_name' => 'main-menu',
     'weight' => 10,
-  ); 
+  );
 
-
+  //Define ajax callback used in comparative table and in form.
   $items['wikicompare_get_itemlist_children_callback'] = array(
     'page callback' => 'wikicompare_get_itemlist_children_response',
     'access callback' => 'user_access',
@@ -232,7 +136,7 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table.inc',
     'delivery callback' => 'ajax_deliver',
   );
-  
+
   $items['wikicompare_get_dialog_callback/%/%/%/%'] = array(
     'page callback' => 'wikicompare_get_dialog_response',
     'access callback' => 'user_access',
@@ -282,7 +186,6 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-
   $items['wikicompare_table_fastaction_form_callback'] = array(
     'page callback' => 'wikicompare_table_fastaction_form_response',
     'access callback' => 'user_access',
@@ -292,7 +195,7 @@ function wikicompare_menu() {
     'file' => 'wikicompare_interface.inc',
     'delivery callback' => 'ajax_deliver',
   );
-  
+
   $items['wikicompare_table_fastaction_submit_callback'] = array(
     'page callback' => 'wikicompare_table_fastaction_submit_response',
     'access callback' => 'user_access',
@@ -302,10 +205,17 @@ function wikicompare_menu() {
     'file' => 'wikicompare_interface.inc',
     'delivery callback' => 'ajax_deliver',
   );
-  
+
   return $items;
+
 }
 
+
+
+/**
+ * Implements hook_permission().
+ * Add new permission specific to wikicompare.
+ */
 function wikicompare_permission() {
   return array(
     'administer wikicompare' => array(
@@ -320,15 +230,11 @@ function wikicompare_permission() {
 }
 
 
-function wikicompare_block_info_alter(&$blocks, $theme, $code_blocks) {
 
-
-  $blocks['system']['navigation']['region'] = -1;
-  $blocks['system']['management']['region'] = -1;
-
-}
-
-
+/**
+ * Implements hook_library().
+ * Add wikicompare javascript file.
+ */
 function wikicompare_library() {
   $path = drupal_get_path('module', 'wikicompare');
 
@@ -344,55 +250,156 @@ function wikicompare_library() {
 }
 
 
+
 /**
- * Implements hook_node_info().
- * This function create the new node type we need for the module
+ * Implements hook_block_info_alter().
+ * Remove navigation and management block from the wikicompare interface.
  */
-function wikicompare_node_info() {
-  return array(
-    'feature' => array(
-      'name' => t('Feature'),
-      'base' => 'feature',
-      'description' => t('TODO : Feature description'),
-      'help' => t('TODO : Features submission guidelines'),
-      'title_label' => t('Title'),
-    ),
-
-    'compared' => array(
-      'name' => t('Compared'),
-      'base' => 'compared',
-      'description' => t('TODO'),
-      'help' => t('TODO'),
-      'title_label' => t('Title'),
-    ),
-
-    'implementation' => array(
-      'name' => t('Implementation'),
-      'base' => 'implementation',
-      'description' => t('TODO'),
-      'help' => t('TODO'),
-      'title_label' => t('Title'),
-    ),
+function wikicompare_block_info_alter(&$blocks, $theme, $code_blocks) {
 
 
-  );
+  $blocks['system']['navigation']['region'] = -1;
+  $blocks['system']['management']['region'] = -1;
+
 }
 
 
-/**
- * Implements hook_theme().
- */
-/*
-function wikicompare_theme() {
-  return array(
-    // Theme function for the compare table
-    'wikicompare_comparative_table' => array(
-      'render element' => 'form',
-      'file' => 'wikicompare_comparative_table.inc',
-    ),
-  );
-}
-*/
 
+/**
+ * Implements hook_admin().
+ * This function create the configuration page of wikicompare.
+ */
+function wikicompare_admin() {
+
+  $form = array();
+
+  //Add an hyperlink to redirect the wikicompare administrator to the manage users page.
+  $form['manage_users'] = array(
+    '#type' => 'link',
+    '#title' => 'Manage users',
+    '#href' => 'admin/people',
+  );
+
+  //Get all available languages to insert them as options of the select field.
+  $languages = array();
+  foreach (language_list() as $key => $language) {
+    $languages[$key] = $language->name;
+  }
+
+  //Display the select button to manage the main language of the wikicompare.
+  $form['wikicompare_main_language'] = array(
+    '#type' => 'select',
+    '#title' => t('Main language'),
+    '#options' => $languages,
+    '#default_value' => language_default('language'),
+    '#description' => t("Define the main language of the website."),
+    '#required' => TRUE,
+  );
+
+
+  //Display the select button to manage the compared parent update.
+  $form['wikicompare_update_compared'] = array(
+    '#type' => 'select',
+    '#title' => t('Manage parent compared?'),
+    '#options' => array(
+      'no-update' => t("No update"),
+      'update' => t("Update"),
+    ),
+    '#default_value' => variable_get('wikicompare_update_compared', 'no-update'),
+    '#description' => t("Define if the parent compared can also have their own percentage.<br/>
+        In this case, the parent compared will support all the implementation of his compared children, and we will be able to select the parent compared in the comparative table.<br/>
+        <br/>
+        Activate this feature can take some time, because the cache table need to be recomputed."),
+    '#required' => TRUE,
+  );
+
+  //Display the button to flush the caches.
+  $form['flush_caches'] = array(
+    '#type' => 'submit',
+    '#suffix' => '<br/>If you ever corrupt your data, you can use this button to recompute all the percentages.<br/>This operation may take some time.',
+    '#value' => t('Flush caches'),
+    '#button_type' => 'button',
+    '#submit' => array('wikicompare_flush_caches'),
+  );
+
+  $form['#submit'][] = 'submit_settings';
+
+  if (module_exists('wikicompare_generate_demo')) {
+    //Add the elements relatives to the demo generation.
+    wikicompare_generate_demo_settings_page($form);
+  }
+
+  return system_settings_form($form);
+
+}
+
+//This function handle the submit of the settings form.
+function submit_settings($form, $form_state) {
+
+  //If we change the main language of the wikicompare.
+  if ($form_state['input']['wikicompare_main_language'] != language_default('language')) {
+
+    $languages = language_list();
+    $old_key = language_default('language');
+    $new_key = $form_state['input']['wikicompare_main_language'];
+
+    $old_ids = array();
+    $res = array();
+
+    //For all wikicompare types.
+    $types = array('compared', 'feature', 'implementation');
+    if (module_exists('wikicompare_needs')) {
+      //Add need type.
+      wikicompare_needs_node_types($array);
+    }
+
+    //Get all the old nodes.
+    $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'vid', 'vid');
+    $query->condition('n.language', $old_key);
+    $query->condition('n.type', $types, 'in');
+
+    if (module_exists('wikicompare_translation')) {
+      wikicompare_translation_settings_change_language_request($query, $new_key);
+    }
+
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $old_ids[$record->nid] = $record->nid;
+      $res[$record->nid] = $record;
+    }
+
+    if (module_exists('wikicompare_translation')) {
+      //Assign the fields of the old node to the new node, and define the translated node as the new main language node.
+      wikicompare_translation_settings_change_language($old_ids, $res);
+    }
+
+    //Change the languages of the old node.
+    if (!empty($old_ids)) {
+      db_update('node')
+        ->fields(array(
+          'language' => $new_key,
+        ))
+        ->condition('nid', $old_ids, 'IN')
+        ->execute();
+    }
+
+    //Change the main language of the wikicompare.
+    variable_set('language_default', $languages[$new_key]);
+
+  }
+
+  //If the wikicompare_update_compared field has changed, we flush the caches to compute the parent compared implementations.
+  if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
+    wikicompare_flush_caches();
+  }
+
+  if (module_exists('wikicompare_generate_demo')) {
+    //Create demo data.
+    wikicompare_generate_demo_submit_settings_page($form, $form_state);
+  }
+
+}
 
 ?>

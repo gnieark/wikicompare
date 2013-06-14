@@ -233,7 +233,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
 }
 
 
-function wikicompare_generate_demo_wikicompare_settings_page(&$form) {
+function wikicompare_generate_demo_settings_page(&$form) {
 
   $form['demo_fieldset'] = array(
     '#type' => 'fieldset',
@@ -506,7 +506,7 @@ function element_validate_integer_positive_or_null($element, &$form_state) {
 }
 
 
-function wikicompare_generate_demo_wikicompare_submit_settings_page($form, $form_state) {
+function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
 
   $features_created = array();
   $compareds_created = array();
