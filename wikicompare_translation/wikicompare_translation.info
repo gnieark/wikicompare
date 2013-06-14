@@ -1,7 +1,5 @@
 name = Wikicompare Translation
-description = Translate wikicompare content
-
-//TODO Faire la fonction qui intervertie les nodes quand on change de language, travailler les form pour mettre en création le language par défaut, et n'afficher les champs structurant que sur le node principal. Faire en sorte que les action ne se fasse que sur le node principal, via des if ($node->language != language_default('language')) { return }
+description = Translate wikicompare content.
 
 dependencies[] = translation
 dependencies[] = wikicompare

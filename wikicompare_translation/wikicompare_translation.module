@@ -1,14 +1,344 @@
 <?php
 
 
-//TODO Not working. Maybe we'll not debug it but just wait for the template which will incluse the language switcher anyway.
+/**
+ * @file
+ * Define the function relative to the translations.
+ */
+
+
+
+/*****************************************************************
+*
+*    MODULE
+*
+*****************************************************************/
+
+/**
+ * Implements hook_block_info_alter().
+ * Add language switcher block.
+ *
+ * Not working.
+ */
 function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks) {
 
   $blocks['locale']['language']['region'] = 'content';
   $blocks['locale']['language']['weight'] = 10;
 
- 
 }
+
+
+
+/**
+ * Modify the request to also get the translated nodes on the new language.
+ *
+ * @param $query
+ *   The query to modify. Passed by reference.
+ * 
+ * @param $new_key
+ *   The new language of the wikicompare.
+ */
+function wikicompare_translation_settings_change_language_request(&$query, $new_key) {
+
+  $query->addField('t', 'nid', 'new_nid');
+  $query->addField('t', 'vid', 'new_vid');
+  $query->leftjoin('node', 't', 'n.tnid = t.tnid');
+  $query->condition('t.language', $new_key);
+
+}
+
+
+
+/**
+ * Assign the fields of the old node to the new node, and define the translated node as the new main language node.
+ *
+ * @param $old_ids 
+ *   The old main language node. Passed by reference.
+ * 
+ * @param $res
+ *   The result of the query.
+ */
+function wikicompare_translation_settings_change_language(&$old_ids, $res) {
+
+  foreach ($res as $ids) {
+
+    //If there is a translation node, we define it as the new main node.
+    if ($ids->new_nid) {
+      //Move the importants field to the new node.
+      wikicompare_translation_move_field_language('wikicompare_parent_id', $ids);
+      wikicompare_translation_move_field_language('wikicompare_type', $ids);
+      wikicompare_translation_move_field_language('wikicompare_weight', $ids);
+      wikicompare_translation_move_field_language('wikicompare_state', $ids);
+      wikicompare_translation_move_field_language('wikicompare_feature_id', $ids);
+      wikicompare_translation_move_field_language('wikicompare_compared_id', $ids);
+      wikicompare_translation_move_field_language('wikicompare_support', $ids);
+
+      //We mark the new node as the referent node by changing the tnid on all related node
+      db_update('node')
+        ->fields(array(
+          'tnid' => $ids->new_nid,
+        ))
+        ->condition('tnid', $ids->nid)
+        ->execute();
+
+      //In this case, we must not update the flag of the old node. If the node wasn't translated, we still change the language of the old node.
+      unset($old_ids[$ids->nid]);
+    }
+  }
+}
+
+
+
+/**
+ * Move a field from the old language node to the new language node.
+ *
+ * @param $field_name
+ *   The name of the field.
+ * 
+ * @param $ids
+ *   The old and new ids of the nodes.
+ */
+function wikicompare_translation_move_field_language($field_name, $ids) {
+
+  //Get datas from the field table.
+  $field = array();
+  $query = db_select('field_data_' . $field_name, 'n');
+  $query->fields('n');
+  $query->condition('n.entity_id', $ids->nid);
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $field = $record;
+  }
+
+  //If there is some record for this node.
+  if (!empty($field)) {
+
+    //By security, we remove all revision field on new language, except the one in history.
+    db_delete('field_revision_' . $field_name)
+      ->condition('entity_id', $ids->new_nid)
+      ->condition('revision_id', $ids->new_vid, '>=')
+      ->execute();
+
+    db_delete('field_data_' . $field_name)
+      ->condition('entity_id', $ids->new_nid)
+      ->execute();
+
+    //Build the data which need to be inserted in fields for the new node.
+    $header = array();
+    $data = array();
+    foreach ($field as $key => $value) {
+      $header[] = $key;
+      //Change for the new id.
+      if ($key == 'entity_id') {
+        $data[] = $ids->new_nid;
+      } elseif ($key == 'revision_id') {
+        $data[] = $ids->new_vid;
+      } else {
+        $data[] = $value;
+      }
+    }
+    $query = db_insert('field_data_' . $field_name)->fields($header);
+    $query->values($data);
+    $query->execute();
+
+    //We create one revision with the content of the field for each revision on the new node
+    $new_revisions = array();
+    $query = db_select('node_revision', 'n');
+    $query->addField('n', 'vid', 'vid');
+    $query->condition('n.nid', $ids->new_nid);
+    $query->condition('n.vid', $ids->new_vid, '>=');
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $new_revisions[$record->vid] = $record->vid;
+    }
+
+    //Note that we take the value on the published revision. All data on revision not yet approved will be lost.
+    $field = array();
+    $query = db_select('field_revision_' . $field_name, 'n');
+    $query->fields('n');
+    $query->condition('n.entity_id', $ids->nid);
+    $query->condition('n.revision_id', $ids->vid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $field = $record;
+    }
+
+    $header = array();
+    foreach ($field as $key => $value) {
+      $header[] = $key;
+    }
+    $lines = array();
+    foreach ($new_revisions as $vid) {
+      $data = array();
+      foreach ($field as $key => $value) {
+        if ($key == 'entity_id') {
+          $data[] = $ids->new_nid;
+        } elseif ($key == 'revision_id') {
+          $data[] = $vid;
+        } else {
+          $data[] = $value;
+        }
+      }
+      $lines[] = $data;
+    }
+    $query = db_insert('field_revision_' . $field_name)->fields($header);
+    foreach ($lines as $record) {
+      $query->values($record);
+    }
+    $query->execute();
+
+    //Delete old fields.
+    db_delete('field_revision_' . $field_name)
+      ->condition('entity_id', $ids->nid)
+      ->condition('revision_id', $ids->vid, '>=')
+      ->execute();
+
+    db_delete('field_data_' . $field_name)
+      ->condition('entity_id', $ids->nid)
+      ->execute();
+
+  } 
+
+}
+
+
+
+
+
+/*****************************************************************
+*
+*    CORE_FUNCTIONS
+*
+*****************************************************************/
+
+/**
+ * Add the lines in the database request to recover the translated title, based on the information of the translated nodes.
+ *
+ * @param $query
+ *   The query to update. Passed by reference
+ *
+ * @param $type
+ *   The type of the request.
+ *
+ * @param db_settings
+ *   An associative array containing the specific informations to build the database query.
+ * 
+ * @param $settings
+ *   An associative array containing the informations about the context of the query.
+ */
+function wikicompare_translation_request_db(&$query, $type, $db_settings, $settings) {
+
+  global $language;
+
+  //Test a flag in db_settings we can use if the translation isn't necessary.
+  if (!isset($db_settings['dont_translate'])) {
+    $query->addField('t', 'nid', 'nid_translated');
+    $query->addField('t', 'title', 'title_translated');
+    $query->addField('t', 'language', 'tlanguage');
+    $query->leftjoin('node', 't', 'n.nid = t.tnid');
+    $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
+
+    //If we are in fastaction mode, we want to also test is the translation node can be fastedited.
+    if ($settings['fastaction']) {
+      $query->addField('tr', 'uid', 'tuid');
+      $query->leftjoin('node_revision', 'tr', 't.nid = tr.nid');
+    }
+  }
+
+}
+
+
+
+/**
+ * Test if the translation node can be fastedit, based on the revisions author.
+ *
+ * @param $node_array
+ *   The node which will be returned. Passed by reference
+ *
+ * @param $record
+ *   The record from the database.
+ *
+ * $type
+ *   The type of the request.
+ *
+ * @param db_settings
+ *   An associative array containing the specific informations to build the database query.
+ */
+function wikicompare_translation_request_db_fastaction(&$node_array, $record, $type, $db_settings) {
+
+  global $language;
+
+  //Test a flag in db_settings we can use if the translation isn't necessary.
+  if (!isset($db_settings['dont_translate'])) {
+    //If the user isn't the author of all the revisions of the translation node, then he can't fastedit it.
+    if ($GLOBALS['user']->uid != $record->tuid && $record->tuid != NULL && $record->tlanguage == $language->language) {
+       $node_array['no-edit-translate'] = True;
+    }
+  }
+
+}
+
+
+
+/**
+ * Replace the title from db by the translated title.
+ *
+ * @param $node_array
+ *   The node which will be returned. Passed by reference
+ *
+ * @param $record
+ *   The record from the database.
+ */
+function wikicompare_translation_request_db_build(&$node_array, $record) {
+
+  global $language;
+
+  //If there is a translation node with a title.
+  if (isset($record->title_translated)) {
+    if ($record->title_translated != NULL && $record->tlanguage == $language->language) {
+      $node_array['data']->tnid = $record->nid_translated;
+      $node_array['data']->title = $record->title_translated;
+    }
+  }
+
+}
+
+
+
+
+
+/*****************************************************************
+*
+*    NODES
+*
+*****************************************************************/
+
+/**
+ * Remove the translation of the deleted node if the deleted node is the main language node.
+ *
+ * @param $node
+ *   The deleted node.
+ */
+function wikicompare_translation_delete_after($node) {
+
+  //If the node created is the main language node, and if there is translation of this node.
+  if ($node->language == language_default('language') && $node->tnid != 0) {
+    //Then we find and remove all the translation of this node.
+    $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->condition('n.tnid', $node->tnid);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      if ($node->nid != $record->nid) {
+        node_delete($record->nid);
+      }
+    }
+  }
+
+}
+
+
+
 
 
 /*****************************************************************
@@ -465,324 +795,6 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST,
     }
 
   }
-
-}
-
-
-
-
-
-/*****************************************************************
-*
-*    NODES
-*
-*****************************************************************/
-
-/**
- * Remove the translation of the deleted node if the deleted node is the main language node.
- *
- * @param $node
- *   The deleted node.
- */
-function wikicompare_translation_delete_after($node) {
-
-  //If the node created is the main language node, and if there is translation of this node.
-  if ($node->language == language_default('language') && $node->tnid != 0) {
-    //Then we find and remove all the translation of this node.
-    $query = db_select('node', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->condition('n.tnid', $node->tnid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      if ($node->nid != $record->nid) {
-        node_delete($record->nid);
-      }
-    }
-  }
-
-}
-
-
-
-
-
-/*****************************************************************
-*
-*    CORE_FUNCTIONS
-*
-*****************************************************************/
-
-/**
- * Add the lines in the database request to recover the translated title, based on the information of the translated nodes.
- *
- * @param $query
- *   The query to update. Passed by reference
- *
- * @param $type
- *   The type of the request.
- *
- * @param db_settings
- *   An associative array containing the specific informations to build the database query.
- * 
- * @param $settings
- *   An associative array containing the informations about the context of the query.
- */
-function wikicompare_translation_request_db(&$query, $type, $db_settings, $settings) {
-
-  global $language;
-
-  //Test a flag in db_settings we can use if the translation isn't necessary.
-  if (!isset($db_settings['dont_translate'])) {
-    $query->addField('t', 'nid', 'nid_translated');
-    $query->addField('t', 'title', 'title_translated');
-    $query->addField('t', 'language', 'tlanguage');
-    $query->leftjoin('node', 't', 'n.nid = t.tnid');
-    $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
-
-    //If we are in fastaction mode, we want to also test is the translation node can be fastedited.
-    if ($settings['fastaction']) {
-      $query->addField('tr', 'uid', 'tuid');
-      $query->leftjoin('node_revision', 'tr', 't.nid = tr.nid');
-    }
-  }
-
-}
-
-
-
-/**
- * Test if the translation node can be fastedit, based on the revisions author.
- *
- * @param $node_array
- *   The node which will be returned. Passed by reference
- *
- * @param $record
- *   The record from the database.
- *
- * $type
- *   The type of the request.
- *
- * @param db_settings
- *   An associative array containing the specific informations to build the database query.
- */
-function wikicompare_translation_request_db_fastaction(&$node_array, $record, $type, $db_settings) {
-
-  global $language;
-
-  //Test a flag in db_settings we can use if the translation isn't necessary.
-  if (!isset($db_settings['dont_translate'])) {
-    //If the user isn't the author of all the revisions of the translation node, then he can't fastedit it.
-    if ($GLOBALS['user']->uid != $record->tuid && $record->tuid != NULL && $record->tlanguage == $language->language) {
-       $node_array['no-edit-translate'] = True;
-    }
-  }
-
-}
-
-
-
-/**
- * Replace the title from db by the translated title.
- *
- * @param $node_array
- *   The node which will be returned. Passed by reference
- *
- * @param $record
- *   The record from the database.
- */
-function wikicompare_translation_request_db_build(&$node_array, $record) {
-
-  global $language;
-
-  //If there is a translation node with a title.
-  if (isset($record->title_translated)) {
-    if ($record->title_translated != NULL && $record->tlanguage == $language->language) {
-      $node_array['data']->tnid = $record->nid_translated;
-      $node_array['data']->title = $record->title_translated;
-    }
-  }
-
-}
-
-
-
-
-
-/*****************************************************************
-*
-*    MODULE
-*
-*****************************************************************/
-
-/**
- * Modify the request to also get the translated nodes on the new language.
- *
- * @param $query
- *   The query to modify. Passed by reference.
- * 
- * @param $new_key
- *   The new language of the wikicompare.
- */
-function wikicompare_translation_settings_change_language_request(&$query, $new_key) {
-
-  $query->addField('t', 'nid', 'new_nid');
-  $query->addField('t', 'vid', 'new_vid');
-  $query->leftjoin('node', 't', 'n.tnid = t.tnid');
-  $query->condition('t.language', $new_key);
-
-}
-
-
-
-/**
- * Assign the fields of the old node to the new node, and define the translated node as the new main language node.
- *
- * @param $old_ids 
- *   The old main language node. Passed by reference.
- * 
- * @param $res
- *   The result of the query.
- */
-function wikicompare_translation_settings_change_language(&$old_ids, $res) {
-
-  foreach ($res as $ids) {
-
-    //If there is a translation node, we define it as the new main node.
-    if ($ids->new_nid) {
-      //Move the importants field to the new node.
-      wikicompare_translation_move_field_language('wikicompare_parent_id', $ids);
-      wikicompare_translation_move_field_language('wikicompare_type', $ids);
-      wikicompare_translation_move_field_language('wikicompare_weight', $ids);
-      wikicompare_translation_move_field_language('wikicompare_state', $ids);
-      wikicompare_translation_move_field_language('wikicompare_feature_id', $ids);
-      wikicompare_translation_move_field_language('wikicompare_compared_id', $ids);
-      wikicompare_translation_move_field_language('wikicompare_support', $ids);
-
-      //We mark the new node as the referent node by changing the tnid on all related node
-      db_update('node')
-        ->fields(array(
-          'tnid' => $ids->new_nid,
-        ))
-        ->condition('tnid', $ids->nid)
-        ->execute();
-
-      //In this case, we must not update the flag of the old node. If the node wasn't translated, we still change the language of the old node.
-      unset($old_ids[$ids->nid]);
-    }
-  }
-}
-
-
-
-/**
- * Move a field from the old language node to the new language node.
- *
- * @param $field_name
- *   The name of the field.
- * 
- * @param $ids
- *   The old and new ids of the nodes.
- */
-function wikicompare_translation_move_field_language($field_name, $ids) {
-
-  //Get datas from the field table.
-  $field = array();
-  $query = db_select('field_data_' . $field_name, 'n');
-  $query->fields('n');
-  $query->condition('n.entity_id', $ids->nid);
-  $result = $query->execute();
-  foreach ($result as $record) {
-    $field = $record;
-  }
-
-  //If there is some record for this node.
-  if (!empty($field)) {
-
-    //By security, we remove all revision field on new language, except the one in history.
-    db_delete('field_revision_' . $field_name)
-      ->condition('entity_id', $ids->new_nid)
-      ->condition('revision_id', $ids->new_vid, '>=')
-      ->execute();
-
-    db_delete('field_data_' . $field_name)
-      ->condition('entity_id', $ids->new_nid)
-      ->execute();
-
-    //Build the data which need to be inserted in fields for the new node.
-    $header = array();
-    $data = array();
-    foreach ($field as $key => $value) {
-      $header[] = $key;
-      //Change for the new id.
-      if ($key == 'entity_id') {
-        $data[] = $ids->new_nid;
-      } elseif ($key == 'revision_id') {
-        $data[] = $ids->new_vid;
-      } else {
-        $data[] = $value;
-      }
-    }
-    $query = db_insert('field_data_' . $field_name)->fields($header);
-    $query->values($data);
-    $query->execute();
-
-    //We create one revision with the content of the field for each revision on the new node
-    $new_revisions = array();
-    $query = db_select('node_revision', 'n');
-    $query->addField('n', 'vid', 'vid');
-    $query->condition('n.nid', $ids->new_nid);
-    $query->condition('n.vid', $ids->new_vid, '>=');
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $new_revisions[$record->vid] = $record->vid;
-    }
-
-    //Note that we take the value on the published revision. All data on revision not yet approved will be lost.
-    $field = array();
-    $query = db_select('field_revision_' . $field_name, 'n');
-    $query->fields('n');
-    $query->condition('n.entity_id', $ids->nid);
-    $query->condition('n.revision_id', $ids->vid);
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $field = $record;
-    }
-
-    $header = array();
-    foreach ($field as $key => $value) {
-      $header[] = $key;
-    }
-    $lines = array();
-    foreach ($new_revisions as $vid) {
-      $data = array();
-      foreach ($field as $key => $value) {
-        if ($key == 'entity_id') {
-          $data[] = $ids->new_nid;
-        } elseif ($key == 'revision_id') {
-          $data[] = $vid;
-        } else {
-          $data[] = $value;
-        }
-      }
-      $lines[] = $data;
-    }
-    $query = db_insert('field_revision_' . $field_name)->fields($header);
-    foreach ($lines as $record) {
-      $query->values($record);
-    }
-    $query->execute();
-
-    //Delete old fields.
-    db_delete('field_revision_' . $field_name)
-      ->condition('entity_id', $ids->nid)
-      ->condition('revision_id', $ids->vid, '>=')
-      ->execute();
-
-    db_delete('field_data_' . $field_name)
-      ->condition('entity_id', $ids->nid)
-      ->execute();
-
-  } 
 
 }
 
