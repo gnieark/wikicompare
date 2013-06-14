@@ -639,5 +639,219 @@ function wikicompare_needs_request_db_after($res, $need_features) {
 
 
 
+/*****************************************************************
+*
+*    GENERATE DEMO
+*
+*****************************************************************/
+
+/** 
+ * Get all needs nodes.
+ *
+ * @param $output
+ *   The html code of the export. Passed by reference.
+ */
+function wikicompare_needs_demo_export(&$output) {
+
+  $output .= "<p>if (module_exists('wikicompare_needs')) {";
+  $output .= "<p>\$needs = array();</p>";
+  //Find all the features on the first level of the tree.
+  $needs = request_db('need', array('states' => array('draft', 'closed')));
+  foreach ($needs as $need) {
+    //Get needs children.
+    wikicompare_generate_demo_export_output_node($output, $need, 'need');
+  }
+  $output .= "}</p>";
+
+}
+
+
+
+/** 
+ * Export need specific fields.
+ *
+ * @param $output
+ *   The html code of the export. Passed by reference.
+ *
+ * @param $type
+ *   The type of the node.
+ * 
+ * @param $node
+ *   The node we are currently exporting.
+ */
+function wikicompare_needs_demo_export_specific_fields(&$output, $type, $node) {
+  if ($type == 'need') {
+    $i = 0;
+    $output .= "\$node->wikicompare_features['und'] = array();<br/>";
+    foreach($node['need_features'] as $fid) {
+      $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_id'] = \$features['new-" . $fid . "'];<br/>";
+      $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_type'] = 'node';<br/>";
+      $i++;
+    }
+  }
+}
+
+
+
+/** 
+ * Display need specific field in the generate demo form.
+ *
+ * @param $form
+ *   The generate demo form. Passed by reference.
+ */
+function wikicompare_needs_demo_form(&$form) {
+
+  $form['demo_fieldset']['need_min_depth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum need depth'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => True,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['need_max_depth'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum need depth'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['need_child_min_per_level'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum number of child need per level'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['need_child_max_per_level'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of child need per level'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['need_min_feature_per_node'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Minimum number of features per needs node'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+  $form['demo_fieldset']['need_max_feature_per_node'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of features per needs node'),
+    '#default_value' => 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );
+
+}
+
+
+
+/** 
+ * Generate need demo data.
+ *
+ * @param $form_state
+ *   The values submitted by the form.
+ */
+function wikicompare_needs_demo_submit_generate($form_state) {
+ 
+
+  $needs_created = array();
+
+  if (($form_state['input']['need_min_depth'] != 0) && ($form_state['input']['need_max_depth'] != 0) && ($form_state['input']['need_child_min_per_level'] != 0) && ($form_state['input']['need_child_max_per_level'] != 0)) {
+
+    $features_without_children = array();
+
+    $query = db_select('cache_feature', 'f');
+    $query->addField('f', 'nid', 'nid');
+    $query->condition("f.has_children", 0);
+    $result = $query->execute();
+    foreach($result as $record) {
+      $features_without_children[$record->nid] = $record->nid;
+    }
+
+    $settings = array(
+      'type' => 'need',
+      'min_depth' => $form_state['input']['need_min_depth'],
+      'max_depth' => $form_state['input']['need_max_depth'],
+      'prefix' => 'Need ' . variable_get('wikicompare_next_demo_sequence', 1),
+      'child_min_per_level' => $form_state['input']['need_child_min_per_level'],
+      'child_max_per_level' => $form_state['input']['need_child_max_per_level'],
+      'min_feature_per_node' => $form_state['input']['need_min_feature_per_node'],
+      'max_feature_per_node' => $form_state['input']['need_max_feature_per_node'],
+      'features_without_children' => $features_without_children,
+      'depth' => 1,
+    );
+
+    if (module_exists('wikicompare_translation')) {  
+      //Prepare translation specific settings in the generate demo submit.
+      wikicompare_translation_demo_submit_settings($settings, $form_state);
+    }
+
+    wikicompare_generate_demo_create_children($settings, $needs_created);
+
+  }
+
+}
+
+
+
+/** 
+ * Generate need specific fields.
+ *
+ * @param $node
+ *   The node we need to modify.
+ *
+ * @param $settings
+ *   The settings of the function.
+ */
+function wikicompare_needs_demo_submit_specific_fields($node, $settings) {
+
+  if ($settings['type'] == 'need') {
+
+    if (!empty($settings['features_without_children'])) {
+
+      $nb_features = rand($settings['min_feature_per_node'], $settings['max_feature_per_node']);
+
+      if (!in_array($nb_features, array(0,1))) {
+
+        $i_features = 0;
+        foreach (array_rand($settings['features_without_children'], $nb_features) as $fid) {
+          $node->wikicompare_features['und'][$i_features]['target_id'] = $fid;
+          $node->wikicompare_features['und'][$i_features]['target_type'] = "node";
+          $i_features++;
+        }      
+        $node->revision = TRUE;
+        $node->revision_moderation = TRUE;
+
+        node_save($node);
+
+        _revisioning_publish_latest_revision($node);
+
+
+      }
+    }
+
+  }
+
+}
 
 ?>

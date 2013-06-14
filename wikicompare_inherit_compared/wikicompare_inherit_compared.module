@@ -861,5 +861,200 @@ function  wikicompare_inherit_compared_request_db(&$query, $type) {
 
 
 
+/*****************************************************************
+*
+*    GENERATE DEMO
+*
+*****************************************************************/
+
+/** 
+ * Export inherit compared.
+ *
+ * @param $output
+ *   The html code of the export. Passed by reference.
+ */
+function wikicompare_inherit_compared_demo_export(&$output) {
+
+  $query = db_select('cache_compared', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
+  $query->where("n.inherit_compared_id IS NOT NULL");
+  $result = $query->execute();
+
+  foreach ($result as $record) {
+
+    $output .= "<p>if (module_exists('wikicompare_inherit_compared')) {</p>";
+
+    $output .= "<p>\$node = node_load(\$compareds['new-" . $record->nid . "']);<br/>";
+    $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$compareds['new-" . $record->inherit_compared_id . "'];<br/>";
+    $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
+    $output .= "\$node->revision = TRUE;<br/>";
+    $output .= "\$node->revision_moderation = TRUE;<br/>";
+    $output .= "node_save(\$node);<br/>";
+    $output .= "_revisioning_publish_latest_revision(\$node);</p>";
+
+    $output .= "<p>}</p>";
+
+  }
+
+}
+
+
+
+/** 
+ * Modify sql request of the implementation export.
+ *
+ * @param $query
+ *   The implementation query. Passed by reference.
+ */
+function wikicompare_inherit_compared_demo_export_implementation_request(&$query) {
+  $query->addField('n', 'use_from_inherit', 'use_from_inherit');
+  $query->where('n.support = 1 OR (n.use_from_inherit = 0 AND c.inherit_compared_id IS NOT NULL)');
+}
+
+
+
+/** 
+ * Export implementation specific fields.
+ *
+ * @param $output
+ *   The html code of the export. Passed by reference.
+ *
+ * @param $record
+ *   The record we are currently exporting.
+ */
+function wikicompare_inherit_compared_demo_export_implementation_render(&$output, $record) {
+  $output .= "if (module_exists('wikicompare_inherit_compared')) {<br/>";
+  $output .= "\$node->wikicompare_use_from_inherit['und'][0]['value'] = " . $record->use_from_inherit . ";<br/>";
+  $output .= "}<br/>";
+}
+
+
+
+
+/** 
+ * Display inherit compared specific fields in the generate demo form.
+ *
+ * @param $form
+ *   The generate demo form. Passed by reference.
+ */
+function wikicompare_inherit_compared_demo_form(&$form) {
+
+  $form['demo_fieldset']['compared_inherit_chance'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Chance that a compared inherit another one (1/x)'),
+    '#default_value' => 5,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );  
+
+  $form['demo_fieldset']['implementation_use_from_inherit_chance'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Chance that a implementation which inherit another one use his own value (1/x)'),
+    '#default_value' => 5,
+    '#size' => 3,
+    '#maxlength' => 3,
+    '#required' => TRUE,
+    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+  );  
+
+}
+
+
+
+/** 
+ * Generate inherit compared demo data.
+ *
+ * @param $form_state
+ *   The values submitted by the form.
+ *
+ * @param $compareds_created
+ *   The nid of the compared created by the function.
+ */
+function wikicompare_inherit_compared_demo_submit_generate($form_state, $compareds_created) {
+
+  if (!empty($compareds_created) && $form_state['input']['compared_inherit_chance'] != 0) { 
+
+    $compared_without_children = array();
+    $query = db_select('cache_compared', 'c');
+    $query->addField('c', 'nid', 'nid');
+    $query->condition("c.has_children", 0);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $compared_without_children[$record->nid] = $record->nid;
+    }
+
+
+
+    foreach ($compared_without_children as $cid) {
+      if (rand(1, $form_state['input']['compared_inherit_chance']) == $form_state['input']['compared_inherit_chance']) {
+        $inherit_compared_id = 0;
+        while ($inherit_compared_id == 0 || $inherit_compared_id == $cid) {
+          $inherit_compared_id = array_rand($compared_without_children);
+        }
+        
+
+        $node = node_load($cid);
+        $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $inherit_compared_id;
+        $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
+  
+        $node->revision = TRUE;
+        $node->revision_moderation = TRUE;
+
+
+        node_save($node);
+
+        _revisioning_publish_latest_revision($node);
+
+        //Security against loop, we don't want that two compared inherit each other
+        unset($compared_without_children[$cid]);
+          
+      }
+    }
+
+  }
+
+}
+
+
+
+/** 
+ * Modify implementation query.
+ *
+ * @param $query
+ *   The implementatio query.
+ */
+function wikicompare_inherit_compared_demo_submit_implementation_query(&$query) {
+  $query->addField('c', 'inherit_compared_id', 'inherit_compared_id');    
+}
+
+
+
+/** 
+ * Modify inherit compared specific field.
+ *
+ * @param $node
+ *   The node we are modifying.
+ * 
+ * @param $modified
+ *   Flag indicated that the node was modified.
+ *
+ * @param $form_state
+ *   The values submitted by the form.
+ *
+ * @param $record
+ *   The detail of the implementation.
+ */
+function wikicompare_inherit_compared_demo_submit_implementation(&$node, &$modified, $form_state, $record) {
+
+  if (($record->inherit_compared_id != NULL) && (rand(1, $form_state['input']['implementation_use_from_inherit_chance']) == $form_state['input']['implementation_use_from_inherit_chance'])) {
+    $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
+    $modified = True;
+  }
+
+}
+
 
 ?>

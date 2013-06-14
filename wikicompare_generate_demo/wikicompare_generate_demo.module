@@ -1,14 +1,17 @@
 <?php
 
+//Include import files.
 require_once drupal_get_path('module', 'wikicompare_generate_demo') . '/data/erp_data.inc';
-require_once drupal_get_path('module', 'wikicompare_generate_demo') . '/data/test_data.inc';
 
+
+
+/**
+ * Implements hook_menu().
+ * Add a new page where we can export the wikicompare.
+ */
 function wikicompare_generate_demo_menu() {
 
   $items = array();
-
-
-  //Enable comparative table URL
   $items['admin/config/wikicompare/export'] = array(
     'title' => 'Export Wikicompare',
     'description' => 'Export Wikicompare',
@@ -17,87 +20,52 @@ function wikicompare_generate_demo_menu() {
   );
 
   return $items;
+
 }
 
-
+/**
+ * Render the export page.
+ */
 function wikicompare_export_page() {
 
+  //First we flush the caches to be sure the data are up to date.
   wikicompare_flush_caches();
 
   $output = "<p>WARNING : Export must always be done when english is the main language of your website. Also, do not use special characters in your translations, including accents.</p>";
 
+  //Get language list on the new wikicompare, to know if we can install the translation or not.
   $output .= "<p>\$language_list = array();<br/>";
   $output .= "foreach (language_list() as \$key => \$lang) {<br/>";
   $output .= "\$language_list[\$key] = \$key;<br/>";
   $output .= "}</p>";
 
   $output .= "<p>\$compareds = array();</p>";
-
-
-  //Find all the compared on the first level of the tree
+  //Find all the compared on the first level of the tree.
   $compareds = request_db('compared', array('states' => array('draft', 'closed')));
-
   foreach ($compareds as $compared) {
+    //Get compared children.
     wikicompare_generate_demo_export_output_node($output, $compared, 'compared');
   }
 
-
   $output .= "<p>\$features = array();</p>";
-
-
+  //Find all the features on the first level of the tree.
   $features = request_db('feature', array('states' => array('draft', 'closed')));
-
   foreach ($features as $feature) {
+    //Get feature children.
     wikicompare_generate_demo_export_output_node($output, $feature, 'feature');
   }
 
-  //TODO Move the module_exists in their respective module
   if (module_exists('wikicompare_needs')) {
-
-    $output .= "<p>if (module_exists('wikicompare_needs')) {";
-    $output .= "<p>\$needs = array();</p>";
-
-
-    $needs = request_db('need', array('states' => array('draft', 'closed')));
-
-
-
-    foreach ($needs as $need) {
-      wikicompare_generate_demo_export_output_node($output, $need, 'need');
-    }
-
-    $output .= "}</p>";
-
+    //Export needs.
+    wikicompare_needs_demo_export($output);
   }
-
 
   if (module_exists('wikicompare_inherit_compared')) {
-    $query = db_select('cache_compared', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
-    $query->where("n.inherit_compared_id IS NOT NULL");
-    $result = $query->execute();
-
-    foreach ($result as $record) {
-
-      $output .= "<p>if (module_exists('wikicompare_inherit_compared')) {</p>";
-
-      $output .= "<p>\$node = node_load(\$compareds['new-" . $record->nid . "']);<br/>";
-      $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$compareds['new-" . $record->inherit_compared_id . "'];<br/>";
-      $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
-      $output .= "\$node->revision = TRUE;<br/>";
-      $output .= "\$node->revision_moderation = TRUE;<br/>";
-      $output .= "node_save(\$node);<br/>";
-      $output .= "_revisioning_publish_latest_revision(\$node);</p>";
-
-      $output .= "<p>}</p>";
-
-    }
-
+    //Export inherit compared.
+    wikicompare_inherit_compared_demo_export($output);
   }
 
-
-
+  //Get all implementations.
   $query = db_select('cache_implementation', 'n');
   $query->addField('c', 'nid', 'cid');
   $query->addField('f', 'nid', 'fid');
@@ -108,21 +76,21 @@ function wikicompare_export_page() {
   $query->condition("f.has_children", 0);
   $query->condition("n.support", 1);
   if (module_exists('wikicompare_inherit_compared')) {
-    $query->addField('n', 'use_from_inherit', 'use_from_inherit');
-    $query->where('n.support = 1 OR (n.use_from_inherit = 0 AND c.inherit_compared_id IS NOT NULL)');
+    //Add inherit compared specific fields.
+    wikicompare_inherit_compared_demo_export_implementation_request($query);
   }
   $result = $query->execute();
 
   foreach ($result as $record) {
 
     $output .= "<p>";
+    //The implementation is created by the wikicompare module, so we have to load it to modify his fields.
     $output .= "\$implementation_id = wikicompare_get_implementation_id(\$compareds['new-" . $record->cid . "'], \$features['new-" . $record->fid . "']);<br/>";
     $output .= "\$node = node_load(\$implementation_id);<br/>";
     $output .= "\$node->wikicompare_support['und'][0]['value'] = " . $record->support . ";<br/>";
     if (module_exists('wikicompare_inherit_compared')) {
-      $output .= "if (module_exists('wikicompare_inherit_compared')) {<br/>";
-      $output .= "\$node->wikicompare_use_from_inherit['und'][0]['value'] = " . $record->use_from_inherit . ";<br/>";
-      $output .= "}<br/>";
+      //Add inherit compared specific fields.
+      wikicompare_inherit_compared_demo_export_implementation_render($output, $record);
     }
     $output .= "\$node->revision = TRUE;<br/>";
     $output .= "\$node->revision_moderation = TRUE;<br/>";
@@ -132,17 +100,27 @@ function wikicompare_export_page() {
 
   }
 
-
-
   return $output;
 
 }
 
 
+
+/**
+ * Type-agnostic and recursive function to export item.
+ *
+ * @param $output
+ *   The code html of the export. Passed by reference.
+ *
+ * @param $node
+ *   The node we want to export.
+ *
+ * @param $type
+ *   The type of the node.
+ */
 function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
 
-
-
+  //Generate code to import node.
   $output .= "<p>";
   $output .= "\$node = new stdClass();<br/>";
   $output .= "\$node->type = '" . $type . "';<br/>";
@@ -159,82 +137,45 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";
   }
 
-
   if (module_exists('wikicompare_needs')) {
-    if ($type == 'need') {
-      $i = 0;
-      $output .= "\$node->wikicompare_features['und'] = array();<br/>";
-      foreach($node['need_features'] as $fid) {
-        $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_id'] = \$features['new-" . $fid . "'];<br/>";
-        $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_type'] = 'node';<br/>";
-        $i++;
-      }
-    }
+    //Export need specific fields.
+    wikicompare_needs_demo_export_specific_fields($output, $type, $node);
   }
 
   $output .= "\$node->comment = 2";
+  //Save the node.
   $output .= "node_save(\$node);<br/>";
+  //We keep the id in an array for later use.
   $output .= "\$". $type . "s['new-" . $node['data']->nid . "'] = \$node->nid;<br/>";
-
 
   $output .= "</p>";
 
   if (module_exists('wikicompare_translation')) {
-
-
-
-    $query = db_select('node', 'n');
-    $query->addField('n', 'title', 'title');
-    $query->addField('n', 'language', 'language');
-    $query->condition('n.tnid', $node['data']->nid);
-    $query->condition('n.language', 'en', '!=');
-    $result = $query->execute();
-
-    $first = True;
-    foreach ($result as $record) {
-      if ($first == True) {
-        $output .= "<p>if (module_exists('wikicompare_translation')) {</p>";
-
-        $output .= "<p>\$node->tnid = \$node->nid;<br/>";
-        $output .= "node_save(\$node);</p>";
-
-        $first = False;
-      }
-      $output .= "<p>if (in_array('" . $record->language . "', \$language_list)) {<br/>";
-      $output .= "\$tnode = new stdClass();<br/>";
-      $output .= "\$tnode->type = '" . $type . "';<br/>";
-      $output .= "\$tnode->language = '" . $record->language . "';<br/>";
-      $output .= "\$tnode->tnid = \$node->nid;<br/>";
-      $output .= '$tnode->title = "' . $record->title . '";<br/>';
-      $output .= "node_save(\$tnode);<br/>";
-      $output .= "}</p>";
-    }
-    if ($first == False) {
-      $output .= "<p>}</p>";
-    }
-
-
+    //Export translations of a node.
+    wikicompare_translation_demo_export_translations($output, $node);
   }
 
-
-
+  //Export children.
   if ($node['data']->has_children) {
-    //Find all the compared on the first level of the tree
     $children = request_db($type, array('states' => array('draft', 'closed')), 'parent', array($node['data']->nid));
-
-
     foreach ($children as $child) {
       wikicompare_generate_demo_export_output_node($output, $child, $type);
     }
   }
 
-
-
 }
 
 
+
+/**
+ * Function which add the generate demo specific field in wikicompare administration.
+ *
+ * @param $form
+ *   The form we need to update. Passed by reference.
+ */
 function wikicompare_generate_demo_settings_page(&$form) {
 
+  //All generate demo related fields are in a fieldset.
   $form['demo_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('Generate Demo'),
@@ -242,44 +183,45 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#collapsed' => TRUE,
   );
 
+  //To generate features.
   $form['demo_fieldset']['feature_min_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum feature depth'),
-    '#default_value' => 2,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => True,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['feature_max_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum feature depth'),
-    '#default_value' => 3,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['feature_child_min_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum number of child feature per level'),
-    '#default_value' => 2,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['feature_child_max_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum number of child feature per level'),
-    '#default_value' => 3,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['feature_min_weight'] = array(
@@ -289,7 +231,7 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['feature_max_weight'] = array(
@@ -299,7 +241,7 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['feature_highest_chance'] = array(
@@ -309,110 +251,53 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
+  //To generate compared.
   $form['demo_fieldset']['compared_min_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum compared depth'),
-    '#default_value' => 2,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['compared_max_depth'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum compared depth'),
-    '#default_value' => 3,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['compared_child_min_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Minimum number of child compared per level'),
-    '#default_value' => 2,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   $form['demo_fieldset']['compared_child_max_per_level'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum number of child compared per level'),
-    '#default_value' => 3,
+    '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-
   if (module_exists('wikicompare_needs')) {
-    $form['demo_fieldset']['need_min_depth'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Minimum need depth'),
-      '#default_value' => 2,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => True,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );
-
-    $form['demo_fieldset']['need_max_depth'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Maximum need depth'),
-      '#default_value' => 3,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );
-
-    $form['demo_fieldset']['need_child_min_per_level'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Minimum number of child need per level'),
-      '#default_value' => 2,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );
-
-    $form['demo_fieldset']['need_child_max_per_level'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Maximum number of child need per level'),
-      '#default_value' => 3,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );
-
-    $form['demo_fieldset']['need_min_feature_per_node'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Minimum number of features per needs node'),
-      '#default_value' => 2,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );
-
-    $form['demo_fieldset']['need_max_feature_per_node'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Maximum number of features per needs node'),
-      '#default_value' => 4,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );
+    //Display need specific fields in the generate demo form.
+    wikicompare_needs_demo_form($form);
   }
 
   $form['demo_fieldset']['implementation_support_chance'] = array(
@@ -422,46 +307,20 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#size' => 3,
     '#maxlength' => 3,
     '#required' => TRUE,
-    '#element_validate' => array('element_validate_integer_positive_or_null'), 
+    '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
   if (module_exists('wikicompare_inherit_compared')) {
-
-    $form['demo_fieldset']['compared_inherit_chance'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Chance that a compared inherit another one (1/x)'),
-      '#default_value' => 5,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );  
-
-    $form['demo_fieldset']['implementation_use_from_inherit_chance'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Chance that a implementation which inherit another one use his own value (1/x)'),
-      '#default_value' => 5,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'), 
-    );    
+    //Display inherit compared specific field in the generate demo form.
+    wikicompare_inherit_compared_demo_form($form) ;
   }
 
-  if (module_exists('wikicompare_translation')) {  
-    $form['demo_fieldset']['wikicompare_generate_translation'] = array(
-      '#type' => 'select',
-      '#title' => t('Generate translation?'),
-      '#options' => array(
-        'false' => t("No"),
-        'true' => t("Yes"),
-      ),
-      '#default_value' => 'true',
-      '#required' => TRUE,
-    );
+  if (module_exists('wikicompare_translation')) {
+    //Display translation specific fields in the generate demo form.
+    wikicompare_translation_demo_form($form);
   }
 
-
+  //Import predefined data.
   $form['demo_fieldset']['generate_erp_data'] = array(
     '#type' => 'submit',
     '#prefix' => '<br/>',
@@ -471,15 +330,7 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#submit' => array('wikicompare_generate_erp_data'),
   );
 
-  $form['demo_fieldset']['generate_test_data'] = array(
-    '#type' => 'submit',
-    '#prefix' => '<br/>',
-    '#suffix' => '<br/>You can use this button to generate predefine data on the test theme.',
-    '#value' => t('Generate test data'),
-    '#button_type' => 'button',
-    '#submit' => array('wikicompare_generate_test_data'),
-  );
-
+  //Drop all datas.
   $form['demo_fieldset']['drop_nodes'] = array(
     '#type' => 'submit',
     '#prefix' => '<br/>',
@@ -489,7 +340,7 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#submit' => array('wikicompare_drop_nodes'),
   );
 
-
+  //Access to the export page.
   $form['demo_fieldset']['export_link'] = array(
     '#type' => 'link',
     '#prefix' => '<br/><br/>',
@@ -498,6 +349,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
   );
 }
 
+/**
+ * Function to validate fields values.
+ */
 function element_validate_integer_positive_or_null($element, &$form_state) {
   $value = $element['#value'];
   if ($value !== '' && (!is_numeric($value) || intval($value) != $value || $value < 0)) {
@@ -506,14 +360,19 @@ function element_validate_integer_positive_or_null($element, &$form_state) {
 }
 
 
+
+/**
+ * Function which generate demo data when we submit the wikicompare administration page.
+ */
 function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
 
   $features_created = array();
   $compareds_created = array();
- 
+
+  //If we want to generate features datas.
   if (($form_state['input']['feature_min_depth'] != 0) && ($form_state['input']['feature_max_depth'] != 0) && ($form_state['input']['feature_child_min_per_level'] != 0) && ($form_state['input']['feature_child_max_per_level'] != 0)) {
 
-
+    //Get all settings.
     $settings = array(
       'type' => 'feature',
       'min_depth' => $form_state['input']['feature_min_depth'],
@@ -527,21 +386,20 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
       'parent_type' => 'parent-weighted-average',
       'depth' => 1,
     );
-
-    if (module_exists('wikicompare_translation')) {  
-      $settings['generate_translation'] = $form_state['input']['wikicompare_generate_translation'];
+    if (module_exists('wikicompare_translation')) {
+      //Prepare translation specific settings in the generate demo submit.
+      wikicompare_translation_demo_submit_settings($settings, $form_state);
     }
 
+    //Generate data.
     wikicompare_generate_demo_create_children($settings, $features_created);
 
-
-
-    
   }
 
+  //If we want to generate compareds datas.
   if (($form_state['input']['compared_min_depth'] != 0) && ($form_state['input']['compared_max_depth'] != 0) && ($form_state['input']['compared_child_min_per_level'] != 0) && ($form_state['input']['compared_child_max_per_level'] != 0)) {
 
-
+    //Get all settings.
     $settings = array(
       'type' => 'compared',
       'min_depth' => $form_state['input']['compared_min_depth'],
@@ -551,107 +409,33 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
       'child_max_per_level' => $form_state['input']['compared_child_max_per_level'],
       'depth' => 1,
     );
-
-    if (module_exists('wikicompare_translation')) {  
-      $settings['generate_translation'] = $form_state['input']['wikicompare_generate_translation'];
+    if (module_exists('wikicompare_translation')) {
+      //Prepare translation specific settings in the generate demo submit.
+      wikicompare_translation_demo_submit_settings($settings, $form_state);
     }
 
+    //Generate datas.
     wikicompare_generate_demo_create_children($settings, $compareds_created);
 
-
   }
 
-
-
-  if (module_exists('wikicompare_needs')) {  
-
-    $needs_created = array();
-
-    if (($form_state['input']['need_min_depth'] != 0) && ($form_state['input']['need_max_depth'] != 0) && ($form_state['input']['need_child_min_per_level'] != 0) && ($form_state['input']['need_child_max_per_level'] != 0)) {
-
-      $features_without_children = array();
-
-      $query = db_select('cache_feature', 'f');
-      $query->addField('f', 'nid', 'nid');
-      $query->condition("f.has_children", 0);
-      $result = $query->execute();
-      foreach($result as $record) {
-        $features_without_children[$record->nid] = $record->nid;
-      }
-
-      $settings = array(
-        'type' => 'need',
-        'min_depth' => $form_state['input']['need_min_depth'],
-        'max_depth' => $form_state['input']['need_max_depth'],
-        'prefix' => 'Need ' . variable_get('wikicompare_next_demo_sequence', 1),
-        'child_min_per_level' => $form_state['input']['need_child_min_per_level'],
-        'child_max_per_level' => $form_state['input']['need_child_max_per_level'],
-        'min_feature_per_node' => $form_state['input']['need_min_feature_per_node'],
-        'max_feature_per_node' => $form_state['input']['need_max_feature_per_node'],
-        'features_without_children' => $features_without_children,
-        'depth' => 1,
-      );
-
-      if (module_exists('wikicompare_translation')) {  
-        $settings['generate_translation'] = $form_state['input']['wikicompare_generate_translation'];
-      }
-
-      wikicompare_generate_demo_create_children($settings, $needs_created);
-
-    }
+  if (module_exists('wikicompare_needs')) {
+    //Generate need demo data.
+    wikicompare_needs_demo_submit_generate($form_state);
   }
 
+  //We use a sequence to make sure we can generate several time the demo data without problem.
   variable_set('wikicompare_next_demo_sequence', variable_get('wikicompare_next_demo_sequence', 1) + 1);
 
-  if (module_exists('wikicompare_inherit_compared')) { 
-
-    if (!empty($compareds_created) && $form_state['input']['compared_inherit_chance'] != 0) { 
-
-
-
-      $compared_without_children = array();
-      $query = db_select('cache_compared', 'c');
-      $query->addField('c', 'nid', 'nid');
-      $query->condition("c.has_children", 0);
-      $result = $query->execute();
-      foreach ($result as $record) {
-        $compared_without_children[$record->nid] = $record->nid;
-      }
-
-
-
-      foreach ($compared_without_children as $cid) {
-        if (rand(1, $form_state['input']['compared_inherit_chance']) == $form_state['input']['compared_inherit_chance']) {
-          $inherit_compared_id = 0;
-          while ($inherit_compared_id == 0 || $inherit_compared_id == $cid) {
-            $inherit_compared_id = array_rand($compared_without_children);
-          }
-          
-
-          $node = node_load($cid);
-          $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $inherit_compared_id;
-          $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
-    
-          $node->revision = TRUE;
-          $node->revision_moderation = TRUE;
-
-
-          node_save($node);
-
-          _revisioning_publish_latest_revision($node);
-
-          //Security against loop, we don't want that two compared inherit each other
-          unset($compared_without_children[$cid]);
-            
-        }
-      }
-
-    }
+  if (module_exists('wikicompare_inherit_compared')) {
+    //Generate inherit compared demo data.
+    wikicompare_inherit_compared_demo_submit_generate($form_state, $compareds_created);
   }
 
-  //This part take a lot of time, better put a high support chance
-  if (!empty($compareds_created) && !empty($features_created) && $form_state['input']['implementation_support_chance'] != 0) { 
+  //Change support implementation value. This part take a lot of time, better put a high support chance
+  if (!empty($compareds_created) && !empty($features_created) && $form_state['input']['implementation_support_chance'] != 0) {
 
+    //Get all implementation node.
     $query = db_select('cache_implementation', 'i');
     $query->addField('i', 'nid', 'nid');
     $query->leftjoin('cache_compared', 'c', 'i.compared_id = c.nid');
@@ -660,52 +444,50 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
     $query->condition("f.has_children", 0);
     $query->condition('i.feature_id', $features_created, 'in');
     $query->condition('i.compared_id', $compareds_created, 'in');
-    if (module_exists('wikicompare_inherit_compared')) { 
-      $query->addField('c', 'inherit_compared_id', 'inherit_compared_id');      
+    if (module_exists('wikicompare_inherit_compared')) {
+      //Add inherit compared specific field.
+      wikicompare_inherit_compared_demo_submit_implementation_query($query);
     }
     $result = $query->execute();
-
-
     foreach($result as $record) {
       $node = node_load($record->nid);
       $modified = False;
+      //Modify support field.
       if (rand(1, $form_state['input']['implementation_support_chance']) == $form_state['input']['implementation_support_chance']) {
         $node->wikicompare_support['und'][0]['value'] = 1;
         $modified = True;
       }
-      if (module_exists('wikicompare_inherit_compared')) { 
-        if (($record->inherit_compared_id != NULL) && (rand(1, $form_state['input']['implementation_use_from_inherit_chance']) == $form_state['input']['implementation_use_from_inherit_chance'])) {
-          $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
-          $modified = True;
-        }
+      if (module_exists('wikicompare_inherit_compared')) {
+        //Modify inherit compared specific field.
+        wikicompare_inherit_compared_demo_submit_implementation($node, $modified, $form_state, $record);
       }
 
       if ($modified == True) {
-
         $node->revision = TRUE;
         $node->revision_moderation = TRUE;
-
         node_save($node);
-
         _revisioning_publish_latest_revision($node);
-
       }
-
     }
-
 
   }
 
-
 }
 
+
+/**
+ * Recursive function which create node.
+ *
+ * @param $settings
+ *
+ * @param $nodes_created
+ *   The created nodes, we need them for later used. Passed by reference.
+ */
 function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
-
-
   $settings_for_children = $settings;
+  //Get the number of children.
   $nb_child = rand($settings['child_min_per_level'], $settings['child_max_per_level']);
-
 
   $i = 1;
   while ($i <= $nb_child) {
@@ -720,16 +502,14 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
       $node->wikicompare_parent_id['und'][0]['target_id'] = $settings['parent_id'];
       $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
     }
-
     if ($settings['type'] == 'feature') {
-
+      //Define random weight in taking account of the parent type and the settings.
       if ($settings['parent_type'] == 'parent-weighted-average') {
         $node->wikicompare_weight['und'][0]['value'] = rand($settings['min_weight'], $settings['max_weight']);
       } elseif ($settings['parent_type'] == 'parent-highest-percentage') {
         $node->wikicompare_weight['und'][0]['value'] = 100/rand($settings['min_weight'], $settings['max_weight']);
       }
-
-
+      //Define random type.
       if (rand(1, $settings['feature_highest_chance']) != $settings['feature_highest_chance']) {
         $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
         $settings_for_children['parent_type'] = 'parent-weighted-average';
@@ -738,88 +518,33 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
         $settings_for_children['parent_type'] = 'parent-highest-percentage';
       }
     }
-
-    if (module_exists('wikicompare_needs')) {  
+    if (module_exists('wikicompare_needs')) {
       if ($settings['type'] == 'need') {
         $node->wikicompare_features['und'] = array();
       }
     }
-
-
-
+    //Create new node.
     node_save($node);
     $nodes_created[$node->nid] = $node->nid;
 
-    if (module_exists('wikicompare_translation')) {  
-      if ($settings['generate_translation'] == 'true') {
-
-        $node->tnid = $node->nid;
-        node_save($node);
-
-        foreach (language_list() as $key => $language) {
-
-          if ($key == language_default('language')) {
-            continue;
-          }
-            
-          $tnode = new stdClass();
-          $tnode->type = $settings['type'];
-          $tnode->language = $key;
-          $tnode->tnid = $node->nid;
-          $tnode->title = $settings['prefix'] . '.' . $i . ' ' . $key;
-
-          node_save($tnode);
-        }
-
-      }
+    if (module_exists('wikicompare_translation')) {
+      //Generate demo translations.
+      wikicompare_translation_demo_submit_generate($node, $settings);
     }
 
-
-
-
-
-
+    //Randomly generate children.
     if ((($settings['depth'] < $settings['min_depth'] or (rand($settings['depth'], $settings['max_depth']) != $settings['depth'])) and ($settings['depth'] < $settings['max_depth']))) {
       $settings_for_children['depth'] = $settings['depth'] + 1;
       $settings_for_children['parent_id'] = $node->nid;
       wikicompare_generate_demo_create_children($settings_for_children, $nodes_created);
     } else {
-
-      if (module_exists('wikicompare_needs')) {  
-
-        if ($settings['type'] == 'need') {
-
-          if (!empty($settings['features_without_children'])) {
-
-            $nb_features = rand($settings['min_feature_per_node'], $settings['max_feature_per_node']);
-
-            if (!in_array($nb_features, array(0,1))) {
-
-              $i_features = 0;
-              foreach (array_rand($settings['features_without_children'], $nb_features) as $fid) {
-                $node->wikicompare_features['und'][$i_features]['target_id'] = $fid;
-                $node->wikicompare_features['und'][$i_features]['target_type'] = "node";
-                $i_features++;
-              }      
-              $node->revision = TRUE;
-              $node->revision_moderation = TRUE;
-
-              node_save($node);
-
-              _revisioning_publish_latest_revision($node);
-
-
-            }
-          }
-        }
-
+      if (module_exists('wikicompare_needs')) {
+        //Generate need specific fields. We generate theses fields only for need without children.
+        wikicompare_needs_demo_submit_specific_fields($node, $settings);
       }
-
     }
 
-
     $i++;
-
 
   }
 
@@ -828,7 +553,9 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
 
 
-
+/**
+ * Function called in wikicompare administration to drop all node in wikicompare.
+ */
 function wikicompare_drop_nodes() {
 
   $query = db_select('node', 'n');
@@ -843,8 +570,5 @@ function wikicompare_drop_nodes() {
   node_delete_multiple($nids);
 
 }
-
-
-
 
 ?>

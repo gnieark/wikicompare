@@ -786,4 +786,137 @@ function wikicompare_translation_move_field_language($field_name, $ids) {
 
 }
 
+
+
+
+
+/*****************************************************************
+*
+*    GENERATE DEMO
+*
+*****************************************************************/
+
+/** 
+ * Export translations of a node.
+ *
+ * @param $output
+ *   The html code of the export. Passed by reference.
+ *
+ * @param $node
+ *   The node we are currently exporting.
+ */
+function wikicompare_translation_demo_export_translations(&$output, $node) {
+
+  //Get all translation node.
+  $query = db_select('node', 'n');
+  $query->addField('n', 'title', 'title');
+  $query->addField('n', 'language', 'language');
+  $query->condition('n.tnid', $node['data']->nid);
+  $query->condition('n.language', 'en', '!=');
+  $result = $query->execute();
+
+  $first = True;
+  foreach ($result as $record) {
+
+    //We only render this code before the first translation.
+    if ($first == True) {
+      $output .= "<p>if (module_exists('wikicompare_translation')) {</p>";
+      $output .= "<p>\$node->tnid = \$node->nid;<br/>";
+      $output .= "node_save(\$node);</p>";
+      $first = False;
+    }
+
+    $output .= "<p>if (in_array('" . $record->language . "', \$language_list)) {<br/>";
+    $output .= "\$tnode = new stdClass();<br/>";
+    $output .= "\$tnode->type = '" . $type . "';<br/>";
+    $output .= "\$tnode->language = '" . $record->language . "';<br/>";
+    $output .= "\$tnode->tnid = \$node->nid;<br/>";
+    $output .= '$tnode->title = "' . $record->title . '";<br/>';
+    $output .= "node_save(\$tnode);<br/>";
+    $output .= "}</p>";
+
+  }
+
+  //Only after the last translation.
+  if ($first == False) {
+    $output .= "<p>}</p>";
+  }
+
+}
+
+
+
+/** 
+ * Display translation specific fields in the generate demo form.
+ *
+ * @param $form
+ *   The generate demo form. Passed by reference.
+ */
+function wikicompare_translation_demo_form(&$form) {
+
+  $form['demo_fieldset']['wikicompare_generate_translation'] = array(
+    '#type' => 'select',
+    '#title' => t('Generate translation?'),
+    '#options' => array(
+      'false' => t("No"),
+      'true' => t("Yes"),
+    ),
+    '#default_value' => 'false',
+    '#required' => TRUE,
+  );
+
+}
+
+
+
+/** 
+ * Prepare translation specific settings in the generate demo submit.
+ *
+ * @param $settings
+ *   The settings of the generate demo submit. Passed by reference.
+ * 
+ * @param $form_state
+ *   The values submitted by the form.
+ */
+function wikicompare_translation_demo_submit_settings(&$settings, $form_state) {
+  $settings['generate_translation'] = $form_state['input']['wikicompare_generate_translation'];
+}
+
+
+
+/** 
+ * Generate demo translations.
+ *
+ * @param $node
+ *   The node we need to generate translations.
+ *
+ * @param $settings
+ *   The settings of the generate demo submit.
+ */
+function wikicompare_translation_demo_submit_generate($node, $settings) {
+
+  if ($settings['generate_translation'] == 'true') {
+
+    $node->tnid = $node->nid;
+    node_save($node);
+
+    foreach (language_list() as $key => $language) {
+
+      if ($key == language_default('language')) {
+        continue;
+      }
+        
+      $tnode = new stdClass();
+      $tnode->type = $settings['type'];
+      $tnode->language = $key;
+      $tnode->tnid = $node->nid;
+      $tnode->title = $settings['prefix'] . '.' . $i . ' ' . $key;
+
+      node_save($tnode);
+    }
+
+  }
+
+}
+
 ?>
