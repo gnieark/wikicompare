@@ -804,25 +804,18 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
     //Get the children, with the parent nid.
     $nodes = request_db($_POST['type'], array('parent_id' => $_POST['nid']),  $settings);
 
-    //Security for the selected_feature_ids, it's an array but javascript return a string when empty.
-    if (isset($_POST['selected_feature_ids'])) {
-      if ($_POST['selected_feature_ids'] == '') {
-        $_POST['selected_feature_ids'] = array();
-      }
-    }
-
     foreach ($nodes as $nid => $node) {
 
       //If a compared table is already displayed in the table, we check it by default.
       if ($_POST['type'] == 'compared' && $settings['context'] == 'table') {
-        if (in_array($nid, $_POST['compared_column_ids'])) {
+        if (in_array($nid, $settings['compared_column_ids'])) {
           $nodes[$nid]['data']->displayed = True;
         }
       }
 
       //If a multidialog feature is already checked in javascript global variable, we check it by default.
       if ($_POST['type'] == 'feature' && $settings['context'] == 'multidialog') {
-        if (in_array($nid, $_POST['selected_feature_ids'])) {
+        if (in_array($nid, $settings['selected_feature_ids'])) {
           $nodes[$nid]['data']->displayed = True;
         }
       }
@@ -889,19 +882,14 @@ function wikicompare_get_feature_children_response($method = 'ajax') {
       $feature_ids[$fid] = $fid;
     }
 
-    //Security for the compared_column_ids, it's an array but javascript return a string when empty.
-    if ($_POST['compared_column_ids'] == '') {
-      $_POST['compared_column_ids'] = array();
-    }
-
     //Recover the implementations needed for the cells, thanks to compared and feature ids.
     $implementations = array();
-    if (!empty($_POST['compared_column_ids'])) {
-      $implementations = request_db('implementation', array('compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
+    if (!empty($settings['compared_column_ids'])) {
+      $implementations = request_db('implementation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
     }
 
     //Prepare the features data for rendering.
-    $feature_row_data = wikicompare_build_rows_data($features, $_POST['compared_column_ids'], $implementations, $settings);
+    $feature_row_data = wikicompare_build_rows_data($features, $settings['compared_column_ids'], $implementations, $settings);
 
     //Render the features.
     $output = wikicompare_table_render_rows($feature_row_data, $settings);
@@ -977,11 +965,12 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
 
         //Build the whole features tree.
         $features = wikicompare_build_recursive_data('feature', $features_without_children, $settings);
-
-        //Finally prepare the features and implementations for rendering and compute the implementation percent.
-        $features = wikicompare_build_rows_data($features['tree'], array($_POST['nid']), $implementations, $settings); 
+        $features = $features['tree'];
 
       }
+
+      //Finally prepare the features and implementations for rendering if necessary compute the implementation percent.
+      $features = wikicompare_build_rows_data($features, array($_POST['nid']), $implementations, $settings);
 
       $cells = array();
       foreach ($features as $fid => $feature) {
@@ -1176,8 +1165,8 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
 
   //Prepare the data with the tree by calling the recursive function.
   $features = array('data' => array());
-  if ($_POST['selected_feature_ids']) {
-    $features = wikicompare_build_recursive_data('feature', $_POST['selected_feature_ids'], $settings);
+  if ($settings['selected_feature_ids']) {
+    $features = wikicompare_build_recursive_data('feature', $settings['selected_feature_ids'], $settings);
   }
 
   //Building the data for the itemlist.
@@ -1206,7 +1195,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
 
   //Add the value for the fastaction form.
   $hidden_fastaction = '';
-  foreach ($_POST['selected_feature_ids'] as $feature_id) {
+  foreach ($settings['selected_feature_ids'] as $feature_id) {
     $hidden_fastaction .= '<div class="need_feature">' . $feature_id . '</div>';
   }
 
@@ -1251,12 +1240,8 @@ function wikicompare_compute_table_response($method = 'ajax') {
   //Get the features we will use to compute the table.
   $selected_feature_ids = array();
   if (!isset($_POST['reset'])) {
-    //Security for the selected_feature_ids, it's an array but javascript return a string when empty.
-    if ($_POST['selected_feature_ids'] == '') {
-      $_POST['selected_feature_ids'] = array();
-    }
 
-    $selected_feature_ids = $_POST['selected_feature_ids'];
+    $selected_feature_ids = $settings['selected_feature_ids'];
 
     if (module_exists('wikicompare_needs')) {
       //Add the features of the selected needs.
@@ -1264,12 +1249,6 @@ function wikicompare_compute_table_response($method = 'ajax') {
     }
   }
   
-  //Security for the compared_columns_ids, it's an array but javascript return a string when empty.
-  $compared_columns_ids = array();
-  if ($_POST['compared_column_ids']) {
-    $compared_columns_ids = $_POST['compared_column_ids'];
-  }
-
   $commands = array();
 
   if (module_exists('wikicompare_needs')) {
@@ -1496,8 +1475,8 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
     //Get implementations details.
     $implementations = array();
-    if (!empty($_POST['compared_column_ids']) && !empty($feature_ids)) {
-      $implementations = request_db('implementation', array('compared_ids' => $_POST['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
+    if (!empty($settings['compared_column_ids']) && !empty($feature_ids)) {
+      $implementations = request_db('implementation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
     }
 
     //Rerender all the implementations displayed in the table.
@@ -1512,8 +1491,8 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
   //If during the tests, we asked for a reset of the selected features itemlist.
   if ($update_selected_features) {
     $features = array('tree' => array());
-    if ($_POST['selected_feature_ids']) {
-      $features = wikicompare_build_recursive_data('feature', $_POST['selected_feature_ids']);
+    if ($settings['selected_feature_ids']) {
+      $features = wikicompare_build_recursive_data('feature', $settings['selected_feature_ids']);
     }
     //Building the data for the itemlist.
     $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, array('computed' => 1));
@@ -1549,18 +1528,23 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 function wikicompare_initialize_settings($args = array()) {
 
   $settings = array();
-
-  foreach (array('fastaction', 'context', 'forbidden_nid', 'computed', 'states', 'colspan', 'can_be_translated') as $key) {
+  foreach (array('fastaction', 'context', 'compared_column_ids', 'selected_feature_ids', 'forbidden_nid', 'computed', 'states', 'colspan') as $key) {
 
     //If the key is already set in the argument of the function, we directly use it.
     if (isset($args[$key])) {
       $settings[$key] = $args[$key];
+
+      //Security for some fields coming from javascript, they are array but javascript return a string when empty.
+      if (in_array($key, array('compared_column_ids', 'selected_feature_ids')) && $args[$key] == '') {
+        $settings[$key] = array();
+      }
+
     //Else we set 0 as default value, except for some specific key.
     } else {
       $result = 0;
       if ($key == 'context') {
         $result = 'table';
-      } elseif ($key == 'states') {
+      } elseif (in_array($key, array('compared_column_ids', 'selected_feature_ids', 'states'))) {
         $result = array();
       }
       $settings[$key] = $result;
@@ -1569,6 +1553,7 @@ function wikicompare_initialize_settings($args = array()) {
   }
 
   return $settings;
+
 }
 
 
