@@ -2,19 +2,24 @@
 
 /**
  * @file
- * Install, update, and uninstall functions for the wikicompare module.
+ * Install, update, and uninstall functions for the wikicompare needs module.
  */
 
+//Some generic function are defined in the wikicompare.install file.
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.install';
 
+
+
+/**
+ * Implements hook_schema()
+ * This hook allow us to create some table in database.
+ */
 function wikicompare_needs_schema() {
 
-
-
+  //Call the generic function from wikicompare.install.
   $schema['cache_need'] = wikicompare_node_schema('need');
 
-
-
+  //Add many2many table for the link between need and feature.
   $schema['cache_need_feature_rel'] = array(
 
     'description' => 'Cache table storing the link between need and feature. Used so the percentage of comparative table are computed faster.',
@@ -48,15 +53,17 @@ function wikicompare_needs_schema() {
       ),
     )
 
-  ); 
+  );
 
   return $schema;
 
 }
 
+
+
 /**
  * Implements hook_install().
- * This function is called only once at the module installation
+ * This function is called only once at the module installation.
  */
 function wikicompare_needs_install() {
 
@@ -64,7 +71,6 @@ function wikicompare_needs_install() {
 
   // Ensure that new node type is available.
   node_types_rebuild();
-  
 
   $field = array(
     'field_name' => 'wikicompare_features',
@@ -77,9 +83,8 @@ function wikicompare_needs_install() {
   );
   field_create_field($field);
 
-
+  //Call the generic function from wikicompare.install.
   wikicompare_node_install('need');
-
 
   $instance = array(
     'field_name' => 'wikicompare_features',
@@ -96,7 +101,7 @@ function wikicompare_needs_install() {
   );
   field_create_instance($instance);
 
-
+  //Assign need specific permissions.
   foreach (array('wikicompare_admin', 'moderator', 'authenticated user') as $role_name) {
 
     $permissions = array(
@@ -113,21 +118,17 @@ function wikicompare_needs_install() {
       ));
     }
 
-
-
     $role = user_role_load_by_name($role_name);
     $rid = $role->rid;
     user_role_change_permissions($rid, $permissions);
-  }
 
+  }
 
   if (module_exists('wikicompare_translation')) {
     variable_set('language_content_type_need', 2);
   }
 
-
 }
-
 
 
 
@@ -137,23 +138,17 @@ function wikicompare_needs_install() {
  */
 function wikicompare_needs_uninstall() {
 
-
-
-
   //Delete all nodes of need type.
-
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
   $result = db_query($sql, array(':type' => 'need'));
   $nids = array();
   foreach ($result as $row) {
     $nids[] = $row->nid;
   }
-
   node_delete_multiple($nids);
 
 
-  //Delete all variable of feature type.
-
+  //Delete all variable of need type.
   variable_del('node_options_need');
   variable_del('node_submitted_need');
   variable_del('language_content_type_need');
@@ -167,22 +162,17 @@ function wikicompare_needs_uninstall() {
   variable_del('comment_preview_need');
   variable_del('comment_subject_field_need');
 
-  //Delete feature content type.
-
-
+  //Delete fields.
   field_delete_field('wikicompare_features');
-
-
 
   field_delete_instance(field_read_instance('node', 'body', 'need'));
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_need'));
-  
-  node_type_delete('need');
 
+  //Delete need type.
+  node_type_delete('need');
 
   // Purge all field information
   // api.drupal.org/api/function/field_purge_batch/7
-
   field_purge_batch(1000);
 
 }
