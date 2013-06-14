@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @file
+ * Define the function for export and generate demo data.
+ */
+
+
 //Include import files.
 require_once drupal_get_path('module', 'wikicompare_generate_demo') . '/data/erp_data.inc';
 

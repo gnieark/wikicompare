@@ -18,15 +18,6 @@ dependencies[] = revisioning
 dependencies[] = simple_dialog
 dependenvies[] = views
 
-
-
-dependencies[] = views_ui
-dependencies[] = devel
-dependencies[] = field_ui
-dependencies[] = admin_menu
-dependencies[] = admin_menu_toolbar
-
-
 package = Wikicompare
 version = VERSION
 core = 7.x

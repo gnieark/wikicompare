@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ * Define the wikicompare dashboard view.
+ */
 
 function wikicompare_views_api() {
   return array(

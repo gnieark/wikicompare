@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Define the main hooks for the wikicompare module.
+ */
+
+/**
  * Include the other files.
  */
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_core_functions.inc';

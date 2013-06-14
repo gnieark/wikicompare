@@ -1,5 +1,4 @@
 <?php
-//READY
 
 /**
  * @file
