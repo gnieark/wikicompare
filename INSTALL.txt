@@ -1,0 +1,37 @@
+Wikicompare
+===========
+
+INSTALLATION
+------------
+1.  Download the latest version of Drupal 7 and place it in your web server.
+
+2.  Download and place the following community modules in the "modules" directory :
+-ckeditor
+-diff
+-entityreference
+-imce
+-openid
+-revisioning
+-simple_dialog
+-views
+
+3.  Place the wikicompare module in the "modules" directory.
+
+4.  Install last full version of ckeditor in sites/all/libraries and in the modules/ckeditor/ckeditor.
+
+5.  In the module simple_dialog, modify the simple_dialog.js file :
+- $('a.simple-dialog' + classes, context).each(function(event) {
++ $('a.simple-dialog' + classes).each(function(event) {
+
+6.  In the module revisioning, modify the revisioning.module file :
+After :
+$node_op = revisioning_user_node_access($revision_op, $node);
+Add :
+$tests = module_invoke_all('revisioning_access_node', $node_op, $revision_op, $node);
+foreach ($tests as $test) {
+  if ($test == False) {
+    $node_op = False;
+  }
+}
+
+7.  Install Drupal, and go to admin/build/modules to enable the module.

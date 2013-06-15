@@ -970,10 +970,6 @@ Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur 
 Debogage
 */
 
-//TODO on a encore des plantages sur le simpledialog quand on valide les fastedit, mais plus dans les autres cas.
-
-
-
 
 
   //INSTALL TIP : Install last full version of ckeditor in sites/all/libraries and in the modules/ckeditor/ckeditor.
@@ -984,23 +980,11 @@ Debogage
 //TODO les fastremove n'apparaissent plus
 //TODO les needs ne sont plus traduits
 
-//TODO Centralize the main update function, et integrer les where directement dans les leftjoin quand possible
 
 
-//TODO Remplacer les $key par $nid quand je les ai utilise en tant que tel
-//TODO renommer toutes les fonctions en les demarrant par wikicompare
+//INSTALL A l'installation, le block language ne se met pas dans le contenu
+//INSTALL Pour faire marcher le dialog dans fastaction, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
 
-//TODO A l'installation, le block language ne se met pas dans le contenu
-//TODO Dans inherit compared, dans le formulaire d'implementation, quand on active / desactive la récupération depuis l'inherit, la valeur de support n'est pas correctement récupérée. Je n'arrive pas à corriger.
-//TODO Dans fastaction, je n'arrive pas à afficher les description et guidelines avec le wysiwyg, ni les many2many comme users et proofs. On retire pour l'instant, archiver dans fichier TODO.
-//TODO Trouver un moyen de sortir les requetes sql de la boucle update_compare_tree, pour un gain massif de performance
-//TODO Code quality : Split the javascript file in three : main for forms (defining ajax function), one for comparative table and one for needs. The last two will override some function in the main file, using a hook system.
-//TODO integrer un module de chat sur le site pourrait être sympa, suggestion drupalchat me parait pas mal
-//TODO Pour faire marcher le dialog dans fastaction, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
-//TODO Low : The selected itemlist are in ordered list intead of unordered list. Looks like there is no error with html code, so we'll just wait for the template.
-//TODO sur une implementation, quand on decoche use_from_inherit la valeur support n'est pas prise en compte / medium
-//TODO Je pense que les expression reguliere ne recupere pas correctement l'id quand > 4 chiffres / critical
-//TODO achever la traduction
-//TODO dans form need, les features ne sont modifiée que une par une
+
 
 })(jQuery);
