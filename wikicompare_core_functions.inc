@@ -814,7 +814,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     }
 
     //Assign the node_array to $res with the nid as key, except it's an implementation we found thanks to the compared and feature ids.
-    if ($type != 'implementation' || isset($settings['nids'])) {
+    if ($type != 'implementation' || isset($db_settings['nids'])) {
       $res[$record->nid] = $node_array;
     } else {
       $res[$record->feature_id][$record->compared_id] = $node_array;
