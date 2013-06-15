@@ -1247,7 +1247,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
     if (module_exists('wikicompare_needs')) {
       //Add the features of the selected needs.
-      wikicompare_needs_table_prepare_compute($selected_feature_ids, $_POST);
+      wikicompare_needs_table_prepare_compute($selected_feature_ids, $_POST, $settings);
     }
   }
 

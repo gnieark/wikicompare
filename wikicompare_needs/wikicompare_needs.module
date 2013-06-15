@@ -72,7 +72,7 @@ function wikicompare_needs_request_db($query, $type) {
  * $type
  *   The type of the request.
  */
-function wikicompare_needs_request_db_build($node_array, $need_features, $record, $type) {
+function wikicompare_needs_request_db_build(&$node_array, &$need_features, $record, $type) {
 
   if ($type == 'need') {
 
@@ -99,7 +99,7 @@ function wikicompare_needs_request_db_build($node_array, $need_features, $record
  * @param $need_features
  *   The array we build before while we were parsing the records.
  */
-function wikicompare_needs_request_db_after($res, $need_features) {
+function wikicompare_needs_request_db_after(&$res, $need_features) {
 
   foreach ($need_features as $nid => $features) {
     $res[$nid]['need_features'] = $features;
@@ -312,12 +312,15 @@ function wikicompare_needs_table_prepare_itemlist($nid, &$nodes, $_POST) {
  *
  * @param $_POST
  *   The data coming from the javascript.
+ *
+ * @param $settings
+ *   The settings for the db request.
  */
-function wikicompare_needs_table_prepare_compute(&$selected_feature_ids, $_POST) {
+function wikicompare_needs_table_prepare_compute(&$selected_feature_ids, $_POST, $settings) {
 
   if (!empty($_POST['selected_need_ids'])) {
     //Call the recursive function to add the features. The function must be recursive because we only have the nids of the needs at the base of the tree, and we must also include the features of their parents.
-    $selected_feature_ids += wikicompare_needs_recover_features($_POST['selected_need_ids']);
+    $selected_feature_ids += wikicompare_needs_recover_features($_POST['selected_need_ids'], $settings);
   }
 
 }
@@ -330,14 +333,16 @@ function wikicompare_needs_table_prepare_compute(&$selected_feature_ids, $_POST)
  * @param $need_ids
  *   The ids of the needs we want to get the features.
  *
+ * @param $settings
+ *   The settings for the db request.
+ *
  * @return $feature_ids
  *   The ids of the feature we will use for the computation.
  */
-function wikicompare_needs_recover_features($need_ids) {
+function wikicompare_needs_recover_features($need_ids, $settings) {
 
   //Get the details of the selected needs.
-  $needs = request_db('need', array('nids' => $need_ids), array());
-
+  $needs = request_db('need', array('nids' => $need_ids), $settings);
 
   $feature_ids = array();
   $parent_ids = array();
@@ -354,7 +359,7 @@ function wikicompare_needs_recover_features($need_ids) {
 
   if (!empty($parent_ids)) {
     //Recursive call.
-    $feature_ids += recover_features($parent_ids);
+    $feature_ids += wikicompare_needs_recover_features($parent_ids, $settings);
   }
 
   return $feature_ids;
