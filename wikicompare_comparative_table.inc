@@ -405,6 +405,9 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
                   'style' => 'display:none',
                 )
               );
+              if (isset($node['data']->displayed)) {
+                $checkbox_link['#attributes']['class'][] = 'displayed';
+              }
               $prefix .= render($checkbox_link);
             }
 

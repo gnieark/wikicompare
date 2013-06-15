@@ -1,5 +1,4 @@
 (function ($) {
-//READY
 
 /*
  * Set global variable. Executed only once at the load of the file.
@@ -960,32 +959,5 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
   }
 };
-
-
-/*
-21/24
-21 fichiers
-faire les TODOS
-Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur le serveur.
-Debogage
-*/
-
-//TODO : Display a compared, compute table, display other compared, toogle out the first compared
-
-
-  //INSTALL TIP : Install last full version of ckeditor in sites/all/libraries and in the modules/ckeditor/ckeditor.
-
-
-
-
-//TODO les fastremove n'apparaissent plus
-//TODO les needs ne sont plus traduits
-
-
-
-//INSTALL A l'installation, le block language ne se met pas dans le contenu
-//INSTALL Pour faire marcher le dialog dans fastaction, je dois enlever le mot cle context dans simple_dialog.js -> "$('a.simple-dialog' + classes, context).each(function(event) {" Il faut trouver pourquoi pour que ça marche directement.
-
-
 
 })(jQuery);
