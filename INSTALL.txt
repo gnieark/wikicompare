@@ -7,10 +7,11 @@ INSTALLATION
 
 2.  Download and place the following community modules in the "modules" directory :
 -ckeditor
+-ctools
 -diff
+-entity
 -entityreference
 -imce
--openid
 -revisioning
 -simple_dialog
 -views
@@ -34,4 +35,4 @@ foreach ($tests as $test) {
   }
 }
 
-7.  Install Drupal, and go to admin/build/modules to enable the module.
+7.  Install Drupal in minimal profile, and go to admin/build/modules to enable the module.
