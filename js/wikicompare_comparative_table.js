@@ -970,6 +970,7 @@ Faire le INSTALL.txt, installer une plateforme de demo et une de stresstest sur 
 Debogage
 */
 
+//TODO : Display a compared, compute table, display other compared, toogle out the first compared
 
 
   //INSTALL TIP : Install last full version of ckeditor in sites/all/libraries and in the modules/ckeditor/ckeditor.

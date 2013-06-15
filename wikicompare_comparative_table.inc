@@ -182,24 +182,23 @@ function wikicompare_table_render_comparative_table($settings, $features=array()
 
   if (empty($features)) {
     //Find all the features on the first level of the tree.
-    $features = request_db('feature', array('parent_id' => NULL), $settings);
-  }
-
-  //Get the feature ids.
-  foreach ($features as $fid => $feature) {
-    $feature_ids[$fid] = $fid;
+    $features['tree'] = request_db('feature', array('parent_id' => NULL), $settings);
+    //Get the feature ids.
+    foreach ($features['tree'] as $fid => $feature) {
+      $features['ids'][$fid] = $fid;
+    }
   }
 
   //Get the needed implementation thanks to feature and compared ids.
   $implementations = array();
   //I though about move this security in the request itself, but it would add an unnecessary db request in many cases.
-  if (!empty($feature_ids) && !empty($compared_ids)) {
+  if (!empty($features['ids']) && !empty($compared_ids)) {
     //Get the needed implementation thanks to feature and compared ids.
-    $implementations = request_db('implementation', array('feature_ids' => $feature_ids, 'compared_ids' => $compared_ids), $settings);
+    $implementations = request_db('implementation', array('feature_ids' => $features['ids'], 'compared_ids' => $compared_ids), $settings);
   }
 
   //Build recursively the features data and compute them if necessary.
-  $features_row_data = wikicompare_build_rows_data($features, $compared_ids, $implementations, $settings);
+  $features_row_data = wikicompare_build_rows_data($features['tree'], $compared_ids, $implementations, $settings);
 
   $compareds = array();
   if (!empty($compared_ids)) {
@@ -747,9 +746,9 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $implementat
         }
 
         //Get the implementation percent by calling the same function than the one used in update_compare_tree.
-        $implementation['data']->percent = 0;
-        $implementation['data']->css_class = 'cell-support-no';
         if (!empty($through_feature_childs)) {
+          $implementation['data']->percent = 0;
+          $implementation['data']->css_class = 'cell-support-no';
           $implementation['data'] = wikicompare_compute_percent($implementation['data'], $through_feature_childs);
         }
 
@@ -1268,7 +1267,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
     //Indicate we are computing the table.
     $settings['computed'] = 1;
     //Render and compute the table.
-    $output = wikicompare_table_render_comparative_table($settings, $features['tree'], $settings['compared_column_ids']);
+    $output = wikicompare_table_render_comparative_table($settings, $features, $settings['compared_column_ids']);
 
   //Else, just reset the table.
   } else {
