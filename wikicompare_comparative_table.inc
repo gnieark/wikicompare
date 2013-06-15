@@ -1328,6 +1328,11 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
       continue;
     }
 
+    //Security for the TYPE_ids, it's an array but javascript return a string when empty.
+    if ($_POST[$type . '_ids'] == '') {
+      $_POST[$type . '_ids'] = array();
+    }
+
     //Security for the TYPE_displayed_ids, it's an array but javascript return a string when empty.
     if ($_POST[$type . '_displayed_ids'] == '') {
       $_POST[$type . '_displayed_ids'] = array();

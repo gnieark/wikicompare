@@ -529,6 +529,8 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
         $node->wikicompare_features['und'] = array();
       }
     }
+    //Activate comments.
+    $node->comment = 2;
     //Create new node.
     node_save($node);
     $nodes_created[$node->nid] = $node->nid;
