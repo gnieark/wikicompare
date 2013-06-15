@@ -57,18 +57,18 @@ function compute_inherit_response($method = 'ajax') {
   }
 
   $commands = array();
+  $support = 0;
 
   if ($_POST['use_from_inherit'] == 'true') {
 
     $inherit_id = NULL;
-    $support = 0;
 
     $query = db_select('cache_implementation', 'n');
     $query->addField('c', 'inherit_compared_id', 'inherit_id');
     $query->addField('ci', 'support', 'support');
     $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
     $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND ci.feature_id = n.feature_id');
-    $query->condition('n.nid', $_POST['node_id']);
+    $query->condition('n.nid', $_POST['nid']);
     $result = $query->execute();
     foreach ($result as $record) {
       $inherit_id = $record->inherit_id;
@@ -87,7 +87,7 @@ function compute_inherit_response($method = 'ajax') {
   } else {
     $query = db_select('cache_implementation', 'n');
     $query->addField('n', 'support', 'support');
-    $query->condition('n.nid', $_POST['node_id']);
+    $query->condition('n.nid', $_POST['nid']);
     $result = $query->execute();
     foreach ($result as $record) {
       $support = $record->support;
@@ -658,8 +658,8 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
  * @param $output
  *   The HTML code which will be inserted. Passed by reference
  *
- * @param $readonly
- *   Flag indicated if the user can modify the node. Passed by reference.
+ * @param $disable_support
+ *   Flag indicated if the support field can be modified. Passed by reference.
  *
  * @param $test
 *   Test if the support field must be checked by default. Passed by reference.
@@ -673,10 +673,13 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
  * @param $node
  *   Object containing the detail of the node.
  *
+ * @param $readonly
+ *   If the user have right to modify fields.
+ *
  * @param $fastaction
  *   The fastaction (add or edit)
  */
-function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, &$readonly, &$test, $form_type, $type, $node, $fastaction) {
+function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, &$disable_support, &$test, $form_type, $type, $node, $readonly, $fastaction) {
 
   if ($type == 'implementation') {
 
@@ -762,7 +765,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
         //Disable the support field located after this one
         if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
-          $readonly = True;
+          $disable_support = True;
         }
       }
 

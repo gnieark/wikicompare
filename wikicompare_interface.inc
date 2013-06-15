@@ -337,13 +337,15 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
     }
 
+
     if ($form_type == 'fastaction') {
 
       //We can modify the value of the implementation only it is at the root of the tree in both axis.
       if (!$res->feature_has_children && !$res->compared_has_children) {
         $test = False;
+        $disable_support = False;
         if (module_exists('wikicompare_inherit_compared')) {
-          wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'fastaction', $node, $fastaction);
+          wikicompare_inherit_compared_modify_form_implementation($form, $output, $disable_support, $test, 'fastaction', $type, $node, $readonly, $fastaction);
         }
 
         //I wasn't able to use the renderable array, so I coded directly in html
@@ -365,7 +367,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         }
 
         //If the user do not have rights, then the field become read-only.
-        if ($readonly == TRUE) {
+        if ($readonly == True || $disable_support == True) {
           $output .= ' disabled="disabled"';
         }
 
@@ -375,7 +377,6 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
     }
 
   }
-
 
   if ($form_type == 'fastaction') {
 
