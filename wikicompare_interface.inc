@@ -192,7 +192,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         $output .= '<p><span id="container-wikicompare-parent-id">' . $parent_name . '</span>';
         if ($readonly != True) {
           //Span with the parent_id, which will be recovered by the submit function and updated by javascript. Followed by the link.
-          $output .= '<span id="parent_id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
+          $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
         }
       }
 
@@ -704,7 +704,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
       //If we are just fastadding a node, then we insert an hidden span containing the id of the parent.
       } else {
-        $output .= '<span id="parent_id" style="display:none;">' . $nid . '</span>';
+        $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $nid . '</span>';
       }
 
       $form = array();

@@ -705,13 +705,13 @@ function wikicompare_translation_fastaction_submit_init_tnode(&$tnode, $_POST, $
     $tnode->uid = $GLOBALS['user']->uid;
     $tnode->language = $language->language;
     //Indicate that the node which will be created is a translation of the main node.
-    $tnode->translation_source = node_load($_POST['node_id']);
+    $tnode->translation_source = node_load($_POST['nid']);
 
     //Get information of the tnode from database if the node already exist.
     if ($fastaction == 'edit') {
       $query = db_select('node', 'n');
       $query->addField('n', 'nid', 'nid');
-      $query->condition('n.tnid', $_POST['node_id']);
+      $query->condition('n.tnid', $_POST['nid']);
       $query->condition('n.language', $language->language);
       $result = $query->execute();
       foreach ($result as $record) {

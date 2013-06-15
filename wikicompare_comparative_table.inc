@@ -1434,7 +1434,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
           $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Compareds', $settings));
           break;
         case 'feature':
-          $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings, array(), $_POST['compared_columns_ids']));
+          $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings, array(), $_POST['compared_column_ids']));
           break;
       }
 

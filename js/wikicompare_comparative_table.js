@@ -554,7 +554,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (type != 'implementation') {
             options.data.title = $('#form_' + type + '_fast' + context + '_title_' + nid).val();
             options.data.title_translation = $('#form_' + type + '_fast' + context + '_title_' + nid + '_translation').val();
-            options.data.parent_id = $('#parent_id').text();
+            options.data.parent_id = $('#wikicompare-parent-id').text();
             options.data.sequence = $('#form_' + type + '_fast' + context + '_sequence_' + nid).val();
             options.data.state = $('#form_' + type + '_fast' + context + '_state_' + nid).val();
           }
