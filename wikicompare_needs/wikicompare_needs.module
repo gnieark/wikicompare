@@ -553,7 +553,7 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
       'text' => 'Select features',
       'title' => 'Select features',
       'selector' => 'dialog-content',
-      'path' => 'wikicompare_get_dialog_callback/multidialog/feature/wikicompare-features/0/',//form_selected_features/none',
+      'path' => 'wikicompare_get_dialog_callback/multidialog/feature/wikicompare-features/0/',
       'id' => 'select_feature_link',
     );
 
@@ -570,6 +570,9 @@ function wikicompare_needs_build_form(&$form, &$form_state, &$output, $form_type
       if ($node->language == language_default('language')) {
         $form['container_selected_feature']['#suffix'] = '<div id="initialize_need_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
       }
+
+      //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the parent.
+      $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
     }
 
     if ($form_type == 'fastaction') {
