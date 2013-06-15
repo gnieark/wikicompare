@@ -904,8 +904,11 @@ function wikicompare_translation_demo_submit_settings(&$settings, $form_state) {
  *
  * @param $settings
  *   The settings of the generate demo submit.
+ *
+ * @param $i
+ *   The id of the node generated at this level.
  */
-function wikicompare_translation_demo_submit_generate($node, $settings) {
+function wikicompare_translation_demo_submit_generate($node, $settings, $i) {
 
   if ($settings['generate_translation'] == 'true') {
 

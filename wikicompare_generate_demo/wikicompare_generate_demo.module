@@ -535,7 +535,7 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
 
     if (module_exists('wikicompare_translation')) {
       //Generate demo translations.
-      wikicompare_translation_demo_submit_generate($node, $settings);
+      wikicompare_translation_demo_submit_generate($node, $settings, $i);
     }
 
     //Randomly generate children.

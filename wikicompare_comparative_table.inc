@@ -344,124 +344,126 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
   $prefix = '';
   $suffix = '';
 
-  //Get the title of the item, which can be a translated title.
-  $title = '<span class="' . $type . '_title_' . $node['data']->nid . '">' . $node['data']->title . '</span>';
+  if ($type != 'implementation') {
 
-  //An implementation has no title, we simply display his percentage.
-  if ($type == 'implementation') {
-    $title = $node['data']->percent . '%';
-  }
+    //Get the title of the item, which can be a translated title.
+    $title = '<span class="' . $type . '_title_' . $node['data']->nid . '">' . $node['data']->title . '</span>';
 
-  //For all table items, we add a link to access the node page and add a div to store the fastaction items.
-  if ($settings['context'] == 'table') {
+    //For all table items, we add a link to access the node page and add a div to store the fastaction items.
+    if ($settings['context'] == 'table') {
 
-    //Create the image link to go to the node page
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to ' . $type . ' ') . $node['data']->nid,
-      'height' => '100%',
-    ));
-    //Create the link. It will redirect to the translated node if any. The html = True indicate that the title of the link contain html.
-    $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
+      //Create the image link to go to the node page
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+        'alt' => t('Link to ' . $type . ' ') . $node['data']->nid,
+        'height' => '100%',
+      ));
+      //Create the link. It will redirect to the translated node if any. The html = True indicate that the title of the link contain html.
+      $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
 
-    //Add fastaction item if fastaction flag is set, or else at least the div which will contains them.
-    $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '">';
-    if ($settings['fastaction']) {
-      $suffix .=  add_fastaction_items($type, $node);
+      //Add fastaction item if fastaction flag is set, or else at least the div which will contains them.
+      $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '">';
+      if ($settings['fastaction']) {
+        $suffix .=  add_fastaction_items($type, $node);
+      }
+      $suffix .= '</span>';
+
     }
-    $suffix .= '</span>';
 
-  }
+    //Specify the most used ajax call to display children.
+    $url = 'wikicompare_get_itemlist_children_callback/nojs/';
 
-  //Specify the most used ajax call to display children.
-  $url = 'wikicompare_get_itemlist_children_callback/nojs/';
+    //Specific case of the table features.
+    if ($type == 'feature' && $settings['context'] == 'table') {
+      //The ajax call is not the same.
+      $url = 'wikicompare_get_feature_children_callback/nojs/';
+      //Creating the first cell of the row, containing the feature details.
+      $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
+      //We display the type only for the parent feature, no interest in case of only children features.
+      if ($node['data']->has_children){
+        $suffix .= '<br/> Type : <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
+      }
+      $suffix .= '<br/> State : <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
 
-  //Specific case of the table features.
-  if ($type == 'feature' && $settings['context'] == 'table') {
-    //The ajax call is not the same.
-    $url = 'wikicompare_get_feature_children_callback/nojs/';
-    //Creating the first cell of the row, containing the feature details.
-    $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
-    //We display the type only for the parent feature, no interest in case of only children features.
-    if ($node['data']->has_children){
-      $suffix .= '<br/> Type : <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
-    }
-    $suffix .= '<br/> State : <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
+    //In this case, we are in an itemlist.
+    } else {
 
-  //In this case, we are in an itemlist.
-  } else {
+      //The forbidden nid is a node we must not be able to select in popin. We display him but will not generate any link or checkbox in the prefix.
+      if ($node['data']->nid != $settings['forbidden_nid']) {
 
-    //The forbidden nid is a node we must not be able to select in popin. We display him but will not generate any link or checkbox in the prefix.
-    if ($node['data']->nid != $settings['forbidden_nid']) {
+        //Only table and multidialog itemlist have checkboxes before the node title. Also, this node must be published.
+        if (in_array($settings['context'], array('table', 'multidialog')) && in_array($node['data']->state, array('published-incomplete', 'published-submitted', 'published'))) {
 
-      //Only table and multidialog itemlist have checkboxes before the node title. Also, this node must be published.
-      if (in_array($settings['context'], array('table', 'multidialog')) && in_array($node['data']->state, array('published-incomplete', 'published-submitted', 'published'))) {
+          //We display a checkbox only if the node has children, or for compared table if we activated the option.
+          if ($node['data']->has_children != 1 || (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' && $settings['context'] == 'table' && $type == 'compared')) {
 
-        //We display a checkbox only if the node has children, or for compared table if we activated the option.
-        if ($node['data']->has_children != 1 || (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' && $settings['context'] == 'table' && $type == 'compared')) {
-
-          //Generate checkbox.
-          $checkbox_settings = array('element' => array(
-            '#title' => $node['data']->nid,
-            '#id' => $type . '_' . $settings['context'] . '_checkbox_' . $node['data']->nid,
-            '#attributes' => array(
-              'class' => array('itemlist_checkbox'),
-              'ntype' => $type,
-              'context' => $settings['context'],
-            ),
-          ));
-          //We check it immediately if it was check before (a compared which already has his column in table, a feature present in the global array in javascript etc...
-          if (isset($node['data']->displayed)) {
-            $checkbox_settings['element']['#checked'] = True;
-          }
-
-          $prefix .= theme_checkbox($checkbox_settings) . ' ';
-
-          //Add the ajax link which will add the column in table.
-          if ($type == 'compared' && $settings['context'] == 'table') {
-            $checkbox_link = array(
-              '#type' => 'link',
-              '#title' => 'toggle',
-              '#href' => 'wikicompare_toogle_compared_checkbox_callback/nojs/',
-              '#id' => 'compared_checkbox_link_' . $node['data']->nid,
+            //Generate checkbox.
+            $checkbox_settings = array('element' => array(
+              '#title' => $node['data']->nid,
+              '#id' => $type . '_' . $settings['context'] . '_checkbox_' . $node['data']->nid,
               '#attributes' => array(
-                'class' => array('simple_ajaxlink'),
-                'action' => 'toogle_compared_checkbox',
-                'style' => 'display:none',
-              )
-            );
-            $prefix .= render($checkbox_link);
+                'class' => array('itemlist_checkbox'),
+                'ntype' => $type,
+                'context' => $settings['context'],
+              ),
+            ));
+            //We check it immediately if it was check before (a compared which already has his column in table, a feature present in the global array in javascript etc...
+            if (isset($node['data']->displayed)) {
+              $checkbox_settings['element']['#checked'] = True;
+            }
+
+            $prefix .= theme_checkbox($checkbox_settings) . ' ';
+
+            //Add the ajax link which will add the column in table.
+            if ($type == 'compared' && $settings['context'] == 'table') {
+              $checkbox_link = array(
+                '#type' => 'link',
+                '#title' => 'toggle',
+                '#href' => 'wikicompare_toogle_compared_checkbox_callback/nojs/',
+                '#id' => 'compared_checkbox_link_' . $node['data']->nid,
+                '#attributes' => array(
+                  'class' => array('simple_ajaxlink'),
+                  'action' => 'toogle_compared_checkbox',
+                  'style' => 'display:none',
+                )
+              );
+              $prefix .= render($checkbox_link);
+            }
+
           }
 
+        //In select dialog, we add a select link before each item.
+        } elseif ($settings['context'] == 'selectdialog') {
+          $img = theme('image', array(
+            'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+            'alt' => t('Select ') . $type . ' ' . $node['data']->nid,
+            'height' => '100%',
+          ));
+          //Create the link. The html = True indicate that the title of the link contain html.
+          $prefix .= l($img, 'wikicompare_select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog')), 'html' => True)) . ' ';
         }
 
-      //In select dialog, we add a select link before each item.
-      } elseif ($settings['context'] == 'selectdialog') {
-        $img = theme('image', array(
-          'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-          'alt' => t('Select ') . $type . ' ' . $node['data']->nid,
-          'height' => '100%',
-        ));
-        //Create the link. The html = True indicate that the title of the link contain html.
-        $prefix .= l($img, 'wikicompare_select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog')), 'html' => True)) . ' ';
       }
 
     }
 
-  }
+    //If the node has children, we replace the title with a link to display the children.
+    if ($node['data']->has_children){
+      $class = array('item_link');
+      if ($settings['computed']) {
+        $class[] = 'computed';
+      }
+      //This class is used to prepare the variable for the cleaning function.
+      if ($settings['context'] == 'table') {
+        $class[] = $type . '_table_link';
+      }
+      //Replace the title by the link.
+      $title = l($title, $url,  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context']), 'html' => True));
+    }
 
-  //If the node has children, we replace the title with a link to display the children.
-  if ($node['data']->has_children){
-    $class = array('item_link');
-    if ($settings['computed']) {
-      $class[] = 'computed';
-    }
-    //This class is used to prepare the variable for the cleaning function.
-    if ($settings['context'] == 'table') {
-      $class[] = $type . '_table_link';
-    }
-    //Replace the title by the link.
-    $title = l($title, $url,  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context']), 'html' => True));
+  } else {
+    //An implementation has no title, we simply display his percentage.
+    $title = $node['data']->percent . '%';
   }
 
   //Return the supertitle rendered in a span so we can easily update it in the cleaning function.
@@ -1316,6 +1318,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     wikicompare_needs_node_types($types);
   }
 
+  $features = array();
   foreach ($types as $type) {
 
     //We must not touch anything on a computed table.
@@ -1338,6 +1341,10 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     $nodes = array();
     if (!empty($node_ids)) {
       $nodes = request_db($type, array('nids' => $node_ids), $settings);
+      //We need to keep the features details for the part with the implementations.
+      if ($type == 'feature') {
+        $features = $nodes;
+      }
     }
 
     //Get from database the list of the nodes at the top of the tree.
@@ -1482,7 +1489,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     //Rerender all the implementations displayed in the table.
     foreach($implementations as $fid => $compareds_implementations) {
       foreach ($compareds_implementations as $cid => $implementation) {
-        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, wikicompare_table_render_implementation($implementation, array(), $settings));
+        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, wikicompare_table_render_implementation($implementation, $features[$implementation['data']->feature_id], $settings));
       }
     }
 

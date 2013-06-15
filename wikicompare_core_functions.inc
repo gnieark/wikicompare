@@ -773,10 +773,6 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   if (module_exists('wikicompare_needs')) {
     //Need specific fields.
     wikicompare_needs_request_db($query, $type);
-    if ($type == 'need') {
-      $query->addField('nf', 'feature_nid', 'need_feature_id');
-      $query->leftjoin('cache_need_feature_rel', 'nf', 'n.nid = nf.need_nid');
-    }
   }
 
   //Launch the request
