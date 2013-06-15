@@ -816,8 +816,11 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST,
  *
  * @param $node
  *   The node we are currently exporting.
+ *
+ * @param $type
+ *   The type of the node.
  */
-function wikicompare_translation_demo_export_translations(&$output, $node) {
+function wikicompare_translation_demo_export_translations(&$output, $node, $type) {
 
   //Get all translation node.
   $query = db_select('node', 'n');

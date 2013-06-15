@@ -47,7 +47,7 @@ function wikicompare_export_page() {
 
   $output .= "<p>\$compareds = array();</p>";
   //Find all the compared on the first level of the tree.
-  $compareds = request_db('compared', array('states' => array('draft', 'closed')));
+  $compareds = request_db('compared', array('parent_id' => NULL), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
   foreach ($compareds as $compared) {
     //Get compared children.
     wikicompare_generate_demo_export_output_node($output, $compared, 'compared');
@@ -55,7 +55,7 @@ function wikicompare_export_page() {
 
   $output .= "<p>\$features = array();</p>";
   //Find all the features on the first level of the tree.
-  $features = request_db('feature', array('states' => array('draft', 'closed')));
+  $features = request_db('feature', array('parent_id' => NULL), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
   foreach ($features as $feature) {
     //Get feature children.
     wikicompare_generate_demo_export_output_node($output, $feature, 'feature');
@@ -148,7 +148,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     wikicompare_needs_demo_export_specific_fields($output, $type, $node);
   }
 
-  $output .= "\$node->comment = 2";
+  $output .= "\$node->comment = 2;<br/>";
   //Save the node.
   $output .= "node_save(\$node);<br/>";
   //We keep the id in an array for later use.
@@ -158,12 +158,12 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
 
   if (module_exists('wikicompare_translation')) {
     //Export translations of a node.
-    wikicompare_translation_demo_export_translations($output, $node);
+    wikicompare_translation_demo_export_translations($output, $node, $type);
   }
 
   //Export children.
   if ($node['data']->has_children) {
-    $children = request_db($type, array('states' => array('draft', 'closed')), 'parent', array($node['data']->nid));
+    $children = request_db($type, array('parent_id' => array($node['data']->nid)), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
     foreach ($children as $child) {
       wikicompare_generate_demo_export_output_node($output, $child, $type);
     }
