@@ -349,27 +349,6 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
     //Get the title of the item, which can be a translated title.
     $title = '<span class="' . $type . '_title_' . $node['data']->nid . '">' . $node['data']->title . '</span>';
 
-    //For all table items, we add a link to access the node page and add a div to store the fastaction items.
-    if ($settings['context'] == 'table') {
-
-      //Create the image link to go to the node page
-      $img = theme('image', array(
-        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to ' . $type . ' ') . $node['data']->nid,
-        'height' => '100%',
-      ));
-      //Create the link. It will redirect to the translated node if any. The html = True indicate that the title of the link contain html.
-      $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
-
-      //Add fastaction item if fastaction flag is set, or else at least the div which will contains them.
-      $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '">';
-      if ($settings['fastaction']) {
-        $suffix .=  add_fastaction_items($type, $node);
-      }
-      $suffix .= '</span>';
-
-    }
-
     //Specify the most used ajax call to display children.
     $url = 'wikicompare_get_itemlist_children_callback/nojs/';
 
@@ -464,6 +443,27 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
   } else {
     //An implementation has no title, we simply display his percentage.
     $title = $node['data']->percent . '%';
+  }
+
+  //For all table items, we add a link to access the node page and add a div to store the fastaction items.
+  if ($settings['context'] == 'table') {
+
+    //Create the image link to go to the node page
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => t('Link to ' . $type . ' ') . $node['data']->nid,
+      'height' => '100%',
+    ));
+    //Create the link. It will redirect to the translated node if any. The html = True indicate that the title of the link contain html.
+    $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
+
+    //Add fastaction item if fastaction flag is set, or else at least the div which will contains them.
+    $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '">';
+    if ($settings['fastaction']) {
+      $suffix .=  add_fastaction_items($type, $node);
+    }
+    $suffix .= '</span>';
+
   }
 
   //Return the supertitle rendered in a span so we can easily update it in the cleaning function.
@@ -1268,11 +1268,11 @@ function wikicompare_compute_table_response($method = 'ajax') {
     //Indicate we are computing the table.
     $settings['computed'] = 1;
     //Render and compute the table.
-    $output = wikicompare_table_render_comparative_table($settings, $features['tree'], $compared_columns_ids);
+    $output = wikicompare_table_render_comparative_table($settings, $features['tree'], $settings['compared_column_ids']);
 
   //Else, just reset the table.
   } else {
-    $output = wikicompare_table_render_comparative_table($settings, array(), $compared_columns_ids);
+    $output = wikicompare_table_render_comparative_table($settings, array(), $settings['compared_column_ids']);
   }
 
   //Replace the old table.
