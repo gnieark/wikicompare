@@ -670,7 +670,7 @@ function wikicompare_needs_demo_export(&$output) {
   $output .= "<p>if (module_exists('wikicompare_needs')) {";
   $output .= "<p>\$needs = array();</p>";
   //Find all the features on the first level of the tree.
-  $needs = request_db('need', array('parent_id' => NULL), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
+  $needs = request_db('need', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
   foreach ($needs as $need) {
     //Get needs children.
     wikicompare_generate_demo_export_output_node($output, $need, 'need');

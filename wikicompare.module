@@ -318,7 +318,7 @@ function wikicompare_admin() {
     '#suffix' => '<br/>If you ever corrupt your data, you can use this button to recompute all the percentages.<br/>This operation may take some time.',
     '#value' => t('Flush caches'),
     '#button_type' => 'button',
-    '#submit' => array('wikicompare_flush_caches'),
+    '#submit' => array('wikicompare_refresh_caches'),
   );
 
   $form['#submit'][] = 'submit_settings';
@@ -391,7 +391,7 @@ function submit_settings($form, $form_state) {
 
   //If the wikicompare_update_compared field has changed, we flush the caches to compute the parent compared implementations.
   if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
-    wikicompare_flush_caches();
+    wikicompare_refresh_caches();
   }
 
   if (module_exists('wikicompare_generate_demo')) {

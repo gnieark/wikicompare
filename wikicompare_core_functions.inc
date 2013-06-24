@@ -482,7 +482,7 @@ function wikicompare_compute_percent($node, $through_feature_childs) {
  * Function which refresh all wikicompare cache tables. It will truncate the tables and then rebuild them based on the information in tables node and field_revisions_*.
  * We should use it if for any reason some nodes were miscalculated.
  */
-function wikicompare_flush_caches() {
+function wikicompare_refresh_caches() {
 
   global $language;
 
