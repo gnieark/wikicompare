@@ -1,0 +1,5 @@
+The aim of this module is to provide a form where a customer can let his information and the detail of one of his project.
+
+Then, his project will be available to all visitors and the entreprises who can answer his need will be able to contact him.
+
+This module may be later improved by creating new objects, customer, integrator and project. This way, the integrators will be able to display the projects they already made and so credibilize themself for when they contact a new customer.
