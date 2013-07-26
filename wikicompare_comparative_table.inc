@@ -81,7 +81,7 @@ function wikicompare_comparative_table() {
   $output .= ' ' . render($reset_link) . '</p>';
 
   //Generate the main compared itemlist.
-  $output .= wikicompare_table_render_main_itemlist('compared', 'Compareds', wikicompare_initialize_settings());
+  $output .= wikicompare_table_render_main_itemlist('compared', 'Products', wikicompare_initialize_settings());
 
   //Generate the comparative table.
   $output .= wikicompare_table_render_comparative_table(wikicompare_initialize_settings());
@@ -1261,7 +1261,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
   }
 
   //Reset the compared part of the table.
-  $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Compareds', $settings));
+  $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Products', $settings));
 
   //Compute the table, unless no features was selected. In this case, we just reset it.
   if ($selected_feature_ids && !isset($_POST['reset'])) {
@@ -1438,7 +1438,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     if ($reset == True) {
       switch ($type) {
         case 'compared':
-          $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Compareds', $settings));
+          $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Products', $settings));
           break;
         case 'feature':
           $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings, array(), $_POST['compared_column_ids']));

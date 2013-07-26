@@ -147,18 +147,12 @@ function wikicompare_insert_node($type, $node) {
       //Implementations has no title, we insert Implementation here because this title will be visible in the dashboard, so we can identify them more easily.
       $node_implementation->title = 'Implementation';
       $node_implementation->language = language_default('language');
+
       //The implementation has both a feature_id and a compared_id
-      if ($type == 'compared') {
-        $node_implementation->wikicompare_feature_id['und'][0]['target_id'] = $counternode->nid;
-        $node_implementation->wikicompare_feature_id['und'][0]['target_type'] = "node";
-        $node_implementation->wikicompare_compared_id['und'][0]['target_id'] = $node->nid;
-        $node_implementation->wikicompare_compared_id['und'][0]['target_type'] = "node";
-      } else {
-        $node_implementation->wikicompare_compared_id['und'][0]['target_id'] = $counternode->nid;
-        $node_implementation->wikicompare_compared_id['und'][0]['target_type'] = "node";
-        $node_implementation->wikicompare_feature_id['und'][0]['target_id'] = $node->nid;
-        $node_implementation->wikicompare_feature_id['und'][0]['target_type'] = "node";
-      }
+      $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_id'] = $node->nid;
+      $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_type'] = "node";
+      $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_id'] = $counternode->nid;
+      $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_type'] = "node";
 
       if (module_exists('wikicompare_inherit_compared')) {
         //Inherit compared specific field.
@@ -204,6 +198,9 @@ function wikicompare_insert_node($type, $node) {
       }
       $query->execute();
     }
+
+    //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation. We can't make it at the implementation creation because the parent through counternode axis are created at the same time.
+    wikicompare_update_parent_link($node->nid);
 
     //Force the update of the compare tree, starting from the created node. It's a node without children on compared and feature axis because it's a just created node.
     wikicompare_update_compare_tree($type, array($node->nid));
@@ -592,6 +589,10 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Trigger a tree update on all the marked nodes.
     if ($node_nids) {
+      //If the parent compared of feature have change, we need to update the parent implementations through compared or feature axis.
+      if (in_array($node_revision->type, array('compared', 'feature'))) {
+        wikicompare_update_parent_link($node_revision->nid);
+      }
       //Trigger the tree update.
       wikicompare_update_compare_tree($node_revision->type, $node_nids);
       //Unmark the nodes.
@@ -609,6 +610,30 @@ function wikicompare_revisionapi($op, $node_revision) {
     }
 
   }
+}
+
+
+
+/**
+ * Function which will update the parent though compared and feature fields in cache_implementation. Theses fields are important for the percentage computation.
+ *
+ * @param $nid
+ *   The nid of the compared or feature which we need to update the implementation. If empty, all implementation will be updated.
+ */
+function wikicompare_update_parent_link($nid=NULL) {
+
+  $query = 'UPDATE cache_implementation n
+         INNER JOIN cache_compared nc ON n.compared_id = nc.nid
+         LEFT JOIN cache_implementation ncp ON (nc.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
+         INNER JOIN cache_feature nf ON n.feature_id = nf.nid
+         LEFT JOIN cache_implementation nfp ON (nf.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
+         SET n.parent_through_compared_id = ncp.nid, n.parent_through_feature_id = nfp.nid';
+  if ($nid != NULL) {
+    $query = $query . ' WHERE nc.nid = ' . $nid . ' OR nf.nid = ' . $nid;
+  }
+
+  db_query($query);
+
 }
 
 

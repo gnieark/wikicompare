@@ -128,17 +128,27 @@ function wikicompare_node_schema($type) {
       'default' => 0,
     );
   } else {
+    $schema['fields']['compared_id'] = array(
+      'description' => 'The compared id of the implementation node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    );
     $schema['fields']['feature_id'] = array(
       'description' => 'The feature id of the implementation node',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => TRUE,
     );
-    $schema['fields']['compared_id'] = array(
-      'description' => 'The compared id of the implementation node',
+    $schema['fields']['parent_through_compared_id'] = array(
+      'description' => 'The parent implementation id on the feature axis',
       'type' => 'int',
       'unsigned' => TRUE,
-      'not null' => TRUE,
+    );
+    $schema['fields']['parent_through_feature_id'] = array(
+      'description' => 'The parent implementation id on the compared axis',
+      'type' => 'int',
+      'unsigned' => TRUE,
     );
 
   }

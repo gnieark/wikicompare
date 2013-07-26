@@ -39,7 +39,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     $query->addField('fs', 'nid', 'nid');
     $query->addField('fs', 'feature_id', 'fid');
     $query->addField('fs', 'compared_id', 'cid');
-    $query->addField('fs', 'support', 'support');	
+    $query->addField('fs', 'support', 'support');
     $query->addField('nf', 'type', 'type');
     $query->addField('nf', 'parent_id', 'parent_id');
     $query->addField('nfpnf', 'nid', 'parent_fs_through_feature_nid');
@@ -124,10 +124,10 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       $query->addField('nf', 'weight', 'weight');
 
       //Get parent feature
-      $query->leftjoin('cache_feature', 'nf', 'fs.feature_id = nf.nid');	
+      $query->leftjoin('cache_feature', 'nf', 'fs.feature_id = nf.nid');
 
       //Get the percent computed of the children, if already computed
-      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');	
+      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
 
       switch ($type) {
         case "implementation":
@@ -626,6 +626,9 @@ function wikicompare_refresh_caches() {
     $query->execute();
 
   }
+
+  //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation.
+  wikicompare_update_parent_link();
 
   //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the compared tree.
   wikicompare_update_compare_tree('feature', $feature_without_children);
