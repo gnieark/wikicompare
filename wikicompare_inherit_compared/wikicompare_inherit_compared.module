@@ -921,6 +921,8 @@ function wikicompare_inherit_compared_demo_export(&$output) {
     $output .= "<p>\$node = node_load(\$compareds['new-" . $record->nid . "']);<br/>";
     $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$compareds['new-" . $record->inherit_compared_id . "'];<br/>";
     $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
+    $output .= "\$node->promote = 0;<br/>";
+    $output .= "\$node->sticky = 0;<br/>";
     $output .= "\$node->revision = TRUE;<br/>";
     $output .= "\$node->revision_moderation = TRUE;<br/>";
     $output .= "node_save(\$node);<br/>";
@@ -1030,6 +1032,8 @@ function wikicompare_inherit_compared_demo_submit_generate($form_state, $compare
         $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $inherit_compared_id;
         $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
 
+        $node->promote = 0;
+        $node->sticky = 0;
         $node->revision = TRUE;
         $node->revision_moderation = TRUE;
 

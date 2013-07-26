@@ -34,7 +34,7 @@ function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks
  *
  * @param $query
  *   The query to modify. Passed by reference.
- * 
+ *
  * @param $new_key
  *   The new language of the wikicompare.
  */
@@ -52,9 +52,9 @@ function wikicompare_translation_settings_change_language_request(&$query, $new_
 /**
  * Assign the fields of the old node to the new node, and define the translated node as the new main language node.
  *
- * @param $old_ids 
+ * @param $old_ids
  *   The old main language node. Passed by reference.
- * 
+ *
  * @param $res
  *   The result of the query.
  */
@@ -94,7 +94,7 @@ function wikicompare_translation_settings_change_language(&$old_ids, $res) {
  *
  * @param $field_name
  *   The name of the field.
- * 
+ *
  * @param $ids
  *   The old and new ids of the nodes.
  */
@@ -197,7 +197,7 @@ function wikicompare_translation_move_field_language($field_name, $ids) {
       ->condition('entity_id', $ids->nid)
       ->execute();
 
-  } 
+  }
 
 }
 
@@ -222,7 +222,7 @@ function wikicompare_translation_move_field_language($field_name, $ids) {
  *
  * @param db_settings
  *   An associative array containing the specific informations to build the database query.
- * 
+ *
  * @param $settings
  *   An associative array containing the informations about the context of the query.
  */
@@ -349,7 +349,7 @@ function wikicompare_translation_delete_after($node) {
 
 /**
  * Get the main language node if we are consulting a translation node.
- * 
+ *
  * @param $node
  *   The object containing the main language node. Passed by reference
  *
@@ -363,7 +363,7 @@ function wikicompare_translation_build_form_settings(&$node, &$nid, $form_state)
 
   //If we are consulting a node which is not in the main language.
   if ($form_state['node']->language != language_default('language')) {
-    
+
     //Then the tnid is in common on all the translation of the main content. We can have it on tnid or translation_source field.
     $tnid = 0;
     if (isset($form_state['node']->tnid)) {
@@ -393,7 +393,7 @@ function wikicompare_translation_build_form_settings(&$node, &$nid, $form_state)
 
 /**
  * Add an item coming from the translated node in the form.
- * 
+ *
  * @param $output
  *   The HTML code which will be inserted. Passed by reference
  *
@@ -542,7 +542,7 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
 
 /**
  * Add the selected field which will allow to select the node which will be submited, main language node or translation.
- * 
+ *
  * @param $output
  *   The HTML code which will be inserted in the comparative table to display the fastaction form. Passed by reference.
  *
@@ -609,7 +609,7 @@ function wikicompare_translation_fastaction_specific_after(&$output, $type, $nod
 
 /**
  * If the user can fastedit the main language node or the translation node, then the fastedit item must be displayed.
- * 
+ *
  * @param $test
  *   Boolean. Return True if the user must not be able to fastedit the item. Passed by reference.
  *
@@ -640,7 +640,7 @@ function wikicompare_translation_fastaction_items_test(&$test, $node_array) {
 
 /**
  * Get tnode and test if we can fastedit it.
- * 
+ *
  * @param $tnode
  *   Object containing the detail of the translation node. Passed by reference.
  *
@@ -678,14 +678,14 @@ function wikicompare_translation_fastaction_get_tnode(&$tnode, &$readonly_transl
       $tnode->title = '';
     }
   }
-  
+
 }
 
 
 
 /**
  * Initiate the tnode according to the information from javascript.
- * 
+ *
  * @param $tnode
  *   Object containing the detail of the translation node. Passed by reference.
  *
@@ -727,7 +727,7 @@ function wikicompare_translation_fastaction_submit_init_tnode(&$tnode, $_POST, $
 
 /**
  * Add the translated fields in the node which will be submited.
- * 
+ *
  * @param $tnode
  *   Object containing the detail of the translation node. Passed by reference.
  *
@@ -768,7 +768,7 @@ function wikicompare_translation_fastaction_submit_element(&$tnode, $_POST, $fie
 
 /**
  * Replace the node submitted by the tnode if it's the choice of the user.
- * 
+ *
  * @param $node
  *   Object containing the detail of the node which will be submitted. Passed by reference.
  *
@@ -808,7 +808,7 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST,
 *
 *****************************************************************/
 
-/** 
+/**
  * Export translations of a node.
  *
  * @param $output
@@ -847,6 +847,9 @@ function wikicompare_translation_demo_export_translations(&$output, $node, $type
     $output .= "\$tnode->language = '" . $record->language . "';<br/>";
     $output .= "\$tnode->tnid = \$node->nid;<br/>";
     $output .= '$tnode->title = "' . $record->title . '";<br/>';
+    $output .= "\$tnode->promote = 0;<br/>";
+    $output .= "\$tnode->sticky = 0;<br/>";
+    $output .= "\$tnode->comment = 2;<br/>";
     $output .= "node_save(\$tnode);<br/>";
     $output .= "}</p>";
 
@@ -861,7 +864,7 @@ function wikicompare_translation_demo_export_translations(&$output, $node, $type
 
 
 
-/** 
+/**
  * Display translation specific fields in the generate demo form.
  *
  * @param $form
@@ -884,12 +887,12 @@ function wikicompare_translation_demo_form(&$form) {
 
 
 
-/** 
+/**
  * Prepare translation specific settings in the generate demo submit.
  *
  * @param $settings
  *   The settings of the generate demo submit. Passed by reference.
- * 
+ *
  * @param $form_state
  *   The values submitted by the form.
  */
@@ -899,7 +902,7 @@ function wikicompare_translation_demo_submit_settings(&$settings, $form_state) {
 
 
 
-/** 
+/**
  * Generate demo translations.
  *
  * @param $node
@@ -923,12 +926,15 @@ function wikicompare_translation_demo_submit_generate($node, $settings, $i) {
       if ($key == language_default('language')) {
         continue;
       }
-        
+
       $tnode = new stdClass();
       $tnode->type = $settings['type'];
       $tnode->language = $key;
       $tnode->tnid = $node->nid;
       $tnode->title = $settings['prefix'] . '.' . $i . ' ' . $key;
+      $tnode->promote = 0;
+      $tnode->sticky = 0;
+      $tnode->comment = 2;
 
       node_save($tnode);
     }
