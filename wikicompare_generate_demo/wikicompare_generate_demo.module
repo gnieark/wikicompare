@@ -39,6 +39,9 @@ function wikicompare_export_page() {
 
   $output = "<p>WARNING : Export must always be done when english is the main language of your website. Also, do not use special characters in your translations, including accents.</p>";
 
+  //We stop the percentage computation on the new wikicompare, to import the data faster.
+  $output .= "<p>wikicompare_stop_cache();</p>";
+
   //Get language list on the new wikicompare, to know if we can install the translation or not.
   $output .= "<p>\$language_list = array();<br/>";
   $output .= "foreach (language_list() as \$key => \$lang) {<br/>";
@@ -98,6 +101,8 @@ function wikicompare_export_page() {
       //Add inherit compared specific fields.
       wikicompare_inherit_compared_demo_export_implementation_render($output, $record);
     }
+    $output .= "\$node->promote = 0;<br/>";
+    $output .= "\$node->sticky = 0;<br/>";
     $output .= "\$node->revision = TRUE;<br/>";
     $output .= "\$node->revision_moderation = TRUE;<br/>";
     $output .= "node_save(\$node);<br/>";
@@ -105,6 +110,9 @@ function wikicompare_export_page() {
     $output .= "</p>";
 
   }
+
+  //We restart the percentage computation on the new wikicompare.
+  $output .= "<p>wikicompare_start_cache();</p>";
 
   return $output;
 
@@ -148,6 +156,8 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     wikicompare_needs_demo_export_specific_fields($output, $type, $node);
   }
 
+  $output .= "\$node->promote = 0;<br/>";
+  $output .= "\$node->sticky = 0;<br/>";
   $output .= "\$node->comment = 2;<br/>";
   //Save the node.
   $output .= "node_save(\$node);<br/>";
@@ -372,6 +382,9 @@ function element_validate_integer_positive_or_null($element, &$form_state) {
  */
 function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
 
+  //We stop the percentage computation to create them faster.
+  wikicompare_stop_cache();
+
   $features_created = array();
   $compareds_created = array();
 
@@ -469,6 +482,8 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
       }
 
       if ($modified == True) {
+        $node->promote = 0;
+        $node->sticky = 0;
         $node->revision = TRUE;
         $node->revision_moderation = TRUE;
         node_save($node);
@@ -477,6 +492,9 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
     }
 
   }
+
+  //We restart the percent computation.
+  wikicompare_start_cache();
 
 }
 
@@ -529,6 +547,8 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
         $node->wikicompare_features['und'] = array();
       }
     }
+    $node->promote = 0;
+    $node->sticky = 0;
     //Activate comments.
     $node->comment = 2;
     //Create new node.
@@ -566,6 +586,8 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
  */
 function wikicompare_drop_nodes() {
 
+  wikicompare_stop_cache();
+
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
   $result = $query->execute();
@@ -576,6 +598,8 @@ function wikicompare_drop_nodes() {
   }
 
   node_delete_multiple($nids);
+
+  wikicompare_start_cache();
 
 }
 

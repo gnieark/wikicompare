@@ -348,6 +348,7 @@ function wikicompare_install() {
 
   //Set module default settings.
   variable_set('wikicompare_update_compared', 'no-update');
+  variable_set('wikicompare_cache_status', 1);
 
   variable_set('revisioning_edit_callback', 1);
 
@@ -822,6 +823,7 @@ function wikicompare_uninstall() {
 
   //Delete module settings variable
   variable_del('wikicompare_update_compared');
+  variable_del('wikicompare_cache_status');
 
   //Delete all nodes of feature type.
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';

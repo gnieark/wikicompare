@@ -27,6 +27,10 @@
  */
 function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
+  if (!variable_get('wikicompare_cache_status', 1)) {
+    return;
+  }
+
   $nodes = array();
   if (!empty($nids)) {
 
@@ -495,23 +499,15 @@ function wikicompare_refresh_caches() {
     variable_set('maintenance_mode', 1);
   }
 
-  //Delete all datas in cache.
-  db_delete('cache_comparative_table')
-    ->execute();
+  wikicompare_empty_cache();
 
   $types = array('compared', 'feature', 'implementation');
-
   if (module_exists('wikicompare_needs')) {
     //Add need type.
     wikicompare_needs_node_types($types);
   }
 
-
   foreach ($types as $type) {
-
-    //Delete all data in the type cache.
-    db_delete('cache_' . $type)
-      ->execute();
 
     //Get all data from node and field_revision_* tables.
     $query = db_select('node', 'n');
@@ -666,6 +662,53 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
   }
 
   return $nid;
+
+}
+
+/**
+ * Function which will empty all the wikicompare cache table.
+ */
+function wikicompare_empty_cache() {
+
+  db_delete('cache_comparative_table')
+    ->execute();
+
+  $types = array('compared', 'feature', 'implementation');
+  if (module_exists('wikicompare_needs')) {
+    //Add need type.
+    wikicompare_needs_node_types($types);
+  }
+
+  foreach ($types as $type) {
+    //Delete all data in the type cache.
+    db_delete('cache_' . $type)
+      ->execute();
+  }
+
+}
+
+
+/**
+ * Function to stop any future update in the wikicompare cache table. Useful when we want to stop the percent computation, for exemple when we insert massive amount of data.
+ */
+function wikicompare_stop_cache() {
+
+  db_delete('cache_comparative_table')
+    ->execute();
+
+  variable_set('wikicompare_cache_status', 0);
+
+}
+
+
+/**
+ * Function to restart the updates in wikicompare cache table.
+ */
+function wikicompare_start_cache() {
+
+  variable_set('wikicompare_cache_status', 1);
+
+  wikicompare_refresh_caches();
 
 }
 
