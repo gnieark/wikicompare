@@ -212,7 +212,7 @@ function wikicompare_update_compare_tree($type, $nids) {
         //We regroup all the same percent in a table to update them all at the same time.
       $cache_to_update[$node->new_css_class][$node->new_percent][$node->nid] = $node->nid;
 
-      //Update the parent though feature and compared axis if the value changed. 
+      //Update the parent though feature and compared axis if the value changed.
       if ($node->parent_through_feature_id) {
         $to_update[$node->parent_through_feature_id] = $node->parent_through_feature_id;
       }

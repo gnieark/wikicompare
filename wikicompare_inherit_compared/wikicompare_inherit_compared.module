@@ -125,18 +125,13 @@ function compute_inherit_response($method = 'ajax') {
  */
 function wikicompare_inherit_compared_update_main_query(&$query) {
 
-  $query->addField('fs', 'use_from_inherit', 'use_from_inherit');
+  $query->addField('n', 'use_from_inherit', 'use_from_inherit');
   //Recover the percent value of the inherited implementation
-  $query->addField('nc', 'inherit_compared_id', 'inheriting_compared_id');
-  $query->addField('ncinc', 'nid', 'inheriting_implementation_nid');
-  $query->addField('ncincctc', 'nid', 'inheriting_implementation_cache_nid');
-  $query->addField('ncincctc', 'percent', 'inheriting_implementation_cache_percent');
-  $query->addField('ncincctc', 'css_class', 'inheriting_implementation_cache_css_class');
-
-  $query->leftjoin('cache_implementation', 'ncinc', 'nc.inherit_compared_id = ncinc.compared_id'); //Get implementation of the inherit compared node
-  $query->leftjoin('cache_comparative_table', 'ncincctc', 'ncinc.nid = ncincctc.nid');  //Get the percent of the inherited implementation
-
-  $query->where('ncinc.feature_id = fs.feature_id OR nc.inherit_compared_id IS NULL'); //We keep only the implementation of the inherit compared node which has the same feature than the implementation.
+  $query->addField('ni', 'compared_id', 'inheriting_compared_id');
+  $query->addField('ni', 'nid', 'inheriting_implementation_nid');
+  $query->addField('ni', 'percent', 'inheriting_implementation_cache_percent');
+  $query->addField('ni', 'css_class', 'inheriting_implementation_cache_css_class');
+  $query->leftjoin('cache_implementation', 'ni', 'n.parent_through_inherit_id = ni.nid');
 
 }
 
@@ -161,7 +156,7 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
     $to_update = array();
     foreach($nodes as $node) {
       if ($node->inheriting_compared_id) {
-        if (!$node->inheriting_implementation_cache_nid) {
+        if (!$node->inheriting_implementation_cache_percent) {
           $to_update[$node->inheriting_implementation_nid] = $node->inheriting_implementation_nid;
         }
       }
@@ -173,40 +168,28 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
       $res = wikicompare_update_compare_tree('implementation', $to_update);
       foreach($nodes as $node) {
         if (isset($res[$node->inheriting_implementation_nid])) {
-          $node->inheriting_implementation_cache_nid = $node->inheriting_implementation_nid;
           $node->inheriting_implementation_cache_percent = $res[$node->inheriting_implementation_nid]['percent'];
           $node->inheriting_implementation_cache_css_class = $res[$node->inheriting_implementation_nid]['css_class'];
         }
       }
     }
 
-    //Recover children_through_inherit, so we can update them at the end of wikicompare_update_compare_tree
-    $res_search_inherit_compared_children = '';
-    foreach($nodes as $node) {
-      if ($res_search_inherit_compared_children) {
-        $res_search_inherit_compared_children = $res_search_inherit_compared_children . ',';
-      }
-      $res_search_inherit_compared_children = $res_search_inherit_compared_children . "('" . $node->fid . "','" . $node->cid . "')";
-    }
-
     $through_inherit_childs = array();
-    if (($type == 'compared' && !empty($nids)) || $res_search_inherit_compared_children) {
-      $query = db_select('cache_implementation', 'i');
-      $query->addField('i', 'nid', 'nid');
-      $query->addField('i', 'feature_id', 'fid');
+    if (in_array($type, array('compared', 'implementation')) && !empty($nids))  {
+      $query = db_select('cache_implementation', 'n');
+      $query->addField('n', 'nid', 'nid');
+      $query->addField('n', 'feature_id', 'fid');
       $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
-      $query->join('cache_feature', 'nf', 'i.feature_id = nf.nid');
-      $query->join('cache_compared', 'nc', 'i.compared_id = nc.nid');
+      $query->join('cache_compared', 'nc', 'n.compared_id = nc.nid');
       //Only the implementation which has no children on both axis will be updated because only them can have their percent updated by inheritance
-      $query->condition('nf.has_children', 0);
-      $query->condition('nc.has_children', 0);
-
+      $query->condition('n.compared_has_children', 0);
+      $query->condition('n.feature_has_children', 0);
       switch ($type) {
         case "compared":
           $query->condition('nc.inherit_compared_id', $nids, 'IN');
           break;
         default:
-          $query->where('(i.feature_id, nc.inherit_compared_id) IN (' . $res_search_inherit_compared_children . ')');
+          $query->condition('parent_through_inherit_id', $nids, 'IN');
           break;
       }
       $result = $query->execute();
@@ -314,7 +297,11 @@ function wikicompare_inherit_compared_flush_cache(&$to_insert, $record, $type) {
   }
 
   if ($type == 'implementation') {
-    $to_insert[$record->nid]['use_from_inherit'] = $record->use_from_inherit;
+    $use_from_inherit = 1;
+    if ($record->use_from_inherit != NULL) {
+      $use_from_inherit = $record->use_from_inherit;
+    }
+    $to_insert[$record->nid]['use_from_inherit'] = $use_from_inherit;
   }
 }
 
@@ -654,7 +641,7 @@ function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
 
   db_query($query);
 
-} 
+}
 
 
 
