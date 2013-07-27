@@ -102,9 +102,9 @@ function wikicompare_node_schema($type) {
       'unsigned' => TRUE,
     );
     $schema['indexes']['parent_id'] = array('parent_id');
-    $schema['foreign keys']['node_parent'] = array(
+    $schema['foreign keys']['parent_id'] = array(
       'table' => 'node',
-      'columns' => array('parent_feature_id' => 'nid'),
+      'columns' => array('parent_id' => 'nid'),
     );
     $schema['fields']['sequence'] = array(
       'description' => 'The sequence of the node',
@@ -142,21 +142,41 @@ function wikicompare_node_schema($type) {
       'unsigned' => TRUE,
       'not null' => TRUE,
     );
+    $schema['indexes']['compared_id'] = array('compared_id');
+    $schema['foreign keys']['compared_id'] = array(
+      'table' => 'node',
+      'columns' => array('compared_id' => 'nid'),
+    );
     $schema['fields']['feature_id'] = array(
       'description' => 'The feature id of the implementation node',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => TRUE,
     );
+    $schema['indexes']['feature_id'] = array('feature_id');
+    $schema['foreign keys']['compared_id'] = array(
+      'table' => 'node',
+      'columns' => array('feature_id' => 'nid'),
+    );
     $schema['fields']['parent_through_compared_id'] = array(
       'description' => 'The parent implementation id on the feature axis',
       'type' => 'int',
       'unsigned' => TRUE,
     );
+    $schema['indexes']['parent_through_compared_id'] = array('parent_through_compared_id');
+    $schema['foreign keys']['parent_through_compared_id'] = array(
+      'table' => 'node',
+      'columns' => array('parent_through_compared_id' => 'nid'),
+    );
     $schema['fields']['parent_through_feature_id'] = array(
       'description' => 'The parent implementation id on the compared axis',
       'type' => 'int',
       'unsigned' => TRUE,
+    );
+    $schema['indexes']['parent_through_feature_id'] = array('parent_through_feature_id');
+    $schema['foreign keys']['parent_through_feature_id'] = array(
+      'table' => 'node',
+      'columns' => array('parent_through_feature_id' => 'nid'),
     );
 
   }

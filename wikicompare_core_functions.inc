@@ -630,6 +630,11 @@ function wikicompare_refresh_caches() {
   //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation.
   wikicompare_update_parent_link();
 
+  if (module_exists('wikicompare_inherit_compared')) {
+    //Update parent_through_inherit_id in cache_implementation.
+    wikicompare_inherit_compared_update_parent_link();
+  }
+
   //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the compared tree.
   wikicompare_update_compare_tree('feature', $feature_without_children);
 

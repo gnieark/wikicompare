@@ -19,10 +19,18 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
       'unsigned' => TRUE,
   );
   $schema['cache_compared']['indexes']['inherit_compared_id'] = array('inherit_compared_id');
-  $schema['cache_compared']['foreign keys']['node_inherit'] = array(
+  $schema['cache_compared']['foreign keys']['inherit_compared_id'] = array(
     'table' => 'node',
     'columns' => array('inherit_compared_id' => 'nid'),
   );
+  $schema['cache_compared']['fields']['inherit_changed'] = array(
+    'description' => "Boolean indicated that the inherited compared of this node has changed, and thus we need to update the parent through inherit of his implementations",
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  $schema['cache_compared']['indexes']['inherit_changed'] = array('inherit_changed');
 
   $schema['cache_implementation']['fields']['use_from_inherit'] = array(
       'description' => "Boolean indicated if we should use the data from the inherited compared",
@@ -30,6 +38,16 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
       'size' => 'tiny',
       'not null' => TRUE,
       'default' => 1,
+  );
+  $schema['cache_implementation']['fields']['parent_through_inherit_id'] = array(
+    'description' => 'The inherited implementation id',
+    'type' => 'int',
+    'unsigned' => TRUE,
+  );
+  $schema['cache_implementation']['indexes']['parent_through_inherit_id'] = array('parent_through_inherit_id');
+  $schema['cache_implementation']['foreign keys']['parent_through_inherit_id'] = array(
+    'table' => 'node',
+    'columns' => array('parent_through_inherit_id' => 'nid'),
   );
 
 }

@@ -415,6 +415,24 @@ function wikicompare_inherit_compared_cache_implementation_fields(&$cache_implem
 
 
 /**
+ * Update parent_through_inherit_id in cache_implementation.
+ *
+ * @param $node
+ *   The node which was created.
+ */
+function wikicompare_inherit_compared_insert_parent_inherit($node) {
+
+  if ($node->type == 'compared') {
+    if (isset($node->wikicompare_inherit_compared_id['und'][0])) {
+      wikicompare_inherit_compared_update_parent_link($node->nid);
+    }
+  }
+
+}
+
+
+
+/**
  * Prepare the header for the mass insert in wikicompare cache table with the inherit compared specific fields.
  *
  * @param $header
@@ -506,6 +524,15 @@ function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revi
     //Trigger a tree update on the updated node because the value of his implementations may have changed.
     if ($node_revision_inherit != $current_node_inherit) {
       $to_update[$node_revision->nid] = $node_revision->nid;
+
+      //Mark the modified node so his implementations will be updated with his new implementations parents through inherit.
+      db_update('cache_compared')
+        ->fields(array(
+          'inherit_changed' => 1,
+        ))
+        ->condition('nid', $node_revision->nid)
+        ->execute();
+
     }
   }
 
@@ -560,6 +587,74 @@ function wikicompare_inherit_compared_cache_update_fields(&$fields, $node_revisi
   }
 
 }
+
+
+
+/**
+ * Update the query to get inherit_changed flag.
+ *
+ * @param $query
+ *   The query we want to modify. Passed by reference.
+ *
+ * @param $type
+ *   The type of the modified node.
+ */
+function wikicompare_inherit_compared_get_inherit_changed(&$query, $type) {
+
+  if ($type == 'compared') {
+    $query->addField('n', 'inherit_changed', 'inherit_changed');
+  }
+
+}
+
+
+
+/**
+ * Update the parent_through_inherit fields in implementation.
+ *
+ * @param $node
+ *   The updated node.
+ *
+ * @param $type
+ *   The type of the node.
+ */
+function wikicompare_inherit_compared_update_parent_implementations($node, $type) {
+
+  if ($type == 'compared') {
+    if ($node->inherit_changed) {
+      wikicompare_inherit_compared_update_parent_link($node->nid);
+      db_update('cache_compared')
+        ->fields(array(
+          'inherit_changed' => 0
+        ))
+        ->condition('nid', $node->nid)
+        ->execute();
+    }
+  }
+
+}
+
+
+
+/**
+ * Function which will update the parent though inherit field in cache_implementation. This field is important for the percentage computation.
+ *
+ * @param $nid
+ *   The nid of the compared or feature which we need to update the implementation. If empty, all implementation will be updated.
+ */
+function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
+
+  $query = 'UPDATE cache_implementation n
+         INNER JOIN cache_compared nc ON n.compared_id = nc.nid
+         LEFT JOIN cache_implementation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
+         SET n.parent_through_inherit_id = nci.nid';
+  if ($nid != NULL) {
+    $query = $query . ' WHERE nc.nid = ' . $nid;
+  }
+
+  db_query($query);
+
+} 
 
 
 

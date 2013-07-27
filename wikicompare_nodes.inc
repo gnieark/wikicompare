@@ -202,6 +202,11 @@ function wikicompare_insert_node($type, $node) {
     //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation. We can't make it at the implementation creation because the parent through counternode axis are created at the same time.
     wikicompare_update_parent_link($type, $node->nid);
 
+    if (module_exists('wikicompare_inherit_compared')) {
+      //Update parent_through_inherit_id.
+      wikicompare_inherit_compared_insert_parent_inherit($node);
+    }
+
     //Force the update of the compare tree, starting from the created node. It's a node without children on compared and feature axis because it's a just created node.
     wikicompare_update_compare_tree($type, array($node->nid));
   }
@@ -592,6 +597,10 @@ function wikicompare_revisionapi($op, $node_revision) {
     if (in_array($node_revision->type, array('compared', 'feature'))) {
       $query->addField('n', 'parent_changed', 'parent_changed');
     }
+    if (module_exists('wikicompare_inherit_compared')) {
+      //Update the query to get inherit_changed flag.
+      wikicompare_inherit_compared_get_inherit_changed($query, $node_revision->type);
+    }
     $query->condition('n.to_update', 1, '=');
     $result = $query->execute();
     foreach($result as $record) {
@@ -613,6 +622,12 @@ function wikicompare_revisionapi($op, $node_revision) {
               ->condition('nid', $node->nid)
               ->execute();
           }
+
+          if (module_exists('wikicompare_inherit_compared')) {
+            //Update the parent_through_inherit fields in implementation.
+            wikicompare_inherit_compared_update_parent_implementations($node, $node_revision->type);
+          }
+
         }
       }
       //Trigger the tree update.
