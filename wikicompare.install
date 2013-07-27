@@ -127,6 +127,14 @@ function wikicompare_node_schema($type) {
       'not null' => TRUE,
       'default' => 0,
     );
+    $schema['fields']['parent_changed'] = array(
+      'description' => "Boolean indicated that the parent of this node has changed, and thus we need to update the parent of his implementations",
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    $schema['indexes']['parent_changed'] = array('parent_changed');
   } else {
     $schema['fields']['compared_id'] = array(
       'description' => 'The compared id of the implementation node',

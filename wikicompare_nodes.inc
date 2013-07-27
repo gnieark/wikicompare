@@ -200,7 +200,7 @@ function wikicompare_insert_node($type, $node) {
     }
 
     //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation. We can't make it at the implementation creation because the parent through counternode axis are created at the same time.
-    wikicompare_update_parent_link($node->nid);
+    wikicompare_update_parent_link($type, $node->nid);
 
     //Force the update of the compare tree, starting from the created node. It's a node without children on compared and feature axis because it's a just created node.
     wikicompare_update_compare_tree($type, array($node->nid));
@@ -470,6 +470,14 @@ function wikicompare_revisionapi($op, $node_revision) {
             $to_update[$node_revision->nid] = $node_revision->nid;
             $to_update[$node_revision_parent] = $node_revision_parent;
             $to_update[$current_node_parent] = $current_node_parent;
+
+            //Mark the modified node so his implementations will be updated with his new implementations parents on compared and feature axis.
+            db_update('cache_' . $node_revision->type)
+              ->fields(array(
+                'parent_changed' => 1,
+              ))
+              ->condition('nid', $node_revision->nid)
+              ->execute();
           }
 
         }
@@ -581,24 +589,38 @@ function wikicompare_revisionapi($op, $node_revision) {
     $node_nids = array();
     $query = db_select('cache_' . $node_revision->type, 'n');
     $query->addField('n', 'nid', 'nid');
+    if (in_array($node_revision->type, array('compared', 'feature'))) {
+      $query->addField('n', 'parent_changed', 'parent_changed');
+    }
     $query->condition('n.to_update', 1, '=');
     $result = $query->execute();
-    foreach($result as $item) {
-      $node_nids[$item->nid] = $item->nid;
+    foreach($result as $record) {
+      $node_nids[$record->nid] = $record->nid;
+      $nodes[$record->nid] = $record;
     }
 
     //Trigger a tree update on all the marked nodes.
     if ($node_nids) {
       //If the parent compared of feature have change, we need to update the parent implementations through compared or feature axis.
-      if (in_array($node_revision->type, array('compared', 'feature'))) {
-        wikicompare_update_parent_link($node_revision->nid);
+      foreach ($nodes as $node) {
+        if (in_array($node_revision->type, array('compared', 'feature'))) {
+          if ($node->parent_changed) {
+            wikicompare_update_parent_link($node_revision->type, $node_revision->nid);
+            db_update('cache_' . $node_revision->type)
+              ->fields(array(
+                'parent_changed' => 0
+              ))
+              ->condition('nid', $node->nid)
+              ->execute();
+          }
+        }
       }
       //Trigger the tree update.
       wikicompare_update_compare_tree($node_revision->type, $node_nids);
       //Unmark the nodes.
       db_update('cache_' . $node_revision->type)
         ->fields(array(
-          'to_update' => 0,
+          'to_update' => 0
         ))
         ->condition('nid', $node_nids, 'IN')
         ->execute();
@@ -620,16 +642,16 @@ function wikicompare_revisionapi($op, $node_revision) {
  * @param $nid
  *   The nid of the compared or feature which we need to update the implementation. If empty, all implementation will be updated.
  */
-function wikicompare_update_parent_link($nid=NULL) {
+function wikicompare_update_parent_link($type=NULL, $nid=NULL) {
 
   $query = 'UPDATE cache_implementation n
-         INNER JOIN cache_compared nc ON n.compared_id = nc.nid
-         LEFT JOIN cache_implementation ncp ON (nc.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
-         INNER JOIN cache_feature nf ON n.feature_id = nf.nid
-         LEFT JOIN cache_implementation nfp ON (nf.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
+         INNER JOIN cache_compared compared ON n.compared_id = compared.nid
+         LEFT JOIN cache_implementation ncp ON (compared.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
+         INNER JOIN cache_feature feature ON n.feature_id = feature.nid
+         LEFT JOIN cache_implementation nfp ON (feature.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
          SET n.parent_through_compared_id = ncp.nid, n.parent_through_feature_id = nfp.nid';
   if ($nid != NULL) {
-    $query = $query . ' WHERE nc.nid = ' . $nid . ' OR nf.nid = ' . $nid;
+    $query = $query . ' WHERE ' . $type . '.nid = ' . $nid;
   }
 
   db_query($query);
