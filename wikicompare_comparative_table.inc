@@ -733,7 +733,7 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $implementat
       //Get implementation detail, thanks to feature and compared id.
       $implementation = $implementations[$fid][$cid];
 
-      //If the table is computed, then we will not use the percent in cache_comparative_table but compute it with the specified features.
+      //If the table is computed, then we will not use the percent in cache_implementation but compute it with the specified features.
       if ($settings['computed']) {
 
         //The type of the feature which will be used in the wikicompare_compute_percent function

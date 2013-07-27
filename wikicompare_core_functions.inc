@@ -27,9 +27,9 @@
  */
 function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
-  if (!variable_get('wikicompare_cache_status', 1)) {
+//  if (!variable_get('wikicompare_computation_status', 1)) {
     return;
-  }
+//  }
 
   $nodes = array();
   if (!empty($nids)) {
@@ -499,12 +499,16 @@ function wikicompare_refresh_caches() {
     variable_set('maintenance_mode', 1);
   }
 
-  wikicompare_empty_cache();
-
   $types = array('compared', 'feature', 'implementation');
   if (module_exists('wikicompare_needs')) {
     //Add need type.
     wikicompare_needs_node_types($types);
+  }
+
+  foreach ($types as $type) {
+    //Delete all data in the type cache.
+    db_delete('cache_' . $type)
+      ->execute();
   }
 
   foreach ($types as $type) {
@@ -673,38 +677,21 @@ function wikicompare_get_implementation_id($compared_id, $feature_id) {
 
 }
 
-/**
- * Function which will empty all the wikicompare cache table.
- */
-function wikicompare_empty_cache() {
-
-  db_delete('cache_comparative_table')
-    ->execute();
-
-  $types = array('compared', 'feature', 'implementation');
-  if (module_exists('wikicompare_needs')) {
-    //Add need type.
-    wikicompare_needs_node_types($types);
-  }
-
-  foreach ($types as $type) {
-    //Delete all data in the type cache.
-    db_delete('cache_' . $type)
-      ->execute();
-  }
-
-}
 
 
 /**
  * Function to stop any future update in the wikicompare cache table. Useful when we want to stop the percent computation, for exemple when we insert massive amount of data.
  */
-function wikicompare_stop_cache() {
+function wikicompare_stop_computation() {
 
-  db_delete('cache_comparative_table')
+  db_update('cache_implementation')
+    ->fields(array(
+      'percent' => 0,
+      'css_class' => '',
+    ))
     ->execute();
 
-  variable_set('wikicompare_cache_status', 0);
+  variable_set('wikicompare_computation_status', 0);
 
 }
 
@@ -712,9 +699,9 @@ function wikicompare_stop_cache() {
 /**
  * Function to restart the updates in wikicompare cache table.
  */
-function wikicompare_start_cache() {
+function wikicompare_start_computation() {
 
-  variable_set('wikicompare_cache_status', 1);
+  variable_set('wikicompare_computation_status', 1);
 
   wikicompare_refresh_caches();
 
@@ -782,9 +769,8 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   } else {
     $query->addField('n', 'feature_id', 'feature_id');
     $query->addField('n', 'compared_id', 'compared_id');
-    $query->addField('ctc', 'percent', 'percent');
-    $query->addField('ctc', 'css_class', 'css_class');
-    $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
+    $query->addField('n', 'percent', 'percent');
+    $query->addField('n', 'css_class', 'css_class');
     //If the nodes to recover are not specify by the nids in argument, then it means we need to find them thanks to the compareds and features ids.
     if (!isset($db_settings['nids'])) {
       $query->condition("n.compared_id", $db_settings['compared_ids'], 'in');

@@ -313,17 +313,17 @@ function wikicompare_admin() {
   );
 
   //Display the cache status.
-  $form['wikicompare_cache_status'] = array(
+  $form['wikicompare_computation_status'] = array(
     '#type' => 'select',
-    '#title' => t('Cache status'),
+    '#title' => t('Computation status'),
     '#options' => array(
-      0 => t("Cache disactivated"),
-      1 => t("Cache activated"),
+      0 => t("Computation disactivated"),
+      1 => t("Computation activated"),
     ),
-    '#default_value' => variable_get('wikicompare_cache_status', 1),
-    '#description' => t("Change the status of the cache, if you need to perform quickly some changes in the table without having the time needed to compute the percentage.
+    '#default_value' => variable_get('wikicompare_computation_status', 1),
+    '#description' => t("Change the status of the computation, if you need to perform quickly some changes in the table without having the time needed to compute the percentage.
         <br/>
-        Note that no percentage will be visible in the table while the cache is disactivated."),
+        Note that no percentage will be visible in the table while the computation is disactivated."),
     '#required' => TRUE,
   );
 
@@ -409,12 +409,12 @@ function submit_settings($form, $form_state) {
     wikicompare_refresh_caches();
   }
 
-  if ($form_state['input']['wikicompare_cache_status'] == 0 && variable_get('wikicompare_cache_status', 1) == 1) {
-    wikicompare_stop_cache();
+  if ($form_state['input']['wikicompare_computation_status'] == 0 && variable_get('wikicompare_computation_status', 1) == 1) {
+    wikicompare_stop_computation();
   }
 
-  if ($form_state['input']['wikicompare_cache_status'] == 1 && variable_get('wikicompare_cache_status', 1) == 0) {
-    wikicompare_start_cache();
+  if ($form_state['input']['wikicompare_computation_status'] == 1 && variable_get('wikicompare_computation_status', 1) == 0) {
+    wikicompare_start_computation();
   }
 
   if (module_exists('wikicompare_generate_demo')) {

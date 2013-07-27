@@ -2,7 +2,7 @@
 
 function wikicompare_generate_erp_data() {
 
-wikicompare_stop_cache();
+wikicompare_stop_computation();
 
 $language_list = array();
 foreach (language_list() as $key => $lang) {
@@ -3685,7 +3685,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-wikicompare_start_cache();
+wikicompare_start_computation();
 
 }
 

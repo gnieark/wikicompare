@@ -305,10 +305,6 @@ function wikicompare_delete_node($type, $node) {
 
     //Delete them in the wikicompare cache.
     if (!empty($implementation_ids)) {
-      db_delete('cache_comparative_table')
-        ->condition('nid', $implementation_ids, 'in')
-        ->execute();
-
       db_delete('cache_implementation')
         ->condition('nid', $implementation_ids, 'in')
         ->execute();

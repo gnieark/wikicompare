@@ -13,39 +13,6 @@
  */
 function wikicompare_schema() {
 
-  //Create cache table for the comparative_table computation, so percent and css_class are computed at each change on feature/compared/implementation and not at each read of the comparative table.
-  $schema['cache_comparative_table'] = array(
-
-    'description' => 'Cache table for comparative table',
-    'fields' => array(
-      'nid' => array(
-        'description' => 'The nid of the implementation node',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'percent' => array(
-        'description' => 'The percentage returned by the node',
-        'type' => 'float',
-        'default' => 0,
-      ),
-      'css_class' => array(
-        'description' => 'The css class returned by the node',
-        'type' => 'varchar',
-        'length' => 32,
-        'default' => '',
-      ),
-    ),
-    'primary key' =>  array('nid'),
-    'foreign keys' => array(
-      'node' => array(
-        'table' => 'node',
-        'columns' => array('nid' => 'nid'),
-      ),
-    )
-
-  );
-
   /**
    * Create cache tables for feature, compared and implementation records.
    * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
@@ -178,7 +145,17 @@ function wikicompare_node_schema($type) {
       'table' => 'node',
       'columns' => array('parent_through_feature_id' => 'nid'),
     );
-
+    $schema['fields']['percent'] = array(
+      'description' => 'The percentage returned by the node',
+      'type' => 'float',
+      'default' => NULL,
+    );
+    $schema['fields']['css_class'] = array(
+      'description' => 'The css class returned by the node',
+      'type' => 'varchar',
+      'length' => 32,
+      'default' => NULL,
+    );
   }
 
   switch ($type) {
@@ -386,7 +363,7 @@ function wikicompare_install() {
 
   //Set module default settings.
   variable_set('wikicompare_update_compared', 'no-update');
-  variable_set('wikicompare_cache_status', 1);
+  variable_set('wikicompare_computation_status', 1);
 
   variable_set('revisioning_edit_callback', 1);
 
@@ -861,7 +838,7 @@ function wikicompare_uninstall() {
 
   //Delete module settings variable
   variable_del('wikicompare_update_compared');
-  variable_del('wikicompare_cache_status');
+  variable_del('wikicompare_computation_status');
 
   //Delete all nodes of feature type.
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';

@@ -40,7 +40,7 @@ function wikicompare_export_page() {
   $output = "<p>WARNING : Export must always be done when english is the main language of your website. Also, do not use special characters in your translations, including accents.</p>";
 
   //We stop the percentage computation on the new wikicompare, to import the data faster.
-  $output .= "<p>wikicompare_stop_cache();</p>";
+  $output .= "<p>wikicompare_stop_computation();</p>";
 
   //Get language list on the new wikicompare, to know if we can install the translation or not.
   $output .= "<p>\$language_list = array();<br/>";
@@ -112,7 +112,7 @@ function wikicompare_export_page() {
   }
 
   //We restart the percentage computation on the new wikicompare.
-  $output .= "<p>wikicompare_start_cache();</p>";
+  $output .= "<p>wikicompare_start_computation();</p>";
 
   return $output;
 
@@ -383,7 +383,7 @@ function element_validate_integer_positive_or_null($element, &$form_state) {
 function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
 
   //We stop the percentage computation to create them faster.
-  wikicompare_stop_cache();
+  wikicompare_stop_computation();
 
   $features_created = array();
   $compareds_created = array();
@@ -494,7 +494,7 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
   }
 
   //We restart the percent computation.
-  wikicompare_start_cache();
+  wikicompare_start_computation();
 
 }
 
@@ -586,7 +586,7 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
  */
 function wikicompare_drop_nodes() {
 
-  wikicompare_stop_cache();
+  wikicompare_stop_computation();
 
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
@@ -599,7 +599,7 @@ function wikicompare_drop_nodes() {
 
   node_delete_multiple($nids);
 
-  wikicompare_start_cache();
+  wikicompare_start_computation();
 
 }
 
