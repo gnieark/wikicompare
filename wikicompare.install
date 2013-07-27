@@ -156,6 +156,58 @@ function wikicompare_node_schema($type) {
       'length' => 32,
       'default' => NULL,
     );
+    $schema['fields']['compared_parent_id'] = array(
+      'description' => 'The parent id of the compared node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+    );
+    $schema['indexes']['compared_parent_id'] = array('compared_parent_id');
+    $schema['foreign keys']['compared_parent_id'] = array(
+      'table' => 'node',
+      'columns' => array('compared_parent_id' => 'nid'),
+    );
+    $schema['fields']['compared_state'] = array(
+      'description' => 'The state of the compared node',
+      'type' => 'varchar',
+      'length' => 32,
+    );
+    $schema['fields']['compared_has_children'] = array(
+      'description' => "Boolean indicated if the compared node has children.",
+      'type' => 'int',
+      'size' => 'tiny',
+      'default' => 0,
+    );
+    $schema['fields']['feature_parent_id'] = array(
+      'description' => 'The parent id of the feature node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+    );
+    $schema['indexes']['feature_parent_id'] = array('feature_parent_id');
+    $schema['foreign keys']['feature_parent_id'] = array(
+      'table' => 'node',
+      'columns' => array('feature_parent_id' => 'nid'),
+    );
+    $schema['fields']['feature_type'] = array(
+      'description' => 'The type of the feature node',
+      'type' => 'varchar',
+      'length' => 32,
+    );
+    $schema['fields']['feature_weight'] = array(
+      'description' => 'The weight of the feature node',
+      'type' => 'int',
+      'unsigned' => TRUE,
+    );
+    $schema['fields']['feature_state'] = array(
+      'description' => 'The state of the feature node',
+      'type' => 'varchar',
+      'length' => 32,
+    );
+    $schema['fields']['feature_has_children'] = array(
+      'description' => "Boolean indicated if the feature node has children.",
+      'type' => 'int',
+      'size' => 'tiny',
+      'default' => 0,
+    );
   }
 
   switch ($type) {

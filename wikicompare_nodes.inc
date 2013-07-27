@@ -130,7 +130,14 @@ function wikicompare_insert_node($type, $node) {
     $query = db_select('node', 'n');
     $query->addField('n', 'nid', 'nid');
     $query->addField('fp', 'wikicompare_parent_id_target_id', 'parent_id');
+    if ($countertype == 'feature') {
+      $query->addField('cache', 'type', 'type');
+      $query->addField('cache', 'weight', 'weight');
+    }
+    $query->addField('cache', 'state', 'state');
+    $query->addField('cache', 'has_children', 'has_children');
     $query->leftjoin('field_revision_wikicompare_parent_id', 'fp', 'n.vid = fp.revision_id');
+    $query->leftjoin('cache_feature', 'cache', 'n.nid = cache.nid');
     $query->condition('n.type', $countertype);
     $query->condition('n.language', language_default('language'));
     $result = $query->execute();
@@ -162,6 +169,14 @@ function wikicompare_insert_node($type, $node) {
       //Save the implementation node in database.
       node_save($node_implementation);
 
+      if ($type == 'feature') {
+        $feature_type = $node->wikicompare_type['und'][0]['value'];
+        $feature_weight = $node->wikicompare_weight['und'][0]['value'];
+      } else {
+        $feature_type = $counternode->type;
+        $feature_weight = $counternode->weight;
+      }
+
       //Prepare to add the new record in wikicompare cache table.
       $cache_implementation = array(
         'nid' => $node_implementation->nid,
@@ -169,6 +184,14 @@ function wikicompare_insert_node($type, $node) {
         'feature_id' => $node_implementation->wikicompare_feature_id['und'][0]['target_id'],
         'compared_id' => $node_implementation->wikicompare_compared_id['und'][0]['target_id'],
         'support' => 0,
+        $type . '_parent_id' => $parent_id,
+        $type . '_state' => $node->wikicompare_state['und'][0]['value'],
+        $type . '_has_children' => 0,
+        $countertype . '_parent_id' => $counternode->parent_id,
+        $countertype . '_state' => $counternode->state,
+        $countertype . '_has_children' => $counternode->has_children,
+        'feature_type' => $feature_type,
+        'feature_weight' => $feature_weight,
       );
 
       if (module_exists('wikicompare_inherit_compared')) {
@@ -179,11 +202,10 @@ function wikicompare_insert_node($type, $node) {
       //Add the prepared implementation fields in array so we can insert them all at once later.
       $cache_implementations[] = $cache_implementation;
 
-
     }
 
     //Prepare the header for the mass insert in implementation cache table.
-    $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support');
+    $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'feature_type', 'feature_weight');
 
     if (module_exists('wikicompare_inherit_compared')) {
       //Inherit compared specific field.
@@ -608,6 +630,37 @@ function wikicompare_revisionapi($op, $node_revision) {
     if ($node_nids) {
       //If the parent compared of feature have change, we need to update the parent implementations through compared or feature axis.
       foreach ($nodes as $node) {
+
+        //Update the cache_implementation with the new structural fields, needed for the percent computation.
+        if (in_array($node_revision->type, array('compared', 'feature'))) {
+
+          $fields = array();
+          $query = db_select('cache_' . $node_revision->type, 'n');
+          $query->addField('n', 'parent_id', 'parent_id');
+          $query->addField('n', 'state', 'state');
+          $query->addField('n', 'has_children', 'has_children');
+          if ($node_revision->type == 'feature') {
+            $query->addField('n', 'type', 'type');
+            $query->addField('n', 'weight', 'weight');
+          }
+          $query->condition('n.nid', $node->nid);
+          $result = $query->execute();
+          foreach($result as $record) {
+            $fields[$node_revision->type . '_parent_id'] = $record->parent_id;
+            $fields[$node_revision->type . '_state'] = $record->state;
+            $fields[$node_revision->type . '_has_children'] = $record->has_children;
+            if ($node_revision->type == 'feature') {
+              $fields['feature_type'] = $node_revision->wikicompare_type['und'][0]['value'];
+              $fields['feature_weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
+            }
+          }
+
+          db_update('cache_implementation')
+              ->fields($fields)
+              ->condition($node_revision->type . '_id', $node->nid)
+              ->execute();
+        }
+
         if (in_array($node_revision->type, array('compared', 'feature'))) {
           if ($node->parent_changed) {
             wikicompare_update_parent_link($node_revision->type, $node_revision->nid);
