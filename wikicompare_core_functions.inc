@@ -19,65 +19,66 @@
  * @param $nids
  *   The nids of the nodes to update.
  *
- * @param $update_parent
- *   Flag which can block the recursivity of the function on parent. This allow to avoid updating parents if the function was recursively launched by the parents.
- *
  * @return array
  *   An array containing the implementations updated by the function. This is mainly used to recover the children when this function is recursively called by the parents.
  */
-function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
+function wikicompare_update_compare_tree($type, $nids) {
 
-//  if (!variable_get('wikicompare_computation_status', 1)) {
+  if (!variable_get('wikicompare_computation_status', 1)) {
     return;
-//  }
-
+  }
+dpm($type);
+dpm($nids);
   $nodes = array();
   if (!empty($nids)) {
 
     //Recover the details of the targeted implementations.
-    $query = db_select('cache_implementation', 'fs');
-    $query->addField('fs', 'nid', 'nid');
-    $query->addField('fs', 'feature_id', 'fid');
-    $query->addField('fs', 'compared_id', 'cid');
-    $query->addField('fs', 'support', 'support');
+    $query = db_select('cache_implementation', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'feature_id', 'fid');
+    $query->addField('n', 'compared_id', 'cid');
+    $query->addField('n', 'support', 'support');
     $query->addField('nf', 'type', 'type');
-    $query->addField('nf', 'parent_id', 'parent_id');
-    $query->addField('nfpnf', 'nid', 'parent_fs_through_feature_nid');
+    $query->addField('n', 'percent', 'old_percent');
+    $query->addField('n', 'css_class', 'old_css_class');
+//    $query->addField('nf', 'parent_id', 'parent_id');
+    $query->addField('n', 'parent_through_compared_id', 'parent_through_compared_id');
+    $query->addField('n', 'parent_through_feature_id', 'parent_through_feature_id');
+/*
+    //Get parent implementation through feature axis.*/
+    $query->join('cache_feature', 'nf', 'n.feature_id = nf.nid'); //Get feature node.
+//    $query->leftjoin('cache_implementation', 'nfpnf', 'nf.parent_id = nfpnf.feature_id'); //Get implementation of the parent feature node.
 
-    //Get parent implementation through feature axis.
-    $query->join('cache_feature', 'nf', 'fs.feature_id = nf.nid'); //Get feature node.
-    $query->leftjoin('cache_implementation', 'nfpnf', 'nf.parent_id = nfpnf.feature_id'); //Get implementation of the parent feature node.
+//    $query->where('nfpnf.compared_id = fs.compared_id OR nf.parent_id IS NULL'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
 
-    $query->where('nfpnf.compared_id = fs.compared_id OR nf.parent_id IS NULL'); //We keep only the implementation of the parent feature node which has the same compared than the implementation. Which mean it's the parent implementation on the feature axis.
-
-    $query->join('cache_compared', 'nc', 'fs.compared_id = nc.nid'); //Get compared node.
+//    $query->join('cache_compared', 'nc', 'n.compared_id = nc.nid'); //Get compared node.
 
     //Get parent implementation through compared axis, only if compared update is enabled.
-    if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update') {
-      $query->addField('nc', 'parent_id', 'parent_id');
-      $query->addField('ncpnc', 'nid', 'parent_fs_through_compared_nid');
-      $query->leftjoin('cache_implementation', 'ncpnc', 'nc.parent_id = ncpnc.compared_id'); //Get implementation of the parent compared node.
+//    if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update') {
+//      $query->addField('nc', 'parent_id', 'parent_id');
+//      $query->addField('n', 'parent_through_feature_id', 'parent_through_feature_id');
+//      $query->leftjoin('cache_implementation', 'ncpnc', 'nc.parent_id = ncpnc.compared_id'); //Get implementation of the parent compared node.
 
-      $query->where('ncpnc.feature_id = fs.feature_id OR nc.parent_id IS NULL'); //We keep only the implementation of the parent compared node which has the same feature than the implementation. Which mean it's the parent implementation on the compared axis.
+//      $query->where('ncpnc.feature_id = fs.feature_id OR nc.parent_id IS NULL'); //We keep only the implementation of the parent compared node which has the same feature than the implementation. Which mean it's the parent implementation on the compared axis.
 
-    }
+//    }
 
     //If possible, we search directly through feature or compared id to compute the sql request faster.
     switch ($type) {
       case "implementation":
-        $query->condition('fs.nid', $nids, 'IN');
+        $query->condition('n.nid', $nids, 'IN');
         break;
       case "feature":
         //Recover children of implementation on compared axis, because we will only update implementation which has no children on compared axis.
-        $query->leftjoin('cache_compared', 'ncc', 'fs.compared_id = ncc.parent_id'); //Get compared node children.
-        $query->where('ncc.nid IS NULL'); //Only the implementation without children on compared axis need to be updated, because they will update their parent on compared axis anyway.
-        $query->condition('fs.feature_id', $nids, 'IN');
+        $query->join('cache_compared', 'nc', 'n.compared_id = nc.nid'); //Get compared node children.
+        $query->where('nc.has_children = 0'); //Only the implementation without children on compared axis need to be updated, because they will update their parent on compared axis anyway.
+        $query->condition('n.feature_id', $nids, 'IN');
         break;
       case "compared":
         //Recover children of implementation on feature axis, because we will only update implementation which has no children on feature axis.
-        $query->leftjoin('cache_feature', 'nfc', 'fs.feature_id = nfc.parent_id'); //Get feature node children.
-        $query->where('nfc.nid IS NULL'); //Only the implementation without children on feature axis need to be updated, because they will update their parent on feature axis anyway.
-        $query->condition('fs.compared_id', $nids, 'IN');
+//        $query->leftjoin('cache_feature', 'nfc', 'n.feature_id = nfc.parent_id'); //Get feature node children.
+        $query->where('nf.has_children = 0'); //Only the implementation without children on feature axis need to be updated, because they will update their parent on feature axis anyway.
+        $query->condition('n.compared_id', $nids, 'IN');
         break;
     }
 
@@ -90,13 +91,13 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
 
     //Build the variables needed for later computations.
     $implementation_ids = array();
-    $res_search_feature_children = '';
-    $res_search_compared_children = '';
+//    $res_search_feature_children = '';
+//    $res_search_compared_children = '';
     foreach($result as $record) {
       //Using $record->nid as key allow deduplication of the id in argument array.
       $nodes[$record->nid] = $record;
       $implementation_ids[$record->nid] = $record->nid;
-
+/*
       //Build the where argument for the later get children query.
       if ($res_search_feature_children) {
         $res_search_feature_children = $res_search_feature_children . ',';
@@ -106,33 +107,34 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       if ($res_search_compared_children) {
         $res_search_compared_children = $res_search_compared_children . ',';
       }
-      $res_search_compared_children = $res_search_compared_children . "('" . $record->cid . "','" . $record->fid . "')";
+      $res_search_compared_children = $res_search_compared_children . "('" . $record->cid . "','" . $record->fid . "')";*/
     }
-
+dpm($nodes);
     //Get the children on feature axis.
     $through_feature_childs = array();
     //We don't need the children through feature axis in case of type = 'compared'. Also, we should not call this function if $res_search_feature_children is used and null, otherwise it'll crash.
-    if ($type == 'feature' || ($type == 'implementation' && $res_search_feature_children)) {
+    if ($type != 'compared') {
+//    if ($type == 'feature' || ($type == 'implementation' && $res_search_feature_children)) {
       //Get children implementation through feature axis
-      $query = db_select('cache_implementation', 'fs');
-      $query->addField('fs', 'nid', 'nid');
-      $query->addField('fs', 'feature_id', 'fid');
-      $query->addField('fs', 'compared_id', 'cid');
+      $query = db_select('cache_implementation', 'n');
+      $query->addField('n', 'nid', 'nid');
+      $query->addField('n', 'feature_id', 'fid');
+      $query->addField('n', 'compared_id', 'cid');
       $query->addField('nf','parent_id', 'parent_fid');
-      $query->addField('ctc', 'nid', 'cache_nid');
-      $query->addField('ctc', 'percent', 'percent');
+      $query->addField('n', 'percent', 'percent');
       $query->addField('nf', 'weight', 'weight');
 
-      //Get parent feature
-      $query->leftjoin('cache_feature', 'nf', 'fs.feature_id = nf.nid');
+      //Get feature
+      $query->leftjoin('cache_feature', 'nf', 'n.feature_id = nf.nid');
 
       //Get the percent computed of the children, if already computed
-      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
+//      $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
 
       switch ($type) {
         case "implementation":
           //We keep only the implementation of the child feature node which has the same compared than the implementation. Which mean it's the children implementation on the feature axis.
-          $query->where('(nf.parent_id, fs.compared_id) IN (' . $res_search_feature_children . ')');
+          $query->condition('parent_through_feature_id', $nids, 'IN');
+//          $query->where('(nf.parent_id, n.compared_id) IN (' . $res_search_feature_children . ')');
           break;
         case "feature":
           $query->condition('nf.parent_id', $nids, 'IN');
@@ -149,31 +151,32 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
         $through_feature_childs[$record->parent_fid][$record->cid][$record->nid] = $record;
       }
     }
-
+dpm($through_feature_childs);
     //Get the children on feature axis.
     $through_compared_childs = array();
     //We don't need the children through compared child in case of type = 'feature'. Also, we should not call this function if $res_search_feature_children is used and null, otherwise it'll crash.
-    if ($type == 'compared' || ($type == 'implementation' && $res_search_compared_children)) {
+    if ($type != 'feature') {
+//    if ($type == 'compared' || ($type == 'implementation' && $res_search_compared_children)) {
       //Get children implementation through feature axis.
-      $query = db_select('cache_implementation', 'fs');
-      $query->addField('fs', 'nid', 'nid');
-      $query->addField('fs', 'feature_id', 'fid');
-      $query->addField('fs', 'compared_id', 'cid');
+      $query = db_select('cache_implementation', 'n');
+      $query->addField('n', 'nid', 'nid');
+      $query->addField('n', 'feature_id', 'fid');
+      $query->addField('n', 'compared_id', 'cid');
       $query->addField('nc','parent_id', 'parent_cid');
-      $query->addField('ctc', 'nid', 'cache_nid');
-      $query->addField('ctc', 'percent', 'percent');
-      $query->addField('ctc', 'css_class', 'css_class');
+      $query->addField('n', 'percent', 'percent');
+      $query->addField('n', 'css_class', 'css_class');
 
       //Get parent compared.
-      $query->leftjoin('cache_compared', 'nc', 'fs.compared_id = nc.nid');
+      $query->leftjoin('cache_compared', 'nc', 'n.compared_id = nc.nid');
 
       //Get the percent computed of the children, if already computed.
-      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
+//      $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
 
       switch ($type) {
         case "implementation":
           //We keep only the implementation of the child compared node which has the same feature than the implementation. Which mean it's the children implementation on the compared axis.
-          $query->where('(nc.parent_id, fs.feature_id) IN (' . $res_search_compared_children . ')');
+          $query->condition('parent_through_compared_id', $nids, 'IN');
+//          $query->where('(nc.parent_id, n.feature_id) IN (' . $res_search_compared_children . ')');
           break;
         case "compared":
           $query->condition('nc.parent_id', $nids, 'IN');
@@ -188,34 +191,34 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
         $through_compared_childs[$record->parent_cid][$record->fid][$record->nid] = $record;
       }
     }
-
+dpm($through_compared_childs);
     //Assign children to each node to compute.
-    $to_update = array();
+//    $to_update = array();
     foreach($nodes as $node) {
       $node->through_feature_childs = array();
       if (isset($through_feature_childs[$node->fid][$node->cid])) {
         //Assign the children thanks to fid and cid key.
         $node->through_feature_childs = $through_feature_childs[$node->fid][$node->cid];
-        foreach($through_feature_childs[$node->fid][$node->cid] as $child) {
+/*        foreach($through_feature_childs[$node->fid][$node->cid] as $child) {
           if (!$child->cache_nid) {
             //If the children isn't already computed, we mark it to update.
             $to_update_feature_childs[$child->nid] = $child->nid;
           }
-        }
+        }*/
       }
       $node->through_compared_childs = array();
       if (isset($through_compared_childs[$node->cid][$node->fid])) {
         //Assign the children thanks to fid and cid key.
         $node->through_compared_childs = $through_compared_childs[$node->cid][$node->fid];
-        foreach($through_compared_childs[$node->cid][$node->fid] as $child) {
+/*        foreach($through_compared_childs[$node->cid][$node->fid] as $child) {
           if (!$child->cache_nid) {
             //If the children isn't already computed, we mark it to update.
             $to_update_compared_childs[$child->nid] = $child->nid;
           }
-        }
+        }*/
       }
     }
-
+/*
     //If some children through feature axis are not already computed.
     if (!empty($to_update_feature_childs)) {
       //Update the children on feature axis with the flag no-update-feature. This flag ensure it'll not try to update parent on the same axis than the one we use here.
@@ -245,102 +248,103 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
         }
       }
     }
-
+*/
     if (module_exists('wikicompare_inherit_compared')) {
       //Compute the inherited implementation if not already done, and get inheriting children.
       wikicompare_inherit_compared_update_comparative_table_preparation($nodes, $type, $nids);
     }
-
+/*
     //Recover the existing cache value only now and not in the first SQL request, because their value may be updated during the children update.
     if ($implementation_ids) {
-      $query = db_select('node', 'fs');
-      $query->addField('fs', 'nid', 'nid');
+      $query = db_select('node', 'n');
+      $query->addField('n', 'nid', 'nid');
       $query->addField('ctc', 'nid', 'cache_nid');
       $query->addField('ctc', 'percent', 'cache_percent');
       $query->addField('ctc', 'css_class', 'cache_css_class');
-      $query->leftjoin('cache_comparative_table', 'ctc', 'fs.nid = ctc.nid');
-      $query->condition('fs.nid', $implementation_ids, 'IN');
+      $query->leftjoin('cache_comparative_table', 'ctc', 'n.nid = ctc.nid');
+      $query->condition('n.nid', $implementation_ids, 'IN');
       $result = $query->execute();
       foreach($result as $record) {
         $nodes[$record->nid]->cache_nid = $record->cache_nid;
         $nodes[$record->nid]->cache_percent = $record->cache_percent;
         $nodes[$record->nid]->cache_css_class = $record->cache_css_class;
       }
-    }
+    }*/
 
   }
 
 
-
+dpm($nodes);
   /*
    * Now we'll compute the percent and css_class of each nids in function argument.
    */
   $to_update = array();
   $cache_to_update = array();
-  $cache_to_insert = array();
+//  $cache_to_insert = array();
   $res = array();
+  $update_compared_flag = variable_get('wikicompare_update_compared', 'no-update');
   foreach($nodes as $node) {
 
     //We update only if the update parent isn't set and there is no children on compared axis.
-    if ((variable_get('wikicompare_update_compared', 'no-update') == 'no-update') && !empty($node->through_compared_childs)) {
+    if (($update_compared_flag == 'no-update') && !empty($node->through_compared_childs)) {
       continue;
     }
 
     //If any misconfiguration, it'll always return 0.
-    $node->percent = 0;
-    $node->css_class = 'cell-support-no';
+    $node->new_percent = 0;
+    $node->new_css_class = 'cell-support-no';
 
     //The support field is used only if the implementation is the deepest in the tree, on both the feature and compared axis.
     if (empty($node->through_feature_childs) && empty($node->through_compared_childs)) {
       if ($node->support == 1) {
-        $node->percent = 100;
-        $node->css_class = 'cell-support-complete';
+        $node->new_percent = 100;
+        $node->new_css_class = 'cell-support-complete';
       } else {
-        $node->percent = 0;
-        $node->css_class = 'cell-support-no';
+        $node->new_percent = 0;
+        $node->new_css_class = 'cell-support-no';
       }
-
+dpm($node);
       if (module_exists('wikicompare_inherit_compared')) {
         //Return the data computed according to the inherited implementation.
         wikicompare_inherit_compared_from_other_support($node);
       }
-    //If the feature is of type weighted average, it'll use the children through feature axis to compute the percent
+    //Use the children through feature axis to compute the percent.
     } else {
       $node = wikicompare_compute_percent($node, $node->through_feature_childs);
     }
 
     //If a children through compared axis is higher than the value computed, then it'll be used instead.
     foreach($node->through_compared_childs as $child) {
-      if ($child->percent >= $node->percent) {
-        $node->percent = $child->percent;
-        $node->css_class = $child->css_class;
+      if ($child->percent >= $node->new_percent) {
+        $node->new_percent = $child->percent;
+        $node->new_css_class = $child->css_class;
       }
     }
 
     //Update the value computed in database, only if the value has changed.
-    if ((($node->percent != $node->cache_percent) || ($node->css_class != $node->cache_css_class))) {
-      if ($node->cache_nid) {
+    if ((($node->old_percent != $node->new_percent) || ($node->old_css_class != $node->new_css_class))) {
+//      if ($node->nid) {
         //We regroup all the same percent in a table to update them all at the same time.
-        $cache_to_update[$node->css_class][$node->percent][] = $node->nid;
-      } else {
+      $cache_to_update[$node->new_css_class][$node->new_percent][$node->nid] = $node->nid;
+/*      } else {
         //We regroup all the same percent in a table to insert them all at the same time.
-        $cache_to_insert[$node->css_class][$node->percent][] = $node->nid;
-      }
-    }
+        $cache_to_insert[$node->css_class$node->css_class][$node->percent][] = $node->nid;
+      }*/
+    
 
     //Update the parent though feature and compared axis if the value changed. This ensure this comparison work correctly and don't update parent if unnecessary.
     //If the flag no-update is set, no update will be made.
-    if (($node->percent != $node->cache_percent) || ($node->css_class != $node->cache_css_class)) {
+//    if (($node->percent != $node->cache_percent) || ($node->new_css_class != $node->cache_css_class)) {
 
       //We mark the parent id through feature axis to update if exist, unless we have the flag no-update-feature. This flag deny the parent update through feature axis if wikicompare_update_compare_tree was launched for a children computation.
-      if (($node->parent_fs_through_feature_nid) && ($update_parent != 'no-update-feature')) {
-        $to_update[$node->parent_fs_through_feature_nid] = $node->parent_fs_through_feature_nid;
+      if ($node->parent_through_feature_id) { // && ($update_parent != 'no-update-feature')) {
+        $to_update[$node->parent_through_feature_id] = $node->parent_through_feature_id;
       }
 
       //We mark the parent id through compared axis to update if exist, unless we have the flag no-update-compared. This flag deny the parent update through compared axis if wikicompare_update_compare_tree was launched for a children computation.
-      if (variable_get('wikicompare_update_compared', 'no-update') != 'no-update') {
-        if (($node->parent_fs_through_compared_nid) && ($update_parent != 'no-update-compared')) {
-          $to_update[$node->parent_fs_through_compared_nid] = $node->parent_fs_through_compared_nid;
+      if ($update_compared_flag != 'no-update') {
+        if ($node->parent_through_compared_nid) { //&& ($update_parent != 'no-update-compared')) {
+          $to_update[$node->parent_through_compared_id] = $node->parent_through_compared_id;
         }
       }
 
@@ -352,11 +356,11 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
     }
 
     //Fill the res variable the function will return.
-    $res[$node->nid]['percent'] = $node->percent;
-    $res[$node->nid]['css_class'] = $node->css_class;
+    $res[$node->nid]['percent'] = $node->new_percent;
+    $res[$node->nid]['css_class'] = $node->new_css_class;
 
   }
-
+/*
   //Insert the new records in database. Data are regrouped by css and percent to try to make as few query as possible.
   foreach($cache_to_insert as $key_css_class => $css_class) {
     foreach($cache_to_insert[$key_css_class] as $key_percent => $percent) {
@@ -370,11 +374,12 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
       }
       $query->execute();
     }
-  }
+  }*/
+dpm($cache_to_update, 'cache_to_update');
   //Update the old records. Data are regrouped by css and percent to try to make as few query as possible.
   foreach($cache_to_update as $key_css_class => $css_class) {
     foreach($cache_to_update[$key_css_class] as $key_percent => $percent) {
-        db_update('cache_comparative_table')
+        db_update('cache_implementation')
           ->fields(array(
             'percent' => $key_percent,
             'css_class' => $key_css_class,
@@ -383,7 +388,7 @@ function wikicompare_update_compare_tree($type, $nids, $update_parent = NULL) {
           ->execute();
     }
   }
-
+dpm($to_update, 'to_update');
   //Update the parent marked.
   if (!empty($to_update)) {
     wikicompare_update_compare_tree('implementation', $to_update);
@@ -425,12 +430,12 @@ function wikicompare_compute_percent($node, $through_feature_childs) {
       }
 
       //Compute the value. We round the percent to 4 because it's the precision in database.
-      $node->percent = round(($total / $count),4);
+      $node->new_percent = round(($total / $count),4);
 
     //If the feature is of type highest percentage, it'll take the maximum value of the children.
     } elseif ($node->type == 'parent-highest-percentage') {
-      $node->percent = 0;
-      $node->css_class = 'cell-support-no';
+      $node->new_percent = 0;
+      $node->new_css_class = 'cell-support-no';
       foreach($through_feature_childs as $child) {
 
           //Security if weight field is misconfigured.
@@ -441,37 +446,37 @@ function wikicompare_compute_percent($node, $through_feature_childs) {
           //Compute the value for this children. We round the percent to 4 because it's the precision in database.
           $child_percent = round(($child->percent * $child->weight / 100), 4);
           //If percent for this children is highter, then it'll be the value computed.
-          if ($child_percent >= $node->percent) {
-            $node->percent = $child_percent;
+          if ($child_percent >= $node->new_percent) {
+            $node->new_percent = $child_percent;
           }
 
       }
 
       //Find the css class based on the percentage value.
-      if ($node->percent ==0) {
-        $node->css_class = 'cell-support-no';
-      } elseif (($node->percent > 0) && ($node->percent < 10)) {
-        $node->css_class = 'cell-support-partial-0-10';
-      } elseif (($node->percent >= 10) && ($node->percent < 20)) {
-        $node->css_class = 'cell-support-partial-10-20';
-      } elseif (($node->percent >= 20) && ($node->percent < 30)) {
-        $node->css_class = 'cell-support-partial-20-30';
-      } elseif (($node->percent >= 30) && ($node->percent < 40)) {
-        $node->css_class = 'cell-support-partial-30-40';
-      } elseif (($node->percent >= 40) && ($node->percent < 50)) {
-        $node->css_class = 'cell-support-partial-40-50';
-      } elseif (($node->percent >= 50) && ($node->percent < 60)) {
-        $node->css_class = 'cell-support-partial-50-60';
-      } elseif (($node->percent >= 60) && ($node->percent < 70)) {
-        $node->css_class = 'cell-support-partial-60-70';
-      } elseif (($node->percent >= 70) && ($node->percent < 80)) {
-        $node->css_class = 'cell-support-partial-70-80';
-      } elseif (($node->percent >= 80) && ($node->percent < 90)) {
-        $node->css_class = 'cell-support-partial-80-90';
-      } elseif (($node->percent >= 90) && ($node->percent < 100)) {
-        $node->css_class = 'cell-support-partial-90-100';
-      } elseif (($node->percent == 100)) {
-        $node->css_class = 'cell-support-complete';
+      if ($node->new_percent ==0) {
+        $node->new_css_class = 'cell-support-no';
+      } elseif (($node->new_percent > 0) && ($node->new_percent < 10)) {
+        $node->new_css_class = 'cell-support-partial-0-10';
+      } elseif (($node->new_percent >= 10) && ($node->new_percent < 20)) {
+        $node->new_css_class = 'cell-support-partial-10-20';
+      } elseif (($node->new_percent >= 20) && ($node->new_percent < 30)) {
+        $node->new_css_class = 'cell-support-partial-20-30';
+      } elseif (($node->new_percent >= 30) && ($node->new_percent < 40)) {
+        $node->new_css_class = 'cell-support-partial-30-40';
+      } elseif (($node->new_percent >= 40) && ($node->new_percent < 50)) {
+        $node->new_css_class = 'cell-support-partial-40-50';
+      } elseif (($node->new_percent >= 50) && ($node->new_percent < 60)) {
+        $node->new_css_class = 'cell-support-partial-50-60';
+      } elseif (($node->new_percent >= 60) && ($node->new_percent < 70)) {
+        $node->new_css_class = 'cell-support-partial-60-70';
+      } elseif (($node->new_percent >= 70) && ($node->new_percent < 80)) {
+        $node->new_css_class = 'cell-support-partial-70-80';
+      } elseif (($node->new_percent >= 80) && ($node->new_percent < 90)) {
+        $node->new_css_class = 'cell-support-partial-80-90';
+      } elseif (($node->new_percent >= 90) && ($node->new_percent < 100)) {
+        $node->new_css_class = 'cell-support-partial-90-100';
+      } elseif (($node->new_percent == 100)) {
+        $node->new_css_class = 'cell-support-complete';
       }
     }
 
