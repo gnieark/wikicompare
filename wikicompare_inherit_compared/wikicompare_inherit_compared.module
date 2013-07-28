@@ -631,22 +631,24 @@ function wikicompare_inherit_compared_update_parent_implementations($node, $type
  */
 function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
 
-/* MYSQL query */
-  $query = 'UPDATE cache_implementation n
-         INNER JOIN cache_compared nc ON n.compared_id = nc.nid
-         LEFT JOIN cache_implementation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
-         SET n.parent_through_inherit_id = nci.nid';
-
-/*
-  $query = 'UPDATE cache_implementation
-         SET parent_through_inherit_id = nci.nid
-         FROM cache_implementation n
-         INNER JOIN cache_compared nc ON n.compared_id = nc.nid
-         LEFT JOIN cache_implementation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
-         WHERE cache_implementation.nid = n.nid';
-*/
-  if ($nid != NULL) {
-    $query = $query . ' WHERE nc.nid = ' . $nid;
+  if (Database::getConnection()->databaseType() == 'mysql') {
+    $query = 'UPDATE cache_implementation n
+           INNER JOIN cache_compared nc ON n.compared_id = nc.nid
+           LEFT JOIN cache_implementation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
+           SET n.parent_through_inherit_id = nci.nid';
+    if ($nid != NULL) {
+      $query = $query . ' WHERE nc.nid = ' . $nid;
+    }
+  } else {
+    $query = 'UPDATE cache_implementation
+           SET parent_through_inherit_id = nci.nid
+           FROM cache_implementation n
+           INNER JOIN cache_compared nc ON n.compared_id = nc.nid
+           LEFT JOIN cache_implementation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
+           WHERE cache_implementation.nid = n.nid';
+    if ($nid != NULL) {
+      $query = $query . ' AND nc.nid = ' . $nid;
+    }
   }
 
   db_query($query);
