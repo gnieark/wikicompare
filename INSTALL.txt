@@ -24,15 +24,4 @@ INSTALLATION
 - $('a.simple-dialog' + classes, context).each(function(event) {
 + $('a.simple-dialog' + classes).each(function(event) {
 
-6.  In the module revisioning, modify the revisioning.module file :
-After :
-$node_op = revisioning_user_node_access($revision_op, $node);
-Add :
-$tests = module_invoke_all('revisioning_access_node', $node_op, $revision_op, $node);
-foreach ($tests as $test) {
-  if ($test == False) {
-    $node_op = False;
-  }
-}
-
-7.  Install Drupal in minimal profile, and go to admin/build/modules to enable the module.
+6.  Install Drupal in minimal profile, and go to admin/build/modules to enable the module.

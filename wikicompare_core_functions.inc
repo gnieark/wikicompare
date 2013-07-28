@@ -500,13 +500,14 @@ function wikicompare_refresh_caches() {
   wikicompare_update_parent_link();
 
   //Update the structural fields from compared and feature in implementation.
-/* MYSQL Query
+/* MYSQL Query*/
   db_query('UPDATE cache_implementation n
          INNER JOIN cache_compared nc ON n.compared_id = nc.nid
          INNER JOIN cache_feature nf ON n.feature_id = nf.nid
          SET n.compared_parent_id = nc.parent_id, n.compared_state = nc.state, n.compared_has_children = nc.has_children,
          n.feature_parent_id = nf.parent_id, n.feature_state = nf.state, n.feature_has_children = nf.has_children, n.feature_type = nf.type, n.feature_weight = nf.weight');
-*/
+
+/*
   db_query('UPDATE cache_implementation
          SET compared_parent_id = nc.parent_id, compared_state = nc.state, compared_has_children = nc.has_children,
          feature_parent_id = nf.parent_id, feature_state = nf.state, feature_has_children = nf.has_children, feature_type = nf.type, feature_weight = nf.weight
@@ -514,7 +515,7 @@ function wikicompare_refresh_caches() {
          INNER JOIN cache_compared nc ON n.compared_id = nc.nid
          INNER JOIN cache_feature nf ON n.feature_id = nf.nid
          WHERE cache_implementation.nid = n.nid');
-
+*/
 
   if (module_exists('wikicompare_inherit_compared')) {
     //Update parent_through_inherit_id in cache_implementation.

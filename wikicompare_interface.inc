@@ -260,7 +260,9 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       //Modify the weight to place it at the end of the form.
       $form['wikicompare_user_ids']['#weight'] = 10;
       //We can modify the field only if we have the rights on the node.
-      if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
+      if (wikicompare_revisioning_access_node_revision('publish revisions', $node) != 1) {
+dpm(wikicompare_revisioning_access_node_revision('publish revisions', $node));
+dpm('WTF ' . NODE_ACCESS_DENY);
         //Hide the field in the form. We can't unset it, otherwise it display an error.
         hide($form['wikicompare_user_ids']);
         //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
@@ -1092,8 +1094,9 @@ function wikicompare_state_get_options($nid, $current_state) {
  * @return $test or $users
  *   Return either a boolean to give or not access, or an array with the users of the node.
  */
-function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
-
+function wikicompare_revisioning_access_node_revision($revision_op, $node) {
+dpm($revision_op);
+dpm($node);
   //Only the access right relative to publishing need to be check.
   if ($revision_op == 'publish revisions') {
 
@@ -1108,8 +1111,10 @@ function wikicompare_revisioning_access_node($node_op, $revision_op, $node) {
 
     //Return the boolean to revisionning module.
     if (($test == False) && ($uid != 1)) {
-      return False;
+dpm('return ' . NODE_ACCESS_DENY);
+      return NODE_ACCESS_DENY;
     } else {
+dpm('return True');
       return True;
     }
 
