@@ -98,6 +98,9 @@ function wikicompare_inherit_compared_install() {
   );
   field_create_instance($instance);
 
+  db_add_field('cache_compared', 'inherit_changed', $schema['fields']['inherit_changed']);
+  db_add_index('cache_compared', 'inherit_changed', array('inherit_changed'));
+
   //Add index in the cache table.
   $schema = drupal_get_schema('cache_implementation');
   db_add_field('cache_implementation', 'use_from_inherit', $schema['fields']['use_from_inherit']);
@@ -133,6 +136,8 @@ function wikicompare_inherit_compared_install() {
   );
   field_create_instance($instance);
 
+  db_add_field('cache_implementation', 'parent_through_inherit_id', $schema['fields']['parent_through_inherit_id']);
+  db_add_index('cache_implementation', 'parent_through_inherit_id', array('parent_through_inherit_id'));
 
   //Set use_from_inherit of old implementations to 1.
   $implementations = db_query("SELECT nid FROM node WHERE type = 'implementation'");
@@ -163,9 +168,13 @@ function wikicompare_inherit_compared_uninstall() {
   db_drop_field('cache_compared', 'inherit_compared_id');
   db_drop_index('cache_compared', 'inherit_compared_id');
   field_delete_field('wikicompare_inherit_compared_id');
+  db_drop_field('cache_compared', 'inherit_changed');
+  db_drop_index('cache_compared', 'inherit_changed');
 
   db_drop_field('cache_implementation', 'use_from_inherit');
   field_delete_field('wikicompare_use_from_inherit');
+  db_drop_field('cache_implementation', 'parent_through_inherit_id');
+  db_drop_index('cache_implementation', 'parent_through_inherit_id');
 
   // Purge all field information
   // api.drupal.org/api/function/field_purge_batch/7

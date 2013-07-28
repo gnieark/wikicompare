@@ -708,14 +708,27 @@ function wikicompare_revisionapi($op, $node_revision) {
  */
 function wikicompare_update_parent_link($type=NULL, $nid=NULL) {
 
+/* MYSQL Query
   $query = 'UPDATE cache_implementation n
          INNER JOIN cache_compared compared ON n.compared_id = compared.nid
          LEFT JOIN cache_implementation ncp ON (compared.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
          INNER JOIN cache_feature feature ON n.feature_id = feature.nid
          LEFT JOIN cache_implementation nfp ON (feature.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
          SET n.parent_through_compared_id = ncp.nid, n.parent_through_feature_id = nfp.nid';
+*/
+
+  $query = 'UPDATE cache_implementation
+    SET parent_through_compared_id = ncp.nid, 
+        parent_through_feature_id = nfp.nid
+    FROM cache_implementation n
+    INNER JOIN cache_compared compared ON n.compared_id = compared.nid
+    LEFT JOIN cache_implementation ncp ON (compared.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
+    INNER JOIN cache_feature feature ON n.feature_id = feature.nid
+    LEFT JOIN cache_implementation nfp ON (feature.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
+    WHERE cache_implementation.nid = n.nid';
+
   if ($nid != NULL) {
-    $query = $query . ' WHERE ' . $type . '.nid = ' . $nid;
+    $query = $query . ' AND ' . $type . '.nid = ' . $nid;
   }
 
   db_query($query);

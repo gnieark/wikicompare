@@ -20,12 +20,12 @@
  *
  * Not working.
  */
-function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks) {
+/*function wikicompare_translation_block_info_alter(&$blocks, $theme, $code_blocks) {
 
   $blocks['locale']['language']['region'] = 'content';
   $blocks['locale']['language']['weight'] = 10;
 
-}
+}*/
 
 
 
@@ -236,7 +236,7 @@ function wikicompare_translation_request_db(&$query, $type, $db_settings, $setti
     $query->addField('t', 'title', 'title_translated');
     $query->addField('t', 'language', 'tlanguage');
     $query->leftjoin('node', 't', 'n.nid = t.tnid');
-    $query->where("t.language = '" . $language->language . "' OR t.language = '" . language_default('language') . "' OR t.language IS NULL");
+    $query->where("t.language = '" . $language->language . "' OR t.language IS NULL");
 
     //If we are in fastaction mode, we want to also test is the translation node can be fastedited.
     if ($settings['fastaction']) {

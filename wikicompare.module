@@ -27,9 +27,9 @@ define('WIKICOMPARE_STATE_OPTIONS', serialize(array(
       )));
 
 define('WIKICOMPARE_STATE_PUBLISHED', serialize(array(
-        'published-incomplete' => 'Incomplete - Already published',
-        'published-submitted' => 'Submitted - Already published',
-        'published' => 'Published'
+        'published-incomplete',
+        'published-submitted',
+        'published'
       )));
 
 /**
