@@ -261,8 +261,6 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       $form['wikicompare_user_ids']['#weight'] = 10;
       //We can modify the field only if we have the rights on the node.
       if (wikicompare_revisioning_access_node_revision('publish revisions', $node) != 1) {
-dpm(wikicompare_revisioning_access_node_revision('publish revisions', $node));
-dpm('WTF ' . NODE_ACCESS_DENY);
         //Hide the field in the form. We can't unset it, otherwise it display an error.
         hide($form['wikicompare_user_ids']);
         //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
@@ -1067,23 +1065,9 @@ function wikicompare_state_get_options($nid, $current_state) {
 
 
 /**
- * Implements hook_revisioning_access_node().
- * Check _revisioning_access_node_revision and revisioning_user_node_access in revisioning.module for more information
- * We need to add the hook in community module:
- * $tests = module_invoke_all('revisioning_access_node', $node_op, $revision_op, $node);
- * foreach ($tests as $test) {
- *   if ($test == False) {
- *     $node_op = False;
- *   }
- * }
- * after
- * $node_op = revisioning_user_node_access($revision_op, $node);
- * in revisioning.module. Make some lobbying to integrate this hook in revisioning module.
+ * Implements hook_revisioning_access_node_revision().
  *
- * It would be better to implement this hook in revisioning_user_node_access, but this function is poorly designed. It return during the whole function, we suggest to move only one return at the end and insert the hook just before.
  * Since auto-publish use directly revisioning_user_node_access, we can't alter his result. Therefore, we can't use the auto-publish feature for now because since everyone has the publish revision right, everyone will auto-publish even those who are not power users.
- *
- * @param $node_op
  *
  * @param $revision_op
  *   Indicate which operation the module is doing, and so the access right to check.
@@ -1095,8 +1079,7 @@ function wikicompare_state_get_options($nid, $current_state) {
  *   Return either a boolean to give or not access, or an array with the users of the node.
  */
 function wikicompare_revisioning_access_node_revision($revision_op, $node) {
-dpm($revision_op);
-dpm($node);
+
   //Only the access right relative to publishing need to be check.
   if ($revision_op == 'publish revisions') {
 
@@ -1111,10 +1094,9 @@ dpm($node);
 
     //Return the boolean to revisionning module.
     if (($test == False) && ($uid != 1)) {
-dpm('return ' . NODE_ACCESS_DENY);
+
       return NODE_ACCESS_DENY;
     } else {
-dpm('return True');
       return True;
     }
 
