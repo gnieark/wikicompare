@@ -321,8 +321,6 @@ function wikicompare_table_render_implementation($implementation, $feature, $cid
   if (in_array($feature['data']->state, unserialize(WIKICOMPARE_STATE_PUBLISHED)) || $feature == NULL) {
     //Render the implementation.
     $output .= wikicompare_table_get_supertitle_item('implementation', $implementation, $settings);
-  } else {
-    $output .= '';
   }
   $output .= '</td>';
 
