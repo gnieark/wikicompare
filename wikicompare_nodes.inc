@@ -5,6 +5,8 @@
  * Fonctions and hooks which manages the actions relatives to the nodes CRUD and cache management.
  */
 
+require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
+
 
 
 /**
@@ -54,14 +56,6 @@ function wikicompare_insert_node($type, $node) {
   //Theses actions happen only for the main language node. No action for the translation nodes.
   if ($node->language != language_default('language')) {
     return;
-  }
-
-  //Find the countertype of the created node, compared for feature and feature for compared.
-  $countertype = '';
-  if ($type == 'compared') {
-    $countertype = 'feature';
-  } elseif ($type == 'feature') {
-    $countertype = 'compared';
   }
 
 
@@ -117,120 +111,9 @@ function wikicompare_insert_node($type, $node) {
 
 
 
-  /*
-   * Create the new implementations.
-   */
-
-  //Only the compareds and features create new implementations.
+  //For compared and feature, create the new implementations if the created node is published.
   if (in_array($type, array('compared', 'feature'))) {
-
-    // Find all countertype node of the main language.
-    // We don't use cache table because node is more reliable for such important task and there is no performance worries here.
-    $counternodes = array();
-    $query = db_select('node', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->addField('fp', 'wikicompare_parent_id_target_id', 'parent_id');
-    if ($countertype == 'feature') {
-      $query->addField('cache', 'type', 'type');
-      $query->addField('cache', 'weight', 'weight');
-    }
-    $query->addField('cache', 'state', 'state');
-    $query->addField('cache', 'has_children', 'has_children');
-    $query->leftjoin('field_revision_wikicompare_parent_id', 'fp', 'n.vid = fp.revision_id');
-    $query->leftjoin('cache_feature', 'cache', 'n.nid = cache.nid');
-    $query->condition('n.type', $countertype);
-    $query->condition('n.language', language_default('language'));
-    $result = $query->execute();
-    foreach ($result as $record) {
-      $counternodes[$record->nid] = $record;
-    }
-
-    //Create a new implementation node for each countertype nodes
-    foreach ($counternodes as $counternode){
-      $node_implementation = new stdClass();
-      $node_implementation->type = 'implementation';
-      // Add default parameters
-      node_object_prepare($node_implementation);
-      //Implementations has no title, we insert Implementation here because this title will be visible in the dashboard, so we can identify them more easily.
-      $node_implementation->title = 'Implementation';
-      $node_implementation->language = language_default('language');
-
-      //The implementation has both a feature_id and a compared_id
-      $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_id'] = $node->nid;
-      $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_type'] = "node";
-      $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_id'] = $counternode->nid;
-      $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_type'] = "node";
-
-      if (module_exists('wikicompare_inherit_compared')) {
-        //Inherit compared specific field.
-        wikicompare_inherit_compared_insert_implementation($node_implementation);
-      }
-
-      //Save the implementation node in database.
-      node_save($node_implementation);
-
-      if ($type == 'feature') {
-        $feature_type = $node->wikicompare_type['und'][0]['value'];
-        $feature_weight = $node->wikicompare_weight['und'][0]['value'];
-      } else {
-        $feature_type = $counternode->type;
-        $feature_weight = $counternode->weight;
-      }
-
-      //Prepare to add the new record in wikicompare cache table.
-      $cache_implementation = array(
-        'nid' => $node_implementation->nid,
-        'vid' => $node_implementation->vid,
-        'feature_id' => $node_implementation->wikicompare_feature_id['und'][0]['target_id'],
-        'compared_id' => $node_implementation->wikicompare_compared_id['und'][0]['target_id'],
-        'support' => 0,
-        $type . '_parent_id' => $parent_id,
-        $type . '_state' => $node->wikicompare_state['und'][0]['value'],
-        $type . '_has_children' => 0,
-        $countertype . '_parent_id' => $counternode->parent_id,
-        $countertype . '_state' => $counternode->state,
-        $countertype . '_has_children' => $counternode->has_children,
-        'feature_type' => $feature_type,
-        'feature_weight' => $feature_weight,
-      );
-
-      if (module_exists('wikicompare_inherit_compared')) {
-        //Inherit compared specific field.
-        wikicompare_inherit_compared_cache_implementation_fields($cache_implementation, $node_implementation);
-      }
-
-      //Add the prepared implementation fields in array so we can insert them all at once later.
-      $cache_implementations[] = $cache_implementation;
-
-    }
-
-    //Prepare the header for the mass insert in implementation cache table.
-    $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'feature_type', 'feature_weight');
-
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Inherit compared specific field.
-      wikicompare_inherit_compared_cache_fields_header($header, 'implementation');
-    }
-
-    //Insert the created implementation in their caches.
-    if (!empty($cache_implementation)) {
-      $query = db_insert('cache_implementation')->fields($header);
-      foreach ($cache_implementations as $implementation) {
-        $query->values($implementation);
-      }
-      $query->execute();
-    }
-
-    //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation. We can't make it at the implementation creation because the parent through counternode axis are created at the same time.
-    wikicompare_update_parent_link($type, $node->nid);
-
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Update parent_through_inherit_id.
-      wikicompare_inherit_compared_insert_parent_inherit($node);
-    }
-
-    //Force the update of the compare tree, starting from the created node. It's a node without children on compared and feature axis because it's a just created node.
-    wikicompare_update_compare_tree($type, array($node->nid));
+    wikicompare_create_implementations($node, $type);
   }
 
 }
@@ -511,6 +394,13 @@ function wikicompare_revisionapi($op, $node_revision) {
         wikicompare_inherit_compared_preupdate_compared($to_update, $node_revision, $current_node);
       }
 
+      //Tests based on compared specific fields.
+      if ($node_revision->type == 'compared') {
+        if ($node_revision->wikicompare_state['und'][0]['value'] != $current_node->wikicompare_state['und'][0]['value']) {
+          $to_update[$node_revision->nid] = $node_revision->nid;
+        }
+      }
+
       //Tests based on feature specific fields.
       if ($node_revision->type == 'feature') {
         if (($node_revision->wikicompare_type['und'][0]['value'] != $current_node->wikicompare_type['und'][0]['value']) || ($node_revision->wikicompare_weight['und'][0]['value'] != $current_node->wikicompare_weight['und'][0]['value']) || ($node_revision->wikicompare_state['und'][0]['value'] != $current_node->wikicompare_state['und'][0]['value'])) {
@@ -634,6 +524,9 @@ function wikicompare_revisionapi($op, $node_revision) {
         //Update the cache_implementation with the new structural fields, needed for the percent computation.
         if (in_array($node_revision->type, array('compared', 'feature'))) {
 
+          //Create the missing implementations if the node is published without being published before.
+          wikicompare_create_implementations($node_revision, $node_revision->type);
+
           $fields = array();
           $query = db_select('cache_' . $node_revision->type, 'n');
           $query->addField('n', 'parent_id', 'parent_id');
@@ -701,6 +594,158 @@ function wikicompare_revisionapi($op, $node_revision) {
 
 
 /**
+ * Create the new implementations.
+ *
+ * @param $node
+ *   The node which was created/modified.
+ *
+ * @param $type
+ *   The type of the node.
+ */
+function wikicompare_create_implementations($node, $type) {
+
+  //We create the implementations only if the node is published.
+  if (!in_array($node->wikicompare_state['und'][0]['value'], unserialize(WIKICOMPARE_STATE_PUBLISHED))) {
+    return;
+  }
+
+  //Find the countertype of the created node, compared for feature and feature for compared.
+  $countertype = '';
+  if ($type == 'compared') {
+    $countertype = 'feature';
+  } elseif ($type == 'feature') {
+    $countertype = 'compared';
+  }
+
+  $parent_id = NULL;
+  if (isset($node->wikicompare_parent_id['und'][0])) {
+    $parent_id = $node->wikicompare_parent_id['und'][0]['target_id'];
+  }
+
+  // Find all countertype node of the main language.
+  // We don't use cache table because node is more reliable for such important task and there is no performance worries here.
+  $counternodes = array();
+  $query = db_select('node', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('cache', 'parent_id', 'parent_id');
+  if ($countertype == 'feature') {
+    $query->addField('cache', 'type', 'type');
+    $query->addField('cache', 'weight', 'weight');
+  }
+  $query->addField('cache', 'state', 'state');
+  $query->addField('cache', 'has_children', 'has_children');
+  $query->addField('ni', 'nid', 'implementation_nid');
+  $query->leftjoin('cache_' . $countertype, 'cache', 'n.nid = cache.nid');
+  /*
+   * I don't like at all using the table cache for the implementation creation because they are less reliable than node/fields table. Unfortunately, using node/fields table would mean using at least four more join and I believe it would really cost us too much on the perf side.
+   * The main problem which can happen is that an implemention doesn't exist in cache but exist in node, and so another implementation will be created for the same couple compared/feature. If this situation happenned too often, we'll need to add a list in administration with all the duplicated implementation, so the admin can chose which one should be deleted.
+   */
+  $query->leftjoin('cache_implementation', 'ni', 'n.nid = ni.' . $countertype . '_id AND ni.' . $type . '_id = ' . $node->nid);
+  $query->condition('n.type', $countertype);
+  $query->condition('n.language', language_default('language'));
+  $query->condition('cache.state', unserialize(WIKICOMPARE_STATE_PUBLISHED), 'in');
+  $result = $query->execute();
+  foreach ($result as $record) {
+    //Check if the implementation is already created.
+    if (!$record->implementation_nid) {
+      $counternodes[$record->nid] = $record;
+    }
+  }
+
+  //Create a new implementation node for each countertype nodes
+  foreach ($counternodes as $counternode){
+    $node_implementation = new stdClass();
+    $node_implementation->type = 'implementation';
+    // Add default parameters
+    node_object_prepare($node_implementation);
+    //Implementations has no title, we insert Implementation here because this title will be visible in the dashboard, so we can identify them more easily.
+    $node_implementation->title = 'Implementation';
+    $node_implementation->language = language_default('language');
+
+    //The implementation has both a feature_id and a compared_id
+    $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_id'] = $node->nid;
+    $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_type'] = "node";
+    $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_id'] = $counternode->nid;
+    $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_type'] = "node";
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      //Inherit compared specific field.
+      wikicompare_inherit_compared_insert_implementation($node_implementation);
+    }
+
+    //Save the implementation node in database.
+    node_save($node_implementation);
+
+    if ($type == 'feature') {
+      $feature_type = $node->wikicompare_type['und'][0]['value'];
+      $feature_weight = $node->wikicompare_weight['und'][0]['value'];
+    } else {
+      $feature_type = $counternode->type;
+      $feature_weight = $counternode->weight;
+    }
+
+    //Prepare to add the new record in wikicompare cache table.
+    $cache_implementation = array(
+      'nid' => $node_implementation->nid,
+      'vid' => $node_implementation->vid,
+      'feature_id' => $node_implementation->wikicompare_feature_id['und'][0]['target_id'],
+      'compared_id' => $node_implementation->wikicompare_compared_id['und'][0]['target_id'],
+      'support' => 0,
+      $type . '_parent_id' => $parent_id,
+      $type . '_state' => $node->wikicompare_state['und'][0]['value'],
+      $type . '_has_children' => 0,
+      $countertype . '_parent_id' => $counternode->parent_id,
+      $countertype . '_state' => $counternode->state,
+      $countertype . '_has_children' => $counternode->has_children,
+      'feature_type' => $feature_type,
+      'feature_weight' => $feature_weight,
+    );
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      //Inherit compared specific field.
+      wikicompare_inherit_compared_cache_implementation_fields($cache_implementation, $node_implementation);
+    }
+
+    //Add the prepared implementation fields in array so we can insert them all at once later.
+    $cache_implementations[] = $cache_implementation;
+
+  }
+
+  //Insert the created implementation in their caches.
+  if (!empty($cache_implementation)) {
+
+    //Prepare the header for the mass insert in implementation cache table.
+    $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'feature_type', 'feature_weight');
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      //Inherit compared specific field.
+      wikicompare_inherit_compared_cache_fields_header($header, 'implementation');
+    }
+
+    $query = db_insert('cache_implementation')->fields($header);
+    foreach ($cache_implementations as $implementation) {
+      $query->values($implementation);
+    }
+    $query->execute();
+
+    //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation. We can't make it at the implementation creation because the parent through counternode axis are created at the same time.
+    wikicompare_update_parent_link($type, $node->nid);
+
+    if (module_exists('wikicompare_inherit_compared')) {
+      //Update parent_through_inherit_id.
+      wikicompare_inherit_compared_insert_parent_inherit($node);
+    }
+
+    //Force the update of the compare tree, starting from the created node. It's a node without children on compared and feature axis because it's a just created node.
+    wikicompare_update_compare_tree($type, array($node->nid));
+
+  }
+
+}
+
+
+
+/**
  * Function which will update the parent though compared and feature fields in cache_implementation. Theses fields are important for the percentage computation.
  *
  * @param $nid
@@ -720,7 +765,7 @@ function wikicompare_update_parent_link($type=NULL, $nid=NULL) {
     }
   } else {
     $query = 'UPDATE cache_implementation
-      SET parent_through_compared_id = ncp.nid, 
+      SET parent_through_compared_id = ncp.nid,
           parent_through_feature_id = nfp.nid
       FROM cache_implementation n
       INNER JOIN cache_compared compared ON n.compared_id = compared.nid

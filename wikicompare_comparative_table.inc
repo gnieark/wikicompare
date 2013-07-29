@@ -2,6 +2,7 @@
 
 //Define the message when a user didn't have the javascript activated.
 define('NOJS_MESSAGE', "You need to activate javascript to use the comparative table.");
+require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
 
 
@@ -279,9 +280,9 @@ function wikicompare_table_render_rows($features_row_data, $settings) {
     $output .= '<td>' . wikicompare_table_get_supertitle_item('feature', $feature, $settings) . '</td>';
 
     //Add a column for each compared.
-    foreach ($feature['implementations'] as $implementation) {
+    foreach ($feature['implementations'] as $cid => $implementation) {
       //Render implementation.
-      $output .= wikicompare_table_render_implementation($implementation, $feature, $settings);
+      $output .= wikicompare_table_render_implementation($implementation, $feature, $cid, $settings);
     }
     $output .= '</tr>';
 
@@ -307,17 +308,23 @@ function wikicompare_table_render_rows($features_row_data, $settings) {
  * @return $output
  *   The rendered implementation.
  */
-function wikicompare_table_render_implementation($implementation, $feature, $settings) {
+function wikicompare_table_render_implementation($implementation, $feature, $cid, $settings) {
 
-  //We hide the implementation for all non-published feature, to more easily distinct them from the published ones.
-  if (in_array($feature['data']->state, array('published-incomplete', 'published-submitted', 'published')) || $feature == NULL) {
-
-    //Render the implementation.
-    $output = '<td id="implementation_' . $implementation['data']->nid . '" class="implementation_cell ' . $implementation['data']->css_class . ' implementation_compared_' . $implementation['data']->compared_id . ' implementation_feature_' . $implementation['data']->feature_id . '">' . wikicompare_table_get_supertitle_item('implementation', $implementation, $settings) . '</td>';
-
-  } else {
-    $output = '<td></td>';
+  $output = '<td';
+  $css_class = '';
+  if (isset($implementation['data']->nid)) {
+    $output .= ' id="implementation_' . $implementation['data']->nid . '"';
+    $css_class = 'implementation_cell ' . $implementation['data']->css_class;
   }
+  $output .= ' class="' . $css_class . ' implementation_compared_' . $cid . ' implementation_feature_' . $feature['data']->nid . '">';
+  //We hide the implementation for all non-published feature, to more easily distinct them from the published ones.
+  if (in_array($feature['data']->state, unserialize(WIKICOMPARE_STATE_PUBLISHED)) || $feature == NULL) {
+    //Render the implementation.
+    $output .= wikicompare_table_get_supertitle_item('implementation', $implementation, $settings);
+  } else {
+    $output .= '';
+  }
+  $output .= '</td>';
 
   return $output;
 }
@@ -731,7 +738,11 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $implementat
     foreach ($compared_ids as $cid) {
 
       //Get implementation detail, thanks to feature and compared id.
-      $implementation = $implementations[$fid][$cid];
+      if (isset($implementations[$fid][$cid])) {
+        $implementation = $implementations[$fid][$cid];
+      } else {
+        $implementation = array('data' => new stdClass);
+      }
 
       //If the table is computed, then we will not use the percent in cache_implementation but compute it with the specified features.
       if ($settings['computed']) {
@@ -981,7 +992,7 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
         //Get implementation details.
         $implementation = $feature['implementations'][$_POST['nid']];
         //Render the cell.
-        $cells[$implementation['data']->feature_id] = wikicompare_table_render_implementation($implementation, $feature, $settings);
+        $cells[$fid] = wikicompare_table_render_implementation($implementation, $feature, $_POST['nid'], $settings);
       }
 
     }
@@ -1496,7 +1507,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     //Rerender all the implementations displayed in the table.
     foreach($implementations as $fid => $compareds_implementations) {
       foreach ($compareds_implementations as $cid => $implementation) {
-        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, wikicompare_table_render_implementation($implementation, $features[$implementation['data']->feature_id], $settings));
+        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, wikicompare_table_render_implementation($implementation, $features[$implementation['data']->feature_id], $cid, $settings));
       }
     }
 

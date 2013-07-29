@@ -546,6 +546,7 @@ function wikicompare_refresh_caches() {
  */
 function wikicompare_get_implementation_id($compared_id, $feature_id) {
 
+  $nid = 0;
   $query = db_select('cache_implementation', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->condition('compared_id', $compared_id);
