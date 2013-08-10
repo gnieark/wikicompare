@@ -263,6 +263,9 @@ function wikicompare_install() {
   // Ensure that new node types is available.
   node_types_rebuild();
 
+  //Set the front page of the wikicompare on the comparative table.
+  variable_set('site_frontpage', 'compare');
+
   //Create the body field. We can't use the drupal function because we want a description without summary field.
   $field = field_info_field('body');
   if (empty($field)) {
@@ -597,9 +600,6 @@ function wikicompare_install() {
       'public_pid' => 'wikicompare_user',
     )));
   variable_set('imce_settings_replace', 2);
-
-  //Set the front page of the wikicompare on the comparative table.
-  variable_set('site_frontpage', 'compare');
 
 }
 
