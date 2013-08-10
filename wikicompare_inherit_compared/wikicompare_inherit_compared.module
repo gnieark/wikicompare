@@ -42,7 +42,7 @@ function wikicompare_inherit_compared_menu() {
  * @param $method
  *   Indicate if the call was made with javascript or if it's a simple browser call.
  *
- * @param $_POST
+ * @param $POST
  *   The variables send by the javascript.
  *
  * @return $page
@@ -955,15 +955,15 @@ function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$for
  * @param $donotupdate
  *   Boolean indicated if the support field must be updated later. Passed by reference.
  *
- * @param $_POST
+ * @param $POST
  *   Variables from javascript.
  */
-function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotupdate,  $_POST) {
+function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotupdate,  $POST) {
 
   //Compared specific fields.
   if ($node->type == 'compared') {
-    if ($_POST['inherit_id'] != 0) {
-          $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $_POST['inherit_id'];
+    if ($POST['inherit_id'] != 0) {
+          $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $POST['inherit_id'];
           $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
 
     } else {
@@ -973,7 +973,7 @@ function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotu
 
   //Implementation specific fields.
   if ($node->type == 'implementation') {
-    if ($_POST['use_from_inherit'] == 'true') {
+    if ($POST['use_from_inherit'] == 'true') {
       $node->wikicompare_use_from_inherit['und'][0]['value'] = 1;
       //If we use from the inherited implementation, then we do not update the support field of the node.
       $donotupdate = True;

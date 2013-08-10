@@ -689,29 +689,29 @@ function wikicompare_translation_fastaction_get_tnode(&$tnode, &$readonly_transl
  * @param $tnode
  *   Object containing the detail of the translation node. Passed by reference.
  *
- * @param $_POST
+ * @param $POST
  *   Variables from javascript.
  *
  * @param $fastaction
  *   The fastaction (add or edit)
  */
-function wikicompare_translation_fastaction_submit_init_tnode(&$tnode, $_POST, $fastaction) {
+function wikicompare_translation_fastaction_submit_init_tnode(&$tnode, $POST, $fastaction) {
 
   global $language;
 
   //Initiate the tnode only is the language of the user is not the main language.
   if ($language->language != language_default('language')) {
-    $tnode->type = $_POST['type'];
+    $tnode->type = $POST['type'];
     $tnode->uid = $GLOBALS['user']->uid;
     $tnode->language = $language->language;
     //Indicate that the node which will be created is a translation of the main node.
-    $tnode->translation_source = node_load($_POST['nid']);
+    $tnode->translation_source = node_load($POST['nid']);
 
     //Get information of the tnode from database if the node already exist.
     if ($fastaction == 'edit') {
       $query = db_select('node', 'n');
       $query->addField('n', 'nid', 'nid');
-      $query->condition('n.tnid', $_POST['nid']);
+      $query->condition('n.tnid', $POST['nid']);
       $query->condition('n.language', $language->language);
       $result = $query->execute();
       foreach ($result as $record) {
@@ -731,26 +731,26 @@ function wikicompare_translation_fastaction_submit_init_tnode(&$tnode, $_POST, $
  * @param $tnode
  *   Object containing the detail of the translation node. Passed by reference.
  *
- * @param $_POST
+ * @param $POST
  *   Variables from javascript.
  *
  * @param $field_name
  *   The name of the submitted field.
  *
  * @param $jscript_name
- *   The name of the field in javascript, so we can retrieve the value in $_POST.
+ *   The name of the field in javascript, so we can retrieve the value in $POST.
  *
  * @param $fastaction
  *   The fastaction (add or edit)
  */
-function wikicompare_translation_fastaction_submit_element(&$tnode, $_POST, $field_name, $jscript_name, $fastaction) {
+function wikicompare_translation_fastaction_submit_element(&$tnode, $POST, $field_name, $jscript_name, $fastaction) {
 
   //We add the translated fields only if the main language node is already created.
   if ($fastaction == 'edit') {
     global $language;
 
     if ($language->language != language_default('language')) {
-      $value = $_POST[$jscript_name . '_translation'];
+      $value = $POST[$jscript_name . '_translation'];
       if ($field_name != 'title') {
         $temp = $value;
         $value = array();
@@ -775,13 +775,13 @@ function wikicompare_translation_fastaction_submit_element(&$tnode, $_POST, $fie
  * @param $tnode
  *   Object containing the detail of the translation node.
  *
- * @param $_POST
+ * @param $POST
  *   Variables from javascript.
  *
  * @param $fastaction
  *   The fastaction (add or edit)
  */
-function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST, $fastaction) {
+function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $POST, $fastaction) {
 
   //We work on the translated node only if the main language node is already created.
   if ($fastaction == 'edit') {
@@ -789,7 +789,7 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $_POST,
 
     if ($language->language != language_default('language')) {
       //Replace the node by the tnode if we selected the tnode in the select field.
-      if ($_POST['selectnode']) {
+      if ($POST['selectnode']) {
         $node = $tnode;
       }
     }

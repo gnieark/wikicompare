@@ -288,14 +288,14 @@ function wikicompare_needs_comparative_table_main_output(&$output) {
  * @param $nodes
  *   The nodes array which contains the data which will be used in the render itemlist function.
  *
- * @param $_POST
+ * @param $POST
  *   The data coming from the javascript.
  */
-function wikicompare_needs_table_prepare_itemlist($nid, &$nodes, $_POST) {
+function wikicompare_needs_table_prepare_itemlist($nid, &$nodes, $POST) {
 
-  if (!empty($_POST['selected_need_ids'])) {
+  if (!empty($POST['selected_need_ids'])) {
     //If the node is in the global variable of the javascript, we mark it to be checked.
-    if (in_array($nid, $_POST['selected_need_ids'])) {
+    if (in_array($nid, $POST['selected_need_ids'])) {
       $nodes[$nid]['data']->displayed = True;
     }
   }
@@ -310,17 +310,17 @@ function wikicompare_needs_table_prepare_itemlist($nid, &$nodes, $_POST) {
  * @param $selected_feature_ids
  *   Array containing the features which will be used to compute the comparative table.
  *
- * @param $_POST
+ * @param $POST
  *   The data coming from the javascript.
  *
  * @param $settings
  *   The settings for the db request.
  */
-function wikicompare_needs_table_prepare_compute(&$selected_feature_ids, $_POST, $settings) {
+function wikicompare_needs_table_prepare_compute(&$selected_feature_ids, $POST, $settings) {
 
-  if (!empty($_POST['selected_need_ids'])) {
+  if (!empty($POST['selected_need_ids'])) {
     //Call the recursive function to add the features. The function must be recursive because we only have the nids of the needs at the base of the tree, and we must also include the features of their parents.
-    $selected_feature_ids += wikicompare_needs_recover_features($_POST['selected_need_ids'], $settings);
+    $selected_feature_ids += wikicompare_needs_recover_features($POST['selected_need_ids'], $settings);
   }
 
 }
@@ -631,14 +631,14 @@ function wikicompare_needs_fastaction_command(&$commands, $type, $nid, $output) 
  * @param $type
  *   The type of the node.
  *
- * @param $_POST
+ * @param $POST
  *   Variables from javascript.
  */
-function wikicompare_needs_fastaction_submit_after(&$node, $type, $_POST) {
+function wikicompare_needs_fastaction_submit_after(&$node, $type, $POST) {
 
   if ($type == 'need') {
     $need_features = array();
-    foreach ($_POST['need_feature_ids'] as $feature_id) {
+    foreach ($POST['need_feature_ids'] as $feature_id) {
       $array = array();
       $array['target_id'] = $feature_id;
       $array['target_type'] = "node";
