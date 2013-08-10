@@ -601,6 +601,8 @@ function wikicompare_install() {
     )));
   variable_set('imce_settings_replace', 2);
 
+  cache_clear_all();
+
 }
 
 
