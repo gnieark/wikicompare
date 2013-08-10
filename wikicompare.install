@@ -598,6 +598,9 @@ function wikicompare_install() {
     )));
   variable_set('imce_settings_replace', 2);
 
+  //Set the front page of the wikicompare on the comparative table.
+  variable_set('site_frontpage', 'compare');
+
 }
 
 
