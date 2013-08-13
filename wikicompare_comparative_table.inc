@@ -95,7 +95,10 @@ function wikicompare_comparative_table() {
     '#href' => 'toogle_fastaction_callback/nojs',
     '#id' => 'toogle_fastaction_link',
   );
-  $output .= '<p>' . render($toogle_link) . '</p>';
+  //Fastaction is only available for authenticated users.
+  if (user_is_anonymous() != True) {
+    $output .= '<p>' . render($toogle_link) . '</p>';
+  }
 
 
   //Add the link to launch a cleaning on the table.

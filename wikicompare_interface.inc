@@ -790,6 +790,11 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     return $output;
   }
 
+  //Security to avoid firebug hacking while the user is anonymous.
+  if (user_is_anonymous() == True) {
+    return "You can only use fastaction if you are logged";
+  }
+
   //Get some variables from javascript.
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
