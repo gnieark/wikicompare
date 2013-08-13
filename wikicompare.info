@@ -17,6 +17,7 @@ dependencies[] = openid
 dependencies[] = revisioning
 dependencies[] = simple_dialog
 dependencies[] = views
+dependencies[] = userone
 
 package = Wikicompare
 version = VERSION
