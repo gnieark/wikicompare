@@ -1023,7 +1023,7 @@ function wikicompare_state_get_options($nid, $current_state) {
 
   //Check if the user have power right on the node.
   $has_right = False;
-  if (wikicompare_test_access_node('test', $nid, $user->uid)  || user_access('moderate wikicompare', $user) || $user->uid == 1) {
+  if (wikicompare_test_access_node('test', array($nid), $user->uid)  || user_access('moderate wikicompare', $user) || $user->uid == 1) {
     $has_right = True;
   }
 
@@ -1094,7 +1094,7 @@ function wikicompare_revisioning_access_node_revision($revision_op, $node) {
     //There is no problem when we create the node because there is no revision to publish yet.
     if (isset($node->nid)) {
       //Call the generic function which will test the access to the node.
-      $test = wikicompare_test_access_node('test', $node->nid, $uid);
+      $test = wikicompare_test_access_node('test', array($node->nid), $uid);
     }
 
     //Return the boolean to revisionning module.
@@ -1117,20 +1117,20 @@ function wikicompare_revisioning_access_node_revision($revision_op, $node) {
  * @param $action
  *   The reason we call the function, either a boolean test or to get the users of the node.
  *
- * @param $nid
- *   The nid of the node.
+ * @param $nids
+ *   An array containing the nids of the nodes to test.
  *
  * @param $uid
  *   The uid to test
  *
  * @return
  */
-function wikicompare_test_access_node($action, $nid, $uid=NULL) {
+function wikicompare_test_access_node($action, $nids, $uid=NULL) {
 
     $test = False;
     $users = array();
 
-    if ($nid == NULL) {
+    if (empty($nids)) {
       return False;
     }
 
@@ -1141,9 +1141,11 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
 
     //Get the users linked to the node from parents.
     $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'type', 'type');
     $query->addField('f', 'wikicompare_user_from_parent_ids_target_id', 'uid');
     $query->join('field_revision_wikicompare_user_from_parent_ids', 'f', 'n.vid = f.revision_id');
-    $query->condition('n.nid', $nid);
+    $query->condition('n.nid', $nids, 'in');
     if ($action == 'test') {
       //Test our user.
       $query->condition('f.wikicompare_user_from_parent_ids_target_id', $uid);
@@ -1154,25 +1156,27 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
         //Grant access if the user is in the node.
         $test = True;
       } else {
-          //Return the users.
-          $users[$record->uid] = array(
-            'entity_type' => 'node',
-            'bundle' => '',
-            'deleted' => 0,
-            'entity_id' => 0,
-            'revision_id' => 0,
-            'language' => 'und',
-            'delta' => 0,
-            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
-          );
+        //Return the users.
+        $users[$record->nid][$record->uid] = array(
+          'entity_type' => 'node',
+          'bundle' => $record->type,
+          'deleted' => 0,
+          'entity_id' => 0,
+          'revision_id' => 0,
+          'language' => 'und',
+          'delta' => 0,
+          'wikicompare_user_from_parent_ids_target_id' => $record->uid,
+        );
       }
     }
 
     //Get the users directly linked in the node.
     $query = db_select('node', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'type', 'type');
     $query->addField('f', 'wikicompare_user_ids_target_id', 'uid');
     $query->join('field_revision_wikicompare_user_ids', 'f', 'n.vid = f.revision_id');
-    $query->condition('n.nid', $nid);
+    $query->condition('n.nid', $nids, 'in');
     if ($action == 'test') {
       //Test our user.
       $query->condition('f.wikicompare_user_ids_target_id', $uid);
@@ -1184,9 +1188,9 @@ function wikicompare_test_access_node($action, $nid, $uid=NULL) {
         $test = True;
       } else {
           //Return the users.
-          $users[$record->uid] = array(
+          $users[$record->nid][$record->uid] = array(
             'entity_type' => 'node',
-            'bundle' => '',
+            'bundle' => $record->type,
             'deleted' => 0,
             'entity_id' => 0,
             'revision_id' => 0,

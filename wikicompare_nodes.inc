@@ -77,7 +77,7 @@ function wikicompare_insert_node($type, $node) {
       ->execute();
 
     //Update the created node with the powered users from his parent.
-    wikicompare_update_cache_users($node->nid, $parent_id, $type, $node->vid);
+    wikicompare_update_cache_users(array(array('nid' => $node->nid)));
 
   }
 
@@ -189,7 +189,7 @@ function wikicompare_delete_node($type, $node) {
   }
 
   //At this time, the node is deleted in Drupal but not in the cache table, which means the users of the deleted nodes are deleted but not the link with his children. So we launch the update users function to update the children users before updating the cache.
-  wikicompare_update_cache_users($node->nid);
+  wikicompare_update_cache_users(array(array('nid' => $node->nid)));
 
   //Only compareds and features are linked to implementations.
   if (in_array($type, array('compared', 'feature'))) {
@@ -472,7 +472,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         $fields['sequence'] = $node_revision->wikicompare_sequence['und'][0]['value'];
         $fields['state'] = $node_revision->wikicompare_state['und'][0]['value'];
         //Update the power users on the node and his children.
-        wikicompare_update_cache_users($node_revision->nid, $parent_id, $node_revision->type, $node_revision->vid);
+        wikicompare_update_cache_users(array(array('nid' => $node_revision->nid)));
 
       //Implementation specific fields.
       } else {
@@ -790,68 +790,81 @@ function wikicompare_update_parent_link($type=NULL, $nid=NULL) {
  * Function which will update the power users of the specified node with the power users from his parent.
  * This function is a recursive function, which will then update the power users of his children.
  *
- * @param $nid
- *   The nid of the node to update.
- *
- * @param $parent_id
- *   The parent_id of the node, used to find the power users of the parent.
- *
- * @param $type
- *   The type of the node.
- *
- * @param $vid
- *   The vid of the active revision, used to find the power users of the good revision.
+ * @param $nodes
+ *   The array containing the nodes we want to update the power users from parents.
  */
-function wikicompare_update_cache_users($nid, $parent_id=NULL, $type=NULL, $vid=NULL) {
+function wikicompare_update_cache_users($nodes) {
+
+  $parent_ids = array();
+  $nids = array();
+  foreach ($nodes as $node) {
+    if (isset($node['parent_id'])) {
+      $parent_ids[$node['parent_id']] = $node['parent_id'];
+    }
+    $nids[$node['nid']] = $node['nid'];
+  }
 
   //Users from parent field are only filled by this function, so we flush it before rebuild it.
   db_delete('field_data_wikicompare_user_from_parent_ids')
-    ->condition('entity_id', $nid)
+    ->condition('entity_id', $nids, 'in')
     ->execute();
   db_delete('field_revision_wikicompare_user_from_parent_ids')
-    ->condition('entity_id', $nid)
+    ->condition('entity_id', $nids, 'in')
     ->execute();
 
   //We can only get users from parent node if there is a parent node.
-  if ($parent_id != NULL) {
+  if (!empty($parent_ids)) {
     //Get the users of the parent node.
-    $users = wikicompare_test_access_node('get_users', $parent_id);
+    $users = wikicompare_test_access_node('get_users', $parent_ids);
 
-    //If there is users in the parent node.
-    if (!empty($users)) {
-
-      //The table we want to update is a Drupal table, so we need to give his required fields.
-      foreach ($users as $uid => $user) {
-        $users[$uid]['bundle'] = $type;
-        $users[$uid]['entity_id'] = $nid;
-        $users[$uid]['revision_id'] = $vid;
+    //The table we want to update is a Drupal table, so we need to give his required fields.
+    $to_insert = array();
+    foreach ($nodes as $node) {
+      if (isset($node['parent_id'])) {
+        if (isset($users[$node['parent_id']])) {
+          foreach ($users[$node['parent_id']] as $user) {
+            $field = $user;
+            $field['entity_id'] = $node['nid'];
+            $field['revision_id'] = $node['vid'];
+            $to_insert[] = $field;
+          }
+        }
       }
+    }
 
+    if (!empty($to_insert)) {
       //Insert the users from parents in the tables.
       $query = db_insert('field_data_wikicompare_user_from_parent_ids')->fields(array('entity_type', 'bundle', 'deleted', 'entity_id', 'revision_id', 'language', 'delta', 'wikicompare_user_from_parent_ids_target_id'));
-      foreach ($users as $user) {
-        $query->values($user);
+      foreach ($to_insert as $insert) {
+        $query->values($insert);
       }
       $query->execute();
       $query = db_insert('field_revision_wikicompare_user_from_parent_ids')->fields(array('entity_type', 'bundle', 'deleted', 'entity_id', 'revision_id', 'language', 'delta', 'wikicompare_user_from_parent_ids_target_id'));
-      foreach ($users as $user) {
-        $query->values($user);
+      foreach ($to_insert as $insert) {
+        $query->values($insert);
       }
       $query->execute();
-
     }
   }
 
   //Find all children of the updated node, and launch the recursive function to update them.
+  $children = array();
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'vid', 'vid');
+  $query->addField('f', 'wikicompare_parent_id_target_id', 'parent_id');
   $query->leftjoin('field_revision_wikicompare_parent_id', 'f', 'n.vid = f.revision_id');
-  $query->condition('f.wikicompare_parent_id_target_id', $nid);
+  $query->condition('f.wikicompare_parent_id_target_id', $nids, 'in');
   $result = $query->execute();
   foreach ($result as $record) {
+    $children[$record->nid]['nid'] = $record->nid;
+    $children[$record->nid]['vid'] = $record->vid;
+    $children[$record->nid]['parent_id'] = $record->parent_id;
+  }
+
+  if (!empty($children)) {
     //Launch the recursive function.
-    wikicompare_update_cache_users($record->nid, $nid, $type, $record->vid);
+    wikicompare_update_cache_users($children);
   }
 
 }
