@@ -1187,17 +1187,17 @@ function wikicompare_test_access_node($action, $nids, $uid=NULL) {
         //Grant access if the user is in the node.
         $test = True;
       } else {
-          //Return the users.
-          $users[$record->nid][$record->uid] = array(
-            'entity_type' => 'node',
-            'bundle' => $record->type,
-            'deleted' => 0,
-            'entity_id' => 0,
-            'revision_id' => 0,
-            'language' => 'und',
-            'delta' => 0,
-            'wikicompare_user_from_parent_ids_target_id' => $record->uid,
-          );
+        //Return the users.
+        $users[$record->nid][$record->uid] = array(
+          'entity_type' => 'node',
+          'bundle' => $record->type,
+          'deleted' => 0,
+          'entity_id' => 0,
+          'revision_id' => 0,
+          'language' => 'und',
+          'delta' => 0,
+          'wikicompare_user_from_parent_ids_target_id' => $record->uid,
+        );
       }
     }
 
