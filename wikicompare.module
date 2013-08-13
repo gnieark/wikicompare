@@ -97,6 +97,15 @@ function wikicompare_menu() {
     'file' => 'wikicompare_comparative_table.inc',
   );
 
+  //Add an access to users management for moderators.
+  $items['admin/people/people'] = array(
+    'title' => 'Manage Users',
+    'description' => 'Find and manage people interacting with your site.',
+    'access arguments' => array('administer users'),
+    'menu_name' => 'main-menu',
+    'weight' => 9,
+  );
+
   //Add an access to wikicompare admin page in the main menu.
   $items['admin/config/wikicompare'] = array(
     'title' => 'Administration',
