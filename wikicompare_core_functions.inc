@@ -365,9 +365,9 @@ function wikicompare_refresh_caches() {
   }
 
   $types = array('compared', 'feature', 'implementation');
-  if (module_exists('wikicompare_needs')) {
-    //Add need type.
-    wikicompare_needs_node_types($types);
+  if (module_exists('wikicompare_profiles')) {
+    //Add profile type.
+    wikicompare_profiles_node_types($types);
   }
 
   foreach ($types as $type) {
@@ -689,9 +689,9 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     wikicompare_translation_request_db($query, $type, $db_settings, $settings);
   }
 
-  if (module_exists('wikicompare_needs')) {
+  if (module_exists('wikicompare_profiles')) {
     //Need specific fields.
-    wikicompare_needs_request_db($query, $type);
+    wikicompare_profiles_request_db($query, $type);
   }
 
   //Launch the request
@@ -699,7 +699,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
 
 
   $res = array();
-  $need_features = array();
+  $profile_features = array();
   foreach ($result as $record) {
 
     //Start building the ressource which will be returned for this node.
@@ -709,9 +709,9 @@ function request_db($type, $db_settings = array(), $settings=array()) {
       'children' => array(),
     );
 
-    if (module_exists('wikicompare_needs')) {
-      //Recover all need_features in an array to use them later.
-      wikicompare_needs_request_db_build($node_array, $need_features, $record, $type);
+    if (module_exists('wikicompare_profiles')) {
+      //Recover all profile_features in an array to use them later.
+      wikicompare_profiles_request_db_build($node_array, $profile_features, $record, $type);
     }
 
     if ($settings['fastaction'] == 1) {
@@ -741,9 +741,9 @@ function request_db($type, $db_settings = array(), $settings=array()) {
 
   }
 
-  if (module_exists('wikicompare_needs')) {
+  if (module_exists('wikicompare_profiles')) {
     //Assign node features to the $res. We couldn't do it  while we were parsing the records.
-    wikicompare_needs_request_db_after($res, $need_features);
+    wikicompare_profiles_request_db_after($res, $profile_features);
   }
 
   return $res;

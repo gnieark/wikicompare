@@ -523,9 +523,9 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       unset($form_state['node']->wikicompare_user_ids);
     }
 
-    if (module_exists('wikicompare_needs')) {
-      //Remove important need fields from translated node.
-      wikicompare_needs_wikicompare_translation_form($form, $form_state, $node);
+    if (module_exists('wikicompare_profiles')) {
+      //Remove important profile fields from translated node.
+      wikicompare_profiles_wikicompare_translation_form($form, $form_state, $node);
     }
 
     if (module_exists('wikicompare_inherit_compared')) {

@@ -284,7 +284,7 @@ function wikicompare_install() {
     'cardinality' => 1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'need')),
+      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'profile')),
     ),
   );
   field_create_field($field);

@@ -49,9 +49,9 @@ function wikicompare_comparative_table() {
   //Render the link thanks to the simple dialog module.
   $output .= '<p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
 
-  if (module_exists('wikicompare_needs')) {
-    //Generate the main need itemlist in the wikicompare table.
-    wikicompare_needs_comparative_table_main_output($output);
+  if (module_exists('wikicompare_profiles')) {
+    //Generate the main profile itemlist in the wikicompare table.
+    wikicompare_profiles_comparative_table_main_output($output);
   }
 
   //Add the compute button.
@@ -836,9 +836,9 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
         }
       }
 
-      if (module_exists('wikicompare_needs')) {
-        //Auto check the already selected needs in main table.
-        wikicompare_needs_table_prepare_itemlist($nid, $nodes, $_POST);
+      if (module_exists('wikicompare_profiles')) {
+        //Auto check the already selected profiles in main table.
+        wikicompare_profiles_table_prepare_itemlist($nid, $nodes, $_POST);
       }
 
     }
@@ -1195,7 +1195,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
   $hidden = '<tbody>';
   $i = 0;
   foreach ($features['data'] as $feature) {
-    //We remove the feature if it's a parent feature. This case can happen if we add the feature to the need when it has no children, and then it become a parent.
+    //We remove the feature if it's a parent feature. This case can happen if we add the feature to the profile when it has no children, and then it become a parent.
     if (!$feature['data']->has_children) {
       $hidden .= '<tr><td>
       <input type="text" size="60" value="&quot;' . $feature['data']->title . ' (' . $feature['data']->nid . ')&quot;" name="wikicompare_features[und][' . $i . '][target_id]">
@@ -1212,7 +1212,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
   //Add the value for the fastaction form.
   $hidden_fastaction = '';
   foreach ($settings['selected_feature_ids'] as $feature_id) {
-    $hidden_fastaction .= '<div class="need_feature">' . $feature_id . '</div>';
+    $hidden_fastaction .= '<div class="profile_feature">' . $feature_id . '</div>';
   }
 
   $commands = array();
@@ -1259,17 +1259,17 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
     $selected_feature_ids = $settings['selected_feature_ids'];
 
-    if (module_exists('wikicompare_needs')) {
-      //Add the features of the selected needs.
-      wikicompare_needs_table_prepare_compute($selected_feature_ids, $_POST, $settings);
+    if (module_exists('wikicompare_profiles')) {
+      //Add the features of the selected profiles.
+      wikicompare_profiles_table_prepare_compute($selected_feature_ids, $_POST, $settings);
     }
   }
 
   $commands = array();
 
-  if (module_exists('wikicompare_needs')) {
-    //Add commmand to reset the need part of the table.
-    wikicompare_needs_table_send_compute($commands, $settings);
+  if (module_exists('wikicompare_profiles')) {
+    //Add commmand to reset the profile part of the table.
+    wikicompare_profiles_table_send_compute($commands, $settings);
   }
 
   //Reset the compared part of the table.
@@ -1327,9 +1327,9 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
   //Execute for all wikicompare node type, except implementation.
   $types = array('compared', 'feature');
-  if (module_exists('wikicompare_needs')) {
-    //Add need type.
-    wikicompare_needs_node_types($types);
+  if (module_exists('wikicompare_profiles')) {
+    //Add profile type.
+    wikicompare_profiles_node_types($types);
   }
 
   $features = array();
@@ -1459,9 +1459,9 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
     }
 
-    if (module_exists('wikicompare_needs')) {
-      //Add commmand to reset the need part of the table.
-      wikicompare_needs_table_clean_reset($commands, $type, $reset, $settings);
+    if (module_exists('wikicompare_profiles')) {
+      //Add commmand to reset the profile part of the table.
+      wikicompare_profiles_table_clean_reset($commands, $type, $reset, $settings);
     }
 
     //Reset all fields displayed in the table. All field are in a span to easily refresh them.

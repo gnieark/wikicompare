@@ -1,0 +1,6 @@
+name = Wikicompare Profiles
+description = Add the possibility to manage group of profiles, which we can then select in the table to have custom results.
+package = Wikicompare
+version = VERSION
+core = 7.x
+dependencies[] = wikicompare

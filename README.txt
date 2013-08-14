@@ -58,9 +58,9 @@ The third page is the administration page, only accessible if you have the wikia
 
 OTHER MODULES
 =============
-wikicompare_needs :
-This module creates a new object, the needs, which we can select in the comparative table.
-These needs contain a list of features in them. If we check a need in the comparative table and then compute it, the table will be recomputed with the features of the selected needs.
+wikicompare_profiles :
+This module creates a new object, the profiles, which we can select in the comparative table.
+These profiles contain a list of features in them. If we check a profile in the comparative table and then compute it, the table will be recomputed with the features of the selected profiles.
 This allow us to configure some profile of user, which will then be able to find the best product for them, not only the best product overall.
 
 wikicompare_translation :
@@ -77,7 +77,7 @@ This module, which is not for production purpose, allows us to generate demo dat
 TECHNICAL EXPLANATIONS
 ======================
 In the comparative table, the percent of the implementations are not computed on each visit. The percentage is store in a cache table and computed each time a structural field (type in feature, support in implementation, parent etc...) change.
-There is an exception through, when you compute the table with needs or manual selected features, the percentage are recomputed.
+There is an exception through, when you compute the table with profiles or manual selected features, the percentage are recomputed.
 
 The function which updates the percentage, located in wikicompare_core_functions.inc, is a monstrous recursive function. The reason is the fact it has to update each implementations of parent feature or parent compared, which mean it's a recursive function on two axis. If you like challenge, I suggest you try to read this function, you'll like it.
 

@@ -64,9 +64,9 @@ function wikicompare_export_page() {
     wikicompare_generate_demo_export_output_node($output, $feature, 'feature');
   }
 
-  if (module_exists('wikicompare_needs')) {
-    //Export needs.
-    wikicompare_needs_demo_export($output);
+  if (module_exists('wikicompare_profiles')) {
+    //Export profiles.
+    wikicompare_profiles_demo_export($output);
   }
 
   if (module_exists('wikicompare_inherit_compared')) {
@@ -151,9 +151,9 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
     $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";
   }
 
-  if (module_exists('wikicompare_needs')) {
-    //Export need specific fields.
-    wikicompare_needs_demo_export_specific_fields($output, $type, $node);
+  if (module_exists('wikicompare_profiles')) {
+    //Export profile specific fields.
+    wikicompare_profiles_demo_export_specific_fields($output, $type, $node);
   }
 
   $output .= "\$node->promote = 0;<br/>";
@@ -311,9 +311,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  if (module_exists('wikicompare_needs')) {
-    //Display need specific fields in the generate demo form.
-    wikicompare_needs_demo_form($form);
+  if (module_exists('wikicompare_profiles')) {
+    //Display profile specific fields in the generate demo form.
+    wikicompare_profiles_demo_form($form);
   }
 
   $form['demo_fieldset']['implementation_support_chance'] = array(
@@ -438,9 +438,9 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
 
   }
 
-  if (module_exists('wikicompare_needs')) {
-    //Generate need demo data.
-    wikicompare_needs_demo_submit_generate($form_state);
+  if (module_exists('wikicompare_profiles')) {
+    //Generate profile demo data.
+    wikicompare_profiles_demo_submit_generate($form_state);
   }
 
   //We use a sequence to make sure we can generate several time the demo data without problem.
@@ -542,8 +542,8 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
         $settings_for_children['parent_type'] = 'parent-highest-percentage';
       }
     }
-    if (module_exists('wikicompare_needs')) {
-      if ($settings['type'] == 'need') {
+    if (module_exists('wikicompare_profiles')) {
+      if ($settings['type'] == 'profile') {
         $node->wikicompare_features['und'] = array();
       }
     }
@@ -566,9 +566,9 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
       $settings_for_children['parent_id'] = $node->nid;
       wikicompare_generate_demo_create_children($settings_for_children, $nodes_created);
     } else {
-      if (module_exists('wikicompare_needs')) {
-        //Generate need specific fields. We generate theses fields only for need without children.
-        wikicompare_needs_demo_submit_specific_fields($node, $settings);
+      if (module_exists('wikicompare_profiles')) {
+        //Generate profile specific fields. We generate theses fields only for profile without children.
+        wikicompare_profiles_demo_submit_specific_fields($node, $settings);
       }
     }
 

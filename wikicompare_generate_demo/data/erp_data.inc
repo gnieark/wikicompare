@@ -2219,12 +2219,12 @@ node_save($tnode);
 
 }
 
-if (module_exists('wikicompare_needs')) {
+if (module_exists('wikicompare_profiles')) {
 
-$needs = array();
+$profiles = array();
 
 $node = new stdClass();
-$node->type = 'need';
+$node->type = 'profile';
 $node->language = 'en';
 $node->title = "Domain : Retail";
 $node->wikicompare_sequence['und'][0]['value'] = 1;
@@ -2248,7 +2248,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$needs['new-12115'] = $node->nid;
+$profiles['new-12115'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2257,7 +2257,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'need';
+$tnode->type = 'profile';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Secteur d'activite : Distribution";
@@ -2270,10 +2270,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'need';
+$node->type = 'profile';
 $node->language = 'en';
-$node->title = "Retail, simple needs";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $needs['new-12115'];
+$node->title = "Retail, simple profiles";
+$node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12115'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2282,7 +2282,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$needs['new-12117'] = $node->nid;
+$profiles['new-12117'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2291,7 +2291,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'need';
+$tnode->type = 'profile';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Distribution, besoins simples";
@@ -2304,10 +2304,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'need';
+$node->type = 'profile';
 $node->language = 'en';
-$node->title = "Retail, complex needs";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $needs['new-12115'];
+$node->title = "Retail, complex profiles";
+$node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12115'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2342,7 +2342,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$needs['new-12119'] = $node->nid;
+$profiles['new-12119'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2351,7 +2351,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'need';
+$tnode->type = 'profile';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Distribution, besoins complexes";
@@ -2364,9 +2364,9 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'need';
+$node->type = 'profile';
 $node->language = 'en';
-$node->title = "Specific needs";
+$node->title = "Specific profiles";
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
 $node->wikicompare_features['und'] = array();
@@ -2374,7 +2374,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$needs['new-12121'] = $node->nid;
+$profiles['new-12121'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2383,7 +2383,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'need';
+$tnode->type = 'profile';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Besoins specifiques";
@@ -2396,10 +2396,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'need';
+$node->type = 'profile';
 $node->language = 'en';
 $node->title = "Document management";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $needs['new-12121'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12121'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2414,7 +2414,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$needs['new-12123'] = $node->nid;
+$profiles['new-12123'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2423,7 +2423,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'need';
+$tnode->type = 'profile';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gestion des documents";
@@ -2436,10 +2436,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'need';
+$node->type = 'profile';
 $node->language = 'en';
 $node->title = "Internal communication";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $needs['new-12121'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12121'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2448,7 +2448,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$needs['new-12125'] = $node->nid;
+$profiles['new-12125'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2457,7 +2457,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'need';
+$tnode->type = 'profile';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Communications internes";

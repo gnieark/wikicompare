@@ -1,0 +1,180 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the wikicompare profiles module.
+ */
+
+//Some generic function are defined in the wikicompare.install file.
+require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.install';
+
+
+
+/**
+ * Implements hook_schema()
+ * This hook allow us to create some table in database.
+ */
+function wikicompare_profiles_schema() {
+
+  //Call the generic function from wikicompare.install.
+  $schema['cache_profile'] = wikicompare_node_schema('profile');
+
+  //Add many2many table for the link between profile and feature.
+  $schema['cache_profile_feature_rel'] = array(
+
+    'description' => 'Cache table storing the link between profile and feature. Used so the percentage of comparative table are computed faster.',
+    'fields' => array(
+      'profile_nid' => array(
+        'description' => 'The nid of the profile node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+
+      'feature_nid' => array(
+        'description' => 'The nid of the feature node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'profile_nid' => array('profile_nid'),
+      'feature_nid' => array('feature_nid'),
+    ),
+    'foreign keys' => array(
+      'profile_nid' => array(
+        'table' => 'node',
+        'columns' => array('profile_nid' => 'nid'),
+      ),
+      'feature_nid' => array(
+        'table' => 'node_revision',
+        'columns' => array('feature_nid' => 'nid'),
+      ),
+    )
+
+  );
+
+  return $schema;
+
+}
+
+
+
+/**
+ * Implements hook_install().
+ * This function is called only once at the module installation.
+ */
+function wikicompare_profiles_install() {
+
+  $t = get_t();
+
+  // Ensure that new node type is available.
+  node_types_rebuild();
+
+  $field = array(
+    'field_name' => 'wikicompare_features',
+    'type' => 'entityreference',
+    'cardinality' => -1,
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array('target_bundles' => array('feature')),
+    ),
+  );
+  field_create_field($field);
+
+  //Call the generic function from wikicompare.install.
+  wikicompare_node_install('profile');
+
+  $instance = array(
+    'field_name' => 'wikicompare_features',
+    'entity_type' => 'node',
+    'bundle' => 'profile',
+    'label' => 'Features',
+    'widget' => array(
+      'type' => 'entityreference_autocomplete',
+    ),
+    'settings' => array(
+      'target_type' => 'node',
+      'handler_settings' => array('target_bundles' => array('feature')),
+    ),
+  );
+  field_create_instance($instance);
+
+  //Assign profile specific permissions.
+  foreach (array('wikicompare_admin', 'moderator', 'authenticated user') as $role_name) {
+
+    $permissions = array(
+      'create profile content' => TRUE,
+      'edit any profile content' => TRUE,
+      'delete own profile content' => TRUE,
+      'view revisions of any profile content' => TRUE,
+      'publish revisions of any profile content' => TRUE,
+    );
+
+    if ($role_name != 'authenticated user') {
+      $permissions = array_merge($permissions, array(
+        'delete any profile content' => TRUE,
+      ));
+    }
+
+    $role = user_role_load_by_name($role_name);
+    $rid = $role->rid;
+    user_role_change_permissions($rid, $permissions);
+
+  }
+
+  if (module_exists('wikicompare_translation')) {
+    variable_set('language_content_type_profile', 2);
+  }
+
+}
+
+
+
+/**
+ * Implements hook_uninstall().
+ * This function is called at the module uninstallation
+ */
+function wikicompare_profiles_uninstall() {
+
+  //Delete all nodes of profile type.
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'profile'));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+  node_delete_multiple($nids);
+
+
+  //Delete all variable of profile type.
+  variable_del('node_options_profile');
+  variable_del('node_submitted_profile');
+  variable_del('language_content_type_profile');
+
+  variable_del('new_revisions_profile');
+  variable_del('comment_anonymous_profile');
+  variable_del('comment_profile');
+  variable_del('comment_default_mode_profile');
+  variable_del('comment_default_per_page_profile');
+  variable_del('comment_form_location_profile');
+  variable_del('comment_preview_profile');
+  variable_del('comment_subject_field_profile');
+
+  //Delete fields.
+  field_delete_field('wikicompare_features');
+
+  field_delete_instance(field_read_instance('node', 'body', 'profile'));
+  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_profile'));
+
+  //Delete profile type.
+  node_type_delete('profile');
+
+  // Purge all field information
+  // api.drupal.org/api/function/field_purge_batch/7
+  field_purge_batch(1000);
+
+}
+
+?>

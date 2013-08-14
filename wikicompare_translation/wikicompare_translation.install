@@ -20,8 +20,8 @@ function wikicompare_translation_install() {
   foreach (array('compared', 'feature', 'implementation') as $type) {
     variable_set('language_content_type_' . $type, 2);
   }
-  if (module_exists('wikicompare_needs')) {
-    variable_set('language_content_type_need', 2);
+  if (module_exists('wikicompare_profiles')) {
+    variable_set('language_content_type_profile', 2);
   }
 
   
@@ -54,8 +54,8 @@ function wikicompare_translation_uninstall() {
     variable_set('language_content_type_' . $type, 0);
   }
 
-  if (module_exists('wikicompare_needs')) {
-    variable_set('language_content_type_need', 0);
+  if (module_exists('wikicompare_profiles')) {
+    variable_set('language_content_type_profile', 0);
   }
 
 }

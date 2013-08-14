@@ -298,9 +298,9 @@ function wikicompare_revisionapi($op, $node_revision) {
     //Types which must be checked by the function. All types defined by wikicompare module are concerned.
     $types = array('compared', 'feature', 'implementation');
 
-    if (module_exists('wikicompare_needs')) {
-      //Add need type.
-      wikicompare_needs_node_types($types);
+    if (module_exists('wikicompare_profiles')) {
+      //Add profile type.
+      wikicompare_profiles_node_types($types);
     }
 
     //Verify that the node must be checked, based on his type.
@@ -315,9 +315,9 @@ function wikicompare_revisionapi($op, $node_revision) {
       //Types which must check their parent_id. All types defined by wikicompare module are concerned, except implementation which does not have parent_id field.
       $types = array('compared', 'feature');
 
-      if (module_exists('wikicompare_needs')) {
-        //Add need type.
-        wikicompare_needs_node_types($types);
+      if (module_exists('wikicompare_profiles')) {
+        //Add profile type.
+        wikicompare_profiles_node_types($types);
       }
 
       //Verify that the parent_id field must be checked, based on his type.
@@ -360,7 +360,7 @@ function wikicompare_revisionapi($op, $node_revision) {
                 $childs[$record->nid] = $record->nid;
               }
             }
-            //Update the has_children flag. The update of this flag is the only reason why we let need nodes go until here.
+            //Update the has_children flag. The update of this flag is the only reason why we let profile nodes go until here.
             if (empty($childs)) {
               db_update('cache_' . $node_revision->type)
                 ->fields(array(
@@ -447,9 +447,9 @@ function wikicompare_revisionapi($op, $node_revision) {
     //Types which must be checked by the function. All types defined by wikicompare module are concerned.
     $types = array('compared', 'feature', 'implementation');
 
-    if (module_exists('wikicompare_needs')) {
-      //Add need type.
-      wikicompare_needs_node_types($types);
+    if (module_exists('wikicompare_profiles')) {
+      //Add profile type.
+      wikicompare_profiles_node_types($types);
     }
 
     //Verify that the node must be checked, based on his type.
@@ -583,9 +583,9 @@ function wikicompare_revisionapi($op, $node_revision) {
         ->execute();
     }
 
-    if (module_exists('wikicompare_needs')) {
-      //Update the need_features many2many cache table.
-      wikicompare_needs_after_update_fields($node_revision);
+    if (module_exists('wikicompare_profiles')) {
+      //Update the profile_features many2many cache table.
+      wikicompare_profiles_after_update_fields($node_revision);
     }
 
   }

@@ -9,8 +9,8 @@ fastaction = 0;
 manual_selected_feature_ids = {};
 //The dictionnary containing the feature selected in forms.
 selected_feature_ids = {};
-//The dictionnary containing the needs selected in the table.
-selected_need_ids = {};
+//The dictionnary containing the profiles selected in the table.
+selected_profile_ids = {};
 
 
 //Drupal.behaviors is the equivalent for Drupal of ready()
@@ -87,13 +87,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Call the ajax to display the column.
           $('#compared_checkbox_link_' + nid).click();
 
-        //The checkbox in the table need itemlist, which must keep in memory all checked need for the table computation.
-        } else if ($(this).attr('ntype') == 'need') {
+        //The checkbox in the table profile itemlist, which must keep in memory all checked profile for the table computation.
+        } else if ($(this).attr('ntype') == 'profile') {
           //Add or remove the checked/unchecked checkbox in the global variable.
           if ($(this).attr('checked')) {
-            selected_need_ids[nid] = nid;
+            selected_profile_ids[nid] = nid;
           } else {
-            delete selected_need_ids[nid];
+            delete selected_profile_ids[nid];
           }
 
         //All other itemlist checkboxes are selected features (manually or for forms) in popin.
@@ -266,11 +266,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * Use the wikicompare_features field to detect that we are in a need form. In this case, we recover the settings from Drupal to initiate selected_feature_ids.
+     * Use the wikicompare_features field to detect that we are in a profile form. In this case, we recover the settings from Drupal to initiate selected_feature_ids.
      */
     $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       //Get settings from Drupal.
-      from_db = settings['wikicompare_needs']['selected_feature_ids'];
+      from_db = settings['wikicompare_profiles']['selected_feature_ids'];
       for (index = 0; index < from_db.length; ++index) {
         var fid = from_db[index];
         //Initiate selected_feature_ids.
@@ -399,9 +399,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_compareds_columns = false;
         send_features = false;
         send_implementations = false;
-        send_needs = false;
+        send_profiles = false;
         send_manual_selected_features = false;
-        send_selected_needs = false;
+        send_selected_profiles = false;
         send_states = false;
         send_forbidden_nid = false;
         send_container = false;
@@ -432,9 +432,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
             make_cleaning = true;
           }
 
-          //If we are in need table itemlist, we send the already checked need so they are checked by default.
-          if (type == 'need') {
-            send_selected_needs = true;
+          //If we are in profile table itemlist, we send the already checked profile so they are checked by default.
+          if (type == 'profile') {
+            send_selected_profiles = true;
           }
         }
 
@@ -498,8 +498,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_compareds_columns = true;
           //Send the features manually selected, they'll be used to select the computed features.
           send_manual_selected_features = true;
-          //Send the selected need. Their features will be used to select the computed features.
-          send_selected_needs = true;
+          //Send the selected profile. Their features will be used to select the computed features.
+          send_selected_profiles = true;
           //Send the states.
           send_states = true;
           //Send the size of the table to adjust the lines.
@@ -572,14 +572,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.support = $('#edit-wikicompare-support-und').is(':checked');
             options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').is(':checked');
           }
-          if (type == 'need') {
-            var need_feature_ids = {};
+          if (type == 'profile') {
+            var profile_feature_ids = {};
             var i = 0;
-            $('.need_feature').each(function (key, value) {
-              need_feature_ids[$(this).text()] = $(this).text();
+            $('.profile_feature').each(function (key, value) {
+              profile_feature_ids[$(this).text()] = $(this).text();
               i = i + 1;
             });
-            options.data.need_feature_ids = need_feature_ids;
+            options.data.profile_feature_ids = profile_feature_ids;
           }
           options.data.revision = $('#form_' + type + '_fast' + context + '_revision_' + nid).val();
           options.data.selectnode = $('#form_' + type + '_fast' + context + '_selectnode_' + nid).val();
@@ -608,7 +608,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_states = true;
 
           //We will send all nodes in the cleaning function, and check which parent is displaying his children.
-          var a = ['compared', 'feature', 'need'];
+          var a = ['compared', 'feature', 'profile'];
           for (index = 0; index < a.length; ++index) {
 
             //The node type we are working on.
@@ -749,15 +749,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.implementation_ids = implementation_ids;
         }
 
-        //Get and send the needs in the table.
-        if (send_needs == true) {
-          var need_ids = {};
-          $('.need_item').each(function (key, value) {
+        //Get and send the profiles in the table.
+        if (send_profiles == true) {
+          var profile_ids = {};
+          $('.profile_item').each(function (key, value) {
             var nid = extract_nid($(this).attr('id'))[0];
-            need_ids[nid] =  nid;
+            profile_ids[nid] =  nid;
           });
           //Add them in the ajax call variables.
-          options.data.need_ids = need_ids;
+          options.data.profile_ids = profile_ids;
         }
 
         //Get all manually selected features to send their id to drupal.
@@ -765,9 +765,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.selected_feature_ids = manual_selected_feature_ids;
         }
 
-        //Get all manually selected needs to send their id to drupal.
-        if (send_selected_needs == true) {
-          options.data.selected_need_ids = selected_need_ids;
+        //Get all manually selected profiles to send their id to drupal.
+        if (send_selected_profiles == true) {
+          options.data.selected_profile_ids = selected_profile_ids;
         }
 
         //Send the states which must be displayed in the table, by checking the checkboxes at the beginning of the table.
@@ -842,16 +842,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('.implementation_compared_' + nid).fadeIn();
             }
 
-            //Initialize the selected_features_ids when we open a need fastaction form. Not the same variable than manual_selected_features_ids to avoid conflict.
+            //Initialize the selected_features_ids when we open a profile fastaction form. Not the same variable than manual_selected_features_ids to avoid conflict.
             if (action == 'show_fastaction_form') {
-              if (type == 'need') {
-                var need_feature_ids = {};
-                $('.need_feature').each(function (key, value) {
+              if (type == 'profile') {
+                var profile_feature_ids = {};
+                $('.profile_feature').each(function (key, value) {
                   fid = $(this).text();
-                  need_feature_ids[fid] = fid;
+                  profile_feature_ids[fid] = fid;
                 });
                 //Insert actual features in global variable.
-                selected_feature_ids = need_feature_ids;
+                selected_feature_ids = profile_feature_ids;
               }
             }
 

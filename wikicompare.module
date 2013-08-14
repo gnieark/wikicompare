@@ -375,9 +375,9 @@ function submit_settings($form, $form_state) {
 
     //For all wikicompare types.
     $types = array('compared', 'feature', 'implementation');
-    if (module_exists('wikicompare_needs')) {
-      //Add need type.
-      wikicompare_needs_node_types($array);
+    if (module_exists('wikicompare_profiles')) {
+      //Add profile type.
+      wikicompare_profiles_node_types($array);
     }
 
     //Get all the old nodes.

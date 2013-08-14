@@ -97,9 +97,9 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
     $settings = array();
 
-    if (module_exists('wikicompare_needs')) {
-      //Send the features of the need node to javascript file, so we can checked the features by default in the popin.
-      wikicompare_needs_build_form_settings($settings, $form_state);
+    if (module_exists('wikicompare_profiles')) {
+      //Send the features of the profile node to javascript file, so we can checked the features by default in the popin.
+      wikicompare_profiles_build_form_settings($settings, $form_state);
     }
 
     if (module_exists('wikicompare_translation')) {
@@ -502,9 +502,9 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
     }
   }
 
-  if (module_exists('wikicompare_needs')) {
-    //Add the field specific to need at the end of the form.
-    wikicompare_needs_build_form($form, $form_state, $output, $form_type, $type, $node, $fastaction, $nid);
+  if (module_exists('wikicompare_profiles')) {
+    //Add the field specific to profile at the end of the form.
+    wikicompare_profiles_build_form($form, $form_state, $output, $form_type, $type, $node, $fastaction, $nid);
   }
 
   //Add the revision field in fastaction, which allow to tell why you modify the node in a new revision.
@@ -754,9 +754,9 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
         break;
     }
 
-    if (module_exists('wikicompare_needs')) {
-      //Add the fastaction form after the need item.
-      wikicompare_needs_fastaction_command($commands, $type, $nid, $output);
+    if (module_exists('wikicompare_profiles')) {
+      //Add the fastaction form after the profile item.
+      wikicompare_profiles_fastaction_command($commands, $type, $nid, $output);
     }
 
     //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
@@ -945,9 +945,9 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       }
     }
 
-    if (module_exists('wikicompare_needs')) {
-      //Assign need specific fields.
-      wikicompare_needs_fastaction_submit_after($node, $type, $_POST);
+    if (module_exists('wikicompare_profiles')) {
+      //Assign profile specific fields.
+      wikicompare_profiles_fastaction_submit_after($node, $type, $_POST);
     }
 
     if (module_exists('wikicompare_translation')) {
