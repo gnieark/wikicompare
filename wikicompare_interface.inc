@@ -11,7 +11,7 @@
  * Implements hook_form().
  * We need it to display the title in the nodes form.
  */
-function feature_form($node, $form_state) {
+function criterion_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
@@ -29,9 +29,9 @@ function wikicompare_form_product_node_form_alter(&$form, &$form_state, $form_id
   //Call type-agnostic function.
   wikicompare_build_form('form', $form, $form_state, 'product');
 }
-function wikicompare_form_feature_node_form_alter(&$form, &$form_state, $form_id) {
+function wikicompare_form_criterion_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
-  wikicompare_build_form('form', $form, $form_state, 'feature');
+  wikicompare_build_form('form', $form, $form_state, 'criterion');
 }
 function wikicompare_form_evaluation_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
@@ -98,7 +98,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
     $settings = array();
 
     if (module_exists('wikicompare_profiles')) {
-      //Send the features of the profile node to javascript file, so we can checked the features by default in the popin.
+      //Send the criterions of the profile node to javascript file, so we can checked the criterions by default in the popin.
       wikicompare_profiles_build_form_settings($settings, $form_state);
     }
 
@@ -276,14 +276,14 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
   //Code specific to evaluation.
   } else {
 
-    //Get information from cache, like guidelines and has_children flag of product and feature.
+    //Get information from cache, like guidelines and has_children flag of product and criterion.
     $query = db_select('cache_evaluation', 'n');
-    $query->addField('f', 'title', 'feature');
+    $query->addField('f', 'title', 'criterion');
     $query->addField('c', 'title', 'product');
-    $query->addField('f', 'has_children', 'feature_has_children');
+    $query->addField('f', 'has_children', 'criterion_has_children');
     $query->addField('c', 'has_children', 'product_has_children');
     $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines');
-    $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
+    $query->leftjoin('cache_criterion', 'f', 'n.criterion_id = f.nid');
     $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
     $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
     $query->condition('n.nid', $nid);
@@ -294,18 +294,18 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
     if ($form_type == 'form') {
 
-      //Display guidelines from feature.
+      //Display guidelines from criterion.
       $form['wikicompare_guidelines'] = array(
         '#markup' => $record->guidelines,
         '#weight' => -2,
       );
 
-      //Transform feature and product many2one field into simple label.
-      $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
+      //Transform criterion and product many2one field into simple label.
+      $form['wikicompare_criterion_id'] = array('#markup' => $res->criterion);
       $form['wikicompare_product_id'] = array('#markup' => $res->product);
 
       //We can modify the value of the evaluation only it is at the root of the tree in both axis.
-      if (!$res->feature_has_children && !$res->product_has_children) {
+      if (!$res->criterion_has_children && !$res->product_has_children) {
         //If the user has not rights on the node, then he will not be able to change the protected status of the evaluation.
         if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
           //Hide the field in the form. We can't unset it, otherwise it display an error.
@@ -341,7 +341,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
     if ($form_type == 'fastaction') {
 
       //We can modify the value of the evaluation only it is at the root of the tree in both axis.
-      if (!$res->feature_has_children && !$res->product_has_children) {
+      if (!$res->criterion_has_children && !$res->product_has_children) {
         $test = False;
         $disable_support = False;
         if (module_exists('wikicompare_inherit_product')) {
@@ -380,16 +380,16 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
   if ($form_type == 'fastaction') {
 
-    //Feature specific fields.
-    if ($type == 'feature') {
+    //Criterion specific fields.
+    if ($type == 'criterion') {
 
       $type_field = array(
         '#type' => 'select',
         '#title' => t('Type'),
         '#required' => TRUE,
         '#options' => array(
-          'parent-weighted-average' => 'Parent Feature - Weighted Average',
-          'parent-highest-percentage' => 'Parent Feature - Highest Percentage',
+          'parent-weighted-average' => 'Parent Criterion - Weighted Average',
+          'parent-highest-percentage' => 'Parent Criterion - Highest Percentage',
         ),
         '#id' => 'form_' . $type . '_fast' . $fastaction . '_type_' . $nid,
       );
@@ -429,7 +429,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       $weight_default = 1;
       //If the parent if of type highest-percentage, then the default weight must be 100 and not 1.
       if ($parent_id != 0 && $fastaction != 'edit') {
-        $query = db_select('cache_feature', 'n');
+        $query = db_select('cache_criterion', 'n');
         $query->addField('n', 'nid', 'nid');
         $query->addField('n', 'type', 'type');
         $query->condition('n.nid', $parent_id);
@@ -649,7 +649,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
     //Define if we want to display the form after an itemlist or after a row in the table.
     $display_type = 'itemlist';
-    if (in_array($type, array('feature','evaluation'))) {
+    if (in_array($type, array('criterion','evaluation'))) {
       $display_type = 'row_table';
     }
 
@@ -746,11 +746,11 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
       case ('product'):
         $commands[] = ajax_command_invoke('#product_table_children_' . $nid, 'before', array($output));
         break;
-      case ('feature'):
-        $commands[] = ajax_command_invoke('#feature_table_' . $nid, 'after', array($output));
+      case ('criterion'):
+        $commands[] = ajax_command_invoke('#criterion_table_' . $nid, 'after', array($output));
         break;
       case ('evaluation'):
-        $commands[] = ajax_command_invoke('#feature_table_' . $node->wikicompare_feature_id['und'][0]['target_id'], 'after', array($output));
+        $commands[] = ajax_command_invoke('#criterion_table_' . $node->wikicompare_criterion_id['und'][0]['target_id'], 'after', array($output));
         break;
     }
 
@@ -904,12 +904,12 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       wikicompare_inherit_product_fastaction_submit_element($node, $donotupdate, $_POST);
     }
 
-    //Feature specific fields.
-    if ($type == 'feature') {
+    //Criterion specific fields.
+    if ($type == 'criterion') {
 
       //Assign type field.
-      if ($_POST['feature_type'] != NULL) {
-        $node->wikicompare_type['und'][0]['value'] = $_POST['feature_type'];
+      if ($_POST['criterion_type'] != NULL) {
+        $node->wikicompare_type['und'][0]['value'] = $_POST['criterion_type'];
       } else {
         $missing_field = TRUE;
       }
@@ -1072,7 +1072,7 @@ function wikicompare_state_get_options($nid, $current_state) {
 /**
  * Implements hook_revisioning_access_node_revision().
  *
- * Since auto-publish use directly revisioning_user_node_access, we can't alter his result. Therefore, we can't use the auto-publish feature for now because since everyone has the publish revision right, everyone will auto-publish even those who are not power users.
+ * Since auto-publish use directly revisioning_user_node_access, we can't alter his result. Therefore, we can't use the auto-publish criterion for now because since everyone has the publish revision right, everyone will auto-publish even those who are not power users.
  *
  * @param $revision_op
  *   Indicate which operation the module is doing, and so the access right to check.

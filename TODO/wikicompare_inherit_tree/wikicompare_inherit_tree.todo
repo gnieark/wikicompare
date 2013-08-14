@@ -2,9 +2,9 @@ TODO : The goal of this module is to be able to select a product as element of a
 
 For exemple, let's take ERP exemple.
 
-The wikicompare on ERP may have the feature "Programmatic language", which is of type "inherit tree".
+The wikicompare on ERP may have the criterion "Programmatic language", which is of type "inherit tree".
 
-We may have a specific product tree, which contain the product "Python", "PHP", etc... with some value in the children of the feature "Programmatic language".
+We may have a specific product tree, which contain the product "Python", "PHP", etc... with some value in the children of the criterion "Programmatic language".
 
 Then let's take the ERP OpenERP, in the evaluation OpenERP - Programmatic language, we can specify a product, for exemple Python. Then in this case, the percent of OpenERP - Programmatic language will be the percent of Python - Programmatic language.
 

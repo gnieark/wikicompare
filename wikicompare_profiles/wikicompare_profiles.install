@@ -19,10 +19,10 @@ function wikicompare_profiles_schema() {
   //Call the generic function from wikicompare.install.
   $schema['cache_profile'] = wikicompare_node_schema('profile');
 
-  //Add many2many table for the link between profile and feature.
-  $schema['cache_profile_feature_rel'] = array(
+  //Add many2many table for the link between profile and criterion.
+  $schema['cache_profile_criterion_rel'] = array(
 
-    'description' => 'Cache table storing the link between profile and feature. Used so the percentage of comparative table are computed faster.',
+    'description' => 'Cache table storing the link between profile and criterion. Used so the percentage of comparative table are computed faster.',
     'fields' => array(
       'profile_nid' => array(
         'description' => 'The nid of the profile node',
@@ -31,8 +31,8 @@ function wikicompare_profiles_schema() {
         'not null' => TRUE,
       ),
 
-      'feature_nid' => array(
-        'description' => 'The nid of the feature node',
+      'criterion_nid' => array(
+        'description' => 'The nid of the criterion node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -40,16 +40,16 @@ function wikicompare_profiles_schema() {
     ),
     'indexes' => array(
       'profile_nid' => array('profile_nid'),
-      'feature_nid' => array('feature_nid'),
+      'criterion_nid' => array('criterion_nid'),
     ),
     'foreign keys' => array(
       'profile_nid' => array(
         'table' => 'node',
         'columns' => array('profile_nid' => 'nid'),
       ),
-      'feature_nid' => array(
+      'criterion_nid' => array(
         'table' => 'node_revision',
-        'columns' => array('feature_nid' => 'nid'),
+        'columns' => array('criterion_nid' => 'nid'),
       ),
     )
 
@@ -73,12 +73,12 @@ function wikicompare_profiles_install() {
   node_types_rebuild();
 
   $field = array(
-    'field_name' => 'wikicompare_features',
+    'field_name' => 'wikicompare_criterions',
     'type' => 'entityreference',
     'cardinality' => -1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('feature')),
+      'handler_settings' => array('target_bundles' => array('criterion')),
     ),
   );
   field_create_field($field);
@@ -87,16 +87,16 @@ function wikicompare_profiles_install() {
   wikicompare_node_install('profile');
 
   $instance = array(
-    'field_name' => 'wikicompare_features',
+    'field_name' => 'wikicompare_criterions',
     'entity_type' => 'node',
     'bundle' => 'profile',
-    'label' => 'Features',
+    'label' => 'Criterions',
     'widget' => array(
       'type' => 'entityreference_autocomplete',
     ),
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('feature')),
+      'handler_settings' => array('target_bundles' => array('criterion')),
     ),
   );
   field_create_instance($instance);
@@ -163,7 +163,7 @@ function wikicompare_profiles_uninstall() {
   variable_del('comment_subject_field_profile');
 
   //Delete fields.
-  field_delete_field('wikicompare_features');
+  field_delete_field('wikicompare_criterions');
 
   field_delete_instance(field_read_instance('node', 'body', 'profile'));
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_profile'));

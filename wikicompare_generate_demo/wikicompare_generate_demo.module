@@ -56,12 +56,12 @@ function wikicompare_export_page() {
     wikicompare_generate_demo_export_output_node($output, $product, 'product');
   }
 
-  $output .= "<p>\$features = array();</p>";
-  //Find all the features on the first level of the tree.
-  $features = request_db('feature', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
-  foreach ($features as $feature) {
-    //Get feature children.
-    wikicompare_generate_demo_export_output_node($output, $feature, 'feature');
+  $output .= "<p>\$criterions = array();</p>";
+  //Find all the criterions on the first level of the tree.
+  $criterions = request_db('criterion', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
+  foreach ($criterions as $criterion) {
+    //Get criterion children.
+    wikicompare_generate_demo_export_output_node($output, $criterion, 'criterion');
   }
 
   if (module_exists('wikicompare_profiles')) {
@@ -80,7 +80,7 @@ function wikicompare_export_page() {
   $query->addField('f', 'nid', 'fid');
   $query->addField('n', 'support', 'support');
   $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
-  $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
+  $query->leftjoin('cache_criterion', 'f', 'n.criterion_id = f.nid');
   $query->condition("c.has_children", 0);
   $query->condition("f.has_children", 0);
   $query->condition("n.support", 1);
@@ -94,7 +94,7 @@ function wikicompare_export_page() {
 
     $output .= "<p>";
     //The evaluation is created by the wikicompare module, so we have to load it to modify his fields.
-    $output .= "\$evaluation_id = wikicompare_get_evaluation_id(\$products['new-" . $record->cid . "'], \$features['new-" . $record->fid . "']);<br/>";
+    $output .= "\$evaluation_id = wikicompare_get_evaluation_id(\$products['new-" . $record->cid . "'], \$criterions['new-" . $record->fid . "']);<br/>";
     $output .= "\$node = node_load(\$evaluation_id);<br/>";
     $output .= "\$node->wikicompare_support['und'][0]['value'] = " . $record->support . ";<br/>";
     if (module_exists('wikicompare_inherit_product')) {
@@ -146,7 +146,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   }
   $output .= "\$node->wikicompare_sequence['und'][0]['value'] = " . $node['data']->sequence . ";<br/>";
   $output .= "\$node->wikicompare_state['und'][0]['value'] = '" . $node['data']->state . "';<br/>";
-  if ($type == 'feature') {
+  if ($type == 'criterion') {
     $output .= "\$node->wikicompare_type['und'][0]['value'] = '" . $node['data']->type . "';<br/>";
     $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";
   }
@@ -199,10 +199,10 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#collapsed' => TRUE,
   );
 
-  //To generate features.
-  $form['demo_fieldset']['feature_min_depth'] = array(
+  //To generate criterions.
+  $form['demo_fieldset']['criterion_min_depth'] = array(
     '#type' => 'textfield',
-    '#title' => t('Minimum feature depth'),
+    '#title' => t('Minimum criterion depth'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -210,9 +210,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['feature_max_depth'] = array(
+  $form['demo_fieldset']['criterion_max_depth'] = array(
     '#type' => 'textfield',
-    '#title' => t('Maximum feature depth'),
+    '#title' => t('Maximum criterion depth'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -220,9 +220,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['feature_child_min_per_level'] = array(
+  $form['demo_fieldset']['criterion_child_min_per_level'] = array(
     '#type' => 'textfield',
-    '#title' => t('Minimum number of child feature per level'),
+    '#title' => t('Minimum number of child criterion per level'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -230,9 +230,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['feature_child_max_per_level'] = array(
+  $form['demo_fieldset']['criterion_child_max_per_level'] = array(
     '#type' => 'textfield',
-    '#title' => t('Maximum number of child feature per level'),
+    '#title' => t('Maximum number of child criterion per level'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -240,9 +240,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['feature_min_weight'] = array(
+  $form['demo_fieldset']['criterion_min_weight'] = array(
     '#type' => 'textfield',
-    '#title' => t('Minimum feature weight'),
+    '#title' => t('Minimum criterion weight'),
     '#default_value' => 1,
     '#size' => 3,
     '#maxlength' => 3,
@@ -250,9 +250,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['feature_max_weight'] = array(
+  $form['demo_fieldset']['criterion_max_weight'] = array(
     '#type' => 'textfield',
-    '#title' => t('Maximum feature weight'),
+    '#title' => t('Maximum criterion weight'),
     '#default_value' => 3,
     '#size' => 3,
     '#maxlength' => 3,
@@ -260,9 +260,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['feature_highest_chance'] = array(
+  $form['demo_fieldset']['criterion_highest_chance'] = array(
     '#type' => 'textfield',
-    '#title' => t('Chance that the feature is of highest type instead of weighted average (1/x)'),
+    '#title' => t('Chance that the criterion is of highest type instead of weighted average (1/x)'),
     '#default_value' => 5,
     '#size' => 3,
     '#maxlength' => 3,
@@ -385,23 +385,23 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
   //We stop the percentage computation to create them faster.
   wikicompare_stop_computation();
 
-  $features_created = array();
+  $criterions_created = array();
   $products_created = array();
 
-  //If we want to generate features datas.
-  if (($form_state['input']['feature_min_depth'] != 0) && ($form_state['input']['feature_max_depth'] != 0) && ($form_state['input']['feature_child_min_per_level'] != 0) && ($form_state['input']['feature_child_max_per_level'] != 0)) {
+  //If we want to generate criterions datas.
+  if (($form_state['input']['criterion_min_depth'] != 0) && ($form_state['input']['criterion_max_depth'] != 0) && ($form_state['input']['criterion_child_min_per_level'] != 0) && ($form_state['input']['criterion_child_max_per_level'] != 0)) {
 
     //Get all settings.
     $settings = array(
-      'type' => 'feature',
-      'min_depth' => $form_state['input']['feature_min_depth'],
-      'max_depth' => $form_state['input']['feature_max_depth'],
-      'prefix' => 'Feature ' . variable_get('wikicompare_next_demo_sequence', 1),
-      'child_min_per_level' => $form_state['input']['feature_child_min_per_level'],
-      'child_max_per_level' => $form_state['input']['feature_child_max_per_level'],
-      'min_weight' => $form_state['input']['feature_min_weight'],
-      'max_weight' => $form_state['input']['feature_max_weight'],
-      'feature_highest_chance' => $form_state['input']['feature_highest_chance'],
+      'type' => 'criterion',
+      'min_depth' => $form_state['input']['criterion_min_depth'],
+      'max_depth' => $form_state['input']['criterion_max_depth'],
+      'prefix' => 'Criterion ' . variable_get('wikicompare_next_demo_sequence', 1),
+      'child_min_per_level' => $form_state['input']['criterion_child_min_per_level'],
+      'child_max_per_level' => $form_state['input']['criterion_child_max_per_level'],
+      'min_weight' => $form_state['input']['criterion_min_weight'],
+      'max_weight' => $form_state['input']['criterion_max_weight'],
+      'criterion_highest_chance' => $form_state['input']['criterion_highest_chance'],
       'parent_type' => 'parent-weighted-average',
       'depth' => 1,
     );
@@ -411,7 +411,7 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
     }
 
     //Generate data.
-    wikicompare_generate_demo_create_children($settings, $features_created);
+    wikicompare_generate_demo_create_children($settings, $criterions_created);
 
   }
 
@@ -452,16 +452,16 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
   }
 
   //Change support evaluation value. This part take a lot of time, better put a high support chance
-  if (!empty($products_created) && !empty($features_created) && $form_state['input']['evaluation_support_chance'] != 0) {
+  if (!empty($products_created) && !empty($criterions_created) && $form_state['input']['evaluation_support_chance'] != 0) {
 
     //Get all evaluation node.
     $query = db_select('cache_evaluation', 'i');
     $query->addField('i', 'nid', 'nid');
     $query->leftjoin('cache_product', 'c', 'i.product_id = c.nid');
-    $query->leftjoin('cache_feature', 'f', 'i.feature_id = f.nid');
+    $query->leftjoin('cache_criterion', 'f', 'i.criterion_id = f.nid');
     $query->condition("c.has_children", 0);
     $query->condition("f.has_children", 0);
-    $query->condition('i.feature_id', $features_created, 'in');
+    $query->condition('i.criterion_id', $criterions_created, 'in');
     $query->condition('i.product_id', $products_created, 'in');
     if (module_exists('wikicompare_inherit_product')) {
       //Add inherit product specific field.
@@ -526,7 +526,7 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
       $node->wikicompare_parent_id['und'][0]['target_id'] = $settings['parent_id'];
       $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
     }
-    if ($settings['type'] == 'feature') {
+    if ($settings['type'] == 'criterion') {
       //Define random weight in taking account of the parent type and the settings.
       if ($settings['parent_type'] == 'parent-weighted-average') {
         $node->wikicompare_weight['und'][0]['value'] = rand($settings['min_weight'], $settings['max_weight']);
@@ -534,7 +534,7 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
         $node->wikicompare_weight['und'][0]['value'] = 100/rand($settings['min_weight'], $settings['max_weight']);
       }
       //Define random type.
-      if (rand(1, $settings['feature_highest_chance']) != $settings['feature_highest_chance']) {
+      if (rand(1, $settings['criterion_highest_chance']) != $settings['criterion_highest_chance']) {
         $node->wikicompare_type['und'][0]['value'] = 'parent-weighted-average';
         $settings_for_children['parent_type'] = 'parent-weighted-average';
       } else {
@@ -544,7 +544,7 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
     }
     if (module_exists('wikicompare_profiles')) {
       if ($settings['type'] == 'profile') {
-        $node->wikicompare_features['und'] = array();
+        $node->wikicompare_criterions['und'] = array();
       }
     }
     $node->promote = 0;

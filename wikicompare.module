@@ -54,9 +54,9 @@ function wikicompare_help($path, $arg) {
  */
 function wikicompare_node_info() {
   return array(
-    'feature' => array(
-      'name' => t('Feature'),
-      'base' => 'feature',
+    'criterion' => array(
+      'name' => t('Criterion'),
+      'base' => 'criterion',
       'title_label' => t('Title'),
     ),
 
@@ -129,8 +129,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_get_feature_children_callback'] = array(
-    'page callback' => 'wikicompare_get_feature_children_response',
+  $items['wikicompare_get_criterion_children_callback'] = array(
+    'page callback' => 'wikicompare_get_criterion_children_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -321,7 +321,7 @@ function wikicompare_admin() {
     '#description' => t("Define if the parent product can also have their own percentage.<br/>
         In this case, the parent product will support all the evaluation of his product children, and we will be able to select the parent product in the comparative table.<br/>
         <br/>
-        Activate this feature can take some time, because the cache table need to be recomputed."),
+        Activate this criterion can take some time, because the cache table need to be recomputed."),
     '#required' => TRUE,
   );
 
@@ -374,7 +374,7 @@ function submit_settings($form, $form_state) {
     $res = array();
 
     //For all wikicompare types.
-    $types = array('product', 'feature', 'evaluation');
+    $types = array('product', 'criterion', 'evaluation');
     if (module_exists('wikicompare_profiles')) {
       //Add profile type.
       wikicompare_profiles_node_types($array);

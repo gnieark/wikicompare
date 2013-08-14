@@ -53,12 +53,12 @@
 </tr>
 <tr>
 	<td>click</td>
-	<td>css=span.feature_title_34</td>
+	<td>css=span.criterion_title_34</td>
 	<td></td>
 </tr>
 <tr>
 	<td>waitForElementPresent</td>
-	<td>id=feature_table_57</td>
+	<td>id=criterion_table_57</td>
 	<td></td>
 </tr>
 <tr>

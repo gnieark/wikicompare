@@ -11,15 +11,15 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
 /**
  * Implements hook_insert().
- * Executed each time a feature node is created.
+ * Executed each time a criterion node is created.
  *
  * @param $node
  *   The node object which was created.
  */
-function feature_insert($node) {
+function criterion_insert($node) {
 
   //Call the type-agnostic function.
-  wikicompare_insert_node('feature', $node);
+  wikicompare_insert_node('criterion', $node);
 
 }
 
@@ -43,7 +43,7 @@ function product_insert($node) {
 
 /**
  * Type-agnostic function which will proceed all actions which happen when we insert a node.
- * Essentially, we need to insert new entries in wikicompare caches and create the new evaluations for each existing product or feature.
+ * Essentially, we need to insert new entries in wikicompare caches and create the new evaluations for each existing product or criterion.
  *
  * @param $type
  *   The type of the created node.
@@ -92,8 +92,8 @@ function wikicompare_insert_node($type, $node) {
       'has_children' => 0,
   );
 
-  //Feature specific fields.
-  if ($type == 'feature') {
+  //Criterion specific fields.
+  if ($type == 'criterion') {
     $fields['type'] = $node->wikicompare_type['und'][0]['value'];
     $fields['weight'] = $node->wikicompare_weight['und'][0]['value'];
   }
@@ -111,8 +111,8 @@ function wikicompare_insert_node($type, $node) {
 
 
 
-  //For product and feature, create the new evaluations if the created node is published.
-  if (in_array($type, array('product', 'feature'))) {
+  //For product and criterion, create the new evaluations if the created node is published.
+  if (in_array($type, array('product', 'criterion'))) {
     wikicompare_create_evaluations($node, $type);
   }
 
@@ -124,15 +124,15 @@ function wikicompare_insert_node($type, $node) {
 
 /**
  * Implements hook_delete().
- * Executed each time a feature is deleted.
+ * Executed each time a criterion is deleted.
  *
  * @param $node
  *   The node object which will be deleted.
  */
-function feature_delete($node) {
+function criterion_delete($node) {
 
   //Call the type-agnostic function.
-  wikicompare_delete_node('feature', $node);
+  wikicompare_delete_node('criterion', $node);
 
 }
 
@@ -173,7 +173,7 @@ function evaluation_delete($node) {
 
 /**
  * Type-agnostic function which will proceed all actions which happen when we delete a node.
- * Essentially, we need to remove the entries in wikicompare caches and delete the evaluations linked the deleted product or feature.
+ * Essentially, we need to remove the entries in wikicompare caches and delete the evaluations linked the deleted product or criterion.
  *
  * @param $type
  *   The type of the deleted node.
@@ -191,8 +191,8 @@ function wikicompare_delete_node($type, $node) {
   //At this time, the node is deleted in Drupal but not in the cache table, which means the users of the deleted nodes are deleted but not the link with his children. So we launch the update users function to update the children users before updating the cache.
   wikicompare_update_cache_users(array(array('nid' => $node->nid)));
 
-  //Only products and features are linked to evaluations.
-  if (in_array($type, array('product', 'feature'))) {
+  //Only products and criterions are linked to evaluations.
+  if (in_array($type, array('product', 'criterion'))) {
 
     //Find all evaluation nodes.
     //We can use field_data* field because this field should not be modified so nor have revision. We don't use cache table because field_data* is more reliable.
@@ -259,7 +259,7 @@ function wikicompare_delete_node($type, $node) {
     }
 
     //We launch the tree update on the parent node, so it can recompute his new data.
-    if (in_array($type, array('product', 'feature'))) {
+    if (in_array($type, array('product', 'criterion'))) {
       wikicompare_update_compare_tree($type, array($node->wikicompare_parent_id['und'][0]['target_id']));
     }
   }
@@ -296,7 +296,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   if ($op == 'pre publish') {
 
     //Types which must be checked by the function. All types defined by wikicompare module are concerned.
-    $types = array('product', 'feature', 'evaluation');
+    $types = array('product', 'criterion', 'evaluation');
 
     if (module_exists('wikicompare_profiles')) {
       //Add profile type.
@@ -313,7 +313,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       $current_node = node_load($node_revision->nid);
 
       //Types which must check their parent_id. All types defined by wikicompare module are concerned, except evaluation which does not have parent_id field.
-      $types = array('product', 'feature');
+      $types = array('product', 'criterion');
 
       if (module_exists('wikicompare_profiles')) {
         //Add profile type.
@@ -372,12 +372,12 @@ function wikicompare_revisionapi($op, $node_revision) {
           }
 
           //We will trigger a tree update on both the old parent and the new parent, because their values may change because of the change in their children.
-          if (in_array($node_revision->type, array('product', 'feature'))) {
+          if (in_array($node_revision->type, array('product', 'criterion'))) {
             $to_update[$node_revision->nid] = $node_revision->nid;
             $to_update[$node_revision_parent] = $node_revision_parent;
             $to_update[$current_node_parent] = $current_node_parent;
 
-            //Mark the modified node so his evaluations will be updated with his new evaluations parents on product and feature axis.
+            //Mark the modified node so his evaluations will be updated with his new evaluations parents on product and criterion axis.
             db_update('cache_' . $node_revision->type)
               ->fields(array(
                 'parent_changed' => 1,
@@ -401,8 +401,8 @@ function wikicompare_revisionapi($op, $node_revision) {
         }
       }
 
-      //Tests based on feature specific fields.
-      if ($node_revision->type == 'feature') {
+      //Tests based on criterion specific fields.
+      if ($node_revision->type == 'criterion') {
         if (($node_revision->wikicompare_type['und'][0]['value'] != $current_node->wikicompare_type['und'][0]['value']) || ($node_revision->wikicompare_weight['und'][0]['value'] != $current_node->wikicompare_weight['und'][0]['value']) || ($node_revision->wikicompare_state['und'][0]['value'] != $current_node->wikicompare_state['und'][0]['value'])) {
           $to_update[$node_revision->nid] = $node_revision->nid;
         }
@@ -422,7 +422,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       //If any of the critical field have changed.
       if (!empty($to_update)) {
         //Only the type related to the compare tree need to be mark for update.
-        if (in_array($node_revision->type, array('product', 'feature', 'evaluation'))) {
+        if (in_array($node_revision->type, array('product', 'criterion', 'evaluation'))) {
           //We mark the marked nodes, his old parent and his new parent for update
           db_update('cache_' . $node_revision->type)
             ->fields(array(
@@ -445,7 +445,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   if ($op == 'post publish') {
 
     //Types which must be checked by the function. All types defined by wikicompare module are concerned.
-    $types = array('product', 'feature', 'evaluation');
+    $types = array('product', 'criterion', 'evaluation');
 
     if (module_exists('wikicompare_profiles')) {
       //Add profile type.
@@ -479,8 +479,8 @@ function wikicompare_revisionapi($op, $node_revision) {
         $fields['support']= $node_revision->wikicompare_support['und'][0]['value'];
       }
 
-      //Feature specific fields.
-      if ($node_revision->type == 'feature') {
+      //Criterion specific fields.
+      if ($node_revision->type == 'criterion') {
         $fields['type'] = $node_revision->wikicompare_type['und'][0]['value'];
         $fields['weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
       }
@@ -502,7 +502,7 @@ function wikicompare_revisionapi($op, $node_revision) {
     $node_nids = array();
     $query = db_select('cache_' . $node_revision->type, 'n');
     $query->addField('n', 'nid', 'nid');
-    if (in_array($node_revision->type, array('product', 'feature'))) {
+    if (in_array($node_revision->type, array('product', 'criterion'))) {
       $query->addField('n', 'parent_changed', 'parent_changed');
     }
     if (module_exists('wikicompare_inherit_product')) {
@@ -518,11 +518,11 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Trigger a tree update on all the marked nodes.
     if ($node_nids) {
-      //If the parent product of feature have change, we need to update the parent evaluations through product or feature axis.
+      //If the parent product of criterion have change, we need to update the parent evaluations through product or criterion axis.
       foreach ($nodes as $node) {
 
         //Update the cache_evaluation with the new structural fields, needed for the percent computation.
-        if (in_array($node_revision->type, array('product', 'feature'))) {
+        if (in_array($node_revision->type, array('product', 'criterion'))) {
 
           //Create the missing evaluations if the node is published without being published before.
           wikicompare_create_evaluations($node_revision, $node_revision->type);
@@ -532,7 +532,7 @@ function wikicompare_revisionapi($op, $node_revision) {
           $query->addField('n', 'parent_id', 'parent_id');
           $query->addField('n', 'state', 'state');
           $query->addField('n', 'has_children', 'has_children');
-          if ($node_revision->type == 'feature') {
+          if ($node_revision->type == 'criterion') {
             $query->addField('n', 'type', 'type');
             $query->addField('n', 'weight', 'weight');
           }
@@ -542,9 +542,9 @@ function wikicompare_revisionapi($op, $node_revision) {
             $fields[$node_revision->type . '_parent_id'] = $record->parent_id;
             $fields[$node_revision->type . '_state'] = $record->state;
             $fields[$node_revision->type . '_has_children'] = $record->has_children;
-            if ($node_revision->type == 'feature') {
-              $fields['feature_type'] = $node_revision->wikicompare_type['und'][0]['value'];
-              $fields['feature_weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
+            if ($node_revision->type == 'criterion') {
+              $fields['criterion_type'] = $node_revision->wikicompare_type['und'][0]['value'];
+              $fields['criterion_weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
             }
           }
 
@@ -554,7 +554,7 @@ function wikicompare_revisionapi($op, $node_revision) {
               ->execute();
         }
 
-        if (in_array($node_revision->type, array('product', 'feature'))) {
+        if (in_array($node_revision->type, array('product', 'criterion'))) {
           if ($node->parent_changed) {
             wikicompare_update_parent_link($node_revision->type, $node_revision->nid);
             db_update('cache_' . $node_revision->type)
@@ -584,7 +584,7 @@ function wikicompare_revisionapi($op, $node_revision) {
     }
 
     if (module_exists('wikicompare_profiles')) {
-      //Update the profile_features many2many cache table.
+      //Update the profile_criterions many2many cache table.
       wikicompare_profiles_after_update_fields($node_revision);
     }
 
@@ -609,11 +609,11 @@ function wikicompare_create_evaluations($node, $type) {
     return;
   }
 
-  //Find the countertype of the created node, product for feature and feature for product.
+  //Find the countertype of the created node, product for criterion and criterion for product.
   $countertype = '';
   if ($type == 'product') {
-    $countertype = 'feature';
-  } elseif ($type == 'feature') {
+    $countertype = 'criterion';
+  } elseif ($type == 'criterion') {
     $countertype = 'product';
   }
 
@@ -628,7 +628,7 @@ function wikicompare_create_evaluations($node, $type) {
   $query = db_select('node', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('cache', 'parent_id', 'parent_id');
-  if ($countertype == 'feature') {
+  if ($countertype == 'criterion') {
     $query->addField('cache', 'type', 'type');
     $query->addField('cache', 'weight', 'weight');
   }
@@ -638,7 +638,7 @@ function wikicompare_create_evaluations($node, $type) {
   $query->leftjoin('cache_' . $countertype, 'cache', 'n.nid = cache.nid');
   /*
    * I don't like at all using the table cache for the evaluation creation because they are less reliable than node/fields table. Unfortunately, using node/fields table would mean using at least four more join and I believe it would really cost us too much on the perf side.
-   * The main problem which can happen is that an implemention doesn't exist in cache but exist in node, and so another evaluation will be created for the same couple product/feature. If this situation happenned too often, we'll need to add a list in administration with all the duplicated evaluation, so the admin can chose which one should be deleted.
+   * The main problem which can happen is that an implemention doesn't exist in cache but exist in node, and so another evaluation will be created for the same couple product/criterion. If this situation happenned too often, we'll need to add a list in administration with all the duplicated evaluation, so the admin can chose which one should be deleted.
    */
   $query->leftjoin('cache_evaluation', 'ni', 'n.nid = ni.' . $countertype . '_id AND ni.' . $type . '_id = ' . $node->nid);
   $query->condition('n.type', $countertype);
@@ -662,7 +662,7 @@ function wikicompare_create_evaluations($node, $type) {
     $node_evaluation->title = 'evaluation';
     $node_evaluation->language = language_default('language');
 
-    //The evaluation has both a feature_id and a product_id
+    //The evaluation has both a criterion_id and a product_id
     $node_evaluation->{'wikicompare_' . $type . '_id'}['und'][0]['target_id'] = $node->nid;
     $node_evaluation->{'wikicompare_' . $type . '_id'}['und'][0]['target_type'] = "node";
     $node_evaluation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_id'] = $counternode->nid;
@@ -676,19 +676,19 @@ function wikicompare_create_evaluations($node, $type) {
     //Save the evaluation node in database.
     node_save($node_evaluation);
 
-    if ($type == 'feature') {
-      $feature_type = $node->wikicompare_type['und'][0]['value'];
-      $feature_weight = $node->wikicompare_weight['und'][0]['value'];
+    if ($type == 'criterion') {
+      $criterion_type = $node->wikicompare_type['und'][0]['value'];
+      $criterion_weight = $node->wikicompare_weight['und'][0]['value'];
     } else {
-      $feature_type = $counternode->type;
-      $feature_weight = $counternode->weight;
+      $criterion_type = $counternode->type;
+      $criterion_weight = $counternode->weight;
     }
 
     //Prepare to add the new record in wikicompare cache table.
     $cache_evaluation = array(
       'nid' => $node_evaluation->nid,
       'vid' => $node_evaluation->vid,
-      'feature_id' => $node_evaluation->wikicompare_feature_id['und'][0]['target_id'],
+      'criterion_id' => $node_evaluation->wikicompare_criterion_id['und'][0]['target_id'],
       'product_id' => $node_evaluation->wikicompare_product_id['und'][0]['target_id'],
       'support' => 0,
       $type . '_parent_id' => $parent_id,
@@ -697,8 +697,8 @@ function wikicompare_create_evaluations($node, $type) {
       $countertype . '_parent_id' => $counternode->parent_id,
       $countertype . '_state' => $counternode->state,
       $countertype . '_has_children' => $counternode->has_children,
-      'feature_type' => $feature_type,
-      'feature_weight' => $feature_weight,
+      'criterion_type' => $criterion_type,
+      'criterion_weight' => $criterion_weight,
     );
 
     if (module_exists('wikicompare_inherit_product')) {
@@ -715,7 +715,7 @@ function wikicompare_create_evaluations($node, $type) {
   if (!empty($cache_evaluation)) {
 
     //Prepare the header for the mass insert in evaluation cache table.
-    $header = array('nid', 'vid', 'feature_id', 'product_id', 'support', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'feature_type', 'feature_weight');
+    $header = array('nid', 'vid', 'criterion_id', 'product_id', 'support', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'criterion_type', 'criterion_weight');
 
     if (module_exists('wikicompare_inherit_product')) {
       //Inherit product specific field.
@@ -728,7 +728,7 @@ function wikicompare_create_evaluations($node, $type) {
     }
     $query->execute();
 
-    //Update parent_through_product_id and parent_through_feature_id field in cache_evaluation. We can't make it at the evaluation creation because the parent through counternode axis are created at the same time.
+    //Update parent_through_product_id and parent_through_criterion_id field in cache_evaluation. We can't make it at the evaluation creation because the parent through counternode axis are created at the same time.
     wikicompare_update_parent_link($type, $node->nid);
 
     if (module_exists('wikicompare_inherit_product')) {
@@ -736,7 +736,7 @@ function wikicompare_create_evaluations($node, $type) {
       wikicompare_inherit_product_insert_parent_inherit($node);
     }
 
-    //Force the update of the compare tree, starting from the created node. It's a node without children on product and feature axis because it's a just created node.
+    //Force the update of the compare tree, starting from the created node. It's a node without children on product and criterion axis because it's a just created node.
     wikicompare_update_compare_tree($type, array($node->nid));
 
   }
@@ -746,32 +746,32 @@ function wikicompare_create_evaluations($node, $type) {
 
 
 /**
- * Function which will update the parent though product and feature fields in cache_evaluation. Theses fields are important for the percentage computation.
+ * Function which will update the parent though product and criterion fields in cache_evaluation. Theses fields are important for the percentage computation.
  *
  * @param $nid
- *   The nid of the product or feature which we need to update the evaluation. If empty, all evaluation will be updated.
+ *   The nid of the product or criterion which we need to update the evaluation. If empty, all evaluation will be updated.
  */
 function wikicompare_update_parent_link($type=NULL, $nid=NULL) {
 
   if (Database::getConnection()->databaseType() == 'mysql') {
     $query = 'UPDATE cache_evaluation n
            INNER JOIN cache_product product ON n.product_id = product.nid
-           LEFT JOIN cache_evaluation ncp ON (product.parent_id = ncp.product_id AND n.feature_id = ncp.feature_id)
-           INNER JOIN cache_feature feature ON n.feature_id = feature.nid
-           LEFT JOIN cache_evaluation nfp ON (feature.parent_id = nfp.feature_id AND n.product_id = nfp.product_id)
-           SET n.parent_through_product_id = ncp.nid, n.parent_through_feature_id = nfp.nid';
+           LEFT JOIN cache_evaluation ncp ON (product.parent_id = ncp.product_id AND n.criterion_id = ncp.criterion_id)
+           INNER JOIN cache_criterion criterion ON n.criterion_id = criterion.nid
+           LEFT JOIN cache_evaluation nfp ON (criterion.parent_id = nfp.criterion_id AND n.product_id = nfp.product_id)
+           SET n.parent_through_product_id = ncp.nid, n.parent_through_criterion_id = nfp.nid';
     if ($nid != NULL) {
       $query = $query . ' WHERE ' . $type . '.nid = ' . $nid;
     }
   } else {
     $query = 'UPDATE cache_evaluation
       SET parent_through_product_id = ncp.nid,
-          parent_through_feature_id = nfp.nid
+          parent_through_criterion_id = nfp.nid
       FROM cache_evaluation n
       INNER JOIN cache_product product ON n.product_id = product.nid
-      LEFT JOIN cache_evaluation ncp ON (product.parent_id = ncp.product_id AND n.feature_id = ncp.feature_id)
-      INNER JOIN cache_feature feature ON n.feature_id = feature.nid
-      LEFT JOIN cache_evaluation nfp ON (feature.parent_id = nfp.feature_id AND n.product_id = nfp.product_id)
+      LEFT JOIN cache_evaluation ncp ON (product.parent_id = ncp.product_id AND n.criterion_id = ncp.criterion_id)
+      INNER JOIN cache_criterion criterion ON n.criterion_id = criterion.nid
+      LEFT JOIN cache_evaluation nfp ON (criterion.parent_id = nfp.criterion_id AND n.product_id = nfp.product_id)
       WHERE cache_evaluation.nid = n.nid';
     if ($nid != NULL) {
       $query = $query . ' AND ' . $type . '.nid = ' . $nid;

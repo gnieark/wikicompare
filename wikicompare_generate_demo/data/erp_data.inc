@@ -525,10 +525,10 @@ $node->comment = 2;
 node_save($node);
 $products['new-10924'] = $node->nid;
 
-$features = array();
+$criterions = array();
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Accounting";
 $node->wikicompare_sequence['und'][0]['value'] = 1;
@@ -539,7 +539,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-10925'] = $node->nid;
+$criterions['new-10925'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -548,7 +548,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Comptabilite";
@@ -561,10 +561,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Invoicing";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-10925'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-10925'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -574,7 +574,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-10948'] = $node->nid;
+$criterions['new-10948'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -583,7 +583,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Facturation";
@@ -596,10 +596,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Invoice include the detail (product, price, etc...)";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-10948'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-10948'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -609,7 +609,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-10971'] = $node->nid;
+$criterions['new-10971'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -618,7 +618,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "La facture contient les details (produits, prix, etc...)";
@@ -631,10 +631,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Due date management";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-10948'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-10948'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -644,7 +644,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-10994'] = $node->nid;
+$criterions['new-10994'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -653,7 +653,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gestion de la date d'echeance";
@@ -666,10 +666,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Create one account move for each due date, with different date";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-10994'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-10994'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -679,7 +679,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11017'] = $node->nid;
+$criterions['new-11017'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -688,7 +688,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Creer une ecriture pour chaque date d'echeance";
@@ -701,10 +701,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Writing the date in an invoice field";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-10994'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-10994'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -714,7 +714,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11040'] = $node->nid;
+$criterions['new-11040'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -723,7 +723,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Ecrire la date dans un champ de la facture";
@@ -736,10 +736,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Account move";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-10925'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-10925'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -749,7 +749,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11063'] = $node->nid;
+$criterions['new-11063'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -758,7 +758,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Mouvements comptables";
@@ -771,10 +771,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "An account move include several account move line";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11063'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11063'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -784,7 +784,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11086'] = $node->nid;
+$criterions['new-11086'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -793,7 +793,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Un mouvement comptable peut inclure plusieurs ecritures comptables";
@@ -806,10 +806,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Can't validate account move is sum credit different sum debit";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11063'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11063'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -819,7 +819,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11109'] = $node->nid;
+$criterions['new-11109'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -828,7 +828,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Impossible de valider une piece comptable si la somme des debits est different de la somme des credits";
@@ -841,10 +841,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Reporting";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-10925'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-10925'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 3;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -854,7 +854,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11132'] = $node->nid;
+$criterions['new-11132'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -863,7 +863,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Rapports";
@@ -876,10 +876,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Consult account chart in the ERP interface";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11132'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11132'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -889,7 +889,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11155'] = $node->nid;
+$criterions['new-11155'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -898,7 +898,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Consulter le plan comptable depuis l'ERP";
@@ -911,10 +911,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Print general ledger";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11132'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11132'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -924,7 +924,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11178'] = $node->nid;
+$criterions['new-11178'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -933,7 +933,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Imprimer le grand livre";
@@ -946,7 +946,7 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "CRM";
 $node->wikicompare_sequence['und'][0]['value'] = 2;
@@ -957,13 +957,13 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11201'] = $node->nid;
+$criterions['new-11201'] = $node->nid;
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Sellers can manage their cases";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11201'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11201'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -973,7 +973,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11223'] = $node->nid;
+$criterions['new-11223'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -982,7 +982,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Les commerciaux peuvent suivre leurs dossiers";
@@ -995,10 +995,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Being able to send mail through the case interface";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11201'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11201'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1008,7 +1008,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11246'] = $node->nid;
+$criterions['new-11246'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1017,7 +1017,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Etre capable d'envoyer des mails depuis l'interface du dossier";
@@ -1030,10 +1030,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "New emails create new cases";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11201'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11201'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 3;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1043,7 +1043,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11269'] = $node->nid;
+$criterions['new-11269'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1052,7 +1052,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Les nouveaux emails generent de nouveaux dossiers";
@@ -1065,7 +1065,7 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Sales";
 $node->wikicompare_sequence['und'][0]['value'] = 3;
@@ -1076,7 +1076,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11292'] = $node->nid;
+$criterions['new-11292'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1085,7 +1085,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Ventes";
@@ -1098,10 +1098,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Sale order management";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11292'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11292'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1111,7 +1111,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11315'] = $node->nid;
+$criterions['new-11315'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1120,7 +1120,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gestion des commandes";
@@ -1133,10 +1133,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Contain order detail (product, price, etc...)";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11315'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11315'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1146,7 +1146,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11338'] = $node->nid;
+$criterions['new-11338'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1155,7 +1155,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Contient les details de la commande (produits, prix, etc...)";
@@ -1168,10 +1168,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Contain payment method";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11315'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11315'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1181,7 +1181,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11361'] = $node->nid;
+$criterions['new-11361'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1190,7 +1190,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Contient la methode de paiement";
@@ -1203,10 +1203,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Possible processus at order confirmation";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11292'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11292'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1216,7 +1216,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11384'] = $node->nid;
+$criterions['new-11384'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1225,7 +1225,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Processus possibles a la confirmation de la commande";
@@ -1238,10 +1238,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Create invoice, then after payment create picking order";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11384'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11384'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1251,7 +1251,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11407'] = $node->nid;
+$criterions['new-11407'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1260,7 +1260,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Creer la facture, et apres le paiement creer l'ordre de livraison";
@@ -1273,10 +1273,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Create picking order, then after shipping create invoice";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11384'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11384'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1286,7 +1286,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11430'] = $node->nid;
+$criterions['new-11430'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1295,7 +1295,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Creer l'ordre de livraison, et apres l'expedition creer la facture";
@@ -1308,10 +1308,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Create picking, create manually the invoice";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11384'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11384'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1321,7 +1321,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11453'] = $node->nid;
+$criterions['new-11453'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1330,7 +1330,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Creer l'ordre de livraison, creer la facture manuellement";
@@ -1343,7 +1343,7 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Stock";
 $node->wikicompare_sequence['und'][0]['value'] = 4;
@@ -1354,13 +1354,13 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11476'] = $node->nid;
+$criterions['new-11476'] = $node->nid;
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Stock move management";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11476'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11476'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1370,7 +1370,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11498'] = $node->nid;
+$criterions['new-11498'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1379,7 +1379,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gestion des mouvements de stock";
@@ -1392,10 +1392,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Double-entry stock management";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11476'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11476'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1405,7 +1405,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11521'] = $node->nid;
+$criterions['new-11521'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1414,7 +1414,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gestion de stock a double entree";
@@ -1427,10 +1427,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Location management";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11476'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11476'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 3;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1440,7 +1440,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11544'] = $node->nid;
+$criterions['new-11544'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1449,7 +1449,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gestion des emplacements";
@@ -1462,10 +1462,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Being able to manage location";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11544'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11544'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1475,7 +1475,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11567'] = $node->nid;
+$criterions['new-11567'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1484,7 +1484,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Etre capable de gerer les emplacements";
@@ -1497,10 +1497,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Manage hierachical location";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11544'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11544'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1510,7 +1510,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11590'] = $node->nid;
+$criterions['new-11590'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1519,7 +1519,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gerer les emplacement de maniere hierarchique";
@@ -1532,7 +1532,7 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Document management";
 $node->wikicompare_sequence['und'][0]['value'] = 5;
@@ -1543,7 +1543,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11613'] = $node->nid;
+$criterions['new-11613'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1552,7 +1552,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Gestion des documents";
@@ -1565,10 +1565,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Store document in ERP";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11613'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11613'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1578,7 +1578,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11636'] = $node->nid;
+$criterions['new-11636'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1587,7 +1587,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Les documents sont stockes dans l'ERP";
@@ -1600,10 +1600,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Being able to attach document to record";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11613'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11613'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1613,7 +1613,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11659'] = $node->nid;
+$criterions['new-11659'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1622,7 +1622,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Etre capacle d'attacher les documents aux pieces";
@@ -1635,10 +1635,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Access document through a virtual FTP";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11613'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11613'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 3;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1648,7 +1648,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11682'] = $node->nid;
+$criterions['new-11682'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1657,7 +1657,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Acceder aux document depuis un FTP virtuel";
@@ -1670,7 +1670,7 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Internal Communication";
 $node->wikicompare_sequence['und'][0]['value'] = 6;
@@ -1681,7 +1681,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11705'] = $node->nid;
+$criterions['new-11705'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1690,7 +1690,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Communication interne";
@@ -1703,10 +1703,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Comment record";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11705'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11705'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1716,7 +1716,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11728'] = $node->nid;
+$criterions['new-11728'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1725,7 +1725,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Commenter les pieces";
@@ -1738,10 +1738,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Being able to comment any record";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11728'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11728'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1751,7 +1751,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11751'] = $node->nid;
+$criterions['new-11751'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1760,7 +1760,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Etre capable de commenter n'importe quelle piece";
@@ -1773,10 +1773,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "See all interesting comment in the home page of the ERP";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11728'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11728'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1786,7 +1786,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11774'] = $node->nid;
+$criterions['new-11774'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1795,7 +1795,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Voir tous les commentaires interessants sur la page d'accueil de l'ERP";
@@ -1808,10 +1808,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Internal Message";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11705'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11705'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1821,7 +1821,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11797'] = $node->nid;
+$criterions['new-11797'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1830,7 +1830,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Messages internes";
@@ -1843,10 +1843,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Being able to send message to other ERP user";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11797'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11797'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1856,7 +1856,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11820'] = $node->nid;
+$criterions['new-11820'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1865,7 +1865,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Etre capable d'envoyer des messages aux autres utilisateurs de l'ERP";
@@ -1878,10 +1878,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Being able to attach link to record in message";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11797'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11797'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1891,7 +1891,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11843'] = $node->nid;
+$criterions['new-11843'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1900,7 +1900,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Etre capable d'attacher un lien vers les pieces dans les messages";
@@ -1913,10 +1913,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Number of unread message visible at all time";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11797'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11797'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 3;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1926,7 +1926,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11866'] = $node->nid;
+$criterions['new-11866'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1935,7 +1935,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Le nombre de messages non-lus est visible en permanence";
@@ -1948,7 +1948,7 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Technical";
 $node->wikicompare_sequence['und'][0]['value'] = 7;
@@ -1959,7 +1959,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11889'] = $node->nid;
+$criterions['new-11889'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -1968,7 +1968,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Technique";
@@ -1981,10 +1981,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Main concepts manage by framework";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11889'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11889'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -1994,7 +1994,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11912'] = $node->nid;
+$criterions['new-11912'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2003,7 +2003,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Les principaux concept gere par le framework";
@@ -2016,10 +2016,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "ORM (Database and object management)";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11912'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11912'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2029,7 +2029,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11935'] = $node->nid;
+$criterions['new-11935'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2038,7 +2038,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "ORM (Gestion des objets et de la base de donnees)";
@@ -2051,10 +2051,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Interface";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11912'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11912'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2064,13 +2064,13 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11958'] = $node->nid;
+$criterions['new-11958'] = $node->nid;
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Form definition";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11958'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11958'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2080,13 +2080,13 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-11980'] = $node->nid;
+$criterions['new-11980'] = $node->nid;
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Menu";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11958'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11958'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2096,13 +2096,13 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-12002'] = $node->nid;
+$criterions['new-12002'] = $node->nid;
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Access Rights";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11958'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11958'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 3;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2112,7 +2112,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-12024'] = $node->nid;
+$criterions['new-12024'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2121,7 +2121,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Droits d'acces";
@@ -2134,10 +2134,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Modules";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11912'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11912'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 3;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2147,13 +2147,13 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-12047'] = $node->nid;
+$criterions['new-12047'] = $node->nid;
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Programming language";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-11889'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-11889'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2163,7 +2163,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-12069'] = $node->nid;
+$criterions['new-12069'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2172,7 +2172,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Language de programmation";
@@ -2185,10 +2185,10 @@ node_save($tnode);
 }
 
 $node = new stdClass();
-$node->type = 'feature';
+$node->type = 'criterion';
 $node->language = 'en';
 $node->title = "Object-oriented language";
-$node->wikicompare_parent_id['und'][0]['target_id'] = $features['new-12069'];
+$node->wikicompare_parent_id['und'][0]['target_id'] = $criterions['new-12069'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
@@ -2198,7 +2198,7 @@ $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
 node_save($node);
-$features['new-12092'] = $node->nid;
+$criterions['new-12092'] = $node->nid;
 
 if (module_exists('wikicompare_translation')) {
 
@@ -2207,7 +2207,7 @@ node_save($node);
 
 if (in_array('fr', $language_list)) {
 $tnode = new stdClass();
-$tnode->type = 'feature';
+$tnode->type = 'criterion';
 $tnode->language = 'fr';
 $tnode->tnid = $node->nid;
 $tnode->title = "Language oriente-objet";
@@ -2229,21 +2229,21 @@ $node->language = 'en';
 $node->title = "Domain : Retail";
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
-$node->wikicompare_features['und'] = array();
-$node->wikicompare_features['und'][0]['target_id'] = $features['new-10971'];
-$node->wikicompare_features['und'][0]['target_type'] = 'node';
-$node->wikicompare_features['und'][1]['target_id'] = $features['new-11040'];
-$node->wikicompare_features['und'][1]['target_type'] = 'node';
-$node->wikicompare_features['und'][2]['target_id'] = $features['new-11407'];
-$node->wikicompare_features['und'][2]['target_type'] = 'node';
-$node->wikicompare_features['und'][3]['target_id'] = $features['new-11430'];
-$node->wikicompare_features['und'][3]['target_type'] = 'node';
-$node->wikicompare_features['und'][4]['target_id'] = $features['new-11453'];
-$node->wikicompare_features['und'][4]['target_type'] = 'node';
-$node->wikicompare_features['und'][5]['target_id'] = $features['new-11338'];
-$node->wikicompare_features['und'][5]['target_type'] = 'node';
-$node->wikicompare_features['und'][6]['target_id'] = $features['new-11498'];
-$node->wikicompare_features['und'][6]['target_type'] = 'node';
+$node->wikicompare_criterions['und'] = array();
+$node->wikicompare_criterions['und'][0]['target_id'] = $criterions['new-10971'];
+$node->wikicompare_criterions['und'][0]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][1]['target_id'] = $criterions['new-11040'];
+$node->wikicompare_criterions['und'][1]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][2]['target_id'] = $criterions['new-11407'];
+$node->wikicompare_criterions['und'][2]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][3]['target_id'] = $criterions['new-11430'];
+$node->wikicompare_criterions['und'][3]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][4]['target_id'] = $criterions['new-11453'];
+$node->wikicompare_criterions['und'][4]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][5]['target_id'] = $criterions['new-11338'];
+$node->wikicompare_criterions['und'][5]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][6]['target_id'] = $criterions['new-11498'];
+$node->wikicompare_criterions['und'][6]['target_type'] = 'node';
 $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
@@ -2277,7 +2277,7 @@ $node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12115'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
-$node->wikicompare_features['und'] = array();
+$node->wikicompare_criterions['und'] = array();
 $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
@@ -2311,33 +2311,33 @@ $node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12115'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
-$node->wikicompare_features['und'] = array();
-$node->wikicompare_features['und'][0]['target_id'] = $features['new-11086'];
-$node->wikicompare_features['und'][0]['target_type'] = 'node';
-$node->wikicompare_features['und'][1]['target_id'] = $features['new-11109'];
-$node->wikicompare_features['und'][1]['target_type'] = 'node';
-$node->wikicompare_features['und'][2]['target_id'] = $features['new-11017'];
-$node->wikicompare_features['und'][2]['target_type'] = 'node';
-$node->wikicompare_features['und'][3]['target_id'] = $features['new-11040'];
-$node->wikicompare_features['und'][3]['target_type'] = 'node';
-$node->wikicompare_features['und'][4]['target_id'] = $features['new-11155'];
-$node->wikicompare_features['und'][4]['target_type'] = 'node';
-$node->wikicompare_features['und'][5]['target_id'] = $features['new-11178'];
-$node->wikicompare_features['und'][5]['target_type'] = 'node';
-$node->wikicompare_features['und'][6]['target_id'] = $features['new-11246'];
-$node->wikicompare_features['und'][6]['target_type'] = 'node';
-$node->wikicompare_features['und'][7]['target_id'] = $features['new-11269'];
-$node->wikicompare_features['und'][7]['target_type'] = 'node';
-$node->wikicompare_features['und'][8]['target_id'] = $features['new-11223'];
-$node->wikicompare_features['und'][8]['target_type'] = 'node';
-$node->wikicompare_features['und'][9]['target_id'] = $features['new-11361'];
-$node->wikicompare_features['und'][9]['target_type'] = 'node';
-$node->wikicompare_features['und'][10]['target_id'] = $features['new-11521'];
-$node->wikicompare_features['und'][10]['target_type'] = 'node';
-$node->wikicompare_features['und'][11]['target_id'] = $features['new-11567'];
-$node->wikicompare_features['und'][11]['target_type'] = 'node';
-$node->wikicompare_features['und'][12]['target_id'] = $features['new-11590'];
-$node->wikicompare_features['und'][12]['target_type'] = 'node';
+$node->wikicompare_criterions['und'] = array();
+$node->wikicompare_criterions['und'][0]['target_id'] = $criterions['new-11086'];
+$node->wikicompare_criterions['und'][0]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][1]['target_id'] = $criterions['new-11109'];
+$node->wikicompare_criterions['und'][1]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][2]['target_id'] = $criterions['new-11017'];
+$node->wikicompare_criterions['und'][2]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][3]['target_id'] = $criterions['new-11040'];
+$node->wikicompare_criterions['und'][3]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][4]['target_id'] = $criterions['new-11155'];
+$node->wikicompare_criterions['und'][4]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][5]['target_id'] = $criterions['new-11178'];
+$node->wikicompare_criterions['und'][5]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][6]['target_id'] = $criterions['new-11246'];
+$node->wikicompare_criterions['und'][6]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][7]['target_id'] = $criterions['new-11269'];
+$node->wikicompare_criterions['und'][7]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][8]['target_id'] = $criterions['new-11223'];
+$node->wikicompare_criterions['und'][8]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][9]['target_id'] = $criterions['new-11361'];
+$node->wikicompare_criterions['und'][9]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][10]['target_id'] = $criterions['new-11521'];
+$node->wikicompare_criterions['und'][10]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][11]['target_id'] = $criterions['new-11567'];
+$node->wikicompare_criterions['und'][11]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][12]['target_id'] = $criterions['new-11590'];
+$node->wikicompare_criterions['und'][12]['target_type'] = 'node';
 $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
@@ -2369,7 +2369,7 @@ $node->language = 'en';
 $node->title = "Specific profiles";
 $node->wikicompare_sequence['und'][0]['value'] = 2;
 $node->wikicompare_state['und'][0]['value'] = 'published';
-$node->wikicompare_features['und'] = array();
+$node->wikicompare_criterions['und'] = array();
 $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
@@ -2403,13 +2403,13 @@ $node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12121'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
-$node->wikicompare_features['und'] = array();
-$node->wikicompare_features['und'][0]['target_id'] = $features['new-11682'];
-$node->wikicompare_features['und'][0]['target_type'] = 'node';
-$node->wikicompare_features['und'][1]['target_id'] = $features['new-11659'];
-$node->wikicompare_features['und'][1]['target_type'] = 'node';
-$node->wikicompare_features['und'][2]['target_id'] = $features['new-11636'];
-$node->wikicompare_features['und'][2]['target_type'] = 'node';
+$node->wikicompare_criterions['und'] = array();
+$node->wikicompare_criterions['und'][0]['target_id'] = $criterions['new-11682'];
+$node->wikicompare_criterions['und'][0]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][1]['target_id'] = $criterions['new-11659'];
+$node->wikicompare_criterions['und'][1]['target_type'] = 'node';
+$node->wikicompare_criterions['und'][2]['target_id'] = $criterions['new-11636'];
+$node->wikicompare_criterions['und'][2]['target_type'] = 'node';
 $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
@@ -2443,7 +2443,7 @@ $node->wikicompare_parent_id['und'][0]['target_id'] = $profiles['new-12121'];
 $node->wikicompare_parent_id['und'][0]['target_type'] = 'node';
 $node->wikicompare_sequence['und'][0]['value'] = 1;
 $node->wikicompare_state['und'][0]['value'] = 'published';
-$node->wikicompare_features['und'] = array();
+$node->wikicompare_criterions['und'] = array();
 $node->promote = 0;
 $node->sticky = 0;
 $node->comment = 2;
@@ -2554,7 +2554,7 @@ _revisioning_publish_latest_revision($node);
 
 }
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $features['new-10971']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $criterions['new-10971']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2567,7 +2567,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-10971']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-10971']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2580,7 +2580,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-10971']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-10971']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2593,7 +2593,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-10971']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-10971']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2606,7 +2606,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11017']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11017']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2619,7 +2619,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11017']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11017']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2632,7 +2632,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11017']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11017']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2645,7 +2645,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $features['new-11040']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $criterions['new-11040']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2658,7 +2658,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10893'], $features['new-11086']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10893'], $criterions['new-11086']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2671,7 +2671,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $features['new-11086']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $criterions['new-11086']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2684,7 +2684,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11086']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11086']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2697,7 +2697,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11086']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11086']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2710,7 +2710,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10893'], $features['new-11109']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10893'], $criterions['new-11109']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2723,7 +2723,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $features['new-11109']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $criterions['new-11109']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2736,7 +2736,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11109']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11109']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2749,7 +2749,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11109']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11109']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2762,7 +2762,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $features['new-11155']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $criterions['new-11155']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2775,7 +2775,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11155']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11155']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2788,7 +2788,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11155']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11155']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2801,7 +2801,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10893'], $features['new-11178']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10893'], $criterions['new-11178']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2814,7 +2814,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $features['new-11178']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10898'], $criterions['new-11178']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2827,7 +2827,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11178']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11178']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2840,7 +2840,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11178']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11178']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2853,7 +2853,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11223']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11223']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2866,7 +2866,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11223']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11223']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2879,7 +2879,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11223']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11223']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2892,7 +2892,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $features['new-11246']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $criterions['new-11246']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2905,7 +2905,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11246']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11246']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2918,7 +2918,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11269']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11269']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2931,7 +2931,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $features['new-11338']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $criterions['new-11338']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2944,7 +2944,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11338']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11338']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2957,7 +2957,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11338']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11338']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2970,7 +2970,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11338']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11338']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2983,7 +2983,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11361']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11361']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -2996,7 +2996,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10909'], $features['new-11361']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10909'], $criterions['new-11361']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3009,7 +3009,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11361']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11361']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3022,7 +3022,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $features['new-11407']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $criterions['new-11407']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3035,7 +3035,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11407']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11407']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3048,7 +3048,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11407']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11407']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3061,7 +3061,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11407']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11407']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3074,7 +3074,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $features['new-11430']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $criterions['new-11430']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3087,7 +3087,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11430']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11430']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3100,7 +3100,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11430']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11430']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3113,7 +3113,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11430']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11430']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3126,7 +3126,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11453']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11453']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3139,7 +3139,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11453']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11453']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3152,7 +3152,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11453']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11453']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3165,7 +3165,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $features['new-11498']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $criterions['new-11498']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3178,7 +3178,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11498']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11498']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3191,7 +3191,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11498']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11498']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3204,7 +3204,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11498']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11498']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3217,7 +3217,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11521']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11521']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3230,7 +3230,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11521']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11521']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3243,7 +3243,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11521']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11521']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3256,7 +3256,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $features['new-11567']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10895'], $criterions['new-11567']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3269,7 +3269,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11567']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11567']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3282,7 +3282,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11567']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11567']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3295,7 +3295,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11567']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11567']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3308,7 +3308,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11590']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11590']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3321,7 +3321,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11590']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11590']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3334,7 +3334,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11590']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11590']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3347,7 +3347,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $features['new-11636']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10900'], $criterions['new-11636']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3360,7 +3360,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11636']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11636']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3373,7 +3373,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11636']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11636']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3386,7 +3386,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11659']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11659']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3399,7 +3399,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11659']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11659']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3412,7 +3412,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $features['new-11682']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $criterions['new-11682']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3425,7 +3425,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10916'], $features['new-11751']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10916'], $criterions['new-11751']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3438,7 +3438,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10921'], $features['new-11751']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10921'], $criterions['new-11751']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3451,7 +3451,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10921'], $features['new-11774']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10921'], $criterions['new-11774']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3464,7 +3464,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $features['new-11820']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $criterions['new-11820']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3477,7 +3477,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11820']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11820']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3490,7 +3490,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $features['new-11843']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $criterions['new-11843']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3503,7 +3503,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $features['new-11866']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10911'], $criterions['new-11866']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3516,7 +3516,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11866']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11866']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3529,7 +3529,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11935']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11935']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3542,7 +3542,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11935']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11935']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3555,7 +3555,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-11980']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-11980']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3568,7 +3568,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-11980']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-11980']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3581,7 +3581,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-12002']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-12002']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3594,7 +3594,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-12002']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-12002']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3607,7 +3607,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-12024']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-12024']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3620,7 +3620,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-12024']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-12024']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3633,7 +3633,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-12047']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-12047']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3646,7 +3646,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-12047']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-12047']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3659,7 +3659,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $features['new-12092']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10906'], $criterions['new-12092']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {
@@ -3672,7 +3672,7 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $features['new-12092']);
+$evaluation_id = wikicompare_get_evaluation_id($products['new-10924'], $criterions['new-12092']);
 $node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_product')) {

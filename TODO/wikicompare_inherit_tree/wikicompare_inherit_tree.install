@@ -13,19 +13,19 @@
  */
 function wikicompare_inherit_schema() {
 
-  //Create cache table for the inherit tree, similar to the comparative_table of the main module. His role is to compute percent and css_class at each change on feature/product/evaluation and not at each read of the comparative table.
+  //Create cache table for the inherit tree, similar to the comparative_table of the main module. His role is to compute percent and css_class at each change on criterion/product/evaluation and not at each read of the comparative table.
   $schema['cache_inherit_tree'] = array(
 
     'description' => 'Cache table for inherit tree',
     'fields' => array(
-      'inherit_tree_feature_id' => array(
-        'description' => 'The nid of the feature which declare the tree inheritance',
+      'inherit_tree_criterion_id' => array(
+        'description' => 'The nid of the criterion which declare the tree inheritance',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'feature_id' => array(
-        'description' => 'The nid of the feature node',
+      'criterion_id' => array(
+        'description' => 'The nid of the criterion node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -48,18 +48,18 @@ function wikicompare_inherit_schema() {
         'default' => '',
       ),
     ),
-//TODO make unique by inherit_tree_feature_id/feature_id/product_id
+//TODO make unique by inherit_tree_criterion_id/criterion_id/product_id
     'unique keys' => array(
       'nid' => array('nid'),
     ),
     'foreign keys' => array(
-      'inherit_tree_feature_id' => array(
+      'inherit_tree_criterion_id' => array(
         'table' => 'node',
-        'columns' => array('inherit_tree_feature_id' => 'nid'),
+        'columns' => array('inherit_tree_criterion_id' => 'nid'),
       ),
-      'feature_id' => array(
+      'criterion_id' => array(
         'table' => 'node',
-        'columns' => array('feature_id' => 'nid'),
+        'columns' => array('criterion_id' => 'nid'),
       ),
       'product_id' => array(
         'table' => 'node',
@@ -78,13 +78,13 @@ function wikicompare_inherit_schema() {
  */
 function wikicompare_inherit_tree_schema_alter(&$schema) {
   
-  $schema['cache_feature']['fields']['inherit_tree_id'] = array(
-      'description' => 'The feature id at the top of the inherited tree',
+  $schema['cache_criterion']['fields']['inherit_tree_id'] = array(
+      'description' => 'The criterion id at the top of the inherited tree',
       'type' => 'int',
       'unsigned' => TRUE,
   );
-  $schema['cache_feature']['indexes']['inherit_tree_id'] = array('inherit_tree_id');
-  $schema['cache_feature']['foreign keys']['inherit_tree'] = array(
+  $schema['cache_criterion']['indexes']['inherit_tree_id'] = array('inherit_tree_id');
+  $schema['cache_criterion']['foreign keys']['inherit_tree'] = array(
     'table' => 'node',
     'columns' => array('inherit_tree_id' => 'nid'),
   );
@@ -113,27 +113,27 @@ function wikicompare_inherit_tree_install() {
    */ 
 
 
-  $schema = drupal_get_schema('cache_feature');
-  db_add_field('cache_feature', 'inherit_tree_id', $schema['fields']['inherit_tree_id']);
-  db_add_index('cache_feature', 'inherit_tree_id', array('inherit_tree_id'));
+  $schema = drupal_get_schema('cache_criterion');
+  db_add_field('cache_criterion', 'inherit_tree_id', $schema['fields']['inherit_tree_id']);
+  db_add_index('cache_criterion', 'inherit_tree_id', array('inherit_tree_id'));
 
 
 
   $field = array(
-    'field_name' => 'feature_inherit_tree',
+    'field_name' => 'criterion_inherit_tree',
     'type' => 'entityreference',
     'cardinality' => 1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('feature')),
+      'handler_settings' => array('target_bundles' => array('criterion')),
     ),
   );
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'feature_inherit_tree',
+    'field_name' => 'criterion_inherit_tree',
     'entity_type' => 'node',
-    'bundle' => 'feature',
+    'bundle' => 'criterion',
     'label' => 'Inherit Tree',
     'description' => 'TODO',
     'widget' => array(
@@ -141,16 +141,16 @@ function wikicompare_inherit_tree_install() {
     ),
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('feature')),
+      'handler_settings' => array('target_bundles' => array('criterion')),
     ),
   );
   field_create_instance($instance);
 
 
 
-//TODO Put a filter in the feature interface based on this field
+//TODO Put a filter in the criterion interface based on this field
   $field = array(
-    'field_name' => 'feature_inherit_tree_top_product',
+    'field_name' => 'criterion_inherit_tree_top_product',
     'type' => 'entityreference',
     'cardinality' => -1,
     'settings' => array(
@@ -161,9 +161,9 @@ function wikicompare_inherit_tree_install() {
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'feature_inherit_tree_top_product',
+    'field_name' => 'criterion_inherit_tree_top_product',
     'entity_type' => 'node',
-    'bundle' => 'feature',
+    'bundle' => 'criterion',
     'label' => 'Inherit tree top product',
     'description' => 'TODO : Only product children of theses top product can be select in the evaluations',
     'widget' => array(
@@ -223,10 +223,10 @@ function wikicompare_inherit_tree_install() {
 function wikicompare_inherit_tree_uninstall() {
 
 
-  db_drop_field('cache_feature', 'inherit_tree_id');
-  db_drop_index('cache_feature', 'inherit_tree_id');
-  field_delete_field('feature_inherit_tree');
-  field_delete_field('feature_inherit_tree_top_product');
+  db_drop_field('cache_criterion', 'inherit_tree_id');
+  db_drop_index('cache_criterion', 'inherit_tree_id');
+  field_delete_field('criterion_inherit_tree');
+  field_delete_field('criterion_inherit_tree_top_product');
   field_delete_field('evaluation_product_support');
 
 

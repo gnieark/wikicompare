@@ -69,7 +69,7 @@ function wikicompare_translation_settings_change_language(&$old_ids, $res) {
       wikicompare_translation_move_field_language('wikicompare_type', $ids);
       wikicompare_translation_move_field_language('wikicompare_weight', $ids);
       wikicompare_translation_move_field_language('wikicompare_state', $ids);
-      wikicompare_translation_move_field_language('wikicompare_feature_id', $ids);
+      wikicompare_translation_move_field_language('wikicompare_criterion_id', $ids);
       wikicompare_translation_move_field_language('wikicompare_product_id', $ids);
       wikicompare_translation_move_field_language('wikicompare_support', $ids);
 
@@ -500,8 +500,8 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       unset($form_state['node']->wikicompare_state);
     }
 
-    if (isset($form['wikicompare_feature_id'])) {
-      unset($form_state['node']->wikicompare_feature_id);
+    if (isset($form['wikicompare_criterion_id'])) {
+      unset($form_state['node']->wikicompare_criterion_id);
     }
 
     if (isset($form['wikicompare_product_id'])) {

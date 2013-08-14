@@ -5,10 +5,10 @@
  */
 //The fastaction status of the table.
 fastaction = 0;
-//The dictionnary containing the feature manually selected.
-manual_selected_feature_ids = {};
-//The dictionnary containing the feature selected in forms.
-selected_feature_ids = {};
+//The dictionnary containing the criterion manually selected.
+manual_selected_criterion_ids = {};
+//The dictionnary containing the criterion selected in forms.
+selected_criterion_ids = {};
 //The dictionnary containing the profiles selected in the table.
 selected_profile_ids = {};
 
@@ -38,13 +38,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var nid = extract_nid(link_id);
           //Display the children if they are not already shown.
           if (!$(this).hasClass('displayed')) {
-            $('.feature_' + context + '_child_' + nid).show();
+            $('.criterion_' + context + '_child_' + nid).show();
             //Next time, it'll hide the children.
             $(this).addClass('displayed');
           //Hide the children.
           } else {
             //By using this recursive function, the children will be recursively hidded.
-            remove_children_tree(nid, '#feature_' + context + '_link_', '.feature_' + context + '_child_', false);
+            remove_children_tree(nid, '#criterion_' + context + '_link_', '.criterion_' + context + '_child_', false);
           }
           //Avoid the hyperlink to load another page.
           return false;
@@ -54,8 +54,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       } else {
 
         action = 'expand_list_children';
-        //Only the feature in the table are not displayed in an itemlist but in row, the ajax call is not the same.
-        if (type == 'feature' && context == 'table') {
+        //Only the criterion in the table are not displayed in an itemlist but in row, the ajax call is not the same.
+        if (type == 'criterion' && context == 'table') {
           action = 'expand_row_children';
         }
 
@@ -96,13 +96,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
             delete selected_profile_ids[nid];
           }
 
-        //All other itemlist checkboxes are selected features (manually or for forms) in popin.
+        //All other itemlist checkboxes are selected criterions (manually or for forms) in popin.
         } else {
           //Add or remove the checked/unchecked checkbox in the global variable.
           if ($(this).attr('checked')) {
-            selected_feature_dialog_ids[nid] = nid;
+            selected_criterion_dialog_ids[nid] = nid;
           } else {
-            delete selected_feature_dialog_ids[nid];
+            delete selected_criterion_dialog_ids[nid];
           }
         }
 
@@ -146,13 +146,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * When we open a popin, recover the selected feature from the main page, either the manually selected or the form selected features.
+     * When we open a popin, recover the selected criterion from the main page, either the manually selected or the form selected criterions.
      */
-    $('#initialize_selected_feature_dialog_ids:not(.listener_set)').addClass('listener_set').each(function () {
+    $('#initialize_selected_criterion_dialog_ids:not(.listener_set)').addClass('listener_set').each(function () {
         if ($(this).text() == 'manual') {
-          selected_feature_dialog_ids = manual_selected_feature_ids;
+          selected_criterion_dialog_ids = manual_selected_criterion_ids;
         } else {
-          selected_feature_dialog_ids = selected_feature_ids;
+          selected_criterion_dialog_ids = selected_criterion_ids;
         }
     });
 
@@ -266,15 +266,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * Use the wikicompare_features field to detect that we are in a profile form. In this case, we recover the settings from Drupal to initiate selected_feature_ids.
+     * Use the wikicompare_criterions field to detect that we are in a profile form. In this case, we recover the settings from Drupal to initiate selected_criterion_ids.
      */
-    $('#edit-wikicompare-features:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+    $('#edit-wikicompare-criterions:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       //Get settings from Drupal.
-      from_db = settings['wikicompare_profiles']['selected_feature_ids'];
+      from_db = settings['wikicompare_profiles']['selected_criterion_ids'];
       for (index = 0; index < from_db.length; ++index) {
         var fid = from_db[index];
-        //Initiate selected_feature_ids.
-        selected_feature_ids[fid] = fid;
+        //Initiate selected_criterion_ids.
+        selected_criterion_ids[fid] = fid;
       }
     });
 
@@ -397,10 +397,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_computed = false;
         send_products = false;
         send_products_columns = false;
-        send_features = false;
+        send_criterions = false;
         send_evaluations = false;
         send_profiles = false;
-        send_manual_selected_features = false;
+        send_manual_selected_criterions = false;
         send_selected_profiles = false;
         send_states = false;
         send_forbidden_nid = false;
@@ -424,9 +424,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.type = type;
           options.data.context = context;
 
-          //When we are in popin, selecting a feature, we send the already checked features so they are checked by default.
+          //When we are in popin, selecting a criterion, we send the already checked criterions so they are checked by default.
           if (context == 'multidialog') {
-            options.data.selected_feature_ids = selected_feature_dialog_ids;
+            options.data.selected_criterion_ids = selected_criterion_dialog_ids;
           } else if (context != 'selectdialog') {
             //After a children display, we clean the table except if we are in popin (in such case, we have multidialog or selectdialog in context).
             make_cleaning = true;
@@ -438,13 +438,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
         }
 
-        //When we want to display the feature children in table.
+        //When we want to display the criterion children in table.
         if (action == 'expand_row_children') {
           //Send the parent_id so we retrieve the children.
           send_nid = true;
           //Send the flag, so we know if we display or hide the children.
           manage_displayed_flag = true;
-          //Send the product displayed in the table, so we directly add the cell of these columns in the new lines of the feature children.
+          //Send the product displayed in the table, so we directly add the cell of these columns in the new lines of the criterion children.
           send_products_columns = true;
           //Send states if we want to also display the draft and closed items.
           send_states = true;
@@ -458,10 +458,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_nid = true;
           //Send the flag, so we know if we display or hide the column.
           manage_displayed_flag = true;
-          //Verify if the table was computed, in such case the data need to be computed with the selected feature.
+          //Verify if the table was computed, in such case the data need to be computed with the selected criterion.
           send_computed = true;
-          //Send the feature displayed in the table, so we directly add the cells for these row in the new column.
-          send_features = true;
+          //Send the criterion displayed in the table, so we directly add the cells for these row in the new column.
+          send_criterions = true;
           //Resize all lines to the new size of the table.
           auto_colspan = true;
           //The table will be clean after the operation.
@@ -480,13 +480,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //If we are selecting several items in popin.
         if (action == 'submit_dialog') {
-          //Send the features selected and send the array to the main page, to the selected array or manual array.
-          if ($('#initialize_selected_feature_dialog_ids').text() == 'manual') {
-            manual_selected_feature_ids = selected_feature_dialog_ids;
-            send_manual_selected_features = true;
+          //Send the criterions selected and send the array to the main page, to the selected array or manual array.
+          if ($('#initialize_selected_criterion_dialog_ids').text() == 'manual') {
+            manual_selected_criterion_ids = selected_criterion_dialog_ids;
+            send_manual_selected_criterions = true;
           } else {
-            selected_feature_ids = selected_feature_dialog_ids;
-            options.data.selected_feature_ids = selected_feature_dialog_ids;
+            selected_criterion_ids = selected_criterion_dialog_ids;
+            options.data.selected_criterion_ids = selected_criterion_dialog_ids;
           }
           //Send the container we need to update in the main page.
           send_container = true;
@@ -496,9 +496,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'compute_table') {
           //Send the product displayed in the table, they'll keep display in the new table.
           send_products_columns = true;
-          //Send the features manually selected, they'll be used to select the computed features.
-          send_manual_selected_features = true;
-          //Send the selected profile. Their features will be used to select the computed features.
+          //Send the criterions manually selected, they'll be used to select the computed criterions.
+          send_manual_selected_criterions = true;
+          //Send the selected profile. Their criterions will be used to select the computed criterions.
           send_selected_profiles = true;
           //Send the states.
           send_states = true;
@@ -562,8 +562,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (type == 'product') {
             options.data.inherit_id = $('#wikicompare-inherit-product-id').text();
           }
-          if (type == 'feature') {
-            options.data.feature_type = $('#form_' + type + '_fast' + context + '_type_' + nid).val();
+          if (type == 'criterion') {
+            options.data.criterion_type = $('#form_' + type + '_fast' + context + '_type_' + nid).val();
             options.data.guidelines = $('#form_' + type + '_fast' + context + '_guidelines_' + nid).val();
             options.data.guidelines_translation = $('#form_' + type + '_fast' + context + '_guidelines_' + nid + '_translation').val();
             options.data.weight = $('#form_' + type + '_fast' + context + '_weight_' + nid).val();
@@ -573,13 +573,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').is(':checked');
           }
           if (type == 'profile') {
-            var profile_feature_ids = {};
+            var profile_criterion_ids = {};
             var i = 0;
-            $('.profile_feature').each(function (key, value) {
-              profile_feature_ids[$(this).text()] = $(this).text();
+            $('.profile_criterion').each(function (key, value) {
+              profile_criterion_ids[$(this).text()] = $(this).text();
               i = i + 1;
             });
-            options.data.profile_feature_ids = profile_feature_ids;
+            options.data.profile_criterion_ids = profile_criterion_ids;
           }
           options.data.revision = $('#form_' + type + '_fast' + context + '_revision_' + nid).val();
           options.data.selectnode = $('#form_' + type + '_fast' + context + '_selectnode_' + nid).val();
@@ -602,13 +602,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_products_columns = true;
           //Send evaluations, to update the percent.
           send_evaluations = true;
-          //Send selected_features, to check if we need to reset the manual itemlist.
-          send_selected_features = true;
+          //Send selected_criterions, to check if we need to reset the manual itemlist.
+          send_selected_criterions = true;
           //Send states.
           send_states = true;
 
           //We will send all nodes in the cleaning function, and check which parent is displaying his children.
-          var a = ['product', 'feature', 'profile'];
+          var a = ['product', 'criterion', 'profile'];
           for (index = 0; index < a.length; ++index) {
 
             //The node type we are working on.
@@ -616,8 +616,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
             var node_ids = {};
             //Get the class to find the item in the table.
             var item = ftype + '_item';
-            if (ftype == 'feature') {
-              item = 'feature_row';
+            if (ftype == 'criterion') {
+              item = 'criterion_row';
             }
 
             //For all item in the table.
@@ -630,9 +630,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 //Assign the nid.
                 node_ids[nid]['nid'] = nid;
                 //Get the parent id from the table.
-                if (ftype == 'feature') {
+                if (ftype == 'criterion') {
                   var patt = /[0-9]+/g;
-                  //The only numerical value in the class of a feature item is his parent.
+                  //The only numerical value in the class of a criterion item is his parent.
                   if (patt.test($(this).attr('class'))) {
                     var pid = $(this).attr('class');
                     node_ids[nid]['parent_id'] = extract_nid(pid)[0];
@@ -727,15 +727,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.product_column_ids = product_column_ids;
         }
 
-        //Get and send the features in the table.
-        if (send_features == true) {
-          var feature_ids = {};
-          $('.feature_row').each(function (key, value) {
+        //Get and send the criterions in the table.
+        if (send_criterions == true) {
+          var criterion_ids = {};
+          $('.criterion_row').each(function (key, value) {
             var fid = extract_nid($(this).attr('id'))[0];
-            feature_ids[fid] = fid;
+            criterion_ids[fid] = fid;
           });
           //Add them in the ajax call variables.
-          options.data.feature_ids = feature_ids;
+          options.data.criterion_ids = criterion_ids;
         }
 
         //Get and send the evaluations in the table.
@@ -760,9 +760,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.profile_ids = profile_ids;
         }
 
-        //Get all manually selected features to send their id to drupal.
-        if (send_manual_selected_features == true) {
-          options.data.selected_feature_ids = manual_selected_feature_ids;
+        //Get all manually selected criterions to send their id to drupal.
+        if (send_manual_selected_criterions == true) {
+          options.data.selected_criterion_ids = manual_selected_criterion_ids;
         }
 
         //Get all manually selected profiles to send their id to drupal.
@@ -826,7 +826,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             }
 
             if (action == 'expand_row_children') {
-              $('.feature_table_child_' + nid).show();
+              $('.criterion_table_child_' + nid).show();
               //TODO Lines instant display if I put a slideDown(). Use the following fucntion to display them one after another.
 //http://paulirish.com/2008/sequentially-chain-your-callbacks-in-jquery-two-ways/
 //          (function shownext(jq){
@@ -842,16 +842,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('.evaluation_product_' + nid).fadeIn();
             }
 
-            //Initialize the selected_features_ids when we open a profile fastaction form. Not the same variable than manual_selected_features_ids to avoid conflict.
+            //Initialize the selected_criterions_ids when we open a profile fastaction form. Not the same variable than manual_selected_criterions_ids to avoid conflict.
             if (action == 'show_fastaction_form') {
               if (type == 'profile') {
-                var profile_feature_ids = {};
-                $('.profile_feature').each(function (key, value) {
+                var profile_criterion_ids = {};
+                $('.profile_criterion').each(function (key, value) {
                   fid = $(this).text();
-                  profile_feature_ids[fid] = fid;
+                  profile_criterion_ids[fid] = fid;
                 });
-                //Insert actual features in global variable.
-                selected_feature_ids = profile_feature_ids;
+                //Insert actual criterions in global variable.
+                selected_criterion_ids = profile_criterion_ids;
               }
             }
 
@@ -869,7 +869,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
             if (action == 'expand_row_children') {
               //Hide the children recursively.
-              remove_children_tree(nid, '#feature_table_link_', '.feature_table_child_', false);
+              remove_children_tree(nid, '#criterion_table_link_', '.criterion_table_child_', false);
             }
 
             if (action == 'toogle_product_checkbox') {

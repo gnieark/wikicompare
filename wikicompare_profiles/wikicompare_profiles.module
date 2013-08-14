@@ -50,21 +50,21 @@ function wikicompare_profiles_node_info() {
  */
 function wikicompare_profiles_request_db($query, $type) {
   if ($type == 'profile') {
-    $query->addField('nf', 'feature_nid', 'profile_feature_id');
-    $query->leftjoin('cache_profile_feature_rel', 'nf', 'n.nid = nf.profile_nid');
+    $query->addField('nf', 'criterion_nid', 'profile_criterion_id');
+    $query->leftjoin('cache_profile_criterion_rel', 'nf', 'n.nid = nf.profile_nid');
   }
 }
 
 
 
 /**
- * Recover all profile_features in an array to use them later.
+ * Recover all profile_criterions in an array to use them later.
  *
  * @param $node_array
  *   The node which will be returned. Passed by reference.
  *
- * @param $profile_features
- *   The array containing the profile_features we will use later. Passed by reference.
+ * @param $profile_criterions
+ *   The array containing the profile_criterions we will use later. Passed by reference.
  *
  * @param $record
  *   The record from the database.
@@ -72,17 +72,17 @@ function wikicompare_profiles_request_db($query, $type) {
  * $type
  *   The type of the request.
  */
-function wikicompare_profiles_request_db_build(&$node_array, &$profile_features, $record, $type) {
+function wikicompare_profiles_request_db_build(&$node_array, &$profile_criterions, $record, $type) {
 
   if ($type == 'profile') {
 
-    if ($record->profile_feature_id != NULL) {
-      $profile_features[$record->nid][$record->profile_feature_id] = $record->profile_feature_id;
+    if ($record->profile_criterion_id != NULL) {
+      $profile_criterions[$record->nid][$record->profile_criterion_id] = $record->profile_criterion_id;
     }
 
-    unset($node_array['data']->profile_feature_id);
+    unset($node_array['data']->profile_criterion_id);
     //Security to avoid to make isset control later.
-    $node_array['profile_features'] = array();
+    $node_array['profile_criterions'] = array();
 
   }
 
@@ -91,18 +91,18 @@ function wikicompare_profiles_request_db_build(&$node_array, &$profile_features,
 
 
 /**
- * Assign node features to the $res. We couldn't do it  while we were parsing the records.
+ * Assign node criterions to the $res. We couldn't do it  while we were parsing the records.
  *
  * @param $res
  *   The ressource which will be returned. Passed by reference.
  *
- * @param $profile_features
+ * @param $profile_criterions
  *   The array we build before while we were parsing the records.
  */
-function wikicompare_profiles_request_db_after(&$res, $profile_features) {
+function wikicompare_profiles_request_db_after(&$res, $profile_criterions) {
 
-  foreach ($profile_features as $nid => $features) {
-    $res[$nid]['profile_features'] = $features;
+  foreach ($profile_criterions as $nid => $criterions) {
+    $res[$nid]['profile_criterions'] = $criterions;
   }
 
 }
@@ -129,22 +129,22 @@ function profile_insert($node) {
   //Call the type-agnostic function.
   wikicompare_insert_node('profile', $node);
 
-  //Prepare to insert the many2many cache between profiles and features.
-  $features_m2m = array();
-  if (isset($node->wikicompare_features['und'])) {
-    foreach ($node->wikicompare_features['und'] as $feature) {
-      $feature_m2m[] = array(
+  //Prepare to insert the many2many cache between profiles and criterions.
+  $criterions_m2m = array();
+  if (isset($node->wikicompare_criterions['und'])) {
+    foreach ($node->wikicompare_criterions['und'] as $criterion) {
+      $criterion_m2m[] = array(
         'profile_nid' => $node->nid,
-        'feature_nid' => $feature['target_id'],
+        'criterion_nid' => $criterion['target_id'],
       );
     }
   }
 
   //Insert the data in the many2many table cache.
-  $header = array('profile_nid', 'feature_nid');
-  if (!empty($feature_m2m)) {
-    $query = db_insert('cache_profile_feature_rel')->fields($header);
-    foreach ($feature_m2m as $record) {
+  $header = array('profile_nid', 'criterion_nid');
+  if (!empty($criterion_m2m)) {
+    $query = db_insert('cache_profile_criterion_rel')->fields($header);
+    foreach ($criterion_m2m as $record) {
       $query->values($record);
     }
     $query->execute();
@@ -167,7 +167,7 @@ function profile_delete($node) {
   wikicompare_delete_node('profile', $node);
 
   //Remove the many2many cache data related to the deleted profile.
-  db_delete('cache_profile_feature_rel')
+  db_delete('cache_profile_criterion_rel')
     ->condition('profile_nid', $node->nid)
     ->execute();
 
@@ -201,54 +201,54 @@ function wikicompare_profiles_after_update_fields($node_revision) {
   //Profile specific code.
   if ($node_revision->type == 'profile') {
 
-    //Get new features.
-    $new_feature_ids = array();
-    if (isset($node_revision->wikicompare_features['und'])) {
-      foreach ($node_revision->wikicompare_features['und'] as $feature) {
-        $new_feature_ids[$feature['target_id']] = $feature['target_id'];
+    //Get new criterions.
+    $new_criterion_ids = array();
+    if (isset($node_revision->wikicompare_criterions['und'])) {
+      foreach ($node_revision->wikicompare_criterions['und'] as $criterion) {
+        $new_criterion_ids[$criterion['target_id']] = $criterion['target_id'];
       }
     }
 
-    //Get old features, and find the ones we profile to delete.
+    //Get old criterions, and find the ones we profile to delete.
     $to_delete = array();
-    $old_feature_ids = array();
-    $query = db_select('cache_profile_feature_rel', 'f');
-    $query->addField('f', 'feature_nid', 'feature_nid');
+    $old_criterion_ids = array();
+    $query = db_select('cache_profile_criterion_rel', 'f');
+    $query->addField('f', 'criterion_nid', 'criterion_nid');
     $query->condition('f.profile_nid', $node_revision->nid);
     $result = $query->execute();
     foreach ($result as $record) {
-      $old_feature_ids[$record->feature_nid] = $record->feature_nid;
-      if (!in_array($record->feature_nid, $new_feature_ids)) {
-        $to_delete[$record->feature_nid] = $record->feature_nid;
+      $old_criterion_ids[$record->criterion_nid] = $record->criterion_nid;
+      if (!in_array($record->criterion_nid, $new_criterion_ids)) {
+        $to_delete[$record->criterion_nid] = $record->criterion_nid;
       }
     }
 
-    //Find the features we profile to create.
+    //Find the criterions we profile to create.
     $to_create = array();
-    foreach ($new_feature_ids as $feature_id) {
-      if (!in_array($feature_id, $old_feature_ids)) {
-        $to_create[$feature_id] = array(
+    foreach ($new_criterion_ids as $criterion_id) {
+      if (!in_array($criterion_id, $old_criterion_ids)) {
+        $to_create[$criterion_id] = array(
           'profile_nid' => $node_revision->nid,
-          'feature_nid' => $feature_id,
+          'criterion_nid' => $criterion_id,
         );
       }
     }
 
-    //Insert the new features in the cache many2many table.
-    $header = array('profile_nid', 'feature_nid');
+    //Insert the new criterions in the cache many2many table.
+    $header = array('profile_nid', 'criterion_nid');
     if (!empty($to_create)) {
-      $query = db_insert('cache_profile_feature_rel')->fields($header);
+      $query = db_insert('cache_profile_criterion_rel')->fields($header);
       foreach ($to_create as $record) {
         $query->values($record);
       }
       $query->execute();
     }
 
-    //Delete the old features in the cache many2many table.
+    //Delete the old criterions in the cache many2many table.
     if (!empty($to_delete)) {
-      db_delete('cache_profile_feature_rel')
+      db_delete('cache_profile_criterion_rel')
         ->condition('profile_nid', $node_revision->nid)
-        ->condition('feature_nid', $to_delete, 'in')
+        ->condition('criterion_nid', $to_delete, 'in')
         ->execute();
     }
 
@@ -305,10 +305,10 @@ function wikicompare_profiles_table_prepare_itemlist($nid, &$nodes, $POST) {
 
 
 /*
- * Add the features of the profiles to the features which will be used to compute the comparative table.
+ * Add the criterions of the profiles to the criterions which will be used to compute the comparative table.
  *
- * @param $selected_feature_ids
- *   Array containing the features which will be used to compute the comparative table.
+ * @param $selected_criterion_ids
+ *   Array containing the criterions which will be used to compute the comparative table.
  *
  * @param $POST
  *   The data coming from the javascript.
@@ -316,11 +316,11 @@ function wikicompare_profiles_table_prepare_itemlist($nid, &$nodes, $POST) {
  * @param $settings
  *   The settings for the db request.
  */
-function wikicompare_profiles_table_prepare_compute(&$selected_feature_ids, $POST, $settings) {
+function wikicompare_profiles_table_prepare_compute(&$selected_criterion_ids, $POST, $settings) {
 
   if (!empty($POST['selected_profile_ids'])) {
-    //Call the recursive function to add the features. The function must be recursive because we only have the nids of the profiles at the base of the tree, and we must also include the features of their parents.
-    $selected_feature_ids += wikicompare_profiles_recover_features($POST['selected_profile_ids'], $settings);
+    //Call the recursive function to add the criterions. The function must be recursive because we only have the nids of the profiles at the base of the tree, and we must also include the criterions of their parents.
+    $selected_criterion_ids += wikicompare_profiles_recover_criterions($POST['selected_profile_ids'], $settings);
   }
 
 }
@@ -328,28 +328,28 @@ function wikicompare_profiles_table_prepare_compute(&$selected_feature_ids, $POS
 
 
 /*
- * Extract features from profiles.
+ * Extract criterions from profiles.
  *
  * @param $profile_ids
- *   The ids of the profiles we want to get the features.
+ *   The ids of the profiles we want to get the criterions.
  *
  * @param $settings
  *   The settings for the db request.
  *
- * @return $feature_ids
- *   The ids of the feature we will use for the computation.
+ * @return $criterion_ids
+ *   The ids of the criterion we will use for the computation.
  */
-function wikicompare_profiles_recover_features($profile_ids, $settings) {
+function wikicompare_profiles_recover_criterions($profile_ids, $settings) {
 
   //Get the details of the selected profiles.
   $profiles = request_db('profile', array('nids' => $profile_ids), $settings);
 
-  $feature_ids = array();
+  $criterion_ids = array();
   $parent_ids = array();
   foreach ($profiles as $profile) {
-    //Get features.
-    foreach ($profile['profile_features'] as $fid) {
-      $feature_ids[$fid] = $fid;
+    //Get criterions.
+    foreach ($profile['profile_criterions'] as $fid) {
+      $criterion_ids[$fid] = $fid;
     }
     //Get parent for the recursive call.
     if ($profile['data']->parent_id != NULL) {
@@ -359,10 +359,10 @@ function wikicompare_profiles_recover_features($profile_ids, $settings) {
 
   if (!empty($parent_ids)) {
     //Recursive call.
-    $feature_ids += wikicompare_profiles_recover_features($parent_ids, $settings);
+    $criterion_ids += wikicompare_profiles_recover_criterions($parent_ids, $settings);
   }
 
-  return $feature_ids;
+  return $criterion_ids;
 
 }
 
@@ -441,7 +441,7 @@ function wikicompare_profiles_form_profile_node_form_alter(&$form, &$form_state,
 
 
 /**
- * Send the features of the profile node to javascript file, so we can checked the features by default in the popin.
+ * Send the criterions of the profile node to javascript file, so we can checked the criterions by default in the popin.
  *
  * @param $settings
  *   The settings which will be send to javascript. Passed by reference.
@@ -453,17 +453,17 @@ function wikicompare_profiles_build_form_settings(&$settings, $form_state) {
 
   if ($form_state['node']->type == 'profile') {
 
-      //Get the features of the profile node.
-      $selected_feature_ids = array();
-      if (isset($form_state['node']->wikicompare_features['und'])) {
-        foreach ($form_state['node']->wikicompare_features['und'] as $array) {
+      //Get the criterions of the profile node.
+      $selected_criterion_ids = array();
+      if (isset($form_state['node']->wikicompare_criterions['und'])) {
+        foreach ($form_state['node']->wikicompare_criterions['und'] as $array) {
           $fid = $array['target_id'];
-          $selected_feature_ids[] = $fid;
+          $selected_criterion_ids[] = $fid;
         }
       }
 
-      //Insert the feature in the settings to send them to javascript.
-      $settings['wikicompare_profiles']['selected_feature_ids'] = $selected_feature_ids;
+      //Insert the criterion in the settings to send them to javascript.
+      $settings['wikicompare_profiles']['selected_criterion_ids'] = $selected_criterion_ids;
 
   }
 
@@ -485,8 +485,8 @@ function wikicompare_profiles_build_form_settings(&$settings, $form_state) {
  */
 function wikicompare_profiles_wikicompare_translation_form(&$form, &$form_state, $node) {
 
-  if (isset($form['profile_features'])) {
-    unset($form_state['node']->wikicompare_features);
+  if (isset($form['profile_criterions'])) {
+    unset($form_state['node']->wikicompare_criterions);
   }
 
 }
@@ -524,61 +524,61 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
 
   if ($type == 'profile') {
 
-    $selected_feature_itemlist = '';
-    $selected_feature_hidden = '';
+    $selected_criterion_itemlist = '';
+    $selected_criterion_hidden = '';
     //Get data from object.
-    $selected_feature_ids = array();
-    if (isset($node->wikicompare_features['und'])) {
-      foreach ($node->wikicompare_features['und'] as $array) {
+    $selected_criterion_ids = array();
+    if (isset($node->wikicompare_criterions['und'])) {
+      foreach ($node->wikicompare_criterions['und'] as $array) {
         $fid = $array['target_id'];
-        $selected_feature_ids[$fid] = $fid;
+        $selected_criterion_ids[$fid] = $fid;
       }
     }
 
-    //Build the itemlist from the features of the object.
-    $features = array();
-    if (!empty($selected_feature_ids)) {
+    //Build the itemlist from the criterions of the object.
+    $criterions = array();
+    if (!empty($selected_criterion_ids)) {
       $settings = wikicompare_initialize_settings(array('context' => 'selected', 'computed' => 1));
-      $features = wikicompare_build_recursive_data('feature', $selected_feature_ids, $settings);
-      $itemlist_data = wikicompare_build_itemlist('feature', $features['tree'], 0, $settings);
+      $criterions = wikicompare_build_recursive_data('criterion', $selected_criterion_ids, $settings);
+      $itemlist_data = wikicompare_build_itemlist('criterion', $criterions['tree'], 0, $settings);
       //Render the item list
-      $selected_feature_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected features', 'type' => 'ul', 'attributes' => array()));
-      foreach ($selected_feature_ids as $feature_id) {
-        $selected_feature_hidden .= '<div class="profile_feature">' . $feature_id . '</div>';
+      $selected_criterion_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected criterions', 'type' => 'ul', 'attributes' => array()));
+      foreach ($selected_criterion_ids as $criterion_id) {
+        $selected_criterion_hidden .= '<div class="profile_criterion">' . $criterion_id . '</div>';
       }
     }
 
-    //Link which will open a popin where we can select the features.
-    $select_feature_link = array(
-      'text' => 'Select features',
-      'title' => 'Select features',
+    //Link which will open a popin where we can select the criterions.
+    $select_criterion_link = array(
+      'text' => 'Select criterions',
+      'title' => 'Select criterions',
       'selector' => 'dialog-content',
-      'path' => 'wikicompare_get_dialog_callback/multidialog/feature/wikicompare-features/0/',
-      'id' => 'select_feature_link',
+      'path' => 'wikicompare_get_dialog_callback/multidialog/criterion/wikicompare-criterions/0/',
+      'id' => 'select_criterion_link',
     );
 
     if ($form_type == 'form') {
       //The container of the itemlist.
-      $form['container_selected_feature'] = array(
-        'itemlist' => array('#markup' => $selected_feature_itemlist),
+      $form['container_selected_criterion'] = array(
+        'itemlist' => array('#markup' => $selected_criterion_itemlist),
         '#type' => 'container',
-        '#id' => 'container-wikicompare-features',
+        '#id' => 'container-wikicompare-criterions',
         '#weight' => -2,
       );
 
       //The link is visible only in the main language node.
       if ($node->language == language_default('language')) {
-        $form['container_selected_feature']['#suffix'] = '<div id="initialize_profile_features"/><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
+        $form['container_selected_criterion']['#suffix'] = '<div id="initialize_profile_criterions"/><p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
       }
 
       //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the parent.
-      $form['wikicompare_features']['#attributes']['style'] = 'display:none;';
+      $form['wikicompare_criterions']['#attributes']['style'] = 'display:none;';
     }
 
     if ($form_type == 'fastaction') {
-      $output .= '<div id="container-wikicompare-features">';
-      $output .= $selected_feature_itemlist;
-      $output .= '</div><div id="wikicompare-features" style="display:none;">' . $selected_feature_hidden . '</div><p>' . theme('simple_dialog_link', $select_feature_link) . '</p>';
+      $output .= '<div id="container-wikicompare-criterions">';
+      $output .= $selected_criterion_itemlist;
+      $output .= '</div><div id="wikicompare-criterions" style="display:none;">' . $selected_criterion_hidden . '</div><p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
     }
 
   }
@@ -637,14 +637,14 @@ function wikicompare_profiles_fastaction_command(&$commands, $type, $nid, $outpu
 function wikicompare_profiles_fastaction_submit_after(&$node, $type, $POST) {
 
   if ($type == 'profile') {
-    $profile_features = array();
-    foreach ($POST['profile_feature_ids'] as $feature_id) {
+    $profile_criterions = array();
+    foreach ($POST['profile_criterion_ids'] as $criterion_id) {
       $array = array();
-      $array['target_id'] = $feature_id;
+      $array['target_id'] = $criterion_id;
       $array['target_type'] = "node";
-      $profile_features[] = $array;
+      $profile_criterions[] = $array;
     }
-    $node->wikicompare_features['und'] = $profile_features;
+    $node->wikicompare_criterions['und'] = $profile_criterions;
   }
 
 }
@@ -669,7 +669,7 @@ function wikicompare_profiles_demo_export(&$output) {
 
   $output .= "<p>if (module_exists('wikicompare_profiles')) {";
   $output .= "<p>\$profiles = array();</p>";
-  //Find all the features on the first level of the tree.
+  //Find all the criterions on the first level of the tree.
   $profiles = request_db('profile', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
   foreach ($profiles as $profile) {
     //Get profiles children.
@@ -696,10 +696,10 @@ function wikicompare_profiles_demo_export(&$output) {
 function wikicompare_profiles_demo_export_specific_fields(&$output, $type, $node) {
   if ($type == 'profile') {
     $i = 0;
-    $output .= "\$node->wikicompare_features['und'] = array();<br/>";
-    foreach($node['profile_features'] as $fid) {
-      $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_id'] = \$features['new-" . $fid . "'];<br/>";
-      $output .= "\$node->wikicompare_features['und'][" . $i . "]['target_type'] = 'node';<br/>";
+    $output .= "\$node->wikicompare_criterions['und'] = array();<br/>";
+    foreach($node['profile_criterions'] as $fid) {
+      $output .= "\$node->wikicompare_criterions['und'][" . $i . "]['target_id'] = \$criterions['new-" . $fid . "'];<br/>";
+      $output .= "\$node->wikicompare_criterions['und'][" . $i . "]['target_type'] = 'node';<br/>";
       $i++;
     }
   }
@@ -755,9 +755,9 @@ function wikicompare_profiles_demo_form(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['profile_min_feature_per_node'] = array(
+  $form['demo_fieldset']['profile_min_criterion_per_node'] = array(
     '#type' => 'textfield',
-    '#title' => t('Minimum number of features per profiles node'),
+    '#title' => t('Minimum number of criterions per profiles node'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -765,9 +765,9 @@ function wikicompare_profiles_demo_form(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['profile_max_feature_per_node'] = array(
+  $form['demo_fieldset']['profile_max_criterion_per_node'] = array(
     '#type' => 'textfield',
-    '#title' => t('Maximum number of features per profiles node'),
+    '#title' => t('Maximum number of criterions per profiles node'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -792,14 +792,14 @@ function wikicompare_profiles_demo_submit_generate($form_state) {
 
   if (($form_state['input']['profile_min_depth'] != 0) && ($form_state['input']['profile_max_depth'] != 0) && ($form_state['input']['profile_child_min_per_level'] != 0) && ($form_state['input']['profile_child_max_per_level'] != 0)) {
 
-    $features_without_children = array();
+    $criterions_without_children = array();
 
-    $query = db_select('cache_feature', 'f');
+    $query = db_select('cache_criterion', 'f');
     $query->addField('f', 'nid', 'nid');
     $query->condition("f.has_children", 0);
     $result = $query->execute();
     foreach($result as $record) {
-      $features_without_children[$record->nid] = $record->nid;
+      $criterions_without_children[$record->nid] = $record->nid;
     }
 
     $settings = array(
@@ -809,9 +809,9 @@ function wikicompare_profiles_demo_submit_generate($form_state) {
       'prefix' => 'Profile ' . variable_get('wikicompare_next_demo_sequence', 1),
       'child_min_per_level' => $form_state['input']['profile_child_min_per_level'],
       'child_max_per_level' => $form_state['input']['profile_child_max_per_level'],
-      'min_feature_per_node' => $form_state['input']['profile_min_feature_per_node'],
-      'max_feature_per_node' => $form_state['input']['profile_max_feature_per_node'],
-      'features_without_children' => $features_without_children,
+      'min_criterion_per_node' => $form_state['input']['profile_min_criterion_per_node'],
+      'max_criterion_per_node' => $form_state['input']['profile_max_criterion_per_node'],
+      'criterions_without_children' => $criterions_without_children,
       'depth' => 1,
     );
 
@@ -841,17 +841,17 @@ function wikicompare_profiles_demo_submit_specific_fields($node, $settings) {
 
   if ($settings['type'] == 'profile') {
 
-    if (!empty($settings['features_without_children'])) {
+    if (!empty($settings['criterions_without_children'])) {
 
-      $nb_features = rand($settings['min_feature_per_node'], $settings['max_feature_per_node']);
+      $nb_criterions = rand($settings['min_criterion_per_node'], $settings['max_criterion_per_node']);
 
-      if (!in_array($nb_features, array(0,1))) {
+      if (!in_array($nb_criterions, array(0,1))) {
 
-        $i_features = 0;
-        foreach (array_rand($settings['features_without_children'], $nb_features) as $fid) {
-          $node->wikicompare_features['und'][$i_features]['target_id'] = $fid;
-          $node->wikicompare_features['und'][$i_features]['target_type'] = "node";
-          $i_features++;
+        $i_criterions = 0;
+        foreach (array_rand($settings['criterions_without_children'], $nb_criterions) as $fid) {
+          $node->wikicompare_criterions['und'][$i_criterions]['target_id'] = $fid;
+          $node->wikicompare_criterions['und'][$i_criterions]['target_type'] = "node";
+          $i_criterions++;
         }
         $node->revision = TRUE;
         $node->revision_moderation = TRUE;
