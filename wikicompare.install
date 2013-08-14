@@ -14,11 +14,11 @@
 function wikicompare_schema() {
 
   /**
-   * Create cache tables for feature, compared and implementation records.
+   * Create cache tables for feature, compared and evaluation records.
    * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
    * This will allow us to make far less join in sql query on comparative table computation.
    */
-  foreach (array('compared', 'feature', 'implementation') as $type) {
+  foreach (array('compared', 'feature', 'evaluation') as $type) {
     $schema['cache_' . $type] = wikicompare_node_schema($type);
   }
 
@@ -56,7 +56,7 @@ function wikicompare_node_schema($type) {
     'columns' => array('vid' => 'vid'),
   );
 
-  if ($type != 'implementation') {
+  if ($type != 'evaluation') {
     $schema['fields']['title'] = array(
       'description' => 'The title of the node',
       'type' => 'varchar',
@@ -95,7 +95,7 @@ function wikicompare_node_schema($type) {
       'default' => 0,
     );
     $schema['fields']['parent_changed'] = array(
-      'description' => "Boolean indicated that the parent of this node has changed, and thus we need to update the parent of his implementations",
+      'description' => "Boolean indicated that the parent of this node has changed, and thus we need to update the parent of his evaluations",
       'type' => 'int',
       'size' => 'tiny',
       'not null' => TRUE,
@@ -104,7 +104,7 @@ function wikicompare_node_schema($type) {
     $schema['indexes']['parent_changed'] = array('parent_changed');
   } else {
     $schema['fields']['compared_id'] = array(
-      'description' => 'The compared id of the implementation node',
+      'description' => 'The compared id of the evaluation node',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => TRUE,
@@ -115,7 +115,7 @@ function wikicompare_node_schema($type) {
       'columns' => array('compared_id' => 'nid'),
     );
     $schema['fields']['feature_id'] = array(
-      'description' => 'The feature id of the implementation node',
+      'description' => 'The feature id of the evaluation node',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => TRUE,
@@ -126,7 +126,7 @@ function wikicompare_node_schema($type) {
       'columns' => array('feature_id' => 'nid'),
     );
     $schema['fields']['parent_through_compared_id'] = array(
-      'description' => 'The parent implementation id on the feature axis',
+      'description' => 'The parent evaluation id on the feature axis',
       'type' => 'int',
       'unsigned' => TRUE,
     );
@@ -136,7 +136,7 @@ function wikicompare_node_schema($type) {
       'columns' => array('parent_through_compared_id' => 'nid'),
     );
     $schema['fields']['parent_through_feature_id'] = array(
-      'description' => 'The parent implementation id on the compared axis',
+      'description' => 'The parent evaluation id on the compared axis',
       'type' => 'int',
       'unsigned' => TRUE,
     );
@@ -227,9 +227,9 @@ function wikicompare_node_schema($type) {
         'not null' => TRUE,
       );
       break;
-    case 'implementation':
+    case 'evaluation':
       $schema['fields']['support'] = array(
-        'description' => "Boolean indicated if this implementation is supported or not",
+        'description' => "Boolean indicated if this evaluation is supported or not",
         'type' => 'int',
         'size' => 'tiny',
         'not null' => TRUE,
@@ -411,7 +411,7 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-  foreach (array('compared', 'feature', 'implementation') as $type) {
+  foreach (array('compared', 'feature', 'evaluation') as $type) {
     //Generic function.
     wikicompare_node_install($type);
   }
@@ -452,8 +452,8 @@ function wikicompare_install() {
       'publish revisions of any feature content' => TRUE,
       'view revisions of any compared content' => TRUE,
       'publish revisions of any compared content' => TRUE,
-      'view revisions of any implementation content' => TRUE,
-      'publish revisions of any implementation content' => TRUE,
+      'view revisions of any evaluation content' => TRUE,
+      'publish revisions of any evaluation content' => TRUE,
       'access user profiles' => TRUE,
       'change own username' => TRUE,
       'cancel account' => TRUE,
@@ -657,7 +657,7 @@ function wikicompare_node_install($type) {
   field_create_instance($instance);
   
   //Assign wikicompare fields to node types.
-  if ($type != 'implementation') {
+  if ($type != 'evaluation') {
     $instance = array(
       'field_name' => 'wikicompare_parent_id',
       'entity_type' => 'node',
@@ -743,7 +743,7 @@ function wikicompare_node_install($type) {
     $instance = array(
       'field_name' => 'wikicompare_feature_id',
       'entity_type' => 'node',
-      'bundle' => 'implementation',
+      'bundle' => 'evaluation',
       'label' => 'Feature',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
@@ -759,7 +759,7 @@ function wikicompare_node_install($type) {
     $instance = array(
       'field_name' => 'wikicompare_compared_id',
       'entity_type' => 'node',
-      'bundle' => 'implementation',
+      'bundle' => 'evaluation',
       'label' => 'Compared',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
@@ -777,7 +777,7 @@ function wikicompare_node_install($type) {
     $instance = array(
       'field_name' => 'wikicompare_support',
       'entity_type' => 'node',
-      'bundle' => 'implementation',
+      'bundle' => 'evaluation',
       'label' => 'Support',
       'default_value' => array(
         0 => array(
@@ -793,7 +793,7 @@ function wikicompare_node_install($type) {
     $instance = array(
       'field_name' => 'wikicompare_protected',
       'entity_type' => 'node',
-      'bundle' => 'implementation',
+      'bundle' => 'evaluation',
       'label' => 'Protected?',
       'default_value' => array(
         0 => array(
@@ -809,7 +809,7 @@ function wikicompare_node_install($type) {
     $instance = array(
       'field_name' => 'wikicompare_proofs',
       'entity_type' => 'node',
-      'bundle' => 'implementation',
+      'bundle' => 'evaluation',
       'label' => 'Proofs',
       'widget' => array(
         'settings' => array(
@@ -916,9 +916,9 @@ function wikicompare_uninstall() {
   node_delete_multiple($nids);
 
 
-  //Delete all nodes of implementation type.
+  //Delete all nodes of evaluation type.
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
-  $result = db_query($sql, array(':type' => 'implementation'));
+  $result = db_query($sql, array(':type' => 'evaluation'));
   $nids = array();
   foreach ($result as $row) {
     $nids[] = $row->nid;
@@ -926,7 +926,7 @@ function wikicompare_uninstall() {
   node_delete_multiple($nids);
 
   //Purge variables.
-  foreach (array('compared', 'feature', 'implementation') as $type) {
+  foreach (array('compared', 'feature', 'evaluation') as $type) {
 
     variable_del('node_options_' . $type);
     variable_del('node_submitted_' . $type);
@@ -964,10 +964,10 @@ function wikicompare_uninstall() {
 
   field_delete_instance(field_read_instance('node', 'body', 'compared'));
   field_delete_instance(field_read_instance('node', 'body', 'feature'));
-  field_delete_instance(field_read_instance('node', 'body', 'implementation'));
+  field_delete_instance(field_read_instance('node', 'body', 'evaluation'));
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_compared'));
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_feature'));
-  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_implementation'));
+  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_evaluation'));
 
   //Remove wikicompare text format.
   filter_format_disable('wikicompare_text_format');

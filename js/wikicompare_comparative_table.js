@@ -281,7 +281,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * Use the wikicompare_use_from_inherit field to detect that we are in a implementation form. When we change the value of use_from_inherit, the value of support field is recomputed.
+     * Use the wikicompare_use_from_inherit field to detect that we are in a evaluation form. When we change the value of use_from_inherit, the value of support field is recomputed.
      */
     $('#edit-wikicompare-use-from-inherit-und:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       $(this).click(function() {
@@ -291,7 +291,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * Ajaxify the hidden link which will recompute the support field in implementation form.
+     * Ajaxify the hidden link which will recompute the support field in evaluation form.
      */
     $('.compute_inherit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       var link_id = $(this).attr('id');
@@ -398,7 +398,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_compareds = false;
         send_compareds_columns = false;
         send_features = false;
-        send_implementations = false;
+        send_evaluations = false;
         send_profiles = false;
         send_manual_selected_features = false;
         send_selected_profiles = false;
@@ -550,7 +550,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.fastaction = context;
 
           //Get value of all fields in the fastaction form, and send them to Drupal.
-          if (type != 'implementation') {
+          if (type != 'evaluation') {
             options.data.title = $('#form_' + type + '_fast' + context + '_title_' + nid).val();
             options.data.title_translation = $('#form_' + type + '_fast' + context + '_title_' + nid + '_translation').val();
             options.data.parent_id = $('#wikicompare-parent-id').text();
@@ -568,7 +568,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.guidelines_translation = $('#form_' + type + '_fast' + context + '_guidelines_' + nid + '_translation').val();
             options.data.weight = $('#form_' + type + '_fast' + context + '_weight_' + nid).val();
           }
-          if (type == 'implementation') {
+          if (type == 'evaluation') {
             options.data.support = $('#edit-wikicompare-support-und').is(':checked');
             options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').is(':checked');
           }
@@ -585,9 +585,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.selectnode = $('#form_' + type + '_fast' + context + '_selectnode_' + nid).val();
         }
 
-        //If we are updating the support value in implementation form.
+        //If we are updating the support value in evaluation form.
         if (action == 'compute_inherit') {
-          //Send implementation value.
+          //Send evaluation value.
           send_nid = true;
           //Send value of use_from_inherit field.
           options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').attr('checked');
@@ -600,8 +600,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_computed = true;
           //Send compared displayed, to update the titles.
           send_compareds_columns = true;
-          //Send implementations, to update the percent.
-          send_implementations = true;
+          //Send evaluations, to update the percent.
+          send_evaluations = true;
           //Send selected_features, to check if we need to reset the manual itemlist.
           send_selected_features = true;
           //Send states.
@@ -738,15 +738,15 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.feature_ids = feature_ids;
         }
 
-        //Get and send the implementations in the table.
-        if (send_implementations == true) {
-          var implementation_ids = {};
-          $('.implementation_cell').each(function (key, value) {
+        //Get and send the evaluations in the table.
+        if (send_evaluations == true) {
+          var evaluation_ids = {};
+          $('.evaluation_cell').each(function (key, value) {
             var iid = extract_nid($(this).attr('id'))[0];
-            implementation_ids[iid] = iid;
+            evaluation_ids[iid] = iid;
           });
           //Add them in the ajax call variables.
-          options.data.implementation_ids = implementation_ids;
+          options.data.evaluation_ids = evaluation_ids;
         }
 
         //Get and send the profiles in the table.
@@ -839,7 +839,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             if (action == 'toogle_compared_checkbox') {
               //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
               $('#header_compared_' + nid).show();
-              $('.implementation_compared_' + nid).fadeIn();
+              $('.evaluation_compared_' + nid).fadeIn();
             }
 
             //Initialize the selected_features_ids when we open a profile fastaction form. Not the same variable than manual_selected_features_ids to avoid conflict.
@@ -875,10 +875,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
             if (action == 'toogle_compared_checkbox') {
               //Hide the column. We can't use animation because of the current template, to check when we will have the final template
               $('#header_compared_' + nid).hide();
-              $('.implementation_compared_' + nid).hide();
+              $('.evaluation_compared_' + nid).hide();
               //Mark the column element so they will be remove at the next event. We can't do it now because otherwise it will crash the fade animation
               $('#header_compared_' + nid).addClass('to_remove');
-              $('.implementation_compared_' + nid).addClass('to_remove');
+              $('.evaluation_compared_' + nid).addClass('to_remove');
             }
 
           }

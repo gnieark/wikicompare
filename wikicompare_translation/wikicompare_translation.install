@@ -17,7 +17,7 @@ function wikicompare_translation_install() {
   require_once 'includes/language.inc';
 
   //Activate node translation.
-  foreach (array('compared', 'feature', 'implementation') as $type) {
+  foreach (array('compared', 'feature', 'evaluation') as $type) {
     variable_set('language_content_type_' . $type, 2);
   }
   if (module_exists('wikicompare_profiles')) {
@@ -50,7 +50,7 @@ function wikicompare_translation_install() {
  */
 function wikicompare_translation_uninstall() {
 
-  foreach (array('compared', 'feature', 'implementation') as $type) {
+  foreach (array('compared', 'feature', 'evaluation') as $type) {
     variable_set('language_content_type_' . $type, 0);
   }
 

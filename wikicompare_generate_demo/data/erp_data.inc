@@ -2554,8 +2554,8 @@ _revisioning_publish_latest_revision($node);
 
 }
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10895'], $features['new-10971']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10895'], $features['new-10971']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2567,8 +2567,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-10971']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-10971']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2580,8 +2580,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-10971']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-10971']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2593,8 +2593,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-10971']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-10971']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2606,8 +2606,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11017']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11017']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2619,8 +2619,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11017']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11017']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 1;
@@ -2632,8 +2632,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11017']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11017']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2645,8 +2645,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10895'], $features['new-11040']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10895'], $features['new-11040']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2658,8 +2658,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10893'], $features['new-11086']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10893'], $features['new-11086']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2671,8 +2671,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10898'], $features['new-11086']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10898'], $features['new-11086']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2684,8 +2684,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11086']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11086']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2697,8 +2697,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11086']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11086']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2710,8 +2710,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10893'], $features['new-11109']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10893'], $features['new-11109']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2723,8 +2723,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10898'], $features['new-11109']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10898'], $features['new-11109']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2736,8 +2736,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11109']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11109']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2749,8 +2749,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11109']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11109']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2762,8 +2762,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10898'], $features['new-11155']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10898'], $features['new-11155']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2775,8 +2775,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11155']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11155']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2788,8 +2788,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11155']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11155']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2801,8 +2801,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10893'], $features['new-11178']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10893'], $features['new-11178']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2814,8 +2814,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10898'], $features['new-11178']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10898'], $features['new-11178']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2827,8 +2827,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11178']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11178']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2840,8 +2840,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11178']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11178']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2853,8 +2853,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11223']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11223']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2866,8 +2866,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11223']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11223']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2879,8 +2879,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11223']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11223']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2892,8 +2892,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10911'], $features['new-11246']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10911'], $features['new-11246']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2905,8 +2905,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11246']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11246']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2918,8 +2918,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11269']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11269']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2931,8 +2931,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10895'], $features['new-11338']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10895'], $features['new-11338']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2944,8 +2944,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11338']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11338']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2957,8 +2957,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11338']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11338']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2970,8 +2970,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11338']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11338']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2983,8 +2983,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11361']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11361']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -2996,8 +2996,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10909'], $features['new-11361']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10909'], $features['new-11361']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3009,8 +3009,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11361']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11361']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3022,8 +3022,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10895'], $features['new-11407']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10895'], $features['new-11407']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3035,8 +3035,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11407']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11407']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3048,8 +3048,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11407']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11407']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3061,8 +3061,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11407']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11407']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3074,8 +3074,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10895'], $features['new-11430']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10895'], $features['new-11430']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3087,8 +3087,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11430']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11430']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3100,8 +3100,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11430']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11430']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3113,8 +3113,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11430']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11430']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3126,8 +3126,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11453']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11453']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3139,8 +3139,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11453']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11453']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3152,8 +3152,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11453']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11453']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3165,8 +3165,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10895'], $features['new-11498']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10895'], $features['new-11498']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3178,8 +3178,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11498']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11498']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3191,8 +3191,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11498']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11498']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3204,8 +3204,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11498']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11498']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3217,8 +3217,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11521']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11521']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3230,8 +3230,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11521']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11521']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3243,8 +3243,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11521']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11521']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3256,8 +3256,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10895'], $features['new-11567']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10895'], $features['new-11567']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3269,8 +3269,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11567']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11567']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3282,8 +3282,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11567']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11567']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3295,8 +3295,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11567']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11567']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3308,8 +3308,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11590']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11590']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3321,8 +3321,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11590']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11590']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3334,8 +3334,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11590']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11590']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3347,8 +3347,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10900'], $features['new-11636']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10900'], $features['new-11636']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3360,8 +3360,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11636']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11636']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3373,8 +3373,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11636']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11636']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3386,8 +3386,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11659']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11659']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3399,8 +3399,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11659']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11659']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3412,8 +3412,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10911'], $features['new-11682']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10911'], $features['new-11682']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3425,8 +3425,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10916'], $features['new-11751']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10916'], $features['new-11751']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3438,8 +3438,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10921'], $features['new-11751']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10921'], $features['new-11751']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3451,8 +3451,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10921'], $features['new-11774']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10921'], $features['new-11774']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3464,8 +3464,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10911'], $features['new-11820']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10911'], $features['new-11820']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3477,8 +3477,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11820']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11820']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3490,8 +3490,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10911'], $features['new-11843']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10911'], $features['new-11843']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3503,8 +3503,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10911'], $features['new-11866']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10911'], $features['new-11866']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3516,8 +3516,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11866']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11866']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3529,8 +3529,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11935']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11935']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3542,8 +3542,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11935']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11935']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3555,8 +3555,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-11980']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-11980']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3568,8 +3568,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-11980']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-11980']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3581,8 +3581,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-12002']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-12002']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3594,8 +3594,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-12002']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-12002']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3607,8 +3607,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-12024']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-12024']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3620,8 +3620,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-12024']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-12024']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3633,8 +3633,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-12047']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-12047']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3646,8 +3646,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-12047']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-12047']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3659,8 +3659,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10906'], $features['new-12092']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10906'], $features['new-12092']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -3672,8 +3672,8 @@ $node->revision_moderation = TRUE;
 node_save($node);
 _revisioning_publish_latest_revision($node);
 
-$implementation_id = wikicompare_get_implementation_id($compareds['new-10924'], $features['new-12092']);
-$node = node_load($implementation_id);
+$evaluation_id = wikicompare_get_evaluation_id($compareds['new-10924'], $features['new-12092']);
+$node = node_load($evaluation_id);
 $node->wikicompare_support['und'][0]['value'] = 1;
 if (module_exists('wikicompare_inherit_compared')) {
 $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;

@@ -43,12 +43,12 @@
 </tr>
 <tr>
 	<td>waitForElementPresent</td>
-	<td>id=implementation_36</td>
+	<td>id=evaluation_36</td>
 	<td></td>
 </tr>
 <tr>
 	<td>assertText</td>
-	<td>id=implementation_table_supertitle_36</td>
+	<td>id=evaluation_table_supertitle_36</td>
 	<td>50%</td>
 </tr>
 <tr>
@@ -63,7 +63,7 @@
 </tr>
 <tr>
 	<td>assertText</td>
-	<td>id=implementation_table_supertitle_59</td>
+	<td>id=evaluation_table_supertitle_59</td>
 	<td>0%</td>
 </tr>
 

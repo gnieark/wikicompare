@@ -43,7 +43,7 @@ function compared_insert($node) {
 
 /**
  * Type-agnostic function which will proceed all actions which happen when we insert a node.
- * Essentially, we need to insert new entries in wikicompare caches and create the new implementations for each existing compared or feature.
+ * Essentially, we need to insert new entries in wikicompare caches and create the new evaluations for each existing compared or feature.
  *
  * @param $type
  *   The type of the created node.
@@ -111,9 +111,9 @@ function wikicompare_insert_node($type, $node) {
 
 
 
-  //For compared and feature, create the new implementations if the created node is published.
+  //For compared and feature, create the new evaluations if the created node is published.
   if (in_array($type, array('compared', 'feature'))) {
-    wikicompare_create_implementations($node, $type);
+    wikicompare_create_evaluations($node, $type);
   }
 
 }
@@ -156,12 +156,12 @@ function compared_delete($node) {
 
 /**
  * Implements hook_delete().
- * Executed each time an implementation is deleted.
+ * Executed each time an evaluation is deleted.
  *
  * @param $node
  *   The node object which will be deleted.
  */
-function implementation_delete($node) {
+function evaluation_delete($node) {
 
   if (module_exists('wikicompare_translation')) {
     //Delete the translation nodes of the deleted node.
@@ -173,7 +173,7 @@ function implementation_delete($node) {
 
 /**
  * Type-agnostic function which will proceed all actions which happen when we delete a node.
- * Essentially, we need to remove the entries in wikicompare caches and delete the implementations linked the deleted compared or feature.
+ * Essentially, we need to remove the entries in wikicompare caches and delete the evaluations linked the deleted compared or feature.
  *
  * @param $type
  *   The type of the deleted node.
@@ -191,27 +191,27 @@ function wikicompare_delete_node($type, $node) {
   //At this time, the node is deleted in Drupal but not in the cache table, which means the users of the deleted nodes are deleted but not the link with his children. So we launch the update users function to update the children users before updating the cache.
   wikicompare_update_cache_users(array(array('nid' => $node->nid)));
 
-  //Only compareds and features are linked to implementations.
+  //Only compareds and features are linked to evaluations.
   if (in_array($type, array('compared', 'feature'))) {
 
-    //Find all implementation nodes.
+    //Find all evaluation nodes.
     //We can use field_data* field because this field should not be modified so nor have revision. We don't use cache table because field_data* is more reliable.
-    $implementation_ids = array();
+    $evaluation_ids = array();
     $query = db_select('field_data_wikicompare_' . $type . '_id', 'c');
     $query->addField('c', 'entity_id', 'entity_id');
     $query->condition('c.wikicompare_' . $type . '_id_target_id', $node->nid, '=');
     $result = $query->execute();
     foreach ($result as $record) {
-      $implementation_ids[$record->entity_id] = $record->entity_id;
+      $evaluation_ids[$record->entity_id] = $record->entity_id;
     }
 
-    // Delete all implementations found.
-    node_delete_multiple($implementation_ids);
+    // Delete all evaluations found.
+    node_delete_multiple($evaluation_ids);
 
     //Delete them in the wikicompare cache.
-    if (!empty($implementation_ids)) {
-      db_delete('cache_implementation')
-        ->condition('nid', $implementation_ids, 'in')
+    if (!empty($evaluation_ids)) {
+      db_delete('cache_evaluation')
+        ->condition('nid', $evaluation_ids, 'in')
         ->execute();
     }
 
@@ -296,7 +296,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   if ($op == 'pre publish') {
 
     //Types which must be checked by the function. All types defined by wikicompare module are concerned.
-    $types = array('compared', 'feature', 'implementation');
+    $types = array('compared', 'feature', 'evaluation');
 
     if (module_exists('wikicompare_profiles')) {
       //Add profile type.
@@ -312,7 +312,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       //This way we will be able to know which value was changed, and so know what to do. If a node is updated but no critical value is changed, then no update on the compare tree will be done.
       $current_node = node_load($node_revision->nid);
 
-      //Types which must check their parent_id. All types defined by wikicompare module are concerned, except implementation which does not have parent_id field.
+      //Types which must check their parent_id. All types defined by wikicompare module are concerned, except evaluation which does not have parent_id field.
       $types = array('compared', 'feature');
 
       if (module_exists('wikicompare_profiles')) {
@@ -377,7 +377,7 @@ function wikicompare_revisionapi($op, $node_revision) {
             $to_update[$node_revision_parent] = $node_revision_parent;
             $to_update[$current_node_parent] = $current_node_parent;
 
-            //Mark the modified node so his implementations will be updated with his new implementations parents on compared and feature axis.
+            //Mark the modified node so his evaluations will be updated with his new evaluations parents on compared and feature axis.
             db_update('cache_' . $node_revision->type)
               ->fields(array(
                 'parent_changed' => 1,
@@ -408,21 +408,21 @@ function wikicompare_revisionapi($op, $node_revision) {
         }
       }
 
-      //Tests based on implementation specific fields.
-      if ($node_revision->type == 'implementation') {
+      //Tests based on evaluation specific fields.
+      if ($node_revision->type == 'evaluation') {
         if ($node_revision->wikicompare_support['und'][0]['value'] != $current_node->wikicompare_support['und'][0]['value']) {
           $to_update[$node_revision->nid] = $node_revision->nid;
         }
         if (module_exists('wikicompare_inherit_compared')) {
           //Trigger tree update if use_from_inherit has changed.
-          wikicompare_inherit_compared_preupdate_implementation($to_update, $node_revision, $current_node);
+          wikicompare_inherit_compared_preupdate_evaluation($to_update, $node_revision, $current_node);
         }
       }
 
       //If any of the critical field have changed.
       if (!empty($to_update)) {
         //Only the type related to the compare tree need to be mark for update.
-        if (in_array($node_revision->type, array('compared', 'feature', 'implementation'))) {
+        if (in_array($node_revision->type, array('compared', 'feature', 'evaluation'))) {
           //We mark the marked nodes, his old parent and his new parent for update
           db_update('cache_' . $node_revision->type)
             ->fields(array(
@@ -445,7 +445,7 @@ function wikicompare_revisionapi($op, $node_revision) {
   if ($op == 'post publish') {
 
     //Types which must be checked by the function. All types defined by wikicompare module are concerned.
-    $types = array('compared', 'feature', 'implementation');
+    $types = array('compared', 'feature', 'evaluation');
 
     if (module_exists('wikicompare_profiles')) {
       //Add profile type.
@@ -460,8 +460,8 @@ function wikicompare_revisionapi($op, $node_revision) {
         'vid' => $node_revision->vid,
       );
 
-      //Common field to all nodes, except implementation.
-      if ($node_revision->type != 'implementation') {
+      //Common field to all nodes, except evaluation.
+      if ($node_revision->type != 'evaluation') {
 
         $fields['title'] = $node_revision->title;
         $parent_id = NULL;
@@ -474,7 +474,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         //Update the power users on the node and his children.
         wikicompare_update_cache_users(array(array('nid' => $node_revision->nid)));
 
-      //Implementation specific fields.
+      //evaluation specific fields.
       } else {
         $fields['support']= $node_revision->wikicompare_support['und'][0]['value'];
       }
@@ -518,14 +518,14 @@ function wikicompare_revisionapi($op, $node_revision) {
 
     //Trigger a tree update on all the marked nodes.
     if ($node_nids) {
-      //If the parent compared of feature have change, we need to update the parent implementations through compared or feature axis.
+      //If the parent compared of feature have change, we need to update the parent evaluations through compared or feature axis.
       foreach ($nodes as $node) {
 
-        //Update the cache_implementation with the new structural fields, needed for the percent computation.
+        //Update the cache_evaluation with the new structural fields, needed for the percent computation.
         if (in_array($node_revision->type, array('compared', 'feature'))) {
 
-          //Create the missing implementations if the node is published without being published before.
-          wikicompare_create_implementations($node_revision, $node_revision->type);
+          //Create the missing evaluations if the node is published without being published before.
+          wikicompare_create_evaluations($node_revision, $node_revision->type);
 
           $fields = array();
           $query = db_select('cache_' . $node_revision->type, 'n');
@@ -548,7 +548,7 @@ function wikicompare_revisionapi($op, $node_revision) {
             }
           }
 
-          db_update('cache_implementation')
+          db_update('cache_evaluation')
               ->fields($fields)
               ->condition($node_revision->type . '_id', $node->nid)
               ->execute();
@@ -566,8 +566,8 @@ function wikicompare_revisionapi($op, $node_revision) {
           }
 
           if (module_exists('wikicompare_inherit_compared')) {
-            //Update the parent_through_inherit fields in implementation.
-            wikicompare_inherit_compared_update_parent_implementations($node, $node_revision->type);
+            //Update the parent_through_inherit fields in evaluation.
+            wikicompare_inherit_compared_update_parent_evaluations($node, $node_revision->type);
           }
 
         }
@@ -594,7 +594,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
 
 /**
- * Create the new implementations.
+ * Create the new evaluations.
  *
  * @param $node
  *   The node which was created/modified.
@@ -602,9 +602,9 @@ function wikicompare_revisionapi($op, $node_revision) {
  * @param $type
  *   The type of the node.
  */
-function wikicompare_create_implementations($node, $type) {
+function wikicompare_create_evaluations($node, $type) {
 
-  //We create the implementations only if the node is published.
+  //We create the evaluations only if the node is published.
   if (!in_array($node->wikicompare_state['und'][0]['value'], unserialize(WIKICOMPARE_STATE_PUBLISHED))) {
     return;
   }
@@ -634,47 +634,47 @@ function wikicompare_create_implementations($node, $type) {
   }
   $query->addField('cache', 'state', 'state');
   $query->addField('cache', 'has_children', 'has_children');
-  $query->addField('ni', 'nid', 'implementation_nid');
+  $query->addField('ni', 'nid', 'evaluation_nid');
   $query->leftjoin('cache_' . $countertype, 'cache', 'n.nid = cache.nid');
   /*
-   * I don't like at all using the table cache for the implementation creation because they are less reliable than node/fields table. Unfortunately, using node/fields table would mean using at least four more join and I believe it would really cost us too much on the perf side.
-   * The main problem which can happen is that an implemention doesn't exist in cache but exist in node, and so another implementation will be created for the same couple compared/feature. If this situation happenned too often, we'll need to add a list in administration with all the duplicated implementation, so the admin can chose which one should be deleted.
+   * I don't like at all using the table cache for the evaluation creation because they are less reliable than node/fields table. Unfortunately, using node/fields table would mean using at least four more join and I believe it would really cost us too much on the perf side.
+   * The main problem which can happen is that an implemention doesn't exist in cache but exist in node, and so another evaluation will be created for the same couple compared/feature. If this situation happenned too often, we'll need to add a list in administration with all the duplicated evaluation, so the admin can chose which one should be deleted.
    */
-  $query->leftjoin('cache_implementation', 'ni', 'n.nid = ni.' . $countertype . '_id AND ni.' . $type . '_id = ' . $node->nid);
+  $query->leftjoin('cache_evaluation', 'ni', 'n.nid = ni.' . $countertype . '_id AND ni.' . $type . '_id = ' . $node->nid);
   $query->condition('n.type', $countertype);
   $query->condition('n.language', language_default('language'));
   $query->condition('cache.state', unserialize(WIKICOMPARE_STATE_PUBLISHED), 'in');
   $result = $query->execute();
   foreach ($result as $record) {
-    //Check if the implementation is already created.
-    if (!$record->implementation_nid) {
+    //Check if the evaluation is already created.
+    if (!$record->evaluation_nid) {
       $counternodes[$record->nid] = $record;
     }
   }
 
-  //Create a new implementation node for each countertype nodes
+  //Create a new evaluation node for each countertype nodes
   foreach ($counternodes as $counternode){
-    $node_implementation = new stdClass();
-    $node_implementation->type = 'implementation';
+    $node_evaluation = new stdClass();
+    $node_evaluation->type = 'evaluation';
     // Add default parameters
-    node_object_prepare($node_implementation);
-    //Implementations has no title, we insert Implementation here because this title will be visible in the dashboard, so we can identify them more easily.
-    $node_implementation->title = 'Implementation';
-    $node_implementation->language = language_default('language');
+    node_object_prepare($node_evaluation);
+    //evaluations has no title, we insert evaluation here because this title will be visible in the dashboard, so we can identify them more easily.
+    $node_evaluation->title = 'evaluation';
+    $node_evaluation->language = language_default('language');
 
-    //The implementation has both a feature_id and a compared_id
-    $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_id'] = $node->nid;
-    $node_implementation->{'wikicompare_' . $type . '_id'}['und'][0]['target_type'] = "node";
-    $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_id'] = $counternode->nid;
-    $node_implementation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_type'] = "node";
+    //The evaluation has both a feature_id and a compared_id
+    $node_evaluation->{'wikicompare_' . $type . '_id'}['und'][0]['target_id'] = $node->nid;
+    $node_evaluation->{'wikicompare_' . $type . '_id'}['und'][0]['target_type'] = "node";
+    $node_evaluation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_id'] = $counternode->nid;
+    $node_evaluation->{'wikicompare_' . $countertype . '_id'}['und'][0]['target_type'] = "node";
 
     if (module_exists('wikicompare_inherit_compared')) {
       //Inherit compared specific field.
-      wikicompare_inherit_compared_insert_implementation($node_implementation);
+      wikicompare_inherit_compared_insert_evaluation($node_evaluation);
     }
 
-    //Save the implementation node in database.
-    node_save($node_implementation);
+    //Save the evaluation node in database.
+    node_save($node_evaluation);
 
     if ($type == 'feature') {
       $feature_type = $node->wikicompare_type['und'][0]['value'];
@@ -685,11 +685,11 @@ function wikicompare_create_implementations($node, $type) {
     }
 
     //Prepare to add the new record in wikicompare cache table.
-    $cache_implementation = array(
-      'nid' => $node_implementation->nid,
-      'vid' => $node_implementation->vid,
-      'feature_id' => $node_implementation->wikicompare_feature_id['und'][0]['target_id'],
-      'compared_id' => $node_implementation->wikicompare_compared_id['und'][0]['target_id'],
+    $cache_evaluation = array(
+      'nid' => $node_evaluation->nid,
+      'vid' => $node_evaluation->vid,
+      'feature_id' => $node_evaluation->wikicompare_feature_id['und'][0]['target_id'],
+      'compared_id' => $node_evaluation->wikicompare_compared_id['und'][0]['target_id'],
       'support' => 0,
       $type . '_parent_id' => $parent_id,
       $type . '_state' => $node->wikicompare_state['und'][0]['value'],
@@ -703,32 +703,32 @@ function wikicompare_create_implementations($node, $type) {
 
     if (module_exists('wikicompare_inherit_compared')) {
       //Inherit compared specific field.
-      wikicompare_inherit_compared_cache_implementation_fields($cache_implementation, $node_implementation);
+      wikicompare_inherit_compared_cache_evaluation_fields($cache_evaluation, $node_evaluation);
     }
 
-    //Add the prepared implementation fields in array so we can insert them all at once later.
-    $cache_implementations[] = $cache_implementation;
+    //Add the prepared evaluation fields in array so we can insert them all at once later.
+    $cache_evaluations[] = $cache_evaluation;
 
   }
 
-  //Insert the created implementation in their caches.
-  if (!empty($cache_implementation)) {
+  //Insert the created evaluation in their caches.
+  if (!empty($cache_evaluation)) {
 
-    //Prepare the header for the mass insert in implementation cache table.
+    //Prepare the header for the mass insert in evaluation cache table.
     $header = array('nid', 'vid', 'feature_id', 'compared_id', 'support', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'feature_type', 'feature_weight');
 
     if (module_exists('wikicompare_inherit_compared')) {
       //Inherit compared specific field.
-      wikicompare_inherit_compared_cache_fields_header($header, 'implementation');
+      wikicompare_inherit_compared_cache_fields_header($header, 'evaluation');
     }
 
-    $query = db_insert('cache_implementation')->fields($header);
-    foreach ($cache_implementations as $implementation) {
-      $query->values($implementation);
+    $query = db_insert('cache_evaluation')->fields($header);
+    foreach ($cache_evaluations as $evaluation) {
+      $query->values($evaluation);
     }
     $query->execute();
 
-    //Update parent_through_compared_id and parent_through_feature_id field in cache_implementation. We can't make it at the implementation creation because the parent through counternode axis are created at the same time.
+    //Update parent_through_compared_id and parent_through_feature_id field in cache_evaluation. We can't make it at the evaluation creation because the parent through counternode axis are created at the same time.
     wikicompare_update_parent_link($type, $node->nid);
 
     if (module_exists('wikicompare_inherit_compared')) {
@@ -746,33 +746,33 @@ function wikicompare_create_implementations($node, $type) {
 
 
 /**
- * Function which will update the parent though compared and feature fields in cache_implementation. Theses fields are important for the percentage computation.
+ * Function which will update the parent though compared and feature fields in cache_evaluation. Theses fields are important for the percentage computation.
  *
  * @param $nid
- *   The nid of the compared or feature which we need to update the implementation. If empty, all implementation will be updated.
+ *   The nid of the compared or feature which we need to update the evaluation. If empty, all evaluation will be updated.
  */
 function wikicompare_update_parent_link($type=NULL, $nid=NULL) {
 
   if (Database::getConnection()->databaseType() == 'mysql') {
-    $query = 'UPDATE cache_implementation n
+    $query = 'UPDATE cache_evaluation n
            INNER JOIN cache_compared compared ON n.compared_id = compared.nid
-           LEFT JOIN cache_implementation ncp ON (compared.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
+           LEFT JOIN cache_evaluation ncp ON (compared.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
            INNER JOIN cache_feature feature ON n.feature_id = feature.nid
-           LEFT JOIN cache_implementation nfp ON (feature.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
+           LEFT JOIN cache_evaluation nfp ON (feature.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
            SET n.parent_through_compared_id = ncp.nid, n.parent_through_feature_id = nfp.nid';
     if ($nid != NULL) {
       $query = $query . ' WHERE ' . $type . '.nid = ' . $nid;
     }
   } else {
-    $query = 'UPDATE cache_implementation
+    $query = 'UPDATE cache_evaluation
       SET parent_through_compared_id = ncp.nid,
           parent_through_feature_id = nfp.nid
-      FROM cache_implementation n
+      FROM cache_evaluation n
       INNER JOIN cache_compared compared ON n.compared_id = compared.nid
-      LEFT JOIN cache_implementation ncp ON (compared.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
+      LEFT JOIN cache_evaluation ncp ON (compared.parent_id = ncp.compared_id AND n.feature_id = ncp.feature_id)
       INNER JOIN cache_feature feature ON n.feature_id = feature.nid
-      LEFT JOIN cache_implementation nfp ON (feature.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
-      WHERE cache_implementation.nid = n.nid';
+      LEFT JOIN cache_evaluation nfp ON (feature.parent_id = nfp.feature_id AND n.compared_id = nfp.compared_id)
+      WHERE cache_evaluation.nid = n.nid';
     if ($nid != NULL) {
       $query = $query . ' AND ' . $type . '.nid = ' . $nid;
     }

@@ -74,8 +74,8 @@ function wikicompare_export_page() {
     wikicompare_inherit_compared_demo_export($output);
   }
 
-  //Get all implementations.
-  $query = db_select('cache_implementation', 'n');
+  //Get all evaluations.
+  $query = db_select('cache_evaluation', 'n');
   $query->addField('c', 'nid', 'cid');
   $query->addField('f', 'nid', 'fid');
   $query->addField('n', 'support', 'support');
@@ -86,20 +86,20 @@ function wikicompare_export_page() {
   $query->condition("n.support", 1);
   if (module_exists('wikicompare_inherit_compared')) {
     //Add inherit compared specific fields.
-    wikicompare_inherit_compared_demo_export_implementation_request($query);
+    wikicompare_inherit_compared_demo_export_evaluation_request($query);
   }
   $result = $query->execute();
 
   foreach ($result as $record) {
 
     $output .= "<p>";
-    //The implementation is created by the wikicompare module, so we have to load it to modify his fields.
-    $output .= "\$implementation_id = wikicompare_get_implementation_id(\$compareds['new-" . $record->cid . "'], \$features['new-" . $record->fid . "']);<br/>";
-    $output .= "\$node = node_load(\$implementation_id);<br/>";
+    //The evaluation is created by the wikicompare module, so we have to load it to modify his fields.
+    $output .= "\$evaluation_id = wikicompare_get_evaluation_id(\$compareds['new-" . $record->cid . "'], \$features['new-" . $record->fid . "']);<br/>";
+    $output .= "\$node = node_load(\$evaluation_id);<br/>";
     $output .= "\$node->wikicompare_support['und'][0]['value'] = " . $record->support . ";<br/>";
     if (module_exists('wikicompare_inherit_compared')) {
       //Add inherit compared specific fields.
-      wikicompare_inherit_compared_demo_export_implementation_render($output, $record);
+      wikicompare_inherit_compared_demo_export_evaluation_render($output, $record);
     }
     $output .= "\$node->promote = 0;<br/>";
     $output .= "\$node->sticky = 0;<br/>";
@@ -316,9 +316,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     wikicompare_profiles_demo_form($form);
   }
 
-  $form['demo_fieldset']['implementation_support_chance'] = array(
+  $form['demo_fieldset']['evaluation_support_chance'] = array(
     '#type' => 'textfield',
-    '#title' => t('Chance that the created implementation go to supported state (1/x)'),
+    '#title' => t('Chance that the created evaluation go to supported state (1/x)'),
     '#default_value' => 20,
     '#size' => 3,
     '#maxlength' => 3,
@@ -451,11 +451,11 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
     wikicompare_inherit_compared_demo_submit_generate($form_state, $compareds_created);
   }
 
-  //Change support implementation value. This part take a lot of time, better put a high support chance
-  if (!empty($compareds_created) && !empty($features_created) && $form_state['input']['implementation_support_chance'] != 0) {
+  //Change support evaluation value. This part take a lot of time, better put a high support chance
+  if (!empty($compareds_created) && !empty($features_created) && $form_state['input']['evaluation_support_chance'] != 0) {
 
-    //Get all implementation node.
-    $query = db_select('cache_implementation', 'i');
+    //Get all evaluation node.
+    $query = db_select('cache_evaluation', 'i');
     $query->addField('i', 'nid', 'nid');
     $query->leftjoin('cache_compared', 'c', 'i.compared_id = c.nid');
     $query->leftjoin('cache_feature', 'f', 'i.feature_id = f.nid');
@@ -465,20 +465,20 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
     $query->condition('i.compared_id', $compareds_created, 'in');
     if (module_exists('wikicompare_inherit_compared')) {
       //Add inherit compared specific field.
-      wikicompare_inherit_compared_demo_submit_implementation_query($query);
+      wikicompare_inherit_compared_demo_submit_evaluation_query($query);
     }
     $result = $query->execute();
     foreach($result as $record) {
       $node = node_load($record->nid);
       $modified = False;
       //Modify support field.
-      if (rand(1, $form_state['input']['implementation_support_chance']) == $form_state['input']['implementation_support_chance']) {
+      if (rand(1, $form_state['input']['evaluation_support_chance']) == $form_state['input']['evaluation_support_chance']) {
         $node->wikicompare_support['und'][0]['value'] = 1;
         $modified = True;
       }
       if (module_exists('wikicompare_inherit_compared')) {
         //Modify inherit compared specific field.
-        wikicompare_inherit_compared_demo_submit_implementation($node, $modified, $form_state, $record);
+        wikicompare_inherit_compared_demo_submit_evaluation($node, $modified, $form_state, $record);
       }
 
       if ($modified == True) {

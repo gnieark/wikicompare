@@ -24,7 +24,7 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
     'columns' => array('inherit_compared_id' => 'nid'),
   );
   $schema['cache_compared']['fields']['inherit_changed'] = array(
-    'description' => "Boolean indicated that the inherited compared of this node has changed, and thus we need to update the parent through inherit of his implementations",
+    'description' => "Boolean indicated that the inherited compared of this node has changed, and thus we need to update the parent through inherit of his evaluations",
     'type' => 'int',
     'size' => 'tiny',
     'not null' => TRUE,
@@ -32,20 +32,20 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
   );
   $schema['cache_compared']['indexes']['inherit_changed'] = array('inherit_changed');
 
-  $schema['cache_implementation']['fields']['use_from_inherit'] = array(
+  $schema['cache_evaluation']['fields']['use_from_inherit'] = array(
       'description' => "Boolean indicated if we should use the data from the inherited compared",
       'type' => 'int',
       'size' => 'tiny',
       'not null' => TRUE,
       'default' => 1,
   );
-  $schema['cache_implementation']['fields']['parent_through_inherit_id'] = array(
-    'description' => 'The inherited implementation id',
+  $schema['cache_evaluation']['fields']['parent_through_inherit_id'] = array(
+    'description' => 'The inherited evaluation id',
     'type' => 'int',
     'unsigned' => TRUE,
   );
-  $schema['cache_implementation']['indexes']['parent_through_inherit_id'] = array('parent_through_inherit_id');
-  $schema['cache_implementation']['foreign keys']['parent_through_inherit_id'] = array(
+  $schema['cache_evaluation']['indexes']['parent_through_inherit_id'] = array('parent_through_inherit_id');
+  $schema['cache_evaluation']['foreign keys']['parent_through_inherit_id'] = array(
     'table' => 'node',
     'columns' => array('parent_through_inherit_id' => 'nid'),
   );
@@ -102,8 +102,8 @@ function wikicompare_inherit_compared_install() {
   db_add_index('cache_compared', 'inherit_changed', array('inherit_changed'));
 
   //Add index in the cache table.
-  $schema = drupal_get_schema('cache_implementation');
-  db_add_field('cache_implementation', 'use_from_inherit', $schema['fields']['use_from_inherit']);
+  $schema = drupal_get_schema('cache_evaluation');
+  db_add_field('cache_evaluation', 'use_from_inherit', $schema['fields']['use_from_inherit']);
 
   //Add field.
   $field = array(
@@ -122,7 +122,7 @@ function wikicompare_inherit_compared_install() {
   $instance = array(
     'field_name' => 'wikicompare_use_from_inherit',
     'entity_type' => 'node',
-    'bundle' => 'implementation',
+    'bundle' => 'evaluation',
     'label' => 'Use data from inherit compared?',
     'description' => 'TODO',
     'default_value' => array(
@@ -136,19 +136,19 @@ function wikicompare_inherit_compared_install() {
   );
   field_create_instance($instance);
 
-  db_add_field('cache_implementation', 'parent_through_inherit_id', $schema['fields']['parent_through_inherit_id']);
-  db_add_index('cache_implementation', 'parent_through_inherit_id', array('parent_through_inherit_id'));
+  db_add_field('cache_evaluation', 'parent_through_inherit_id', $schema['fields']['parent_through_inherit_id']);
+  db_add_index('cache_evaluation', 'parent_through_inherit_id', array('parent_through_inherit_id'));
 
-  //Set use_from_inherit of old implementations to 1.
-  $implementations = db_query("SELECT nid FROM node WHERE type = 'implementation'");
-  foreach($implementations as $item) {
+  //Set use_from_inherit of old evaluations to 1.
+  $evaluations = db_query("SELECT nid FROM node WHERE type = 'evaluation'");
+  foreach($evaluations as $item) {
     $node = node_load($item->nid);
-    $node->implementation_use_from_inherit['und'][0]['value'] = 1;
+    $node->evaluation_use_from_inherit['und'][0]['value'] = 1;
     node_save($node);
   }
 
   //Update cache
-  db_update('cache_implementation')
+  db_update('cache_evaluation')
     ->fields(array(
       'use_from_inherit' => 1,
     ))
@@ -171,10 +171,10 @@ function wikicompare_inherit_compared_uninstall() {
   db_drop_field('cache_compared', 'inherit_changed');
   db_drop_index('cache_compared', 'inherit_changed');
 
-  db_drop_field('cache_implementation', 'use_from_inherit');
+  db_drop_field('cache_evaluation', 'use_from_inherit');
   field_delete_field('wikicompare_use_from_inherit');
-  db_drop_field('cache_implementation', 'parent_through_inherit_id');
-  db_drop_index('cache_implementation', 'parent_through_inherit_id');
+  db_drop_field('cache_evaluation', 'parent_through_inherit_id');
+  db_drop_index('cache_evaluation', 'parent_through_inherit_id');
 
   // Purge all field information
   // api.drupal.org/api/function/field_purge_batch/7

@@ -193,16 +193,16 @@ function wikicompare_table_render_comparative_table($settings, $features=array()
     }
   }
 
-  //Get the needed implementation thanks to feature and compared ids.
-  $implementations = array();
+  //Get the needed evaluation thanks to feature and compared ids.
+  $evaluations = array();
   //I though about move this security in the request itself, but it would add an unnecessary db request in many cases.
   if (!empty($features['ids']) && !empty($compared_ids)) {
-    //Get the needed implementation thanks to feature and compared ids.
-    $implementations = request_db('implementation', array('feature_ids' => $features['ids'], 'compared_ids' => $compared_ids), $settings);
+    //Get the needed evaluation thanks to feature and compared ids.
+    $evaluations = request_db('evaluation', array('feature_ids' => $features['ids'], 'compared_ids' => $compared_ids), $settings);
   }
 
   //Build recursively the features data and compute them if necessary.
-  $features_row_data = wikicompare_build_rows_data($features['tree'], $compared_ids, $implementations, $settings);
+  $features_row_data = wikicompare_build_rows_data($features['tree'], $compared_ids, $evaluations, $settings);
 
   $compareds = array();
   if (!empty($compared_ids)) {
@@ -248,7 +248,7 @@ function wikicompare_table_render_comparative_table($settings, $features=array()
  * Render the rows for the comparative table. This function is called by the render comparative table function and by the feature add children ajax call.
  *
  * @param $features_row_data
- *   The consolidated data of the row, which contains the features in tree and their implementation.
+ *   The consolidated data of the row, which contains the features in tree and their evaluation.
  *
  * @param $settings
  *   The context of the rows.
@@ -283,9 +283,9 @@ function wikicompare_table_render_rows($features_row_data, $settings) {
     $output .= '<td>' . wikicompare_table_get_supertitle_item('feature', $feature, $settings) . '</td>';
 
     //Add a column for each compared.
-    foreach ($feature['implementations'] as $cid => $implementation) {
-      //Render implementation.
-      $output .= wikicompare_table_render_implementation($implementation, $feature, $cid, $settings);
+    foreach ($feature['evaluations'] as $cid => $evaluation) {
+      //Render evaluation.
+      $output .= wikicompare_table_render_evaluation($evaluation, $feature, $cid, $settings);
     }
     $output .= '</tr>';
 
@@ -297,33 +297,33 @@ function wikicompare_table_render_rows($features_row_data, $settings) {
 }
 
 /**
- * Render the implementation. This fucntion is used in render row function and in the add compared column ajax call.
+ * Render the evaluation. This fucntion is used in render row function and in the add compared column ajax call.
  *
- * @param $implementation
- *   The implementation to render.
+ * @param $evaluation
+ *   The evaluation to render.
  *
  * @param feature
- *   The detail of the feature of the implementation.
+ *   The detail of the feature of the evaluation.
  *
  * @param $settings
- *   The context of the implementation.
+ *   The context of the evaluation.
  *
  * @return $output
- *   The rendered implementation.
+ *   The rendered evaluation.
  */
-function wikicompare_table_render_implementation($implementation, $feature, $cid, $settings) {
+function wikicompare_table_render_evaluation($evaluation, $feature, $cid, $settings) {
 
   $output = '<td';
   $css_class = '';
-  if (isset($implementation['data']->nid)) {
-    $output .= ' id="implementation_' . $implementation['data']->nid . '"';
-    $css_class = 'implementation_cell ' . $implementation['data']->css_class;
+  if (isset($evaluation['data']->nid)) {
+    $output .= ' id="evaluation_' . $evaluation['data']->nid . '"';
+    $css_class = 'evaluation_cell ' . $evaluation['data']->css_class;
   }
-  $output .= ' class="' . $css_class . ' implementation_compared_' . $cid . ' implementation_feature_' . $feature['data']->nid . '">';
-  //We hide the implementation for all non-published feature, to more easily distinct them from the published ones.
+  $output .= ' class="' . $css_class . ' evaluation_compared_' . $cid . ' evaluation_feature_' . $feature['data']->nid . '">';
+  //We hide the evaluation for all non-published feature, to more easily distinct them from the published ones.
   if (in_array($feature['data']->state, unserialize(WIKICOMPARE_STATE_PUBLISHED)) || $feature == NULL) {
-    //Render the implementation.
-    $output .= wikicompare_table_get_supertitle_item('implementation', $implementation, $settings);
+    //Render the evaluation.
+    $output .= wikicompare_table_get_supertitle_item('evaluation', $evaluation, $settings);
   }
   $output .= '</td>';
 
@@ -332,7 +332,7 @@ function wikicompare_table_render_implementation($implementation, $feature, $cid
 
 /*
  * Render the supertitle of an item. This part is separate from the rest of the render function because we have to be able to call this in cleaning function, to for exemple change a simple title into a link if a node get children.
- * This function is call by all item function, itemlist, feature rows and implementations.
+ * This function is call by all item function, itemlist, feature rows and evaluations.
  *
  * @param $type
  *   The type of the rendered node.
@@ -351,7 +351,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
   $prefix = '';
   $suffix = '';
 
-  if ($type != 'implementation') {
+  if ($type != 'evaluation') {
 
     //Get the title of the item, which can be a translated title.
     $title = '<span class="' . $type . '_title_' . $node['data']->nid . '">' . $node['data']->title . '</span>';
@@ -451,7 +451,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
     }
 
   } else {
-    //An implementation has no title, we simply display his percentage.
+    //An evaluation has no title, we simply display his percentage.
     $title = $node['data']->percent . '%';
   }
 
@@ -684,16 +684,16 @@ function wikicompare_build_fulltitle($res, $tree, $parent_title) {
 
 
 /**
- * Function which will build the features row, assign the implementations and compute the percent if we are in compute mode. Used in render comparative table and in feature ajax callback.
+ * Function which will build the features row, assign the evaluations and compute the percent if we are in compute mode. Used in render comparative table and in feature ajax callback.
  *
  * @param $features_tree
  *   The feature tree previously build by recursive function.
  *
  * @param $compared_ids
- *   The nids of the compared nodes displayed in the table, so we can assign the implementations to each rows.
+ *   The nids of the compared nodes displayed in the table, so we can assign the evaluations to each rows.
  *
- * @param $implementations
- *   The implementations details we previously extracted from database.
+ * @param $evaluations
+ *   The evaluations details we previously extracted from database.
  *
  * @param $settings
  *   The context of the build.
@@ -701,7 +701,7 @@ function wikicompare_build_fulltitle($res, $tree, $parent_title) {
  * @return $rows
  *   The prepared rows ready to be rendered.
  */
-function wikicompare_build_rows_data($features_tree, $compared_ids, $implementations, $settings){
+function wikicompare_build_rows_data($features_tree, $compared_ids, $evaluations, $settings){
 
   $rows = array();
 
@@ -721,7 +721,7 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $implementat
     //Launch the recursive function if we are computing the table and the feature have children.
     $children = array();
     if ($feature['children']) {
-      $children = wikicompare_build_rows_data($feature['children'], $compared_ids, $implementations, $settings);
+      $children = wikicompare_build_rows_data($feature['children'], $compared_ids, $evaluations, $settings);
     }
 
     //Since the row are not in a tree but at the same level, we need to use the direct-child flag to recover the true children of the node we are currently working on.
@@ -734,43 +734,43 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $implementat
       }
     }
 
-    //Assign implementation to each rows, following the displayed compareds.
-    $rows[$fid]['implementations'] = array();
+    //Assign evaluation to each rows, following the displayed compareds.
+    $rows[$fid]['evaluations'] = array();
     foreach ($compared_ids as $cid) {
 
-      //Get implementation detail, thanks to feature and compared id.
-      if (isset($implementations[$fid][$cid])) {
-        $implementation = $implementations[$fid][$cid];
+      //Get evaluation detail, thanks to feature and compared id.
+      if (isset($evaluations[$fid][$cid])) {
+        $evaluation = $evaluations[$fid][$cid];
       } else {
-        $implementation = array('data' => new stdClass);
+        $evaluation = array('data' => new stdClass);
       }
 
-      //If the table is computed, then we will not use the percent in cache_implementation but compute it with the specified features.
+      //If the table is computed, then we will not use the percent in cache_evaluation but compute it with the specified features.
       if ($settings['computed']) {
 
         //The type of the feature which will be used in the wikicompare_compute_percent function
-        $implementation['data']->type = $feature['data']->type;
+        $evaluation['data']->type = $feature['data']->type;
         //The weight of the feature which will be used in the parent wikicompare_compute_percent function
-        $implementation['data']->weight = $feature['data']->weight;
+        $evaluation['data']->weight = $feature['data']->weight;
 
-        //Get all children implementation on the feature axis (same compared id).
+        //Get all children evaluation on the feature axis (same compared id).
         $through_feature_childs = array();
         foreach ($direct_children as $child) {
-          $child_implementation = $child['implementations'][$cid]['data'];
-          $through_feature_childs[$child_implementation->feature_id] = $child_implementation;
+          $child_evaluation = $child['evaluations'][$cid]['data'];
+          $through_feature_childs[$child_evaluation->feature_id] = $child_evaluation;
         }
 
-        //Get the implementation percent by calling the same function than the one used in update_compare_tree.
+        //Get the evaluation percent by calling the same function than the one used in update_compare_tree.
         if (!empty($through_feature_childs)) {
-          $implementation['data']->percent = 0;
-          $implementation['data']->css_class = 'cell-support-no';
-          $implementation['data'] = wikicompare_compute_percent($implementation['data'], $through_feature_childs);
+          $evaluation['data']->percent = 0;
+          $evaluation['data']->css_class = 'cell-support-no';
+          $evaluation['data'] = wikicompare_compute_percent($evaluation['data'], $through_feature_childs);
         }
 
       }
 
-      //Assign the implementation to the row.
-      $rows[$fid]['implementations'][$cid] = $implementation;
+      //Assign the evaluation to the row.
+      $rows[$fid]['evaluations'][$cid] = $evaluation;
 
     }
 
@@ -892,20 +892,20 @@ function wikicompare_get_feature_children_response($method = 'ajax') {
     //Get the children, with the parent nid.
     $features = request_db('feature', array('parent_id' => $_POST['nid']), $settings);
 
-    //Extract feature_ids to use it as argument to get the implementations.
+    //Extract feature_ids to use it as argument to get the evaluations.
     $feature_ids = array();
     foreach ($features as $fid => $feature) {
       $feature_ids[$fid] = $fid;
     }
 
-    //Recover the implementations needed for the cells, thanks to compared and feature ids.
-    $implementations = array();
+    //Recover the evaluations needed for the cells, thanks to compared and feature ids.
+    $evaluations = array();
     if (!empty($settings['compared_column_ids'])) {
-      $implementations = request_db('implementation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
+      $evaluations = request_db('evaluation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
     }
 
     //Prepare the features data for rendering.
-    $feature_row_data = wikicompare_build_rows_data($features, $settings['compared_column_ids'], $implementations, $settings);
+    $feature_row_data = wikicompare_build_rows_data($features, $settings['compared_column_ids'], $evaluations, $settings);
 
     //Render the features.
     $output = wikicompare_table_render_rows($feature_row_data, $settings);
@@ -965,10 +965,10 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
       //Get the features details, by searching with their nids.
       $features = request_db('feature', array('nids' => $_POST['feature_ids']), $settings);
 
-      //Recover the implementations needed for the cells.
-      $implementations = request_db('implementation', array('compared_ids' => array($_POST['nid']), 'feature_ids' => $_POST['feature_ids']), $settings);
+      //Recover the evaluations needed for the cells.
+      $evaluations = request_db('evaluation', array('compared_ids' => array($_POST['nid']), 'feature_ids' => $_POST['feature_ids']), $settings);
 
-      //If the table was computed, then we need to compute the implementation of the compared, with the displayed features.
+      //If the table was computed, then we need to compute the evaluation of the compared, with the displayed features.
       if ($settings['computed']) {
 
         //We will use only the feature without childre for the computation.
@@ -985,15 +985,15 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
 
       }
 
-      //Finally prepare the features and implementations for rendering if necessary compute the implementation percent.
-      $features = wikicompare_build_rows_data($features, array($_POST['nid']), $implementations, $settings);
+      //Finally prepare the features and evaluations for rendering if necessary compute the evaluation percent.
+      $features = wikicompare_build_rows_data($features, array($_POST['nid']), $evaluations, $settings);
 
       $cells = array();
       foreach ($features as $fid => $feature) {
-        //Get implementation details.
-        $implementation = $feature['implementations'][$_POST['nid']];
+        //Get evaluation details.
+        $evaluation = $feature['evaluations'][$_POST['nid']];
         //Render the cell.
-        $cells[$fid] = wikicompare_table_render_implementation($implementation, $feature, $_POST['nid'], $settings);
+        $cells[$fid] = wikicompare_table_render_evaluation($evaluation, $feature, $_POST['nid'], $settings);
       }
 
     }
@@ -1325,7 +1325,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
   $commands = array();
   $update_selected_features = false;
 
-  //Execute for all wikicompare node type, except implementation.
+  //Execute for all wikicompare node type, except evaluation.
   $types = array('compared', 'feature');
   if (module_exists('wikicompare_profiles')) {
     //Add profile type.
@@ -1360,7 +1360,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     $nodes = array();
     if (!empty($node_ids)) {
       $nodes = request_db($type, array('nids' => $node_ids), $settings);
-      //We need to keep the features details for the part with the implementations.
+      //We need to keep the features details for the part with the evaluations.
       if ($type == 'feature') {
         $features = $nodes;
       }
@@ -1490,7 +1490,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
   }
 
-  //We refresh the implementations only if the table wasn't computed.
+  //We refresh the evaluations only if the table wasn't computed.
   if (!$_POST['computed']) {
 
     //Extract feature_ids.
@@ -1499,16 +1499,16 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
       $feature_ids[$feature['nid']] = $feature['nid'];
     }
 
-    //Get implementations details.
-    $implementations = array();
+    //Get evaluations details.
+    $evaluations = array();
     if (!empty($settings['compared_column_ids']) && !empty($feature_ids)) {
-      $implementations = request_db('implementation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
+      $evaluations = request_db('evaluation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
     }
 
-    //Rerender all the implementations displayed in the table.
-    foreach($implementations as $fid => $compareds_implementations) {
-      foreach ($compareds_implementations as $cid => $implementation) {
-        $commands[] = ajax_command_replace('#implementation_' . $implementation['data']->nid, wikicompare_table_render_implementation($implementation, $features[$implementation['data']->feature_id], $cid, $settings));
+    //Rerender all the evaluations displayed in the table.
+    foreach($evaluations as $fid => $compareds_evaluations) {
+      foreach ($compareds_evaluations as $cid => $evaluation) {
+        $commands[] = ajax_command_replace('#evaluation_' . $evaluation['data']->nid, wikicompare_table_render_evaluation($evaluation, $features[$evaluation['data']->feature_id], $cid, $settings));
       }
     }
 

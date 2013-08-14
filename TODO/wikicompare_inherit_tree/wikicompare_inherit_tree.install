@@ -13,7 +13,7 @@
  */
 function wikicompare_inherit_schema() {
 
-  //Create cache table for the inherit tree, similar to the comparative_table of the main module. His role is to compute percent and css_class at each change on feature/compared/implementation and not at each read of the comparative table.
+  //Create cache table for the inherit tree, similar to the comparative_table of the main module. His role is to compute percent and css_class at each change on feature/compared/evaluation and not at each read of the comparative table.
   $schema['cache_inherit_tree'] = array(
 
     'description' => 'Cache table for inherit tree',
@@ -165,7 +165,7 @@ function wikicompare_inherit_tree_install() {
     'entity_type' => 'node',
     'bundle' => 'feature',
     'label' => 'Inherit tree top compared',
-    'description' => 'TODO : Only compared children of theses top compared can be select in the implementations',
+    'description' => 'TODO : Only compared children of theses top compared can be select in the evaluations',
     'widget' => array(
       'type' => 'entityreference_autocomplete',
     ),
@@ -179,13 +179,13 @@ function wikicompare_inherit_tree_install() {
 
 
   /*
-   * Create compared_support implementation field
+   * Create compared_support evaluation field
    */
 
 
 
   $field = array(
-    'field_name' => 'implementation_compared_support',
+    'field_name' => 'evaluation_compared_support',
     'type' => 'entityreference',
     'cardinality' => -1,
     'settings' => array(
@@ -196,9 +196,9 @@ function wikicompare_inherit_tree_install() {
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'implementation_compared_support',
+    'field_name' => 'evaluation_compared_support',
     'entity_type' => 'node',
-    'bundle' => 'implementation',
+    'bundle' => 'evaluation',
     'label' => 'Use value of the compared :',
     'description' => 'TODO : We will use theses values to compute percent of the inherited tree',
     'widget' => array(
@@ -227,7 +227,7 @@ function wikicompare_inherit_tree_uninstall() {
   db_drop_index('cache_feature', 'inherit_tree_id');
   field_delete_field('feature_inherit_tree');
   field_delete_field('feature_inherit_tree_top_compared');
-  field_delete_field('implementation_compared_support');
+  field_delete_field('evaluation_compared_support');
 
 
   // Purge all field information

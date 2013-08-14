@@ -33,9 +33,9 @@ function wikicompare_form_feature_node_form_alter(&$form, &$form_state, $form_id
   //Call type-agnostic function.
   wikicompare_build_form('form', $form, $form_state, 'feature');
 }
-function wikicompare_form_implementation_node_form_alter(&$form, &$form_state, $form_id) {
+function wikicompare_form_evaluation_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
-  wikicompare_build_form('form', $form, $form_state, 'implementation');
+  wikicompare_build_form('form', $form, $form_state, 'evaluation');
 }
 
 
@@ -115,8 +115,8 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
   }
 
-  //Code specific to all node type except implementation.
-  if ($type != 'implementation') {
+  //Code specific to all node type except evaluation.
+  if ($type != 'evaluation') {
 
     //Code relative to title field. It is automatically displayed in form, so only fastaction is concerned.
     if ($form_type == 'fastaction') {
@@ -223,7 +223,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
     if (module_exists('wikicompare_inherit_compared')) {
       //Add the fields relative to inherit compared in compared node.
-      wikicompare_inherit_compared_modify_form_no_implementation($form, $output, $form_type, $type, $node, $nid, $readonly);
+      wikicompare_inherit_compared_modify_form_no_evaluation($form, $output, $form_type, $type, $node, $nid, $readonly);
     }
 
 /* TODO Not working, textarea work but not text_format.
@@ -273,11 +273,11 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       $form['wikicompare_user_from_parent_ids']['und'][0]['target_id'] = NULL;
     }
 
-  //Code specific to implementation.
+  //Code specific to evaluation.
   } else {
 
     //Get information from cache, like guidelines and has_children flag of compared and feature.
-    $query = db_select('cache_implementation', 'n');
+    $query = db_select('cache_evaluation', 'n');
     $query->addField('f', 'title', 'feature');
     $query->addField('c', 'title', 'compared');
     $query->addField('f', 'has_children', 'feature_has_children');
@@ -304,9 +304,9 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
       $form['wikicompare_compared_id'] = array('#markup' => $res->compared);
 
-      //We can modify the value of the implementation only it is at the root of the tree in both axis.
+      //We can modify the value of the evaluation only it is at the root of the tree in both axis.
       if (!$res->feature_has_children && !$res->compared_has_children) {
-        //If the user has not rights on the node, then he will not be able to change the protected status of the implementation.
+        //If the user has not rights on the node, then he will not be able to change the protected status of the evaluation.
         if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
           //Hide the field in the form. We can't unset it, otherwise it display an error.
           hide($form['wikicompare_protected']);
@@ -331,8 +331,8 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
       if (module_exists('wikicompare_inherit_compared')) {
         $test = False;
-        //Add the fields relative to inherit compared in implementation node.
-        wikicompare_inherit_compared_modify_form_implementation($form, $output, $readonly, $test, 'form', $type, $node, $fastaction);
+        //Add the fields relative to inherit compared in evaluation node.
+        wikicompare_inherit_compared_modify_form_evaluation($form, $output, $readonly, $test, 'form', $type, $node, $fastaction);
       }
 
     }
@@ -340,16 +340,16 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
     if ($form_type == 'fastaction') {
 
-      //We can modify the value of the implementation only it is at the root of the tree in both axis.
+      //We can modify the value of the evaluation only it is at the root of the tree in both axis.
       if (!$res->feature_has_children && !$res->compared_has_children) {
         $test = False;
         $disable_support = False;
         if (module_exists('wikicompare_inherit_compared')) {
-          wikicompare_inherit_compared_modify_form_implementation($form, $output, $disable_support, $test, 'fastaction', $type, $node, $readonly, $fastaction);
+          wikicompare_inherit_compared_modify_form_evaluation($form, $output, $disable_support, $test, 'fastaction', $type, $node, $readonly, $fastaction);
         }
 
         //I wasn't able to use the renderable array, so I coded directly in html
-        $output .= '<input class="form_implementation_fastaction_support form-checkbox" type="checkbox" id="edit-wikicompare-support-und"';
+        $output .= '<input class="form_evaluation_fastaction_support form-checkbox" type="checkbox" id="edit-wikicompare-support-und"';
 
         if ($fastaction == 'edit') {
           $test_support = False;
@@ -359,7 +359,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
           }
           if (module_exists('wikicompare_inherit_compared')) {
             //Test if the support field must be checked.
-            wikicompare_inherit_compared_test_form_implementation($test_support, $test, $node);
+            wikicompare_inherit_compared_test_form_evaluation($test_support, $test, $node);
           }
           if ($test_support == True) {
             $output .= ' checked="checked"';
@@ -371,7 +371,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
           $output .= ' disabled="disabled"';
         }
 
-        $output .= ' value="1" />  <label class="option" for="form_implementation_fastaction_support_' . $node->nid . '">Support? </label>';
+        $output .= ' value="1" />  <label class="option" for="form_evaluation_fastaction_support_' . $node->nid . '">Support? </label>';
       }
 
     }
@@ -462,8 +462,8 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
   }
 
-  //Code relative to state field, common to all type except implementation.
-  if ($type != 'implementation') {
+  //Code relative to state field, common to all type except evaluation.
+  if ($type != 'evaluation') {
 
     if ($form_type == 'form') {
       //Default state.
@@ -545,8 +545,8 @@ function add_fastaction_items($type, $node_array){
   $output = ' ';
   $nid = $node_array['data']->nid;
 
-  //If the node is an implementation, then we can only fastedit the item, not fastadd or fastremove.
-  if ($type == 'implementation') {
+  //If the node is an evaluation, then we can only fastedit the item, not fastadd or fastremove.
+  if ($type == 'evaluation') {
 
     //Unless the database say the user can't fastedit the node, for exemple if he's not the author of some of the revisions.
     if (!isset($node_array['no-edit'])) {
@@ -649,7 +649,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
     //Define if we want to display the form after an itemlist or after a row in the table.
     $display_type = 'itemlist';
-    if (in_array($type, array('feature','implementation'))) {
+    if (in_array($type, array('feature','evaluation'))) {
       $display_type = 'row_table';
     }
 
@@ -749,7 +749,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
       case ('feature'):
         $commands[] = ajax_command_invoke('#feature_table_' . $nid, 'after', array($output));
         break;
-      case ('implementation'):
+      case ('evaluation'):
         $commands[] = ajax_command_invoke('#feature_table_' . $node->wikicompare_feature_id['und'][0]['target_id'], 'after', array($output));
         break;
     }
@@ -849,8 +849,8 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       wikicompare_translation_fastaction_submit_init_tnode($tnode, $_POST, $fastaction);
     }
 
-    //Fields relatives to all node type except implementation.
-    if ($type != 'implementation') {
+    //Fields relatives to all node type except evaluation.
+    if ($type != 'evaluation') {
       //Assign the field, or mark the field as missing if empty.
       if ($_POST['title'] != NULL) {
         $node->title = $_POST['title'];
@@ -933,8 +933,8 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
     }
 
-    //Implementation specific field.
-    if ($type == 'implementation') {
+    //evaluation specific field.
+    if ($type == 'evaluation') {
       //Assign support field.
       if ($donotupdate == False) {
           if ($_POST['support'] == 'true') {
@@ -968,7 +968,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       _revisioning_publish_latest_revision($node);
 
       //If the submitted node isn't in published state, then we ensure that his state is displayed in the table so the user can immmediately see the node.
-      if ($type != 'implementation') {
+      if ($type != 'evaluation') {
         if (in_array($_POST['state'], array('new', 'incomplete', 'submitted'))) {
           $commands[] = ajax_command_invoke('#checkbox-draft-items', 'attr', array('checked', 'checked'));
         } elseif (in_array($_POST['state'],array('rejected', 'disactivated'))) {

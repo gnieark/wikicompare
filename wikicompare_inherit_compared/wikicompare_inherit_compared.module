@@ -63,11 +63,11 @@ function compute_inherit_response($method = 'ajax') {
 
     $inherit_id = NULL;
 
-    $query = db_select('cache_implementation', 'n');
+    $query = db_select('cache_evaluation', 'n');
     $query->addField('c', 'inherit_compared_id', 'inherit_id');
     $query->addField('ci', 'support', 'support');
     $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND ci.feature_id = n.feature_id');
+    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_compared_id = ci.compared_id AND ci.feature_id = n.feature_id');
     $query->condition('n.nid', $_POST['nid']);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -85,7 +85,7 @@ function compute_inherit_response($method = 'ajax') {
     }
 
   } else {
-    $query = db_select('cache_implementation', 'n');
+    $query = db_select('cache_evaluation', 'n');
     $query->addField('n', 'support', 'support');
     $query->condition('n.nid', $_POST['nid']);
     $result = $query->execute();
@@ -126,12 +126,12 @@ function compute_inherit_response($method = 'ajax') {
 function wikicompare_inherit_compared_update_main_query(&$query) {
 
   $query->addField('n', 'use_from_inherit', 'use_from_inherit');
-  //Recover the percent value of the inherited implementation
+  //Recover the percent value of the inherited evaluation
   $query->addField('ni', 'compared_id', 'inheriting_compared_id');
-  $query->addField('ni', 'nid', 'inheriting_implementation_nid');
-  $query->addField('ni', 'percent', 'inheriting_implementation_cache_percent');
-  $query->addField('ni', 'css_class', 'inheriting_implementation_cache_css_class');
-  $query->leftjoin('cache_implementation', 'ni', 'n.parent_through_inherit_id = ni.nid');
+  $query->addField('ni', 'nid', 'inheriting_evaluation_nid');
+  $query->addField('ni', 'percent', 'inheriting_evaluation_cache_percent');
+  $query->addField('ni', 'css_class', 'inheriting_evaluation_cache_css_class');
+  $query->leftjoin('cache_evaluation', 'ni', 'n.parent_through_inherit_id = ni.nid');
 
 }
 
@@ -139,7 +139,7 @@ function wikicompare_inherit_compared_update_main_query(&$query) {
 
 /**
  * Prepare the variables before the node computation.
- * Essentially check if we have the percent of the inherited implementation and recover the children through inherit we will update after the computation.
+ * Essentially check if we have the percent of the inherited evaluation and recover the children through inherit we will update after the computation.
  *
  * @param $nodes
  *   The object returned by the initial sql request, that we need to complete. Passed by reference.
@@ -152,12 +152,12 @@ function wikicompare_inherit_compared_update_main_query(&$query) {
  */
 function wikicompare_inherit_compared_update_comparative_table_preparation(&$nodes, $type, $nids) {
 
-    //Mark to update the inherited implementation without cache percent
+    //Mark to update the inherited evaluation without cache percent
     $to_update = array();
     foreach($nodes as $node) {
       if ($node->inheriting_compared_id) {
-        if (!$node->inheriting_implementation_cache_percent) {
-          $to_update[$node->inheriting_implementation_nid] = $node->inheriting_implementation_nid;
+        if (!$node->inheriting_evaluation_cache_percent) {
+          $to_update[$node->inheriting_evaluation_nid] = $node->inheriting_evaluation_nid;
         }
       }
     }
@@ -165,23 +165,23 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
     //Recover the missing cache percent
     if (!empty($to_update)) {
       //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop. There is a security in the interface (in select popin) but not in this update code.
-      $res = wikicompare_update_compare_tree('implementation', $to_update);
+      $res = wikicompare_update_compare_tree('evaluation', $to_update);
       foreach($nodes as $node) {
-        if (isset($res[$node->inheriting_implementation_nid])) {
-          $node->inheriting_implementation_cache_percent = $res[$node->inheriting_implementation_nid]['percent'];
-          $node->inheriting_implementation_cache_css_class = $res[$node->inheriting_implementation_nid]['css_class'];
+        if (isset($res[$node->inheriting_evaluation_nid])) {
+          $node->inheriting_evaluation_cache_percent = $res[$node->inheriting_evaluation_nid]['percent'];
+          $node->inheriting_evaluation_cache_css_class = $res[$node->inheriting_evaluation_nid]['css_class'];
         }
       }
     }
 
     $through_inherit_childs = array();
-    if (in_array($type, array('compared', 'implementation')) && !empty($nids))  {
-      $query = db_select('cache_implementation', 'n');
+    if (in_array($type, array('compared', 'evaluation')) && !empty($nids))  {
+      $query = db_select('cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'feature_id', 'fid');
       $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
       $query->join('cache_compared', 'nc', 'n.compared_id = nc.nid');
-      //Only the implementation which has no children on both axis will be updated because only them can have their percent updated by inheritance
+      //Only the evaluation which has no children on both axis will be updated because only them can have their percent updated by inheritance
       $query->condition('n.compared_has_children', 0);
       $query->condition('n.feature_has_children', 0);
       switch ($type) {
@@ -195,7 +195,7 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
       $result = $query->execute();
 
       foreach($result as $record) {
-        //We assign the children implementation in a array with fid and cid as key so their parents can recover them with fid and cid key
+        //We assign the children evaluation in a array with fid and cid as key so their parents can recover them with fid and cid key
         $through_inherit_childs[$record->fid][$record->inherit_compared_id][$record->nid] = $record;
       }
     }
@@ -214,17 +214,17 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
 
 
 /**
- * Return the data computed according to the inherited implementation.
+ * Return the data computed according to the inherited evaluation.
  *
  * @param $node
  *   The node to compute. Passed by reference.
  */
 function wikicompare_inherit_compared_from_other_support(&$node) {
 
-  //Work only if the compared of the implementation inherit a node and we didn't override the information in the implementation.
+  //Work only if the compared of the evaluation inherit a node and we didn't override the information in the evaluation.
   if ($node->inheriting_compared_id && $node->use_from_inherit) {
-    $node->percent = $node->inheriting_implementation_cache_percent;
-    $node->css_class = $node->inheriting_implementation_cache_css_class;
+    $node->percent = $node->inheriting_evaluation_cache_percent;
+    $node->css_class = $node->inheriting_evaluation_cache_css_class;
   }
 
 }
@@ -232,10 +232,10 @@ function wikicompare_inherit_compared_from_other_support(&$node) {
 
 
 /**
- * Add in the implementation to update the implementation which inherit the current implementation.
+ * Add in the evaluation to update the evaluation which inherit the current evaluation.
  *
  * @param $to_update
- *   The array containing the implementation which will be updated by the recursive function. Passed by reference.
+ *   The array containing the evaluation which will be updated by the recursive function. Passed by reference.
  *
  * @param $node
  *   The node we are currently checking.
@@ -269,7 +269,7 @@ function wikicompare_inherit_compared_flush_select(&$query, $type) {
     $query->leftjoin('field_revision_wikicompare_inherit_compared_id', 'nic', 'n.vid = nic.revision_id');
   }
 
-  if ($type == 'implementation') {
+  if ($type == 'evaluation') {
     $query->addField('nu', 'wikicompare_use_from_inherit_value', 'use_from_inherit');
     $query->leftjoin('field_revision_wikicompare_use_from_inherit', 'nu', 'n.vid = nu.revision_id');
   }
@@ -296,7 +296,7 @@ function wikicompare_inherit_compared_flush_cache(&$to_insert, $record, $type) {
     $to_insert[$record->nid]['inherit_compared_id'] = $record->inherit_compared_id;
   }
 
-  if ($type == 'implementation') {
+  if ($type == 'evaluation') {
     $use_from_inherit = 1;
     if ($record->use_from_inherit != NULL) {
       $use_from_inherit = $record->use_from_inherit;
@@ -322,7 +322,7 @@ function  wikicompare_inherit_compared_request_db(&$query, $type) {
     $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
   }
 
-  if ($type == 'implementation') {
+  if ($type == 'evaluation') {
     $query->addField('n', 'use_from_inherit', 'use_from_inherit');
   }
 
@@ -369,40 +369,40 @@ function wikicompare_inherit_compared_cache_insert_fields(&$fields, $type, $node
 
 
 /**
- * Prepare the inherit compared specific field to insert in implementation object.
+ * Prepare the inherit compared specific field to insert in evaluation object.
  *
- * @param $node_implementation
- *   The implementation node which will be created. Passed by reference.
+ * @param $node_evaluation
+ *   The evaluation node which will be created. Passed by reference.
  */
-function wikicompare_inherit_compared_insert_implementation(&$node_implementation) {
+function wikicompare_inherit_compared_insert_evaluation(&$node_evaluation) {
 
   //We set the value of use_from_inherit to 1 because, without user action, it must use the value of the inherited compared.
-  $node_implementation->wikicompare_use_from_inherit['und'][0]['value'] = 1;
+  $node_evaluation->wikicompare_use_from_inherit['und'][0]['value'] = 1;
 
 }
 
 
 
 /**
- * Prepare the inherit compared specific field to insert in implementation cache table.
+ * Prepare the inherit compared specific field to insert in evaluation cache table.
  *
- * @param $cache_implementation
- *   The implementation fields which will be inserted in table. Passed by reference.
+ * @param $cache_evaluation
+ *   The evaluation fields which will be inserted in table. Passed by reference.
  *
  * @param $node
- *   The implementation node which was created.
+ *   The evaluation node which was created.
  */
-function wikicompare_inherit_compared_cache_implementation_fields(&$cache_implementation, $node) {
+function wikicompare_inherit_compared_cache_evaluation_fields(&$cache_evaluation, $node) {
 
   //Insert the use_from_inherit field from the created objet.
-  $cache_implementation['use_from_inherit'] = $node->wikicompare_use_from_inherit['und'][0]['value'];
+  $cache_evaluation['use_from_inherit'] = $node->wikicompare_use_from_inherit['und'][0]['value'];
 
 }
 
 
 
 /**
- * Update parent_through_inherit_id in cache_implementation.
+ * Update parent_through_inherit_id in cache_evaluation.
  *
  * @param $node
  *   The node which was created.
@@ -435,8 +435,8 @@ function wikicompare_inherit_compared_cache_fields_header(&$header, $type) {
     $header[] = 'inherit_compared_id';
   }
 
-  //Implementation specific field.
-  if ($type == 'implementation') {
+  //evaluation specific field.
+  if ($type == 'evaluation') {
     $header[] = 'use_from_inherit';
   }
 
@@ -508,11 +508,11 @@ function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revi
       $current_node_inherit = $current_node->wikicompare_inherit_compared_id['und'][0]['target_id'];
     }
 
-    //Trigger a tree update on the updated node because the value of his implementations may have changed.
+    //Trigger a tree update on the updated node because the value of his evaluations may have changed.
     if ($node_revision_inherit != $current_node_inherit) {
       $to_update[$node_revision->nid] = $node_revision->nid;
 
-      //Mark the modified node so his implementations will be updated with his new implementations parents through inherit.
+      //Mark the modified node so his evaluations will be updated with his new evaluations parents through inherit.
       db_update('cache_compared')
         ->fields(array(
           'inherit_changed' => 1,
@@ -539,7 +539,7 @@ function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revi
  * @param $current_node
  *   The object containing the old data of the node.
  */
-function wikicompare_inherit_compared_preupdate_implementation(&$to_update, $node_revision, $current_node) {
+function wikicompare_inherit_compared_preupdate_evaluation(&$to_update, $node_revision, $current_node) {
 
   if ($node_revision->wikicompare_use_from_inherit['und'][0]['value'] != $current_node->wikicompare_use_from_inherit['und'][0]['value']) {
     $to_update[$node_revision->nid] = $node_revision->nid;
@@ -568,8 +568,8 @@ function wikicompare_inherit_compared_cache_update_fields(&$fields, $node_revisi
     }
     $fields['inherit_compared_id'] = $inherit_id;
   }
-  //Implementation specific field.
-  if ($node_revision->type == 'implementation') {
+  //evaluation specific field.
+  if ($node_revision->type == 'evaluation') {
     $fields['use_from_inherit'] = $node_revision->wikicompare_use_from_inherit['und'][0]['value'];
   }
 
@@ -597,7 +597,7 @@ function wikicompare_inherit_compared_get_inherit_changed(&$query, $type) {
 
 
 /**
- * Update the parent_through_inherit fields in implementation.
+ * Update the parent_through_inherit fields in evaluation.
  *
  * @param $node
  *   The updated node.
@@ -605,7 +605,7 @@ function wikicompare_inherit_compared_get_inherit_changed(&$query, $type) {
  * @param $type
  *   The type of the node.
  */
-function wikicompare_inherit_compared_update_parent_implementations($node, $type) {
+function wikicompare_inherit_compared_update_parent_evaluations($node, $type) {
 
   if ($type == 'compared') {
     if ($node->inherit_changed) {
@@ -624,28 +624,28 @@ function wikicompare_inherit_compared_update_parent_implementations($node, $type
 
 
 /**
- * Function which will update the parent though inherit field in cache_implementation. This field is important for the percentage computation.
+ * Function which will update the parent though inherit field in cache_evaluation. This field is important for the percentage computation.
  *
  * @param $nid
- *   The nid of the compared or feature which we need to update the implementation. If empty, all implementation will be updated.
+ *   The nid of the compared or feature which we need to update the evaluation. If empty, all evaluation will be updated.
  */
 function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
 
   if (Database::getConnection()->databaseType() == 'mysql') {
-    $query = 'UPDATE cache_implementation n
+    $query = 'UPDATE cache_evaluation n
            INNER JOIN cache_compared nc ON n.compared_id = nc.nid
-           LEFT JOIN cache_implementation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
+           LEFT JOIN cache_evaluation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
            SET n.parent_through_inherit_id = nci.nid';
     if ($nid != NULL) {
       $query = $query . ' WHERE nc.nid = ' . $nid;
     }
   } else {
-    $query = 'UPDATE cache_implementation
+    $query = 'UPDATE cache_evaluation
            SET parent_through_inherit_id = nci.nid
-           FROM cache_implementation n
+           FROM cache_evaluation n
            INNER JOIN cache_compared nc ON n.compared_id = nc.nid
-           LEFT JOIN cache_implementation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
-           WHERE cache_implementation.nid = n.nid';
+           LEFT JOIN cache_evaluation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
+           WHERE cache_evaluation.nid = n.nid';
     if ($nid != NULL) {
       $query = $query . ' AND nc.nid = ' . $nid;
     }
@@ -686,7 +686,7 @@ function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
  * @param $readonly
  *   Flag indicated if the user can modify the node.
  */
-function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$output, $form_type, $type, $node, $nid, $readonly) {
+function wikicompare_inherit_compared_modify_form_no_evaluation(&$form, &$output, $form_type, $type, $node, $nid, $readonly) {
 
   //Compared specific field.
   if ($type == 'compared') {
@@ -744,7 +744,7 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
 
 
 /**
- * Add the fields relative to inherit compared in implementation node.
+ * Add the fields relative to inherit compared in evaluation node.
  *
  * @param $form
  *   The form array which will be used by Drupal to build the node form. Passed by reference.
@@ -773,19 +773,19 @@ function wikicompare_inherit_compared_modify_form_no_implementation(&$form, &$ou
  * @param $fastaction
  *   The fastaction (add or edit)
  */
-function wikicompare_inherit_compared_modify_form_implementation(&$form, &$output, &$disable_support, &$test, $form_type, $type, $node, $readonly, $fastaction) {
+function wikicompare_inherit_compared_modify_form_evaluation(&$form, &$output, &$disable_support, &$test, $form_type, $type, $node, $readonly, $fastaction) {
 
-  if ($type == 'implementation') {
+  if ($type == 'evaluation') {
 
-    //Get details of the inherited implementation.
-    $query = db_select('cache_implementation', 'n');
+    //Get details of the inherited evaluation.
+    $query = db_select('cache_evaluation', 'n');
     $query->addField('c', 'inherit_compared_id', 'inherit_id');
     $query->addField('c', 'has_children', 'compared_has_children');
     $query->addField('f', 'has_children', 'feature_has_children');
     $query->addField('ci', 'support', 'inherit_support');
     $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
     $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
+    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
     $query->condition('n.nid', $node->nid);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -812,7 +812,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
         );
         //Add the link after the Drupal field.
         $form['wikicompare_use_from_inherit']['und']['#suffix'] = render($reset_link);
-        //If use_from_inherit is checked at the generation of the form, then the value of support field if the value of the inherited implementation.
+        //If use_from_inherit is checked at the generation of the form, then the value of support field if the value of the inherited evaluation.
         if ($form['wikicompare_use_from_inherit']['und']['#default_value'] == 1) {
           $form['wikicompare_support']['und']['#default_value'] = $res->inherit_support;
           $form['wikicompare_support']['und']['#disabled'] = True;
@@ -828,7 +828,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
 
       if ($res->inherit_id != NULL) {
         //I wasn't able to use the renderable array, so I coded directly in html.
-        $output .= '<input class="form_implementation_fastaction_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
+        $output .= '<input class="form_evaluation_fastaction_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
 
         //Recover value from database.
         if ($fastaction == 'edit') {
@@ -855,7 +855,7 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
           ),
         );
 
-        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_implementation_fastaction_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
+        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_evaluation_fastaction_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
 
         //Disable the support field located after this one
         if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {
@@ -878,25 +878,25 @@ function wikicompare_inherit_compared_modify_form_implementation(&$form, &$outpu
  *   If this test is True, the support field will be checked. Passed by reference.
  *
  * @param $test
- *   Boolean indicated that the value of the inherited implementation must be used.
+ *   Boolean indicated that the value of the inherited evaluation must be used.
  *
  * @param $node
  *   Object containing the detail of the node.
  */
-function wikicompare_inherit_compared_test_form_implementation(&$test_support, $test, $node) {
+function wikicompare_inherit_compared_test_form_evaluation(&$test_support, $test, $node) {
 
-  //If we have to use the value from inherited implementation.
+  //If we have to use the value from inherited evaluation.
   if ($test == True) {
 
-    //Get inherited implementation details .
-    $query = db_select('cache_implementation', 'n');
+    //Get inherited evaluation details .
+    $query = db_select('cache_evaluation', 'n');
     $query->addField('c', 'inherit_compared_id', 'inherit_id');
     $query->addField('c', 'has_children', 'compared_has_children');
     $query->addField('f', 'has_children', 'feature_has_children');
     $query->addField('ci', 'support', 'inherit_support');
     $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
     $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_implementation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
+    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
     $query->condition('n.nid', $node->nid);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -971,11 +971,11 @@ function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotu
     }
   }
 
-  //Implementation specific fields.
-  if ($node->type == 'implementation') {
+  //evaluation specific fields.
+  if ($node->type == 'evaluation') {
     if ($POST['use_from_inherit'] == 'true') {
       $node->wikicompare_use_from_inherit['und'][0]['value'] = 1;
-      //If we use from the inherited implementation, then we do not update the support field of the node.
+      //If we use from the inherited evaluation, then we do not update the support field of the node.
       $donotupdate = True;
     } else {
       $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
@@ -1031,12 +1031,12 @@ function wikicompare_inherit_compared_demo_export(&$output) {
 
 
 /**
- * Modify sql request of the implementation export.
+ * Modify sql request of the evaluation export.
  *
  * @param $query
- *   The implementation query. Passed by reference.
+ *   The evaluation query. Passed by reference.
  */
-function wikicompare_inherit_compared_demo_export_implementation_request(&$query) {
+function wikicompare_inherit_compared_demo_export_evaluation_request(&$query) {
   $query->addField('n', 'use_from_inherit', 'use_from_inherit');
   $query->where('n.support = 1 OR (n.use_from_inherit = 0 AND c.inherit_compared_id IS NOT NULL)');
 }
@@ -1044,7 +1044,7 @@ function wikicompare_inherit_compared_demo_export_implementation_request(&$query
 
 
 /**
- * Export implementation specific fields.
+ * Export evaluation specific fields.
  *
  * @param $output
  *   The html code of the export. Passed by reference.
@@ -1052,7 +1052,7 @@ function wikicompare_inherit_compared_demo_export_implementation_request(&$query
  * @param $record
  *   The record we are currently exporting.
  */
-function wikicompare_inherit_compared_demo_export_implementation_render(&$output, $record) {
+function wikicompare_inherit_compared_demo_export_evaluation_render(&$output, $record) {
   $output .= "if (module_exists('wikicompare_inherit_compared')) {<br/>";
   $output .= "\$node->wikicompare_use_from_inherit['und'][0]['value'] = " . $record->use_from_inherit . ";<br/>";
   $output .= "}<br/>";
@@ -1079,9 +1079,9 @@ function wikicompare_inherit_compared_demo_form(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['implementation_use_from_inherit_chance'] = array(
+  $form['demo_fieldset']['evaluation_use_from_inherit_chance'] = array(
     '#type' => 'textfield',
-    '#title' => t('Chance that a implementation which inherit another one use his own value (1/x)'),
+    '#title' => t('Chance that a evaluation which inherit another one use his own value (1/x)'),
     '#default_value' => 5,
     '#size' => 3,
     '#maxlength' => 3,
@@ -1148,12 +1148,12 @@ function wikicompare_inherit_compared_demo_submit_generate($form_state, $compare
 
 
 /**
- * Modify implementation query.
+ * Modify evaluation query.
  *
  * @param $query
  *   The implementatio query.
  */
-function wikicompare_inherit_compared_demo_submit_implementation_query(&$query) {
+function wikicompare_inherit_compared_demo_submit_evaluation_query(&$query) {
   $query->addField('c', 'inherit_compared_id', 'inherit_compared_id');
 }
 
@@ -1172,11 +1172,11 @@ function wikicompare_inherit_compared_demo_submit_implementation_query(&$query) 
  *   The values submitted by the form.
  *
  * @param $record
- *   The detail of the implementation.
+ *   The detail of the evaluation.
  */
-function wikicompare_inherit_compared_demo_submit_implementation(&$node, &$modified, $form_state, $record) {
+function wikicompare_inherit_compared_demo_submit_evaluation(&$node, &$modified, $form_state, $record) {
 
-  if (($record->inherit_compared_id != NULL) && (rand(1, $form_state['input']['implementation_use_from_inherit_chance']) == $form_state['input']['implementation_use_from_inherit_chance'])) {
+  if (($record->inherit_compared_id != NULL) && (rand(1, $form_state['input']['evaluation_use_from_inherit_chance']) == $form_state['input']['evaluation_use_from_inherit_chance'])) {
     $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
     $modified = True;
   }
