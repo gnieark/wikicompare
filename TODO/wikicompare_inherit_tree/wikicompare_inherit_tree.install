@@ -13,7 +13,7 @@
  */
 function wikicompare_inherit_schema() {
 
-  //Create cache table for the inherit tree, similar to the comparative_table of the main module. His role is to compute percent and css_class at each change on feature/compared/evaluation and not at each read of the comparative table.
+  //Create cache table for the inherit tree, similar to the comparative_table of the main module. His role is to compute percent and css_class at each change on feature/product/evaluation and not at each read of the comparative table.
   $schema['cache_inherit_tree'] = array(
 
     'description' => 'Cache table for inherit tree',
@@ -30,8 +30,8 @@ function wikicompare_inherit_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'compared_id' => array(
-        'description' => 'The nid of the compared node',
+      'product_id' => array(
+        'description' => 'The nid of the product node',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -48,7 +48,7 @@ function wikicompare_inherit_schema() {
         'default' => '',
       ),
     ),
-//TODO make unique by inherit_tree_feature_id/feature_id/compared_id
+//TODO make unique by inherit_tree_feature_id/feature_id/product_id
     'unique keys' => array(
       'nid' => array('nid'),
     ),
@@ -61,9 +61,9 @@ function wikicompare_inherit_schema() {
         'table' => 'node',
         'columns' => array('feature_id' => 'nid'),
       ),
-      'compared_id' => array(
+      'product_id' => array(
         'table' => 'node',
-        'columns' => array('compared_id' => 'nid'),
+        'columns' => array('product_id' => 'nid'),
       ),
 
     )
@@ -150,28 +150,28 @@ function wikicompare_inherit_tree_install() {
 
 //TODO Put a filter in the feature interface based on this field
   $field = array(
-    'field_name' => 'feature_inherit_tree_top_compared',
+    'field_name' => 'feature_inherit_tree_top_product',
     'type' => 'entityreference',
     'cardinality' => -1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared')),
+      'handler_settings' => array('target_bundles' => array('product')),
     ),
   );
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'feature_inherit_tree_top_compared',
+    'field_name' => 'feature_inherit_tree_top_product',
     'entity_type' => 'node',
     'bundle' => 'feature',
-    'label' => 'Inherit tree top compared',
-    'description' => 'TODO : Only compared children of theses top compared can be select in the evaluations',
+    'label' => 'Inherit tree top product',
+    'description' => 'TODO : Only product children of theses top product can be select in the evaluations',
     'widget' => array(
       'type' => 'entityreference_autocomplete',
     ),
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared')),
+      'handler_settings' => array('target_bundles' => array('product')),
     ),
   );
   field_create_instance($instance);
@@ -179,34 +179,34 @@ function wikicompare_inherit_tree_install() {
 
 
   /*
-   * Create compared_support evaluation field
+   * Create product_support evaluation field
    */
 
 
 
   $field = array(
-    'field_name' => 'evaluation_compared_support',
+    'field_name' => 'evaluation_product_support',
     'type' => 'entityreference',
     'cardinality' => -1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared')),
+      'handler_settings' => array('target_bundles' => array('product')),
     ),
   );
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'evaluation_compared_support',
+    'field_name' => 'evaluation_product_support',
     'entity_type' => 'node',
     'bundle' => 'evaluation',
-    'label' => 'Use value of the compared :',
+    'label' => 'Use value of the product :',
     'description' => 'TODO : We will use theses values to compute percent of the inherited tree',
     'widget' => array(
       'type' => 'entityreference_autocomplete',
     ),
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared')),
+      'handler_settings' => array('target_bundles' => array('product')),
     ),
   );
   field_create_instance($instance);
@@ -226,8 +226,8 @@ function wikicompare_inherit_tree_uninstall() {
   db_drop_field('cache_feature', 'inherit_tree_id');
   db_drop_index('cache_feature', 'inherit_tree_id');
   field_delete_field('feature_inherit_tree');
-  field_delete_field('feature_inherit_tree_top_compared');
-  field_delete_field('evaluation_compared_support');
+  field_delete_field('feature_inherit_tree_top_product');
+  field_delete_field('evaluation_product_support');
 
 
   // Purge all field information

@@ -11,11 +11,11 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
 /**
  * The main function to update the percent and css_class for each evaluation
- * It'll find all children on compared and feature axis for the ids passed in argument, compute the percent thanks to theses informations and feature type, and finally if the percent changed it'll update the parents on feature and compared axis.
- * This is a recursive function, which will call itself on parent if the percent computed change in both the feature and compared axis.
+ * It'll find all children on product and feature axis for the ids passed in argument, compute the percent thanks to theses informations and feature type, and finally if the percent changed it'll update the parents on feature and product axis.
+ * This is a recursive function, which will call itself on parent if the percent computed change in both the feature and product axis.
  *
  * @param $type
- *   The type of the node to update. Only the evaluation are updated at the end, but specifying compared or feature allow to directly update all their evaluations.
+ *   The type of the node to update. Only the evaluation are updated at the end, but specifying product or feature allow to directly update all their evaluations.
  *
  * @param $nids
  *   The nids of the nodes to update.
@@ -36,32 +36,32 @@ function wikicompare_update_compare_tree($type, $nids) {
     $query = db_select('cache_evaluation', 'n');
     $query->addField('n', 'nid', 'nid');
     $query->addField('n', 'feature_id', 'fid');
-    $query->addField('n', 'compared_id', 'cid');
+    $query->addField('n', 'product_id', 'cid');
     $query->addField('n', 'support', 'support');
     $query->addField('n', 'feature_type', 'type');
     $query->addField('n', 'percent', 'old_percent');
     $query->addField('n', 'css_class', 'old_css_class');
-    $query->addField('n', 'parent_through_compared_id', 'parent_through_compared_id');
+    $query->addField('n', 'parent_through_product_id', 'parent_through_product_id');
     $query->addField('n', 'parent_through_feature_id', 'parent_through_feature_id');
 
-    //If possible, we search directly through feature or compared id to compute the sql request faster.
+    //If possible, we search directly through feature or product id to compute the sql request faster.
     switch ($type) {
       case "evaluation":
         $query->condition('n.nid', $nids, 'IN');
         break;
       case "feature":
-        $query->condition('n.compared_has_children', 0); //Only the evaluation without children on compared axis need to be updated, because they will update their parent on compared axis anyway.
+        $query->condition('n.product_has_children', 0); //Only the evaluation without children on product axis need to be updated, because they will update their parent on product axis anyway.
         $query->condition('n.feature_id', $nids, 'IN');
         break;
-      case "compared":
+      case "product":
         $query->condition('n.feature_has_children', 0); //Only the evaluation without children on feature axis need to be updated, because they will update their parent on feature axis anyway.
-        $query->condition('n.compared_id', $nids, 'IN');
+        $query->condition('n.product_id', $nids, 'IN');
         break;
     }
 
-    if (module_exists('wikicompare_inherit_compared')) {
+    if (module_exists('wikicompare_inherit_product')) {
       //Add the requests to recover the inherited evaluation.
-      wikicompare_inherit_compared_update_main_query($query);
+      wikicompare_inherit_product_update_main_query($query);
     }
 
     $result = $query->execute();
@@ -74,19 +74,19 @@ function wikicompare_update_compare_tree($type, $nids) {
 
     //Get the children on feature axis.
     $through_feature_childs = array();
-    //We don't need the children through feature axis in case of type = 'compared'.
-    if ($type != 'compared') {
+    //We don't need the children through feature axis in case of type = 'product'.
+    if ($type != 'product') {
       //Get children evaluation through feature axis
       $query = db_select('cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'feature_id', 'fid');
-      $query->addField('n', 'compared_id', 'cid');
+      $query->addField('n', 'product_id', 'cid');
       $query->addField('n','feature_parent_id', 'parent_fid');
       $query->addField('n', 'percent', 'percent');
       $query->addField('n', 'feature_weight', 'weight');
       switch ($type) {
         case "evaluation":
-          //We keep only the evaluation of the child feature node which has the same compared than the evaluation. Which mean it's the children evaluation on the feature axis.
+          //We keep only the evaluation of the child feature node which has the same product than the evaluation. Which mean it's the children evaluation on the feature axis.
           $query->condition('parent_through_feature_id', $nids, 'IN');
           break;
         case "feature":
@@ -106,36 +106,36 @@ function wikicompare_update_compare_tree($type, $nids) {
     }
 
     //Get the children on feature axis.
-    $through_compared_childs = array();
-    //We don't need the children through compared child in case of type = 'feature'.
+    $through_product_childs = array();
+    //We don't need the children through product child in case of type = 'feature'.
     if ($type != 'feature') {
       //Get children evaluation through feature axis.
       $query = db_select('cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'feature_id', 'fid');
-      $query->addField('n', 'compared_id', 'cid');
-      $query->addField('n','compared_parent_id', 'parent_cid');
+      $query->addField('n', 'product_id', 'cid');
+      $query->addField('n','product_parent_id', 'parent_cid');
       $query->addField('n', 'percent', 'percent');
       $query->addField('n', 'css_class', 'css_class');
 
       switch ($type) {
         case "evaluation":
-          //We keep only the evaluation of the child compared node which has the same feature than the evaluation. Which mean it's the children evaluation on the compared axis.
-          $query->condition('parent_through_compared_id', $nids, 'IN');
+          //We keep only the evaluation of the child product node which has the same feature than the evaluation. Which mean it's the children evaluation on the product axis.
+          $query->condition('parent_through_product_id', $nids, 'IN');
           break;
-        case "compared":
-          $query->condition('n.compared_parent_id', $nids, 'IN');
+        case "product":
+          $query->condition('n.product_parent_id', $nids, 'IN');
           break;
       }
 
-      //Only published compareds are used in their parent computation.
-      $query->condition('n.compared_state', unserialize(WIKICOMPARE_STATE_PUBLISHED), 'in');
+      //Only published products are used in their parent computation.
+      $query->condition('n.product_state', unserialize(WIKICOMPARE_STATE_PUBLISHED), 'in');
       $result = $query->execute();
 
       //We assign the children evaluation in a array with fid and cid as key so they parent can recover them with fid and cid key
-      $through_compared_childs = array();
+      $through_product_childs = array();
       foreach($result as $record) {
-        $through_compared_childs[$record->parent_cid][$record->fid][$record->nid] = $record;
+        $through_product_childs[$record->parent_cid][$record->fid][$record->nid] = $record;
       }
     }
 
@@ -146,16 +146,16 @@ function wikicompare_update_compare_tree($type, $nids) {
         //Assign the children thanks to fid and cid key.
         $node->through_feature_childs = $through_feature_childs[$node->fid][$node->cid];
       }
-      $node->through_compared_childs = array();
-      if (isset($through_compared_childs[$node->cid][$node->fid])) {
+      $node->through_product_childs = array();
+      if (isset($through_product_childs[$node->cid][$node->fid])) {
         //Assign the children thanks to fid and cid key.
-        $node->through_compared_childs = $through_compared_childs[$node->cid][$node->fid];
+        $node->through_product_childs = $through_product_childs[$node->cid][$node->fid];
       }
     }
 
-    if (module_exists('wikicompare_inherit_compared')) {
+    if (module_exists('wikicompare_inherit_product')) {
       //Compute the inherited evaluation if not already done, and get inheriting children.
-      wikicompare_inherit_compared_update_comparative_table_preparation($nodes, $type, $nids);
+      wikicompare_inherit_product_update_comparative_table_preparation($nodes, $type, $nids);
     }
 
   }
@@ -168,11 +168,11 @@ function wikicompare_update_compare_tree($type, $nids) {
   $to_update = array();
   $cache_to_update = array();
   $res = array();
-  $update_compared_flag = variable_get('wikicompare_update_compared', 'no-update');
+  $update_product_flag = variable_get('wikicompare_update_product', 'no-update');
   foreach($nodes as $node) {
 
-    //We update only if the update parent isn't set and there is no children on compared axis.
-    if (($update_compared_flag == 'no-update') && !empty($node->through_compared_childs)) {
+    //We update only if the update parent isn't set and there is no children on product axis.
+    if (($update_product_flag == 'no-update') && !empty($node->through_product_childs)) {
       continue;
     }
 
@@ -180,8 +180,8 @@ function wikicompare_update_compare_tree($type, $nids) {
     $node->new_percent = 0;
     $node->new_css_class = 'cell-support-no';
 
-    //The support field is used only if the evaluation is the deepest in the tree, on both the feature and compared axis.
-    if (empty($node->through_feature_childs) && empty($node->through_compared_childs)) {
+    //The support field is used only if the evaluation is the deepest in the tree, on both the feature and product axis.
+    if (empty($node->through_feature_childs) && empty($node->through_product_childs)) {
       if ($node->support == 1) {
         $node->new_percent = 100;
         $node->new_css_class = 'cell-support-complete';
@@ -190,17 +190,17 @@ function wikicompare_update_compare_tree($type, $nids) {
         $node->new_css_class = 'cell-support-no';
       }
 
-      if (module_exists('wikicompare_inherit_compared')) {
+      if (module_exists('wikicompare_inherit_product')) {
         //Return the data computed according to the inherited evaluation.
-        wikicompare_inherit_compared_from_other_support($node);
+        wikicompare_inherit_product_from_other_support($node);
       }
     //Use the children through feature axis to compute the percent.
     } else {
       $node = wikicompare_compute_percent($node, $node->through_feature_childs);
     }
 
-    //If a children through compared axis is higher than the value computed, then it'll be used instead.
-    foreach($node->through_compared_childs as $child) {
+    //If a children through product axis is higher than the value computed, then it'll be used instead.
+    foreach($node->through_product_childs as $child) {
       if ($child->percent >= $node->new_percent) {
         $node->new_percent = $child->percent;
         $node->new_css_class = $child->css_class;
@@ -212,20 +212,20 @@ function wikicompare_update_compare_tree($type, $nids) {
         //We regroup all the same percent in a table to update them all at the same time.
       $cache_to_update[$node->new_css_class][$node->new_percent][$node->nid] = $node->nid;
 
-      //Update the parent though feature and compared axis if the value changed.
+      //Update the parent though feature and product axis if the value changed.
       if ($node->parent_through_feature_id) {
         $to_update[$node->parent_through_feature_id] = $node->parent_through_feature_id;
       }
 
-      if ($update_compared_flag != 'no-update') {
-        if ($node->parent_through_compared_id) {
-          $to_update[$node->parent_through_compared_id] = $node->parent_through_compared_id;
+      if ($update_product_flag != 'no-update') {
+        if ($node->parent_through_product_id) {
+          $to_update[$node->parent_through_product_id] = $node->parent_through_product_id;
         }
       }
 
-      if (module_exists('wikicompare_inherit_compared')) {
+      if (module_exists('wikicompare_inherit_product')) {
         //Add in the evaluation to update the evaluation which inherit the current evaluation.
-        wikicompare_inherit_compared_update_comparative_table_post($to_update, $node);
+        wikicompare_inherit_product_update_comparative_table_post($to_update, $node);
       }
 
     }
@@ -364,7 +364,7 @@ function wikicompare_refresh_caches() {
     variable_set('maintenance_mode', 1);
   }
 
-  $types = array('compared', 'feature', 'evaluation');
+  $types = array('product', 'feature', 'evaluation');
   if (module_exists('wikicompare_profiles')) {
     //Add profile type.
     wikicompare_profiles_node_types($types);
@@ -392,10 +392,10 @@ function wikicompare_refresh_caches() {
       $query->leftjoin('field_revision_wikicompare_state', 'ns', 'n.vid = ns.revision_id');
     } else {
       $query->addField('nf', 'wikicompare_feature_id_target_id', 'feature_id');
-      $query->addField('nc', 'wikicompare_compared_id_target_id', 'compared_id');
+      $query->addField('nc', 'wikicompare_product_id_target_id', 'product_id');
       $query->addField('ns', 'wikicompare_support_value', 'support');
       $query->leftjoin('field_revision_wikicompare_feature_id', 'nf', 'n.vid = nf.revision_id');
-      $query->leftjoin('field_revision_wikicompare_compared_id', 'nc', 'n.vid = nc.revision_id');
+      $query->leftjoin('field_revision_wikicompare_product_id', 'nc', 'n.vid = nc.revision_id');
       $query->leftjoin('field_revision_wikicompare_support', 'ns', 'n.vid = ns.revision_id');
     }
     if ($type == 'feature') {
@@ -407,9 +407,9 @@ function wikicompare_refresh_caches() {
     $query->condition('n.type', $type);
     //Only the main language nodes are concerned.
     $query->condition('n.language', language_default('language'));
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Search for the inhehrit compared specific fields in the flush tables function.
-      wikicompare_inherit_compared_flush_select($query, $type);
+    if (module_exists('wikicompare_inherit_product')) {
+      //Search for the inhehrit product specific fields in the flush tables function.
+      wikicompare_inherit_product_flush_select($query, $type);
     }
     $result = $query->execute();
 
@@ -435,16 +435,16 @@ function wikicompare_refresh_caches() {
           $support = 1;
         }
         $to_insert[$record->nid]['support'] = $support;
-        $to_insert[$record->nid]['compared_id'] = $record->compared_id;
+        $to_insert[$record->nid]['product_id'] = $record->product_id;
         $to_insert[$record->nid]['feature_id'] = $record->feature_id;
       }
       if ($type == 'feature') {
         $to_insert[$record->nid]['type'] = $record->type;
         $to_insert[$record->nid]['weight'] = $record->weight;
       }
-      if (module_exists('wikicompare_inherit_compared')) {
-        //Prepare the inherit compared specific fields in the flush tables function.
-        wikicompare_inherit_compared_flush_cache($to_insert, $record, $type);
+      if (module_exists('wikicompare_inherit_product')) {
+        //Prepare the inherit product specific fields in the flush tables function.
+        wikicompare_inherit_product_flush_cache($to_insert, $record, $type);
       }
     }
 
@@ -474,7 +474,7 @@ function wikicompare_refresh_caches() {
       $header[] = 'state';
       $header[] = 'has_children';
     } else {
-      $header[] = 'compared_id';
+      $header[] = 'product_id';
       $header[] = 'feature_id';
       $header[] = 'support';
     }
@@ -482,9 +482,9 @@ function wikicompare_refresh_caches() {
       $header[] = 'type';
       $header[] = 'weight';
     }
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Add inherit compared specific headers.
-      wikicompare_inherit_compared_cache_fields_header($header, $type);
+    if (module_exists('wikicompare_inherit_product')) {
+      //Add inherit product specific headers.
+      wikicompare_inherit_product_cache_fields_header($header, $type);
     }
 
     //Insert the data into the wikicompare cache table.
@@ -496,32 +496,32 @@ function wikicompare_refresh_caches() {
 
   }
 
-  //Update parent_through_compared_id and parent_through_feature_id field in cache_evaluation.
+  //Update parent_through_product_id and parent_through_feature_id field in cache_evaluation.
   wikicompare_update_parent_link();
 
-  //Update the structural fields from compared and feature in evaluation.
+  //Update the structural fields from product and feature in evaluation.
   if (Database::getConnection()->databaseType() == 'mysql') {
     db_query('UPDATE cache_evaluation n
-           INNER JOIN cache_compared nc ON n.compared_id = nc.nid
+           INNER JOIN cache_product nc ON n.product_id = nc.nid
            INNER JOIN cache_feature nf ON n.feature_id = nf.nid
-           SET n.compared_parent_id = nc.parent_id, n.compared_state = nc.state, n.compared_has_children = nc.has_children,
+           SET n.product_parent_id = nc.parent_id, n.product_state = nc.state, n.product_has_children = nc.has_children,
            n.feature_parent_id = nf.parent_id, n.feature_state = nf.state, n.feature_has_children = nf.has_children, n.feature_type = nf.type, n.feature_weight = nf.weight');
   } else {
     db_query('UPDATE cache_evaluation
-           SET compared_parent_id = nc.parent_id, compared_state = nc.state, compared_has_children = nc.has_children,
+           SET product_parent_id = nc.parent_id, product_state = nc.state, product_has_children = nc.has_children,
            feature_parent_id = nf.parent_id, feature_state = nf.state, feature_has_children = nf.has_children, feature_type = nf.type, feature_weight = nf.weight
            FROM cache_evaluation n
-           INNER JOIN cache_compared nc ON n.compared_id = nc.nid
+           INNER JOIN cache_product nc ON n.product_id = nc.nid
            INNER JOIN cache_feature nf ON n.feature_id = nf.nid
            WHERE cache_evaluation.nid = n.nid');
   }
 
-  if (module_exists('wikicompare_inherit_compared')) {
+  if (module_exists('wikicompare_inherit_product')) {
     //Update parent_through_inherit_id in cache_evaluation.
-    wikicompare_inherit_compared_update_parent_link();
+    wikicompare_inherit_product_update_parent_link();
   }
 
-  //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the compared tree.
+  //Update compatative table cache. We begin the update at the base of the feature tree and at the base of the product tree.
   wikicompare_update_compare_tree('feature', $feature_without_children);
 
   //We only reactive the website if it wasn't in maintenance at the beginning.
@@ -533,10 +533,10 @@ function wikicompare_refresh_caches() {
 
 
 /**
- * Function to easily find the evaluation id with the compared and the feature.
+ * Function to easily find the evaluation id with the product and the feature.
  *
- * @param $compared_id
- *   The compared id of the evaluation to find.
+ * @param $product_id
+ *   The product id of the evaluation to find.
  *
  * @param $feature_id
  *   The feature id of the evaluation to find.
@@ -544,11 +544,11 @@ function wikicompare_refresh_caches() {
  * @return $nid
  *   The id of the evaluation.
  */
-function wikicompare_get_evaluation_id($compared_id, $feature_id) {
+function wikicompare_get_evaluation_id($product_id, $feature_id) {
 
   $query = db_select('cache_evaluation', 'n');
   $query->addField('n', 'nid', 'nid');
-  $query->condition('compared_id', $compared_id);
+  $query->condition('product_id', $product_id);
   $query->condition('feature_id', $feature_id);
   $result = $query->execute();
   foreach ($result as $record) {
@@ -603,8 +603,8 @@ function wikicompare_start_computation() {
  *   An associative array containing the specific informations to build the database query.
  *     - nids: The nids are directly specified.
  *     - parent_id: We'll find the nodes by the parent id.
- *     - compared_id: We'll find the evaluations nodes with the compareds and feature ids.
- *     - feature_id: We'll find the evaluations nodes with the compareds and feature ids.
+ *     - product_id: We'll find the evaluations nodes with the products and feature ids.
+ *     - feature_id: We'll find the evaluations nodes with the products and feature ids.
  *
  * @param $settings
  *   An associative array containing the informations about the context of the query, theses informations are often not only used in this function.
@@ -650,12 +650,12 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   //evaluation specific fields.
   } else {
     $query->addField('n', 'feature_id', 'feature_id');
-    $query->addField('n', 'compared_id', 'compared_id');
+    $query->addField('n', 'product_id', 'product_id');
     $query->addField('n', 'percent', 'percent');
     $query->addField('n', 'css_class', 'css_class');
-    //If the nodes to recover are not specify by the nids in argument, then it means we need to find them thanks to the compareds and features ids.
+    //If the nodes to recover are not specify by the nids in argument, then it means we need to find them thanks to the products and features ids.
     if (!isset($db_settings['nids'])) {
-      $query->condition("n.compared_id", $db_settings['compared_ids'], 'in');
+      $query->condition("n.product_id", $db_settings['product_ids'], 'in');
       $query->condition("n.feature_id", $db_settings['feature_ids'], 'in');
     }
   }
@@ -679,9 +679,9 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     }
   }
 
-  if (module_exists('wikicompare_inherit_compared')) {
-    //Add inherit compared specific fields.
-    wikicompare_inherit_compared_request_db($query, $type);
+  if (module_exists('wikicompare_inherit_product')) {
+    //Add inherit product specific fields.
+    wikicompare_inherit_product_request_db($query, $type);
   }
 
   if (module_exists('wikicompare_translation')) {
@@ -732,11 +732,11 @@ function request_db($type, $db_settings = array(), $settings=array()) {
       wikicompare_translation_request_db_build($node_array, $record);
     }
 
-    //Assign the node_array to $res with the nid as key, except it's an evaluation we found thanks to the compared and feature ids.
+    //Assign the node_array to $res with the nid as key, except it's an evaluation we found thanks to the product and feature ids.
     if ($type != 'evaluation' || isset($db_settings['nids'])) {
       $res[$record->nid] = $node_array;
     } else {
-      $res[$record->feature_id][$record->compared_id] = $node_array;
+      $res[$record->feature_id][$record->product_id] = $node_array;
     }
 
   }

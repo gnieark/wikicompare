@@ -2,38 +2,38 @@
 
 /**
  * @file
- * Install, update, and uninstall functions for the wikicompare_inherit_compared module.
+ * Install, update, and uninstall functions for the wikicompare_inherit_product module.
  */
 
 
 
 /**
  * Implements hook_schema()
- * Add the inherit compared fields in cache tables.
+ * Add the inherit product fields in cache tables.
  */
-function wikicompare_inherit_compared_schema_alter(&$schema) {
+function wikicompare_inherit_product_schema_alter(&$schema) {
 
-  $schema['cache_compared']['fields']['inherit_compared_id'] = array(
-      'description' => 'The inherited id of the compared node',
+  $schema['cache_product']['fields']['inherit_product_id'] = array(
+      'description' => 'The inherited id of the product node',
       'type' => 'int',
       'unsigned' => TRUE,
   );
-  $schema['cache_compared']['indexes']['inherit_compared_id'] = array('inherit_compared_id');
-  $schema['cache_compared']['foreign keys']['inherit_compared_id'] = array(
+  $schema['cache_product']['indexes']['inherit_product_id'] = array('inherit_product_id');
+  $schema['cache_product']['foreign keys']['inherit_product_id'] = array(
     'table' => 'node',
-    'columns' => array('inherit_compared_id' => 'nid'),
+    'columns' => array('inherit_product_id' => 'nid'),
   );
-  $schema['cache_compared']['fields']['inherit_changed'] = array(
-    'description' => "Boolean indicated that the inherited compared of this node has changed, and thus we need to update the parent through inherit of his evaluations",
+  $schema['cache_product']['fields']['inherit_changed'] = array(
+    'description' => "Boolean indicated that the inherited product of this node has changed, and thus we need to update the parent through inherit of his evaluations",
     'type' => 'int',
     'size' => 'tiny',
     'not null' => TRUE,
     'default' => 0,
   );
-  $schema['cache_compared']['indexes']['inherit_changed'] = array('inherit_changed');
+  $schema['cache_product']['indexes']['inherit_changed'] = array('inherit_changed');
 
   $schema['cache_evaluation']['fields']['use_from_inherit'] = array(
-      'description' => "Boolean indicated if we should use the data from the inherited compared",
+      'description' => "Boolean indicated if we should use the data from the inherited product",
       'type' => 'int',
       'size' => 'tiny',
       'not null' => TRUE,
@@ -58,7 +58,7 @@ function wikicompare_inherit_compared_schema_alter(&$schema) {
  * Implements hook_install().
  * This function is called only once at the module installation
  */
-function wikicompare_inherit_compared_install() {
+function wikicompare_inherit_product_install() {
 
   $t = get_t();
 
@@ -67,39 +67,39 @@ function wikicompare_inherit_compared_install() {
 
 
   //Add index in cache table.
-  $schema = drupal_get_schema('cache_compared');
-  db_add_field('cache_compared', 'inherit_compared_id', $schema['fields']['inherit_compared_id']);
-  db_add_index('cache_compared', 'inherit_compared_id', array('inherit_compared_id'));
+  $schema = drupal_get_schema('cache_product');
+  db_add_field('cache_product', 'inherit_product_id', $schema['fields']['inherit_product_id']);
+  db_add_index('cache_product', 'inherit_product_id', array('inherit_product_id'));
 
   //Add field.
   $field = array(
-    'field_name' => 'wikicompare_inherit_compared_id',
+    'field_name' => 'wikicompare_inherit_product_id',
     'type' => 'entityreference',
     'cardinality' => 1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared')),
+      'handler_settings' => array('target_bundles' => array('product')),
     ),
   );
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'wikicompare_inherit_compared_id',
+    'field_name' => 'wikicompare_inherit_product_id',
     'entity_type' => 'node',
-    'bundle' => 'compared',
-    'label' => 'Inherit Compared',
+    'bundle' => 'product',
+    'label' => 'Inherit Product',
     'widget' => array(
       'type' => 'entityreference_autocomplete',
     ),
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared')),
+      'handler_settings' => array('target_bundles' => array('product')),
     ),
   );
   field_create_instance($instance);
 
-  db_add_field('cache_compared', 'inherit_changed', $schema['fields']['inherit_changed']);
-  db_add_index('cache_compared', 'inherit_changed', array('inherit_changed'));
+  db_add_field('cache_product', 'inherit_changed', $schema['fields']['inherit_changed']);
+  db_add_index('cache_product', 'inherit_changed', array('inherit_changed'));
 
   //Add index in the cache table.
   $schema = drupal_get_schema('cache_evaluation');
@@ -113,7 +113,7 @@ function wikicompare_inherit_compared_install() {
     'settings' => array(
       'allowed_values' => array(
         0 => 'Using personnal data',
-        1 => 'Using data from inherited compared',
+        1 => 'Using data from inherited product',
       ),
     ),
   );
@@ -123,7 +123,7 @@ function wikicompare_inherit_compared_install() {
     'field_name' => 'wikicompare_use_from_inherit',
     'entity_type' => 'node',
     'bundle' => 'evaluation',
-    'label' => 'Use data from inherit compared?',
+    'label' => 'Use data from inherit product?',
     'description' => 'TODO',
     'default_value' => array(
       1 => array(
@@ -162,14 +162,14 @@ function wikicompare_inherit_compared_install() {
  * Implements hook_uninstall().
  * This function is called at the module uninstallation
  */
-function wikicompare_inherit_compared_uninstall() {
+function wikicompare_inherit_product_uninstall() {
 
   //Remove field in cache.
-  db_drop_field('cache_compared', 'inherit_compared_id');
-  db_drop_index('cache_compared', 'inherit_compared_id');
-  field_delete_field('wikicompare_inherit_compared_id');
-  db_drop_field('cache_compared', 'inherit_changed');
-  db_drop_index('cache_compared', 'inherit_changed');
+  db_drop_field('cache_product', 'inherit_product_id');
+  db_drop_index('cache_product', 'inherit_product_id');
+  field_delete_field('wikicompare_inherit_product_id');
+  db_drop_field('cache_product', 'inherit_changed');
+  db_drop_index('cache_product', 'inherit_changed');
 
   db_drop_field('cache_evaluation', 'use_from_inherit');
   field_delete_field('wikicompare_use_from_inherit');

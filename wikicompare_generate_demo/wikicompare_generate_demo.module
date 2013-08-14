@@ -48,12 +48,12 @@ function wikicompare_export_page() {
   $output .= "\$language_list[\$key] = \$key;<br/>";
   $output .= "}</p>";
 
-  $output .= "<p>\$compareds = array();</p>";
-  //Find all the compared on the first level of the tree.
-  $compareds = request_db('compared', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
-  foreach ($compareds as $compared) {
-    //Get compared children.
-    wikicompare_generate_demo_export_output_node($output, $compared, 'compared');
+  $output .= "<p>\$products = array();</p>";
+  //Find all the product on the first level of the tree.
+  $products = request_db('product', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
+  foreach ($products as $product) {
+    //Get product children.
+    wikicompare_generate_demo_export_output_node($output, $product, 'product');
   }
 
   $output .= "<p>\$features = array();</p>";
@@ -69,9 +69,9 @@ function wikicompare_export_page() {
     wikicompare_profiles_demo_export($output);
   }
 
-  if (module_exists('wikicompare_inherit_compared')) {
-    //Export inherit compared.
-    wikicompare_inherit_compared_demo_export($output);
+  if (module_exists('wikicompare_inherit_product')) {
+    //Export inherit product.
+    wikicompare_inherit_product_demo_export($output);
   }
 
   //Get all evaluations.
@@ -79,14 +79,14 @@ function wikicompare_export_page() {
   $query->addField('c', 'nid', 'cid');
   $query->addField('f', 'nid', 'fid');
   $query->addField('n', 'support', 'support');
-  $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+  $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
   $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
   $query->condition("c.has_children", 0);
   $query->condition("f.has_children", 0);
   $query->condition("n.support", 1);
-  if (module_exists('wikicompare_inherit_compared')) {
-    //Add inherit compared specific fields.
-    wikicompare_inherit_compared_demo_export_evaluation_request($query);
+  if (module_exists('wikicompare_inherit_product')) {
+    //Add inherit product specific fields.
+    wikicompare_inherit_product_demo_export_evaluation_request($query);
   }
   $result = $query->execute();
 
@@ -94,12 +94,12 @@ function wikicompare_export_page() {
 
     $output .= "<p>";
     //The evaluation is created by the wikicompare module, so we have to load it to modify his fields.
-    $output .= "\$evaluation_id = wikicompare_get_evaluation_id(\$compareds['new-" . $record->cid . "'], \$features['new-" . $record->fid . "']);<br/>";
+    $output .= "\$evaluation_id = wikicompare_get_evaluation_id(\$products['new-" . $record->cid . "'], \$features['new-" . $record->fid . "']);<br/>";
     $output .= "\$node = node_load(\$evaluation_id);<br/>";
     $output .= "\$node->wikicompare_support['und'][0]['value'] = " . $record->support . ";<br/>";
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Add inherit compared specific fields.
-      wikicompare_inherit_compared_demo_export_evaluation_render($output, $record);
+    if (module_exists('wikicompare_inherit_product')) {
+      //Add inherit product specific fields.
+      wikicompare_inherit_product_demo_export_evaluation_render($output, $record);
     }
     $output .= "\$node->promote = 0;<br/>";
     $output .= "\$node->sticky = 0;<br/>";
@@ -270,10 +270,10 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  //To generate compared.
-  $form['demo_fieldset']['compared_min_depth'] = array(
+  //To generate product.
+  $form['demo_fieldset']['product_min_depth'] = array(
     '#type' => 'textfield',
-    '#title' => t('Minimum compared depth'),
+    '#title' => t('Minimum product depth'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -281,9 +281,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['compared_max_depth'] = array(
+  $form['demo_fieldset']['product_max_depth'] = array(
     '#type' => 'textfield',
-    '#title' => t('Maximum compared depth'),
+    '#title' => t('Maximum product depth'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -291,9 +291,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['compared_child_min_per_level'] = array(
+  $form['demo_fieldset']['product_child_min_per_level'] = array(
     '#type' => 'textfield',
-    '#title' => t('Minimum number of child compared per level'),
+    '#title' => t('Minimum number of child product per level'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -301,9 +301,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  $form['demo_fieldset']['compared_child_max_per_level'] = array(
+  $form['demo_fieldset']['product_child_max_per_level'] = array(
     '#type' => 'textfield',
-    '#title' => t('Maximum number of child compared per level'),
+    '#title' => t('Maximum number of child product per level'),
     '#default_value' => 0,
     '#size' => 3,
     '#maxlength' => 3,
@@ -326,9 +326,9 @@ function wikicompare_generate_demo_settings_page(&$form) {
     '#element_validate' => array('element_validate_integer_positive_or_null'),
   );
 
-  if (module_exists('wikicompare_inherit_compared')) {
-    //Display inherit compared specific field in the generate demo form.
-    wikicompare_inherit_compared_demo_form($form) ;
+  if (module_exists('wikicompare_inherit_product')) {
+    //Display inherit product specific field in the generate demo form.
+    wikicompare_inherit_product_demo_form($form) ;
   }
 
   if (module_exists('wikicompare_translation')) {
@@ -386,7 +386,7 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
   wikicompare_stop_computation();
 
   $features_created = array();
-  $compareds_created = array();
+  $products_created = array();
 
   //If we want to generate features datas.
   if (($form_state['input']['feature_min_depth'] != 0) && ($form_state['input']['feature_max_depth'] != 0) && ($form_state['input']['feature_child_min_per_level'] != 0) && ($form_state['input']['feature_child_max_per_level'] != 0)) {
@@ -415,17 +415,17 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
 
   }
 
-  //If we want to generate compareds datas.
-  if (($form_state['input']['compared_min_depth'] != 0) && ($form_state['input']['compared_max_depth'] != 0) && ($form_state['input']['compared_child_min_per_level'] != 0) && ($form_state['input']['compared_child_max_per_level'] != 0)) {
+  //If we want to generate products datas.
+  if (($form_state['input']['product_min_depth'] != 0) && ($form_state['input']['product_max_depth'] != 0) && ($form_state['input']['product_child_min_per_level'] != 0) && ($form_state['input']['product_child_max_per_level'] != 0)) {
 
     //Get all settings.
     $settings = array(
-      'type' => 'compared',
-      'min_depth' => $form_state['input']['compared_min_depth'],
-      'max_depth' => $form_state['input']['compared_max_depth'],
-      'prefix' => 'Compared ' . variable_get('wikicompare_next_demo_sequence', 1),
-      'child_min_per_level' => $form_state['input']['compared_child_min_per_level'],
-      'child_max_per_level' => $form_state['input']['compared_child_max_per_level'],
+      'type' => 'product',
+      'min_depth' => $form_state['input']['product_min_depth'],
+      'max_depth' => $form_state['input']['product_max_depth'],
+      'prefix' => 'Product ' . variable_get('wikicompare_next_demo_sequence', 1),
+      'child_min_per_level' => $form_state['input']['product_child_min_per_level'],
+      'child_max_per_level' => $form_state['input']['product_child_max_per_level'],
       'depth' => 1,
     );
     if (module_exists('wikicompare_translation')) {
@@ -434,7 +434,7 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
     }
 
     //Generate datas.
-    wikicompare_generate_demo_create_children($settings, $compareds_created);
+    wikicompare_generate_demo_create_children($settings, $products_created);
 
   }
 
@@ -446,26 +446,26 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
   //We use a sequence to make sure we can generate several time the demo data without problem.
   variable_set('wikicompare_next_demo_sequence', variable_get('wikicompare_next_demo_sequence', 1) + 1);
 
-  if (module_exists('wikicompare_inherit_compared')) {
-    //Generate inherit compared demo data.
-    wikicompare_inherit_compared_demo_submit_generate($form_state, $compareds_created);
+  if (module_exists('wikicompare_inherit_product')) {
+    //Generate inherit product demo data.
+    wikicompare_inherit_product_demo_submit_generate($form_state, $products_created);
   }
 
   //Change support evaluation value. This part take a lot of time, better put a high support chance
-  if (!empty($compareds_created) && !empty($features_created) && $form_state['input']['evaluation_support_chance'] != 0) {
+  if (!empty($products_created) && !empty($features_created) && $form_state['input']['evaluation_support_chance'] != 0) {
 
     //Get all evaluation node.
     $query = db_select('cache_evaluation', 'i');
     $query->addField('i', 'nid', 'nid');
-    $query->leftjoin('cache_compared', 'c', 'i.compared_id = c.nid');
+    $query->leftjoin('cache_product', 'c', 'i.product_id = c.nid');
     $query->leftjoin('cache_feature', 'f', 'i.feature_id = f.nid');
     $query->condition("c.has_children", 0);
     $query->condition("f.has_children", 0);
     $query->condition('i.feature_id', $features_created, 'in');
-    $query->condition('i.compared_id', $compareds_created, 'in');
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Add inherit compared specific field.
-      wikicompare_inherit_compared_demo_submit_evaluation_query($query);
+    $query->condition('i.product_id', $products_created, 'in');
+    if (module_exists('wikicompare_inherit_product')) {
+      //Add inherit product specific field.
+      wikicompare_inherit_product_demo_submit_evaluation_query($query);
     }
     $result = $query->execute();
     foreach($result as $record) {
@@ -476,9 +476,9 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
         $node->wikicompare_support['und'][0]['value'] = 1;
         $modified = True;
       }
-      if (module_exists('wikicompare_inherit_compared')) {
-        //Modify inherit compared specific field.
-        wikicompare_inherit_compared_demo_submit_evaluation($node, $modified, $form_state, $record);
+      if (module_exists('wikicompare_inherit_product')) {
+        //Modify inherit product specific field.
+        wikicompare_inherit_product_demo_submit_evaluation($node, $modified, $form_state, $record);
       }
 
       if ($modified == True) {

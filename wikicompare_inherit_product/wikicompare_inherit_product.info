@@ -1,0 +1,9 @@
+name = Wikicompare Product Inheritance
+description = Add the possibility to specify a inherited product. This allow us to fill all the evaluation of a new product just by specifying another product, especially usefull for a new product in a collection.
+
+dependencies[] = wikicompare
+
+project = "wikicompare"
+package = Wikicompare
+version = VERSION
+core = 7.x

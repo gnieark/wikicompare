@@ -14,11 +14,11 @@
 function wikicompare_schema() {
 
   /**
-   * Create cache tables for feature, compared and evaluation records.
+   * Create cache tables for feature, product and evaluation records.
    * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
    * This will allow us to make far less join in sql query on comparative table computation.
    */
-  foreach (array('compared', 'feature', 'evaluation') as $type) {
+  foreach (array('product', 'feature', 'evaluation') as $type) {
     $schema['cache_' . $type] = wikicompare_node_schema($type);
   }
 
@@ -103,16 +103,16 @@ function wikicompare_node_schema($type) {
     );
     $schema['indexes']['parent_changed'] = array('parent_changed');
   } else {
-    $schema['fields']['compared_id'] = array(
-      'description' => 'The compared id of the evaluation node',
+    $schema['fields']['product_id'] = array(
+      'description' => 'The product id of the evaluation node',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => TRUE,
     );
-    $schema['indexes']['compared_id'] = array('compared_id');
-    $schema['foreign keys']['compared_id'] = array(
+    $schema['indexes']['product_id'] = array('product_id');
+    $schema['foreign keys']['product_id'] = array(
       'table' => 'node',
-      'columns' => array('compared_id' => 'nid'),
+      'columns' => array('product_id' => 'nid'),
     );
     $schema['fields']['feature_id'] = array(
       'description' => 'The feature id of the evaluation node',
@@ -121,22 +121,22 @@ function wikicompare_node_schema($type) {
       'not null' => TRUE,
     );
     $schema['indexes']['feature_id'] = array('feature_id');
-    $schema['foreign keys']['compared_id'] = array(
+    $schema['foreign keys']['product_id'] = array(
       'table' => 'node',
       'columns' => array('feature_id' => 'nid'),
     );
-    $schema['fields']['parent_through_compared_id'] = array(
+    $schema['fields']['parent_through_product_id'] = array(
       'description' => 'The parent evaluation id on the feature axis',
       'type' => 'int',
       'unsigned' => TRUE,
     );
-    $schema['indexes']['parent_through_compared_id'] = array('parent_through_compared_id');
-    $schema['foreign keys']['parent_through_compared_id'] = array(
+    $schema['indexes']['parent_through_product_id'] = array('parent_through_product_id');
+    $schema['foreign keys']['parent_through_product_id'] = array(
       'table' => 'node',
-      'columns' => array('parent_through_compared_id' => 'nid'),
+      'columns' => array('parent_through_product_id' => 'nid'),
     );
     $schema['fields']['parent_through_feature_id'] = array(
-      'description' => 'The parent evaluation id on the compared axis',
+      'description' => 'The parent evaluation id on the product axis',
       'type' => 'int',
       'unsigned' => TRUE,
     );
@@ -156,23 +156,23 @@ function wikicompare_node_schema($type) {
       'length' => 32,
       'default' => NULL,
     );
-    $schema['fields']['compared_parent_id'] = array(
-      'description' => 'The parent id of the compared node',
+    $schema['fields']['product_parent_id'] = array(
+      'description' => 'The parent id of the product node',
       'type' => 'int',
       'unsigned' => TRUE,
     );
-    $schema['indexes']['compared_parent_id'] = array('compared_parent_id');
-    $schema['foreign keys']['compared_parent_id'] = array(
+    $schema['indexes']['product_parent_id'] = array('product_parent_id');
+    $schema['foreign keys']['product_parent_id'] = array(
       'table' => 'node',
-      'columns' => array('compared_parent_id' => 'nid'),
+      'columns' => array('product_parent_id' => 'nid'),
     );
-    $schema['fields']['compared_state'] = array(
-      'description' => 'The state of the compared node',
+    $schema['fields']['product_state'] = array(
+      'description' => 'The state of the product node',
       'type' => 'varchar',
       'length' => 32,
     );
-    $schema['fields']['compared_has_children'] = array(
-      'description' => "Boolean indicated if the compared node has children.",
+    $schema['fields']['product_has_children'] = array(
+      'description' => "Boolean indicated if the product node has children.",
       'type' => 'int',
       'size' => 'tiny',
       'default' => 0,
@@ -284,7 +284,7 @@ function wikicompare_install() {
     'cardinality' => 1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared', 'feature', 'profile')),
+      'handler_settings' => array('target_bundles' => array('product', 'feature', 'profile')),
     ),
   );
   field_create_field($field);
@@ -308,12 +308,12 @@ function wikicompare_install() {
   field_create_field($field);
 
   $field = array(
-    'field_name' => 'wikicompare_compared_id',
+    'field_name' => 'wikicompare_product_id',
     'type' => 'entityreference',
     'cardinality' => 1,
     'settings' => array(
       'target_type' => 'node',
-      'handler_settings' => array('target_bundles' => array('compared')),
+      'handler_settings' => array('target_bundles' => array('product')),
     ),
   );
   field_create_field($field);
@@ -411,13 +411,13 @@ function wikicompare_install() {
   );
   field_create_field($field);
 
-  foreach (array('compared', 'feature', 'evaluation') as $type) {
+  foreach (array('product', 'feature', 'evaluation') as $type) {
     //Generic function.
     wikicompare_node_install($type);
   }
 
   //Set module default settings.
-  variable_set('wikicompare_update_compared', 'no-update');
+  variable_set('wikicompare_update_product', 'no-update');
   variable_set('wikicompare_computation_status', 1);
 
   variable_set('revisioning_edit_callback', 1);
@@ -444,14 +444,14 @@ function wikicompare_install() {
       'create feature content' => TRUE,
       'edit any feature content' => TRUE,
       'delete own feature content' => TRUE,
-      'create compared content' => TRUE,
-      'edit any compared content' => TRUE,
-      'delete own compared content' => TRUE,
+      'create product content' => TRUE,
+      'edit any product content' => TRUE,
+      'delete own product content' => TRUE,
       'edit revisions' => TRUE,
       'view revisions of any feature content' => TRUE,
       'publish revisions of any feature content' => TRUE,
-      'view revisions of any compared content' => TRUE,
-      'publish revisions of any compared content' => TRUE,
+      'view revisions of any product content' => TRUE,
+      'publish revisions of any product content' => TRUE,
       'view revisions of any evaluation content' => TRUE,
       'publish revisions of any evaluation content' => TRUE,
       'access user profiles' => TRUE,
@@ -465,7 +465,7 @@ function wikicompare_install() {
         'administer comments' => TRUE,
         'delete revisions' => TRUE,
         'delete any feature content' => TRUE,
-        'delete any compared content' => TRUE,
+        'delete any product content' => TRUE,
         'access site in maintenance mode' => TRUE,
         'administer users' => TRUE,
         'moderate wikicompare' => TRUE,
@@ -757,17 +757,17 @@ function wikicompare_node_install($type) {
     field_create_instance($instance);
 
     $instance = array(
-      'field_name' => 'wikicompare_compared_id',
+      'field_name' => 'wikicompare_product_id',
       'entity_type' => 'node',
       'bundle' => 'evaluation',
-      'label' => 'Compared',
+      'label' => 'Product',
       'widget' => array(
         'type' => 'entityreference_autocomplete',
       ),
       'required' => 1,
       'settings' => array(
         'target_type' => 'node',
-        'handler_settings' => array('target_bundles' => array('compared')),
+        'handler_settings' => array('target_bundles' => array('product')),
       ),
     );
     field_create_instance($instance);
@@ -894,7 +894,7 @@ function wikicompare_node_install($type) {
 function wikicompare_uninstall() {
 
   //Delete module settings variable
-  variable_del('wikicompare_update_compared');
+  variable_del('wikicompare_update_product');
   variable_del('wikicompare_computation_status');
 
   //Delete all nodes of feature type.
@@ -906,9 +906,9 @@ function wikicompare_uninstall() {
   }
   node_delete_multiple($nids);
 
-  //Delete all nodes of compared type.
+  //Delete all nodes of product type.
   $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
-  $result = db_query($sql, array(':type' => 'compared'));
+  $result = db_query($sql, array(':type' => 'product'));
   $nids = array();
   foreach ($result as $row) {
     $nids[] = $row->nid;
@@ -926,7 +926,7 @@ function wikicompare_uninstall() {
   node_delete_multiple($nids);
 
   //Purge variables.
-  foreach (array('compared', 'feature', 'evaluation') as $type) {
+  foreach (array('product', 'feature', 'evaluation') as $type) {
 
     variable_del('node_options_' . $type);
     variable_del('node_submitted_' . $type);
@@ -957,15 +957,15 @@ function wikicompare_uninstall() {
   field_delete_field('wikicompare_sequence');
   field_delete_field('wikicompare_state');
   field_delete_field('wikicompare_feature_id');
-  field_delete_field('wikicompare_compared_id'); 
+  field_delete_field('wikicompare_product_id'); 
   field_delete_field('wikicompare_support');
   field_delete_field('wikicompare_protected');
   field_delete_field('wikicompare_proofs');
 
-  field_delete_instance(field_read_instance('node', 'body', 'compared'));
+  field_delete_instance(field_read_instance('node', 'body', 'product'));
   field_delete_instance(field_read_instance('node', 'body', 'feature'));
   field_delete_instance(field_read_instance('node', 'body', 'evaluation'));
-  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_compared'));
+  field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_product'));
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_feature'));
   field_delete_instance(field_read_instance('comment', 'comment_body', 'comment_node_evaluation'));
 

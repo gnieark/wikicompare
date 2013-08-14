@@ -81,8 +81,8 @@ function wikicompare_comparative_table() {
   );
   $output .= ' ' . render($reset_link) . '</p>';
 
-  //Generate the main compared itemlist.
-  $output .= wikicompare_table_render_main_itemlist('compared', 'Products', wikicompare_initialize_settings());
+  //Generate the main product itemlist.
+  $output .= wikicompare_table_render_main_itemlist('product', 'Products', wikicompare_initialize_settings());
 
   //Generate the comparative table.
   $output .= wikicompare_table_render_comparative_table(wikicompare_initialize_settings());
@@ -173,13 +173,13 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
  * @param features
  *   If specified, the table will be computed with the specified features.
  *
- * @param compared_ids
- *   The table will immediately add the specified compared as column.
+ * @param product_ids
+ *   The table will immediately add the specified product as column.
  *
  * @return $output
  *   The rendered table.
  */
-function wikicompare_table_render_comparative_table($settings, $features=array(), $compared_ids=array()){
+function wikicompare_table_render_comparative_table($settings, $features=array(), $product_ids=array()){
 
   //Only the main table will be rendered by this function.
   $settings['context'] = 'table';
@@ -193,21 +193,21 @@ function wikicompare_table_render_comparative_table($settings, $features=array()
     }
   }
 
-  //Get the needed evaluation thanks to feature and compared ids.
+  //Get the needed evaluation thanks to feature and product ids.
   $evaluations = array();
   //I though about move this security in the request itself, but it would add an unnecessary db request in many cases.
-  if (!empty($features['ids']) && !empty($compared_ids)) {
-    //Get the needed evaluation thanks to feature and compared ids.
-    $evaluations = request_db('evaluation', array('feature_ids' => $features['ids'], 'compared_ids' => $compared_ids), $settings);
+  if (!empty($features['ids']) && !empty($product_ids)) {
+    //Get the needed evaluation thanks to feature and product ids.
+    $evaluations = request_db('evaluation', array('feature_ids' => $features['ids'], 'product_ids' => $product_ids), $settings);
   }
 
   //Build recursively the features data and compute them if necessary.
-  $features_row_data = wikicompare_build_rows_data($features['tree'], $compared_ids, $evaluations, $settings);
+  $features_row_data = wikicompare_build_rows_data($features['tree'], $product_ids, $evaluations, $settings);
 
-  $compareds = array();
-  if (!empty($compared_ids)) {
-    //Get the compareds data for the header of the table.
-    $compareds = request_db('compared', array('nids' => $compared_ids), $settings);
+  $products = array();
+  if (!empty($product_ids)) {
+    //Get the products data for the header of the table.
+    $products = request_db('product', array('nids' => $product_ids), $settings);
   }
 
   //Building the table
@@ -220,8 +220,8 @@ function wikicompare_table_render_comparative_table($settings, $features=array()
   //Build header.
   $output .= '<tr id="comparative_table_header">';
   $output .= '<th>' . t('Features') . '</th>';
-  foreach ($compareds as $cid => $compared) {
-    $output .= '<th id="header_compared_' . $cid . '" class="header_compared"><span class="compared_title_' . $cid . '">' . $compared['data']->title . '</span></th>';
+  foreach ($products as $cid => $product) {
+    $output .= '<th id="header_product_' . $cid . '" class="header_product"><span class="product_title_' . $cid . '">' . $product['data']->title . '</span></th>';
   }
   $output .= '</tr>';
   $output .= '</thead>';
@@ -282,7 +282,7 @@ function wikicompare_table_render_rows($features_row_data, $settings) {
     //Generate the main details of the feature in the first cell.
     $output .= '<td>' . wikicompare_table_get_supertitle_item('feature', $feature, $settings) . '</td>';
 
-    //Add a column for each compared.
+    //Add a column for each product.
     foreach ($feature['evaluations'] as $cid => $evaluation) {
       //Render evaluation.
       $output .= wikicompare_table_render_evaluation($evaluation, $feature, $cid, $settings);
@@ -297,7 +297,7 @@ function wikicompare_table_render_rows($features_row_data, $settings) {
 }
 
 /**
- * Render the evaluation. This fucntion is used in render row function and in the add compared column ajax call.
+ * Render the evaluation. This fucntion is used in render row function and in the add product column ajax call.
  *
  * @param $evaluation
  *   The evaluation to render.
@@ -319,7 +319,7 @@ function wikicompare_table_render_evaluation($evaluation, $feature, $cid, $setti
     $output .= ' id="evaluation_' . $evaluation['data']->nid . '"';
     $css_class = 'evaluation_cell ' . $evaluation['data']->css_class;
   }
-  $output .= ' class="' . $css_class . ' evaluation_compared_' . $cid . ' evaluation_feature_' . $feature['data']->nid . '">';
+  $output .= ' class="' . $css_class . ' evaluation_product_' . $cid . ' evaluation_feature_' . $feature['data']->nid . '">';
   //We hide the evaluation for all non-published feature, to more easily distinct them from the published ones.
   if (in_array($feature['data']->state, unserialize(WIKICOMPARE_STATE_PUBLISHED)) || $feature == NULL) {
     //Render the evaluation.
@@ -380,8 +380,8 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
         //Only table and multidialog itemlist have checkboxes before the node title. Also, this node must be published.
         if (in_array($settings['context'], array('table', 'multidialog')) && in_array($node['data']->state, array('published-incomplete', 'published-submitted', 'published'))) {
 
-          //We display a checkbox only if the node has children, or for compared table if we activated the option.
-          if ($node['data']->has_children != 1 || (variable_get('wikicompare_update_compared', 'no-update') != 'no-update' && $settings['context'] == 'table' && $type == 'compared')) {
+          //We display a checkbox only if the node has children, or for product table if we activated the option.
+          if ($node['data']->has_children != 1 || (variable_get('wikicompare_update_product', 'no-update') != 'no-update' && $settings['context'] == 'table' && $type == 'product')) {
 
             //Generate checkbox.
             $checkbox_settings = array('element' => array(
@@ -393,7 +393,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
                 'context' => $settings['context'],
               ),
             ));
-            //We check it immediately if it was check before (a compared which already has his column in table, a feature present in the global array in javascript etc...
+            //We check it immediately if it was check before (a product which already has his column in table, a feature present in the global array in javascript etc...
             if (isset($node['data']->displayed)) {
               $checkbox_settings['element']['#checked'] = True;
             }
@@ -401,15 +401,15 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
             $prefix .= theme_checkbox($checkbox_settings) . ' ';
 
             //Add the ajax link which will add the column in table.
-            if ($type == 'compared' && $settings['context'] == 'table') {
+            if ($type == 'product' && $settings['context'] == 'table') {
               $checkbox_link = array(
                 '#type' => 'link',
                 '#title' => 'toggle',
-                '#href' => 'wikicompare_toogle_compared_checkbox_callback/nojs/',
-                '#id' => 'compared_checkbox_link_' . $node['data']->nid,
+                '#href' => 'wikicompare_toogle_product_checkbox_callback/nojs/',
+                '#id' => 'product_checkbox_link_' . $node['data']->nid,
                 '#attributes' => array(
                   'class' => array('simple_ajaxlink'),
-                  'action' => 'toogle_compared_checkbox',
+                  'action' => 'toogle_product_checkbox',
                   'style' => 'display:none',
                 )
               );
@@ -689,8 +689,8 @@ function wikicompare_build_fulltitle($res, $tree, $parent_title) {
  * @param $features_tree
  *   The feature tree previously build by recursive function.
  *
- * @param $compared_ids
- *   The nids of the compared nodes displayed in the table, so we can assign the evaluations to each rows.
+ * @param $product_ids
+ *   The nids of the product nodes displayed in the table, so we can assign the evaluations to each rows.
  *
  * @param $evaluations
  *   The evaluations details we previously extracted from database.
@@ -701,7 +701,7 @@ function wikicompare_build_fulltitle($res, $tree, $parent_title) {
  * @return $rows
  *   The prepared rows ready to be rendered.
  */
-function wikicompare_build_rows_data($features_tree, $compared_ids, $evaluations, $settings){
+function wikicompare_build_rows_data($features_tree, $product_ids, $evaluations, $settings){
 
   $rows = array();
 
@@ -721,7 +721,7 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $evaluations
     //Launch the recursive function if we are computing the table and the feature have children.
     $children = array();
     if ($feature['children']) {
-      $children = wikicompare_build_rows_data($feature['children'], $compared_ids, $evaluations, $settings);
+      $children = wikicompare_build_rows_data($feature['children'], $product_ids, $evaluations, $settings);
     }
 
     //Since the row are not in a tree but at the same level, we need to use the direct-child flag to recover the true children of the node we are currently working on.
@@ -734,11 +734,11 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $evaluations
       }
     }
 
-    //Assign evaluation to each rows, following the displayed compareds.
+    //Assign evaluation to each rows, following the displayed products.
     $rows[$fid]['evaluations'] = array();
-    foreach ($compared_ids as $cid) {
+    foreach ($product_ids as $cid) {
 
-      //Get evaluation detail, thanks to feature and compared id.
+      //Get evaluation detail, thanks to feature and product id.
       if (isset($evaluations[$fid][$cid])) {
         $evaluation = $evaluations[$fid][$cid];
       } else {
@@ -753,7 +753,7 @@ function wikicompare_build_rows_data($features_tree, $compared_ids, $evaluations
         //The weight of the feature which will be used in the parent wikicompare_compute_percent function
         $evaluation['data']->weight = $feature['data']->weight;
 
-        //Get all children evaluation on the feature axis (same compared id).
+        //Get all children evaluation on the feature axis (same product id).
         $through_feature_childs = array();
         foreach ($direct_children as $child) {
           $child_evaluation = $child['evaluations'][$cid]['data'];
@@ -822,9 +822,9 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
 
     foreach ($nodes as $nid => $node) {
 
-      //If a compared table is already displayed in the table, we check it by default.
-      if ($_POST['type'] == 'compared' && $settings['context'] == 'table') {
-        if (in_array($nid, $settings['compared_column_ids'])) {
+      //If a product table is already displayed in the table, we check it by default.
+      if ($_POST['type'] == 'product' && $settings['context'] == 'table') {
+        if (in_array($nid, $settings['product_column_ids'])) {
           $nodes[$nid]['data']->displayed = True;
         }
       }
@@ -849,7 +849,7 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
     //Rendering the itemlist.
     $output = theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
-    //We prepared a div under the parent compared. This command will fill it with the compared children, and replace anything that was here before.
+    //We prepared a div under the parent product. This command will fill it with the product children, and replace anything that was here before.
     $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
 
   }
@@ -898,14 +898,14 @@ function wikicompare_get_feature_children_response($method = 'ajax') {
       $feature_ids[$fid] = $fid;
     }
 
-    //Recover the evaluations needed for the cells, thanks to compared and feature ids.
+    //Recover the evaluations needed for the cells, thanks to product and feature ids.
     $evaluations = array();
-    if (!empty($settings['compared_column_ids'])) {
-      $evaluations = request_db('evaluation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
+    if (!empty($settings['product_column_ids'])) {
+      $evaluations = request_db('evaluation', array('product_ids' => $settings['product_column_ids'], 'feature_ids' => $feature_ids), $settings);
     }
 
     //Prepare the features data for rendering.
-    $feature_row_data = wikicompare_build_rows_data($features, $settings['compared_column_ids'], $evaluations, $settings);
+    $feature_row_data = wikicompare_build_rows_data($features, $settings['product_column_ids'], $evaluations, $settings);
 
     //Render the features.
     $output = wikicompare_table_render_rows($feature_row_data, $settings);
@@ -938,7 +938,7 @@ function wikicompare_get_feature_children_response($method = 'ajax') {
  * @return $page
  *   Array containing the instructions for the javascript.
  */
-function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
+function wikicompare_toggle_product_checkbox_response($method = 'ajax'){
 
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method != 'ajax') {
@@ -953,11 +953,11 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
     //Initialize settings with the variable from javascript.
     $settings = wikicompare_initialize_settings($_POST);
 
-    //Recover the detail of the compared we want to add, by searching with his nid.
-    $compared = request_db('compared', array('nids' => array($_POST['nid'])), $settings);
+    //Recover the detail of the product we want to add, by searching with his nid.
+    $product = request_db('product', array('nids' => array($_POST['nid'])), $settings);
 
-    //Add the header of the new column, with the compared title.
-    $header = '<th id="header_compared_' . $_POST['nid'] . '" class="header_compared" style="display:none;"><span class="compared_title_' . $_POST['nid'] . '">' . $compared[$_POST['nid']]['data']->title . '</span></th>';
+    //Add the header of the new column, with the product title.
+    $header = '<th id="header_product_' . $_POST['nid'] . '" class="header_product" style="display:none;"><span class="product_title_' . $_POST['nid'] . '">' . $product[$_POST['nid']]['data']->title . '</span></th>';
 
     //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
     if (!empty($_POST['feature_ids'])) {
@@ -966,9 +966,9 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
       $features = request_db('feature', array('nids' => $_POST['feature_ids']), $settings);
 
       //Recover the evaluations needed for the cells.
-      $evaluations = request_db('evaluation', array('compared_ids' => array($_POST['nid']), 'feature_ids' => $_POST['feature_ids']), $settings);
+      $evaluations = request_db('evaluation', array('product_ids' => array($_POST['nid']), 'feature_ids' => $_POST['feature_ids']), $settings);
 
-      //If the table was computed, then we need to compute the evaluation of the compared, with the displayed features.
+      //If the table was computed, then we need to compute the evaluation of the product, with the displayed features.
       if ($settings['computed']) {
 
         //We will use only the feature without childre for the computation.
@@ -1007,8 +1007,8 @@ function wikicompare_toggle_compared_checkbox_response($method = 'ajax'){
 
   }
 
-  //We disactivated the compared checkbox during the ajax call to avoid user spamming, reactivate it.
-  $commands[] = ajax_command_invoke('#compared_table_checkbox_' . $_POST['nid'], 'removeAttr', array('disabled'));
+  //We disactivated the product checkbox during the ajax call to avoid user spamming, reactivate it.
+  $commands[] = ajax_command_invoke('#product_table_checkbox_' . $_POST['nid'], 'removeAttr', array('disabled'));
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -1272,8 +1272,8 @@ function wikicompare_compute_table_response($method = 'ajax') {
     wikicompare_profiles_table_send_compute($commands, $settings);
   }
 
-  //Reset the compared part of the table.
-  $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Products', $settings));
+  //Reset the product part of the table.
+  $commands[] = ajax_command_replace('#comparative_table_main_product', wikicompare_table_render_main_itemlist('product', 'Products', $settings));
 
   //Compute the table, unless no features was selected. In this case, we just reset it.
   if ($selected_feature_ids && !isset($_POST['reset'])) {
@@ -1282,11 +1282,11 @@ function wikicompare_compute_table_response($method = 'ajax') {
     //Indicate we are computing the table.
     $settings['computed'] = 1;
     //Render and compute the table.
-    $output = wikicompare_table_render_comparative_table($settings, $features, $settings['compared_column_ids']);
+    $output = wikicompare_table_render_comparative_table($settings, $features, $settings['product_column_ids']);
 
   //Else, just reset the table.
   } else {
-    $output = wikicompare_table_render_comparative_table($settings, array(), $settings['compared_column_ids']);
+    $output = wikicompare_table_render_comparative_table($settings, array(), $settings['product_column_ids']);
   }
 
   //Replace the old table.
@@ -1326,7 +1326,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
   $update_selected_features = false;
 
   //Execute for all wikicompare node type, except evaluation.
-  $types = array('compared', 'feature');
+  $types = array('product', 'feature');
   if (module_exists('wikicompare_profiles')) {
     //Add profile type.
     wikicompare_profiles_node_types($types);
@@ -1449,11 +1449,11 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
     //If during the previous tests, we ask to reset the table. Only the part concerned by the node type will be reset.
     if ($reset == True) {
       switch ($type) {
-        case 'compared':
-          $commands[] = ajax_command_replace('#comparative_table_main_compared', wikicompare_table_render_main_itemlist('compared', 'Products', $settings));
+        case 'product':
+          $commands[] = ajax_command_replace('#comparative_table_main_product', wikicompare_table_render_main_itemlist('product', 'Products', $settings));
           break;
         case 'feature':
-          $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings, array(), $_POST['compared_column_ids']));
+          $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings, array(), $_POST['product_column_ids']));
           break;
       }
 
@@ -1501,13 +1501,13 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
     //Get evaluations details.
     $evaluations = array();
-    if (!empty($settings['compared_column_ids']) && !empty($feature_ids)) {
-      $evaluations = request_db('evaluation', array('compared_ids' => $settings['compared_column_ids'], 'feature_ids' => $feature_ids), $settings);
+    if (!empty($settings['product_column_ids']) && !empty($feature_ids)) {
+      $evaluations = request_db('evaluation', array('product_ids' => $settings['product_column_ids'], 'feature_ids' => $feature_ids), $settings);
     }
 
     //Rerender all the evaluations displayed in the table.
-    foreach($evaluations as $fid => $compareds_evaluations) {
-      foreach ($compareds_evaluations as $cid => $evaluation) {
+    foreach($evaluations as $fid => $products_evaluations) {
+      foreach ($products_evaluations as $cid => $evaluation) {
         $commands[] = ajax_command_replace('#evaluation_' . $evaluation['data']->nid, wikicompare_table_render_evaluation($evaluation, $features[$evaluation['data']->feature_id], $cid, $settings));
       }
     }
@@ -1554,14 +1554,14 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 function wikicompare_initialize_settings($args = array()) {
 
   $settings = array();
-  foreach (array('fastaction', 'context', 'compared_column_ids', 'selected_feature_ids', 'forbidden_nid', 'computed', 'states', 'colspan') as $key) {
+  foreach (array('fastaction', 'context', 'product_column_ids', 'selected_feature_ids', 'forbidden_nid', 'computed', 'states', 'colspan') as $key) {
 
     //If the key is already set in the argument of the function, we directly use it.
     if (isset($args[$key])) {
       $settings[$key] = $args[$key];
 
       //Security for some fields coming from javascript, they are array but javascript return a string when empty.
-      if (in_array($key, array('compared_column_ids', 'selected_feature_ids')) && $args[$key] == '') {
+      if (in_array($key, array('product_column_ids', 'selected_feature_ids')) && $args[$key] == '') {
         $settings[$key] = array();
       }
 
@@ -1570,7 +1570,7 @@ function wikicompare_initialize_settings($args = array()) {
       $result = 0;
       if ($key == 'context') {
         $result = 'table';
-      } elseif (in_array($key, array('compared_column_ids', 'selected_feature_ids', 'states'))) {
+      } elseif (in_array($key, array('product_column_ids', 'selected_feature_ids', 'states'))) {
         $result = array();
       }
       $settings[$key] = $result;

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Define the function relative to the inherit compared.
+ * Define the function relative to the inherit product.
  */
 
 
@@ -17,7 +17,7 @@
  * Implements hook_menu().
  * Add an ajax callback.
  */
-function wikicompare_inherit_compared_menu() {
+function wikicompare_inherit_product_menu() {
 
   $items = array();
 
@@ -64,10 +64,10 @@ function compute_inherit_response($method = 'ajax') {
     $inherit_id = NULL;
 
     $query = db_select('cache_evaluation', 'n');
-    $query->addField('c', 'inherit_compared_id', 'inherit_id');
+    $query->addField('c', 'inherit_product_id', 'inherit_id');
     $query->addField('ci', 'support', 'support');
-    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
-    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_compared_id = ci.compared_id AND ci.feature_id = n.feature_id');
+    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
+    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND ci.feature_id = n.feature_id');
     $query->condition('n.nid', $_POST['nid']);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -123,11 +123,11 @@ function compute_inherit_response($method = 'ajax') {
  * @param $query
  *   The query to update. Passed by reference.
  */
-function wikicompare_inherit_compared_update_main_query(&$query) {
+function wikicompare_inherit_product_update_main_query(&$query) {
 
   $query->addField('n', 'use_from_inherit', 'use_from_inherit');
   //Recover the percent value of the inherited evaluation
-  $query->addField('ni', 'compared_id', 'inheriting_compared_id');
+  $query->addField('ni', 'product_id', 'inheriting_product_id');
   $query->addField('ni', 'nid', 'inheriting_evaluation_nid');
   $query->addField('ni', 'percent', 'inheriting_evaluation_cache_percent');
   $query->addField('ni', 'css_class', 'inheriting_evaluation_cache_css_class');
@@ -150,12 +150,12 @@ function wikicompare_inherit_compared_update_main_query(&$query) {
  * @param $nids
  *   The nids of the nodes to update.
  */
-function wikicompare_inherit_compared_update_comparative_table_preparation(&$nodes, $type, $nids) {
+function wikicompare_inherit_product_update_comparative_table_preparation(&$nodes, $type, $nids) {
 
     //Mark to update the inherited evaluation without cache percent
     $to_update = array();
     foreach($nodes as $node) {
-      if ($node->inheriting_compared_id) {
+      if ($node->inheriting_product_id) {
         if (!$node->inheriting_evaluation_cache_percent) {
           $to_update[$node->inheriting_evaluation_nid] = $node->inheriting_evaluation_nid;
         }
@@ -164,7 +164,7 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
 
     //Recover the missing cache percent
     if (!empty($to_update)) {
-      //There is a danger here if the inherited compared are looping. Later, we have to think about adding a security when we insert/update the inherit field of a compared which check if there is a loop. There is a security in the interface (in select popin) but not in this update code.
+      //There is a danger here if the inherited product are looping. Later, we have to think about adding a security when we insert/update the inherit field of a product which check if there is a loop. There is a security in the interface (in select popin) but not in this update code.
       $res = wikicompare_update_compare_tree('evaluation', $to_update);
       foreach($nodes as $node) {
         if (isset($res[$node->inheriting_evaluation_nid])) {
@@ -175,18 +175,18 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
     }
 
     $through_inherit_childs = array();
-    if (in_array($type, array('compared', 'evaluation')) && !empty($nids))  {
+    if (in_array($type, array('product', 'evaluation')) && !empty($nids))  {
       $query = db_select('cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'feature_id', 'fid');
-      $query->addField('nc', 'inherit_compared_id', 'inherit_compared_id');
-      $query->join('cache_compared', 'nc', 'n.compared_id = nc.nid');
+      $query->addField('nc', 'inherit_product_id', 'inherit_product_id');
+      $query->join('cache_product', 'nc', 'n.product_id = nc.nid');
       //Only the evaluation which has no children on both axis will be updated because only them can have their percent updated by inheritance
-      $query->condition('n.compared_has_children', 0);
+      $query->condition('n.product_has_children', 0);
       $query->condition('n.feature_has_children', 0);
       switch ($type) {
-        case "compared":
-          $query->condition('nc.inherit_compared_id', $nids, 'IN');
+        case "product":
+          $query->condition('nc.inherit_product_id', $nids, 'IN');
           break;
         default:
           $query->condition('parent_through_inherit_id', $nids, 'IN');
@@ -196,7 +196,7 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
 
       foreach($result as $record) {
         //We assign the children evaluation in a array with fid and cid as key so their parents can recover them with fid and cid key
-        $through_inherit_childs[$record->fid][$record->inherit_compared_id][$record->nid] = $record;
+        $through_inherit_childs[$record->fid][$record->inherit_product_id][$record->nid] = $record;
       }
     }
 
@@ -219,10 +219,10 @@ function wikicompare_inherit_compared_update_comparative_table_preparation(&$nod
  * @param $node
  *   The node to compute. Passed by reference.
  */
-function wikicompare_inherit_compared_from_other_support(&$node) {
+function wikicompare_inherit_product_from_other_support(&$node) {
 
-  //Work only if the compared of the evaluation inherit a node and we didn't override the information in the evaluation.
-  if ($node->inheriting_compared_id && $node->use_from_inherit) {
+  //Work only if the product of the evaluation inherit a node and we didn't override the information in the evaluation.
+  if ($node->inheriting_product_id && $node->use_from_inherit) {
     $node->percent = $node->inheriting_evaluation_cache_percent;
     $node->css_class = $node->inheriting_evaluation_cache_css_class;
   }
@@ -240,7 +240,7 @@ function wikicompare_inherit_compared_from_other_support(&$node) {
  * @param $node
  *   The node we are currently checking.
  */
-function wikicompare_inherit_compared_update_comparative_table_post(&$to_update, $node) {
+function wikicompare_inherit_product_update_comparative_table_post(&$to_update, $node) {
 
   if (!empty($node->through_inherit_childs)) {
     //Add all inheriting children in the nodes to update list.
@@ -254,7 +254,7 @@ function wikicompare_inherit_compared_update_comparative_table_post(&$to_update,
 
 
 /**
- * Search for the inhehrit compared specific fields in the flush tables function.
+ * Search for the inhehrit product specific fields in the flush tables function.
  *
  * @param $query
  *   The query to update. Passed by reference.
@@ -262,11 +262,11 @@ function wikicompare_inherit_compared_update_comparative_table_post(&$to_update,
  * @param $type
  *   The type of the nodes we are searching for.
  */
-function wikicompare_inherit_compared_flush_select(&$query, $type) {
+function wikicompare_inherit_product_flush_select(&$query, $type) {
 
-  if ($type == 'compared') {
-    $query->addField('nic', 'wikicompare_inherit_compared_id_target_id', 'inherit_compared_id');
-    $query->leftjoin('field_revision_wikicompare_inherit_compared_id', 'nic', 'n.vid = nic.revision_id');
+  if ($type == 'product') {
+    $query->addField('nic', 'wikicompare_inherit_product_id_target_id', 'inherit_product_id');
+    $query->leftjoin('field_revision_wikicompare_inherit_product_id', 'nic', 'n.vid = nic.revision_id');
   }
 
   if ($type == 'evaluation') {
@@ -279,7 +279,7 @@ function wikicompare_inherit_compared_flush_select(&$query, $type) {
 
 
 /**
- * Prepare the inherit compared specific fields in the flush tables function.
+ * Prepare the inherit product specific fields in the flush tables function.
  *
  * @param $to_insert
  *   Array containing the data of the record which will be inserted. Passed by reference.
@@ -290,10 +290,10 @@ function wikicompare_inherit_compared_flush_select(&$query, $type) {
  * @param $type
  *   The type of the node
  */
-function wikicompare_inherit_compared_flush_cache(&$to_insert, $record, $type) {
+function wikicompare_inherit_product_flush_cache(&$to_insert, $record, $type) {
 
-  if ($type == 'compared') {
-    $to_insert[$record->nid]['inherit_compared_id'] = $record->inherit_compared_id;
+  if ($type == 'product') {
+    $to_insert[$record->nid]['inherit_product_id'] = $record->inherit_product_id;
   }
 
   if ($type == 'evaluation') {
@@ -308,7 +308,7 @@ function wikicompare_inherit_compared_flush_cache(&$to_insert, $record, $type) {
 
 
 /**
- * Add inherit compared specific fields in db request.
+ * Add inherit product specific fields in db request.
  *
  * @param $query
  *   The query to update. Passed by reference.
@@ -316,10 +316,10 @@ function wikicompare_inherit_compared_flush_cache(&$to_insert, $record, $type) {
  * @param $type
  *   The type of the request.
  */
-function  wikicompare_inherit_compared_request_db(&$query, $type) {
+function  wikicompare_inherit_product_request_db(&$query, $type) {
 
-  if ($type == 'compared') {
-    $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
+  if ($type == 'product') {
+    $query->addField('n', 'inherit_product_id', 'inherit_product_id');
   }
 
   if ($type == 'evaluation') {
@@ -339,7 +339,7 @@ function  wikicompare_inherit_compared_request_db(&$query, $type) {
 *****************************************************************/
 
 /**
- * Prepare the inherit compared specific field to insert in wikicompare cache tables.
+ * Prepare the inherit product specific field to insert in wikicompare cache tables.
  *
  * @param $fields
  *   The fields prepared in generic function. Passed by reference.
@@ -350,17 +350,17 @@ function  wikicompare_inherit_compared_request_db(&$query, $type) {
  * @param $node
  *   The created node.
  */
-function wikicompare_inherit_compared_cache_insert_fields(&$fields, $type, $node) {
+function wikicompare_inherit_product_cache_insert_fields(&$fields, $type, $node) {
 
-  //Compared specific field.
-  if ($type == 'compared') {
+  //Product specific field.
+  if ($type == 'product') {
 
-    //Insert the inherit compared field in the prepared data.
-    $inherit_compared_id = NULL;
-    if (isset($node->wikicompare_inherit_compared_id['und'][0])) {
-      $inherit_compared_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
+    //Insert the inherit product field in the prepared data.
+    $inherit_product_id = NULL;
+    if (isset($node->wikicompare_inherit_product_id['und'][0])) {
+      $inherit_product_id = $node->wikicompare_inherit_product_id['und'][0]['target_id'];
     }
-    $fields['inherit_compared_id'] = $inherit_compared_id;
+    $fields['inherit_product_id'] = $inherit_product_id;
 
   }
 
@@ -369,14 +369,14 @@ function wikicompare_inherit_compared_cache_insert_fields(&$fields, $type, $node
 
 
 /**
- * Prepare the inherit compared specific field to insert in evaluation object.
+ * Prepare the inherit product specific field to insert in evaluation object.
  *
  * @param $node_evaluation
  *   The evaluation node which will be created. Passed by reference.
  */
-function wikicompare_inherit_compared_insert_evaluation(&$node_evaluation) {
+function wikicompare_inherit_product_insert_evaluation(&$node_evaluation) {
 
-  //We set the value of use_from_inherit to 1 because, without user action, it must use the value of the inherited compared.
+  //We set the value of use_from_inherit to 1 because, without user action, it must use the value of the inherited product.
   $node_evaluation->wikicompare_use_from_inherit['und'][0]['value'] = 1;
 
 }
@@ -384,7 +384,7 @@ function wikicompare_inherit_compared_insert_evaluation(&$node_evaluation) {
 
 
 /**
- * Prepare the inherit compared specific field to insert in evaluation cache table.
+ * Prepare the inherit product specific field to insert in evaluation cache table.
  *
  * @param $cache_evaluation
  *   The evaluation fields which will be inserted in table. Passed by reference.
@@ -392,7 +392,7 @@ function wikicompare_inherit_compared_insert_evaluation(&$node_evaluation) {
  * @param $node
  *   The evaluation node which was created.
  */
-function wikicompare_inherit_compared_cache_evaluation_fields(&$cache_evaluation, $node) {
+function wikicompare_inherit_product_cache_evaluation_fields(&$cache_evaluation, $node) {
 
   //Insert the use_from_inherit field from the created objet.
   $cache_evaluation['use_from_inherit'] = $node->wikicompare_use_from_inherit['und'][0]['value'];
@@ -407,11 +407,11 @@ function wikicompare_inherit_compared_cache_evaluation_fields(&$cache_evaluation
  * @param $node
  *   The node which was created.
  */
-function wikicompare_inherit_compared_insert_parent_inherit($node) {
+function wikicompare_inherit_product_insert_parent_inherit($node) {
 
-  if ($node->type == 'compared') {
-    if (isset($node->wikicompare_inherit_compared_id['und'][0])) {
-      wikicompare_inherit_compared_update_parent_link($node->nid);
+  if ($node->type == 'product') {
+    if (isset($node->wikicompare_inherit_product_id['und'][0])) {
+      wikicompare_inherit_product_update_parent_link($node->nid);
     }
   }
 
@@ -420,7 +420,7 @@ function wikicompare_inherit_compared_insert_parent_inherit($node) {
 
 
 /**
- * Prepare the header for the mass insert in wikicompare cache table with the inherit compared specific fields.
+ * Prepare the header for the mass insert in wikicompare cache table with the inherit product specific fields.
  *
  * @param $header
  *   The header array to modify. Passed by reference.
@@ -428,11 +428,11 @@ function wikicompare_inherit_compared_insert_parent_inherit($node) {
  * @param $type
  *   The type of record which will be cached.
  */
-function wikicompare_inherit_compared_cache_fields_header(&$header, $type) {
+function wikicompare_inherit_product_cache_fields_header(&$header, $type) {
 
-  //Compared specific field.
-  if ($type == 'compared') {
-    $header[] = 'inherit_compared_id';
+  //Product specific field.
+  if ($type == 'product') {
+    $header[] = 'inherit_product_id';
   }
 
   //evaluation specific field.
@@ -445,20 +445,20 @@ function wikicompare_inherit_compared_cache_fields_header(&$header, $type) {
 
 
 /**
- * Update cache so all inherited children are now without inherit compared.
+ * Update cache so all inherited children are now without inherit product.
  *
  * @param $node
  *   The deleted node.
  */
-function wikicompare_inherit_compared_cache_compared_delete($node) {
+function wikicompare_inherit_product_cache_product_delete($node) {
 
-  if ($node->type == 'compared') {
+  if ($node->type == 'product') {
 
-    //Get the compared which was inheriting the deleted node.
+    //Get the product which was inheriting the deleted node.
     $to_update = array();
-    $query = db_select('cache_compared', 'c');
+    $query = db_select('cache_product', 'c');
     $query->addField('c', 'nid', 'nid');
-    $query->condition('c.inherit_compared_id', $node->nid);
+    $query->condition('c.inherit_product_id', $node->nid);
     $result = $query->execute();
     foreach($result as $record) {
       $to_update[$record->nid] = $record->nid;
@@ -466,15 +466,15 @@ function wikicompare_inherit_compared_cache_compared_delete($node) {
 
     if (!empty($to_update)) {
       //Update the children so they no more inherit any node.
-      db_update('cache_compared')
+      db_update('cache_product')
         ->fields(array(
-          'inherit_compared_id' => NULL,
+          'inherit_product_id' => NULL,
         ))
         ->condition('nid', $to_update, 'IN')
         ->execute();
 
       //We launch the tree update on the old children.
-      wikicompare_update_compare_tree('compared', $to_update);
+      wikicompare_update_compare_tree('product', $to_update);
     }
 
   }
@@ -484,7 +484,7 @@ function wikicompare_inherit_compared_cache_compared_delete($node) {
 
 
 /**
- * Trigger a tree update if the inherit_compared_id field has changed.
+ * Trigger a tree update if the inherit_product_id field has changed.
  *
  * @param $to_update
  *   The array containing the id which will trigger a tree update. Passed by reference.
@@ -495,17 +495,17 @@ function wikicompare_inherit_compared_cache_compared_delete($node) {
  * @param $current_node
  *   The object containing the old data of the node.
  */
-function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revision, $current_node) {
+function wikicompare_inherit_product_preupdate_product(&$to_update, $node_revision, $current_node) {
 
-  if ($node_revision->type == 'compared') {
+  if ($node_revision->type == 'product') {
     //Get inherit_id.
     $node_revision_inherit = NULL;
-    if ($node_revision->wikicompare_inherit_compared_id) {
-      $node_revision_inherit = $node_revision->wikicompare_inherit_compared_id['und'][0]['target_id'];
+    if ($node_revision->wikicompare_inherit_product_id) {
+      $node_revision_inherit = $node_revision->wikicompare_inherit_product_id['und'][0]['target_id'];
     }
     $current_node_inherit = NULL;
-    if ($current_node->wikicompare_inherit_compared_id) {
-      $current_node_inherit = $current_node->wikicompare_inherit_compared_id['und'][0]['target_id'];
+    if ($current_node->wikicompare_inherit_product_id) {
+      $current_node_inherit = $current_node->wikicompare_inherit_product_id['und'][0]['target_id'];
     }
 
     //Trigger a tree update on the updated node because the value of his evaluations may have changed.
@@ -513,7 +513,7 @@ function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revi
       $to_update[$node_revision->nid] = $node_revision->nid;
 
       //Mark the modified node so his evaluations will be updated with his new evaluations parents through inherit.
-      db_update('cache_compared')
+      db_update('cache_product')
         ->fields(array(
           'inherit_changed' => 1,
         ))
@@ -539,7 +539,7 @@ function wikicompare_inherit_compared_preupdate_compared(&$to_update, $node_revi
  * @param $current_node
  *   The object containing the old data of the node.
  */
-function wikicompare_inherit_compared_preupdate_evaluation(&$to_update, $node_revision, $current_node) {
+function wikicompare_inherit_product_preupdate_evaluation(&$to_update, $node_revision, $current_node) {
 
   if ($node_revision->wikicompare_use_from_inherit['und'][0]['value'] != $current_node->wikicompare_use_from_inherit['und'][0]['value']) {
     $to_update[$node_revision->nid] = $node_revision->nid;
@@ -550,7 +550,7 @@ function wikicompare_inherit_compared_preupdate_evaluation(&$to_update, $node_re
 
 
 /**
- * Add the inherit compared module specific field in the data which will update the wikicompare cache.
+ * Add the inherit product module specific field in the data which will update the wikicompare cache.
  *
  * @param $fields
  *   The array containing the fields which will update the cache. Passed by reference.
@@ -558,15 +558,15 @@ function wikicompare_inherit_compared_preupdate_evaluation(&$to_update, $node_re
  * @param $node_revision
  *   The object containing the new data of the node.
  */
-function wikicompare_inherit_compared_cache_update_fields(&$fields, $node_revision) {
+function wikicompare_inherit_product_cache_update_fields(&$fields, $node_revision) {
 
-  //Compared specific field.
-  if ($node_revision->type == 'compared') {
+  //Product specific field.
+  if ($node_revision->type == 'product') {
     $inherit_id = NULL;
-    if (isset($node_revision->wikicompare_inherit_compared_id['und'][0])) {
-      $inherit_id = $node_revision->wikicompare_inherit_compared_id['und'][0]['target_id'];
+    if (isset($node_revision->wikicompare_inherit_product_id['und'][0])) {
+      $inherit_id = $node_revision->wikicompare_inherit_product_id['und'][0]['target_id'];
     }
-    $fields['inherit_compared_id'] = $inherit_id;
+    $fields['inherit_product_id'] = $inherit_id;
   }
   //evaluation specific field.
   if ($node_revision->type == 'evaluation') {
@@ -586,9 +586,9 @@ function wikicompare_inherit_compared_cache_update_fields(&$fields, $node_revisi
  * @param $type
  *   The type of the modified node.
  */
-function wikicompare_inherit_compared_get_inherit_changed(&$query, $type) {
+function wikicompare_inherit_product_get_inherit_changed(&$query, $type) {
 
-  if ($type == 'compared') {
+  if ($type == 'product') {
     $query->addField('n', 'inherit_changed', 'inherit_changed');
   }
 
@@ -605,12 +605,12 @@ function wikicompare_inherit_compared_get_inherit_changed(&$query, $type) {
  * @param $type
  *   The type of the node.
  */
-function wikicompare_inherit_compared_update_parent_evaluations($node, $type) {
+function wikicompare_inherit_product_update_parent_evaluations($node, $type) {
 
-  if ($type == 'compared') {
+  if ($type == 'product') {
     if ($node->inherit_changed) {
-      wikicompare_inherit_compared_update_parent_link($node->nid);
-      db_update('cache_compared')
+      wikicompare_inherit_product_update_parent_link($node->nid);
+      db_update('cache_product')
         ->fields(array(
           'inherit_changed' => 0
         ))
@@ -627,14 +627,14 @@ function wikicompare_inherit_compared_update_parent_evaluations($node, $type) {
  * Function which will update the parent though inherit field in cache_evaluation. This field is important for the percentage computation.
  *
  * @param $nid
- *   The nid of the compared or feature which we need to update the evaluation. If empty, all evaluation will be updated.
+ *   The nid of the product or feature which we need to update the evaluation. If empty, all evaluation will be updated.
  */
-function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
+function wikicompare_inherit_product_update_parent_link($nid=NULL) {
 
   if (Database::getConnection()->databaseType() == 'mysql') {
     $query = 'UPDATE cache_evaluation n
-           INNER JOIN cache_compared nc ON n.compared_id = nc.nid
-           LEFT JOIN cache_evaluation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
+           INNER JOIN cache_product nc ON n.product_id = nc.nid
+           LEFT JOIN cache_evaluation nci ON (nc.inherit_product_id = nci.product_id AND n.feature_id = nci.feature_id)
            SET n.parent_through_inherit_id = nci.nid';
     if ($nid != NULL) {
       $query = $query . ' WHERE nc.nid = ' . $nid;
@@ -643,8 +643,8 @@ function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
     $query = 'UPDATE cache_evaluation
            SET parent_through_inherit_id = nci.nid
            FROM cache_evaluation n
-           INNER JOIN cache_compared nc ON n.compared_id = nc.nid
-           LEFT JOIN cache_evaluation nci ON (nc.inherit_compared_id = nci.compared_id AND n.feature_id = nci.feature_id)
+           INNER JOIN cache_product nc ON n.product_id = nc.nid
+           LEFT JOIN cache_evaluation nci ON (nc.inherit_product_id = nci.product_id AND n.feature_id = nci.feature_id)
            WHERE cache_evaluation.nid = n.nid';
     if ($nid != NULL) {
       $query = $query . ' AND nc.nid = ' . $nid;
@@ -666,7 +666,7 @@ function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
 *****************************************************************/
 
 /**
- * Add the fields relative to inherit compared in compared node.
+ * Add the fields relative to inherit product in product node.
  *
  * @param $form
  *   The form array which will be used by Drupal to build the node form. Passed by reference.
@@ -686,28 +686,28 @@ function wikicompare_inherit_compared_update_parent_link($nid=NULL) {
  * @param $readonly
  *   Flag indicated if the user can modify the node.
  */
-function wikicompare_inherit_compared_modify_form_no_evaluation(&$form, &$output, $form_type, $type, $node, $nid, $readonly) {
+function wikicompare_inherit_product_modify_form_no_evaluation(&$form, &$output, $form_type, $type, $node, $nid, $readonly) {
 
-  //Compared specific field.
-  if ($type == 'compared') {
+  //Product specific field.
+  if ($type == 'product') {
 
     $inherit_id = 0;
     //Default message.
-    $title = 'No inherited compared';
+    $title = 'No inherited product';
     //Get inherited node detail.
-    if (isset($node->wikicompare_inherit_compared_id['und'])) {
-      $inherit_id = $node->wikicompare_inherit_compared_id['und'][0]['target_id'];
+    if (isset($node->wikicompare_inherit_product_id['und'])) {
+      $inherit_id = $node->wikicompare_inherit_product_id['und'][0]['target_id'];
       //We use wikicompare_build_recursive_data() to build the full title of the inherited node.
-      $res = wikicompare_build_recursive_data('compared', array($inherit_id), wikicompare_initialize_settings());
+      $res = wikicompare_build_recursive_data('product', array($inherit_id), wikicompare_initialize_settings());
       $title = $res['data'][$inherit_id]['data']->fulltitle;
     }
 
     //Link which will open a popin where we can select the inherited node.
     $select_inherit_link = array(
-      'text' => 'Select inherited compared',
-      'title' => 'Select inherited compared',
+      'text' => 'Select inherited product',
+      'title' => 'Select inherited product',
       'selector' => 'dialog-content',
-      'path' => 'wikicompare_get_dialog_callback/selectdialog/compared/wikicompare-inherit-compared-id/' . $nid,
+      'path' => 'wikicompare_get_dialog_callback/selectdialog/product/wikicompare-inherit-product-id/' . $nid,
     );
     //Link which will reset the parent.
     $clear_inherit_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link_inherit'), 'type' => $type)));
@@ -718,22 +718,22 @@ function wikicompare_inherit_compared_modify_form_no_evaluation(&$form, &$output
       $form['container_selected_inherit'] = array(
         'title' => array('#markup' => $title),
         '#type' => 'container',
-        '#id' => 'container-wikicompare-inherit-compared-id',
+        '#id' => 'container-wikicompare-inherit-product-id',
         '#weight' => -3,
          //We add the link after the container.
         '#suffix' => '<p>' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>'
       );
       //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the inherited node.
-      $form['wikicompare_inherit_compared_id']['#attributes']['style'] = 'display:none;';
+      $form['wikicompare_inherit_product_id']['#attributes']['style'] = 'display:none;';
     }
 
     //Add the HTML code relative to the inherited node.
     if ($form_type == 'fastaction') {
       //Container with the inherited name.
-      $output .= '<p><span id="container-wikicompare-inherit-compared-id">' . $title . '</span>';
+      $output .= '<p><span id="container-wikicompare-inherit-product-id">' . $title . '</span>';
       if ($readonly != True) {
         //Span with the inherit_id, which will be recovered by the submit function and updated by javascript. Followed by the link.
-        $output .= '<span id="wikicompare-inherit-compared-id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
+        $output .= '<span id="wikicompare-inherit-product-id" style="display:none;">' . $inherit_id . '</span> ' . theme('simple_dialog_link', $select_inherit_link) . ' ' . $clear_inherit_link . '</p>';
       }
     }
 
@@ -744,7 +744,7 @@ function wikicompare_inherit_compared_modify_form_no_evaluation(&$form, &$output
 
 
 /**
- * Add the fields relative to inherit compared in evaluation node.
+ * Add the fields relative to inherit product in evaluation node.
  *
  * @param $form
  *   The form array which will be used by Drupal to build the node form. Passed by reference.
@@ -773,19 +773,19 @@ function wikicompare_inherit_compared_modify_form_no_evaluation(&$form, &$output
  * @param $fastaction
  *   The fastaction (add or edit)
  */
-function wikicompare_inherit_compared_modify_form_evaluation(&$form, &$output, &$disable_support, &$test, $form_type, $type, $node, $readonly, $fastaction) {
+function wikicompare_inherit_product_modify_form_evaluation(&$form, &$output, &$disable_support, &$test, $form_type, $type, $node, $readonly, $fastaction) {
 
   if ($type == 'evaluation') {
 
     //Get details of the inherited evaluation.
     $query = db_select('cache_evaluation', 'n');
-    $query->addField('c', 'inherit_compared_id', 'inherit_id');
-    $query->addField('c', 'has_children', 'compared_has_children');
+    $query->addField('c', 'inherit_product_id', 'inherit_id');
+    $query->addField('c', 'has_children', 'product_has_children');
     $query->addField('f', 'has_children', 'feature_has_children');
     $query->addField('ci', 'support', 'inherit_support');
-    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
     $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
+    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND n.feature_id = ci.feature_id');
     $query->condition('n.nid', $node->nid);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -794,8 +794,8 @@ function wikicompare_inherit_compared_modify_form_evaluation(&$form, &$output, &
 
     if ($form_type == 'form') {
 
-      //If there is no inherited compared or if we are not at the root of the tree, we don't need the use_from_inherit field.
-      if ($res->inherit_id == NULL || $res->compared_has_children || $res->feature_has_children) {
+      //If there is no inherited product or if we are not at the root of the tree, we don't need the use_from_inherit field.
+      if ($res->inherit_id == NULL || $res->product_has_children || $res->feature_has_children) {
         hide($form['wikicompare_use_from_inherit']);
       } else {
 
@@ -883,20 +883,20 @@ function wikicompare_inherit_compared_modify_form_evaluation(&$form, &$output, &
  * @param $node
  *   Object containing the detail of the node.
  */
-function wikicompare_inherit_compared_test_form_evaluation(&$test_support, $test, $node) {
+function wikicompare_inherit_product_test_form_evaluation(&$test_support, $test, $node) {
 
   //If we have to use the value from inherited evaluation.
   if ($test == True) {
 
     //Get inherited evaluation details .
     $query = db_select('cache_evaluation', 'n');
-    $query->addField('c', 'inherit_compared_id', 'inherit_id');
-    $query->addField('c', 'has_children', 'compared_has_children');
+    $query->addField('c', 'inherit_product_id', 'inherit_id');
+    $query->addField('c', 'has_children', 'product_has_children');
     $query->addField('f', 'has_children', 'feature_has_children');
     $query->addField('ci', 'support', 'inherit_support');
-    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
     $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_compared_id = ci.compared_id AND n.feature_id = ci.feature_id');
+    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND n.feature_id = ci.feature_id');
     $query->condition('n.nid', $node->nid);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -915,7 +915,7 @@ function wikicompare_inherit_compared_test_form_evaluation(&$test_support, $test
 
 
 /**
- * Remove important inherit compared fields from translated node.
+ * Remove important inherit product fields from translated node.
  *
  * @param $form
  *   The form array which will be used by Drupal to build the node form. Passed by reference.
@@ -926,12 +926,12 @@ function wikicompare_inherit_compared_test_form_evaluation(&$test_support, $test
  * @param $node
  *   Object containing the detail of the node.
  */
-function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$form_state, $node) {
+function wikicompare_inherit_product_wikicompare_translation_form(&$form, &$form_state, $node) {
 
-  if (isset($form['wikicompare_inherit_compared_id'])) {
+  if (isset($form['wikicompare_inherit_product_id'])) {
     $form['container_selected_inherit'] = $form['container_selected_inherit']['title'];
-    unset($form['wikicompare_inherit_compared_id']);
-    unset($form_state['node']->wikicompare_inherit_compared_id);
+    unset($form['wikicompare_inherit_product_id']);
+    unset($form_state['node']->wikicompare_inherit_product_id);
   }
 
 }
@@ -947,7 +947,7 @@ function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$for
 *****************************************************************/
 
 /**
- * Assign inherit compared specific fields.
+ * Assign inherit product specific fields.
  *
  * @param $node
  *   The node which will be submitted. Passed by reference.
@@ -958,16 +958,16 @@ function wikicompare_inherit_compared_wikicompare_translation_form(&$form, &$for
  * @param $POST
  *   Variables from javascript.
  */
-function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotupdate,  $POST) {
+function wikicompare_inherit_product_fastaction_submit_element(&$node, &$donotupdate,  $POST) {
 
-  //Compared specific fields.
-  if ($node->type == 'compared') {
+  //Product specific fields.
+  if ($node->type == 'product') {
     if ($POST['inherit_id'] != 0) {
-          $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $POST['inherit_id'];
-          $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
+          $node->wikicompare_inherit_product_id['und'][0]['target_id'] = $POST['inherit_id'];
+          $node->wikicompare_inherit_product_id['und'][0]['target_type'] = "node";
 
     } else {
-          $node->wikicompare_inherit_compared_id['und'] = NULL;
+          $node->wikicompare_inherit_product_id['und'] = NULL;
     }
   }
 
@@ -995,26 +995,26 @@ function wikicompare_inherit_compared_fastaction_submit_element(&$node, &$donotu
 *****************************************************************/
 
 /**
- * Export inherit compared.
+ * Export inherit product.
  *
  * @param $output
  *   The html code of the export. Passed by reference.
  */
-function wikicompare_inherit_compared_demo_export(&$output) {
+function wikicompare_inherit_product_demo_export(&$output) {
 
-  $query = db_select('cache_compared', 'n');
+  $query = db_select('cache_product', 'n');
   $query->addField('n', 'nid', 'nid');
-  $query->addField('n', 'inherit_compared_id', 'inherit_compared_id');
-  $query->where("n.inherit_compared_id IS NOT NULL");
+  $query->addField('n', 'inherit_product_id', 'inherit_product_id');
+  $query->where("n.inherit_product_id IS NOT NULL");
   $result = $query->execute();
 
   foreach ($result as $record) {
 
-    $output .= "<p>if (module_exists('wikicompare_inherit_compared')) {</p>";
+    $output .= "<p>if (module_exists('wikicompare_inherit_product')) {</p>";
 
-    $output .= "<p>\$node = node_load(\$compareds['new-" . $record->nid . "']);<br/>";
-    $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_id'] = \$compareds['new-" . $record->inherit_compared_id . "'];<br/>";
-    $output .= "\$node->wikicompare_inherit_compared_id['und'][0]['target_type'] = 'node';<br/>";
+    $output .= "<p>\$node = node_load(\$products['new-" . $record->nid . "']);<br/>";
+    $output .= "\$node->wikicompare_inherit_product_id['und'][0]['target_id'] = \$products['new-" . $record->inherit_product_id . "'];<br/>";
+    $output .= "\$node->wikicompare_inherit_product_id['und'][0]['target_type'] = 'node';<br/>";
     $output .= "\$node->promote = 0;<br/>";
     $output .= "\$node->sticky = 0;<br/>";
     $output .= "\$node->revision = TRUE;<br/>";
@@ -1036,9 +1036,9 @@ function wikicompare_inherit_compared_demo_export(&$output) {
  * @param $query
  *   The evaluation query. Passed by reference.
  */
-function wikicompare_inherit_compared_demo_export_evaluation_request(&$query) {
+function wikicompare_inherit_product_demo_export_evaluation_request(&$query) {
   $query->addField('n', 'use_from_inherit', 'use_from_inherit');
-  $query->where('n.support = 1 OR (n.use_from_inherit = 0 AND c.inherit_compared_id IS NOT NULL)');
+  $query->where('n.support = 1 OR (n.use_from_inherit = 0 AND c.inherit_product_id IS NOT NULL)');
 }
 
 
@@ -1052,8 +1052,8 @@ function wikicompare_inherit_compared_demo_export_evaluation_request(&$query) {
  * @param $record
  *   The record we are currently exporting.
  */
-function wikicompare_inherit_compared_demo_export_evaluation_render(&$output, $record) {
-  $output .= "if (module_exists('wikicompare_inherit_compared')) {<br/>";
+function wikicompare_inherit_product_demo_export_evaluation_render(&$output, $record) {
+  $output .= "if (module_exists('wikicompare_inherit_product')) {<br/>";
   $output .= "\$node->wikicompare_use_from_inherit['und'][0]['value'] = " . $record->use_from_inherit . ";<br/>";
   $output .= "}<br/>";
 }
@@ -1062,16 +1062,16 @@ function wikicompare_inherit_compared_demo_export_evaluation_render(&$output, $r
 
 
 /**
- * Display inherit compared specific fields in the generate demo form.
+ * Display inherit product specific fields in the generate demo form.
  *
  * @param $form
  *   The generate demo form. Passed by reference.
  */
-function wikicompare_inherit_compared_demo_form(&$form) {
+function wikicompare_inherit_product_demo_form(&$form) {
 
-  $form['demo_fieldset']['compared_inherit_chance'] = array(
+  $form['demo_fieldset']['product_inherit_chance'] = array(
     '#type' => 'textfield',
-    '#title' => t('Chance that a compared inherit another one (1/x)'),
+    '#title' => t('Chance that a product inherit another one (1/x)'),
     '#default_value' => 5,
     '#size' => 3,
     '#maxlength' => 3,
@@ -1094,37 +1094,37 @@ function wikicompare_inherit_compared_demo_form(&$form) {
 
 
 /**
- * Generate inherit compared demo data.
+ * Generate inherit product demo data.
  *
  * @param $form_state
  *   The values submitted by the form.
  *
- * @param $compareds_created
- *   The nid of the compared created by the function.
+ * @param $products_created
+ *   The nid of the product created by the function.
  */
-function wikicompare_inherit_compared_demo_submit_generate($form_state, $compareds_created) {
+function wikicompare_inherit_product_demo_submit_generate($form_state, $products_created) {
 
-  if (!empty($compareds_created) && $form_state['input']['compared_inherit_chance'] != 0) {
+  if (!empty($products_created) && $form_state['input']['product_inherit_chance'] != 0) {
 
-    $compared_without_children = array();
-    $query = db_select('cache_compared', 'c');
+    $product_without_children = array();
+    $query = db_select('cache_product', 'c');
     $query->addField('c', 'nid', 'nid');
     $query->condition("c.has_children", 0);
     $result = $query->execute();
     foreach ($result as $record) {
-      $compared_without_children[$record->nid] = $record->nid;
+      $product_without_children[$record->nid] = $record->nid;
     }
 
-    foreach ($compared_without_children as $cid) {
-      if (rand(1, $form_state['input']['compared_inherit_chance']) == $form_state['input']['compared_inherit_chance']) {
-        $inherit_compared_id = 0;
-        while ($inherit_compared_id == 0 || $inherit_compared_id == $cid) {
-          $inherit_compared_id = array_rand($compared_without_children);
+    foreach ($product_without_children as $cid) {
+      if (rand(1, $form_state['input']['product_inherit_chance']) == $form_state['input']['product_inherit_chance']) {
+        $inherit_product_id = 0;
+        while ($inherit_product_id == 0 || $inherit_product_id == $cid) {
+          $inherit_product_id = array_rand($product_without_children);
         }
 
         $node = node_load($cid);
-        $node->wikicompare_inherit_compared_id['und'][0]['target_id'] = $inherit_compared_id;
-        $node->wikicompare_inherit_compared_id['und'][0]['target_type'] = "node";
+        $node->wikicompare_inherit_product_id['und'][0]['target_id'] = $inherit_product_id;
+        $node->wikicompare_inherit_product_id['und'][0]['target_type'] = "node";
 
         $node->promote = 0;
         $node->sticky = 0;
@@ -1135,8 +1135,8 @@ function wikicompare_inherit_compared_demo_submit_generate($form_state, $compare
 
         _revisioning_publish_latest_revision($node);
 
-        //Security against loop, we don't want that two compared inherit each other
-        unset($compared_without_children[$cid]);
+        //Security against loop, we don't want that two product inherit each other
+        unset($product_without_children[$cid]);
 
       }
     }
@@ -1153,14 +1153,14 @@ function wikicompare_inherit_compared_demo_submit_generate($form_state, $compare
  * @param $query
  *   The implementatio query.
  */
-function wikicompare_inherit_compared_demo_submit_evaluation_query(&$query) {
-  $query->addField('c', 'inherit_compared_id', 'inherit_compared_id');
+function wikicompare_inherit_product_demo_submit_evaluation_query(&$query) {
+  $query->addField('c', 'inherit_product_id', 'inherit_product_id');
 }
 
 
 
 /**
- * Modify inherit compared specific field.
+ * Modify inherit product specific field.
  *
  * @param $node
  *   The node we are modifying.
@@ -1174,9 +1174,9 @@ function wikicompare_inherit_compared_demo_submit_evaluation_query(&$query) {
  * @param $record
  *   The detail of the evaluation.
  */
-function wikicompare_inherit_compared_demo_submit_evaluation(&$node, &$modified, $form_state, $record) {
+function wikicompare_inherit_product_demo_submit_evaluation(&$node, &$modified, $form_state, $record) {
 
-  if (($record->inherit_compared_id != NULL) && (rand(1, $form_state['input']['evaluation_use_from_inherit_chance']) == $form_state['input']['evaluation_use_from_inherit_chance'])) {
+  if (($record->inherit_product_id != NULL) && (rand(1, $form_state['input']['evaluation_use_from_inherit_chance']) == $form_state['input']['evaluation_use_from_inherit_chance'])) {
     $node->wikicompare_use_from_inherit['und'][0]['value'] = 0;
     $modified = True;
   }

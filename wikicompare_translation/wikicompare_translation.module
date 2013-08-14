@@ -70,7 +70,7 @@ function wikicompare_translation_settings_change_language(&$old_ids, $res) {
       wikicompare_translation_move_field_language('wikicompare_weight', $ids);
       wikicompare_translation_move_field_language('wikicompare_state', $ids);
       wikicompare_translation_move_field_language('wikicompare_feature_id', $ids);
-      wikicompare_translation_move_field_language('wikicompare_compared_id', $ids);
+      wikicompare_translation_move_field_language('wikicompare_product_id', $ids);
       wikicompare_translation_move_field_language('wikicompare_support', $ids);
 
       //We mark the new node as the referent node by changing the tnid on all related node
@@ -504,8 +504,8 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       unset($form_state['node']->wikicompare_feature_id);
     }
 
-    if (isset($form['wikicompare_compared_id'])) {
-      unset($form_state['node']->wikicompare_compared_id);
+    if (isset($form['wikicompare_product_id'])) {
+      unset($form_state['node']->wikicompare_product_id);
     }
 
     //TODO Same than weight. Some others fields are concerned.
@@ -514,8 +514,8 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       unset($form_state['node']->wikicompare_support);
     }
 
-    if (isset($form['wikicompare_compared_id'])) {
-      unset($form_state['node']->wikicompare_compared_id);
+    if (isset($form['wikicompare_product_id'])) {
+      unset($form_state['node']->wikicompare_product_id);
     }
 
     if (isset($form['wikicompare_user_ids'])) {
@@ -528,9 +528,9 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       wikicompare_profiles_wikicompare_translation_form($form, $form_state, $node);
     }
 
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Remove important inherit compared fields from translated node.
-      wikicompare_inherit_compared_wikicompare_translation_form($form, $form_state, $node);
+    if (module_exists('wikicompare_inherit_product')) {
+      //Remove important inherit product fields from translated node.
+      wikicompare_inherit_product_wikicompare_translation_form($form, $form_state, $node);
     }
 
   }

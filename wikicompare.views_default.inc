@@ -42,7 +42,7 @@ $handler->display->display_options['style_plugin'] = 'table';
 $handler->display->display_options['style_options']['columns'] = array(
   'title' => 'title',
   'type' => 'type',
-  'wikicompare_compared_id' => 'wikicompare_compared_id',
+  'wikicompare_product_id' => 'wikicompare_product_id',
   'wikicompare_feature_id' => 'wikicompare_feature_id',
   'created_1' => 'created_1',
   'last_editor' => 'last_editor',
@@ -67,7 +67,7 @@ $handler->display->display_options['style_options']['info'] = array(
     'separator' => '',
     'empty_column' => 0,
   ),
-  'wikicompare_compared_id' => array(
+  'wikicompare_product_id' => array(
     'sortable' => 1,
     'default_sort_order' => 'asc',
     'align' => '',
@@ -126,9 +126,9 @@ $handler->display->display_options['style_options']['info'] = array(
 );
 $handler->display->display_options['style_options']['sticky'] = TRUE;
 /* Relationship: Entity Reference: Referenced Entity */
-$handler->display->display_options['relationships']['wikicompare_compared_id_target_id']['id'] = 'wikicompare_compared_id_target_id';
-$handler->display->display_options['relationships']['wikicompare_compared_id_target_id']['table'] = 'field_data_wikicompare_compared_id';
-$handler->display->display_options['relationships']['wikicompare_compared_id_target_id']['field'] = 'wikicompare_compared_id_target_id';
+$handler->display->display_options['relationships']['wikicompare_product_id_target_id']['id'] = 'wikicompare_product_id_target_id';
+$handler->display->display_options['relationships']['wikicompare_product_id_target_id']['table'] = 'field_data_wikicompare_product_id';
+$handler->display->display_options['relationships']['wikicompare_product_id_target_id']['field'] = 'wikicompare_product_id_target_id';
 /* Relationship: Entity Reference: Referenced Entity */
 $handler->display->display_options['relationships']['wikicompare_feature_id_target_id']['id'] = 'wikicompare_feature_id_target_id';
 $handler->display->display_options['relationships']['wikicompare_feature_id_target_id']['table'] = 'field_data_wikicompare_feature_id';
@@ -144,11 +144,11 @@ $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FAL
 $handler->display->display_options['fields']['type']['id'] = 'type';
 $handler->display->display_options['fields']['type']['table'] = 'node';
 $handler->display->display_options['fields']['type']['field'] = 'type';
-/* Field: Content: Compared */
-$handler->display->display_options['fields']['wikicompare_compared_id']['id'] = 'wikicompare_compared_id';
-$handler->display->display_options['fields']['wikicompare_compared_id']['table'] = 'field_data_wikicompare_compared_id';
-$handler->display->display_options['fields']['wikicompare_compared_id']['field'] = 'wikicompare_compared_id';
-$handler->display->display_options['fields']['wikicompare_compared_id']['settings'] = array(
+/* Field: Content: Product */
+$handler->display->display_options['fields']['wikicompare_product_id']['id'] = 'wikicompare_product_id';
+$handler->display->display_options['fields']['wikicompare_product_id']['table'] = 'field_data_wikicompare_product_id';
+$handler->display->display_options['fields']['wikicompare_product_id']['field'] = 'wikicompare_product_id';
+$handler->display->display_options['fields']['wikicompare_product_id']['settings'] = array(
   'link' => 0,
 );
 /* Field: Content: Feature */
@@ -222,7 +222,7 @@ $handler->display->display_options['filters']['type']['id'] = 'type';
 $handler->display->display_options['filters']['type']['table'] = 'node';
 $handler->display->display_options['filters']['type']['field'] = 'type';
 $handler->display->display_options['filters']['type']['value'] = array(
-  'compared' => 'compared',
+  'product' => 'product',
   'feature' => 'feature',
   'evaluation' => 'evaluation',
 );
@@ -244,12 +244,12 @@ $handler->display->display_options['filters']['type']['expose']['reduce'] = TRUE
 $handler->display->display_options['filters']['title_1']['id'] = 'title_1';
 $handler->display->display_options['filters']['title_1']['table'] = 'node';
 $handler->display->display_options['filters']['title_1']['field'] = 'title';
-$handler->display->display_options['filters']['title_1']['relationship'] = 'wikicompare_compared_id_target_id';
+$handler->display->display_options['filters']['title_1']['relationship'] = 'wikicompare_product_id_target_id';
 $handler->display->display_options['filters']['title_1']['operator'] = 'contains';
 $handler->display->display_options['filters']['title_1']['group'] = 1;
 $handler->display->display_options['filters']['title_1']['exposed'] = TRUE;
 $handler->display->display_options['filters']['title_1']['expose']['operator_id'] = 'title_1_op';
-$handler->display->display_options['filters']['title_1']['expose']['label'] = 'Compared';
+$handler->display->display_options['filters']['title_1']['expose']['label'] = 'Product';
 $handler->display->display_options['filters']['title_1']['expose']['operator'] = 'title_1_op';
 $handler->display->display_options['filters']['title_1']['expose']['identifier'] = 'title_1';
 $handler->display->display_options['filters']['title_1']['expose']['remember_roles'] = array(
@@ -429,11 +429,11 @@ $translatables['wikicompare_dashboard'] = array(
   t('‹ previous'),
   t('next ›'),
   t('last »'),
-  t('Content entity referenced from wikicompare_compared_id'),
+  t('Content entity referenced from wikicompare_product_id'),
   t('Content entity referenced from wikicompare_feature_id'),
   t('Title'),
   t('Type'),
-  t('Compared'),
+  t('Product'),
   t('Feature'),
   t('Post date'),
   t('Last edited by'),

@@ -80,12 +80,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Set the onclick event
       $(this).click(function() {
 
-        //The checkbox in the table compared itemlist, which must add or remove a column in the table.
-        if ($(this).attr('ntype') == 'compared' && $(this).attr('context') == 'table') {
+        //The checkbox in the table product itemlist, which must add or remove a column in the table.
+        if ($(this).attr('ntype') == 'product' && $(this).attr('context') == 'table') {
           //Disable the checkbox during the ajax event.
           $(this).attr('disabled', 'disabled');
           //Call the ajax to display the column.
-          $('#compared_checkbox_link_' + nid).click();
+          $('#product_checkbox_link_' + nid).click();
 
         //The checkbox in the table profile itemlist, which must keep in memory all checked profile for the table computation.
         } else if ($(this).attr('ntype') == 'profile') {
@@ -116,7 +116,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
      * Ajaxify the simple link which has no particular code to manage in the call.
      * Theses links are often hidden and automatically clicked on some event, like checkbox check, click on button or call by ajax.
      * Exemple :
-     *   - The compared checkbox which add a column in the table.
+     *   - The product checkbox which add a column in the table.
      *   - The link after a submit button, in popin or fastaction form.
      *   - The cleaning function.
      */
@@ -320,16 +320,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * In compared form, the clear link will reset the inherit_id value of the form.
+     * In product form, the clear link will reset the inherit_id value of the form.
      */
     $('.clear_link_inherit:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).click(function() {
         //Reset title displayed in the field.
-        $('#container-wikicompare-inherit-compared-id').html('No inherited compared');
+        $('#container-wikicompare-inherit-product-id').html('No inherited product');
         //Reset Drupal field value.
-        $('#edit-wikicompare-inherit-compared-id').html('<input type="text" size="60" value="" name="wikicompare_inherit_compared_id[und][0][target_id]">');
+        $('#edit-wikicompare-inherit-product-id').html('<input type="text" size="60" value="" name="wikicompare_inherit_product_id[und][0][target_id]">');
         //Reset fastaction field value.
-        $('#wikicompare-inherit-compared-id').empty();
+        $('#wikicompare-inherit-product-id').empty();
         //Avoid page rediraction.
         return false;
       });
@@ -395,8 +395,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_type = false;
         manage_displayed_flag = false;
         send_computed = false;
-        send_compareds = false;
-        send_compareds_columns = false;
+        send_products = false;
+        send_products_columns = false;
         send_features = false;
         send_evaluations = false;
         send_profiles = false;
@@ -415,8 +415,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_nid = true;
           //Send the flag, so we know if we display or hide the children.
           manage_displayed_flag = true;
-          //Send the compared displayed in the table, so in case of compared table we can checked the already displayed items.
-          send_compareds_columns = true;
+          //Send the product displayed in the table, so in case of product table we can checked the already displayed items.
+          send_products_columns = true;
           //Send states if we want to also display the draft and closed items.
           send_states = true;
           //In popin, we may have to block a forbidden nid.
@@ -444,8 +444,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_nid = true;
           //Send the flag, so we know if we display or hide the children.
           manage_displayed_flag = true;
-          //Send the compared displayed in the table, so we directly add the cell of these columns in the new lines of the feature children.
-          send_compareds_columns = true;
+          //Send the product displayed in the table, so we directly add the cell of these columns in the new lines of the feature children.
+          send_products_columns = true;
           //Send states if we want to also display the draft and closed items.
           send_states = true;
           //The table will be clean after the operation.
@@ -453,8 +453,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         //When we want to add a new column in the table.
-        if (action == 'toogle_compared_checkbox') {
-          //Send the nid of the compared to add.
+        if (action == 'toogle_product_checkbox') {
+          //Send the nid of the product to add.
           send_nid = true;
           //Send the flag, so we know if we display or hide the column.
           manage_displayed_flag = true;
@@ -494,8 +494,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //If we launched the table computation.
         if (action == 'compute_table') {
-          //Send the compared displayed in the table, they'll keep display in the new table.
-          send_compareds_columns = true;
+          //Send the product displayed in the table, they'll keep display in the new table.
+          send_products_columns = true;
           //Send the features manually selected, they'll be used to select the computed features.
           send_manual_selected_features = true;
           //Send the selected profile. Their features will be used to select the computed features.
@@ -510,8 +510,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //If we want to restore the initial state of the table.
         if (action == 'reset_table') {
-          //Send the compared displayed in the table, they'll keep display in the new table.
-          send_compareds_columns = true;
+          //Send the product displayed in the table, they'll keep display in the new table.
+          send_products_columns = true;
           //Send the states.
           send_states = true;
           //Send the size of the table to adjust the lines.
@@ -559,8 +559,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           options.data.description = $('#form_' + type + '_fast' + context + '_description_' + nid).val();
           options.data.description_translation = $('#form_' + type + '_fast' + context + '_description_' + nid + '_translation').val();
-          if (type == 'compared') {
-            options.data.inherit_id = $('#wikicompare-inherit-compared-id').text();
+          if (type == 'product') {
+            options.data.inherit_id = $('#wikicompare-inherit-product-id').text();
           }
           if (type == 'feature') {
             options.data.feature_type = $('#form_' + type + '_fast' + context + '_type_' + nid).val();
@@ -598,8 +598,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
           //Send computed state, the table will not be touched if it was computed.
           send_computed = true;
-          //Send compared displayed, to update the titles.
-          send_compareds_columns = true;
+          //Send product displayed, to update the titles.
+          send_products_columns = true;
           //Send evaluations, to update the percent.
           send_evaluations = true;
           //Send selected_features, to check if we need to reset the manual itemlist.
@@ -608,7 +608,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_states = true;
 
           //We will send all nodes in the cleaning function, and check which parent is displaying his children.
-          var a = ['compared', 'feature', 'profile'];
+          var a = ['product', 'feature', 'profile'];
           for (index = 0; index < a.length; ++index) {
 
             //The node type we are working on.
@@ -700,31 +700,31 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
         }
 
-        //Get and send the compareds in the table.
-        if (send_compareds == true) {
-          var compared_ids = {};
-          $('.compared_item').each(function (key, value) {
+        //Get and send the products in the table.
+        if (send_products == true) {
+          var product_ids = {};
+          $('.product_item').each(function (key, value) {
             var cid = extract_nid($(this).attr('id'))[0];
-            compared_ids[cid] = cid;
+            product_ids[cid] = cid;
           });
           //Add them in the ajax call variables.
-          options.data.compared_ids = compared_ids;
+          options.data.product_ids = product_ids;
         }
 
-        //Get and send the compareds displayed as column in the table.
-        if (send_compareds_columns == true) {
-          //Recover all compared columns displayed in the table to send their id to drupal, in the right order. This is why we can't use a dictionnary.
-          var compared_column_ids = [];
+        //Get and send the products displayed as column in the table.
+        if (send_products_columns == true) {
+          //Recover all product columns displayed in the table to send their id to drupal, in the right order. This is why we can't use a dictionnary.
+          var product_column_ids = [];
           var i = 0;
-          $('.header_compared').each(function (key, value) {
+          $('.header_product').each(function (key, value) {
             if (!$(this).hasClass('to_remove')) {
               var cid = extract_nid($(this).attr('id'))[0];
-              compared_column_ids[i] = cid;
+              product_column_ids[i] = cid;
               i = i + 1;
             }
           });
           //Add them in the ajax call variables.
-          options.data.compared_column_ids = compared_column_ids;
+          options.data.product_column_ids = product_column_ids;
         }
 
         //Get and send the features in the table.
@@ -796,7 +796,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //Get and send the size of the table.
         if (send_colspan == true) {
-          options.data.colspan = $('.header_compared').length + 1;
+          options.data.colspan = $('.header_product').length + 1;
         }
 
         //Launch regular beforeSerialize function
@@ -836,10 +836,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 //          })($(children_id))
             }
 
-            if (action == 'toogle_compared_checkbox') {
+            if (action == 'toogle_product_checkbox') {
               //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
-              $('#header_compared_' + nid).show();
-              $('.evaluation_compared_' + nid).fadeIn();
+              $('#header_product_' + nid).show();
+              $('.evaluation_product_' + nid).fadeIn();
             }
 
             //Initialize the selected_features_ids when we open a profile fastaction form. Not the same variable than manual_selected_features_ids to avoid conflict.
@@ -872,13 +872,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
               remove_children_tree(nid, '#feature_table_link_', '.feature_table_child_', false);
             }
 
-            if (action == 'toogle_compared_checkbox') {
+            if (action == 'toogle_product_checkbox') {
               //Hide the column. We can't use animation because of the current template, to check when we will have the final template
-              $('#header_compared_' + nid).hide();
-              $('.evaluation_compared_' + nid).hide();
+              $('#header_product_' + nid).hide();
+              $('.evaluation_product_' + nid).hide();
               //Mark the column element so they will be remove at the next event. We can't do it now because otherwise it will crash the fade animation
-              $('#header_compared_' + nid).addClass('to_remove');
-              $('.evaluation_compared_' + nid).addClass('to_remove');
+              $('#header_product_' + nid).addClass('to_remove');
+              $('.evaluation_product_' + nid).addClass('to_remove');
             }
 
           }
@@ -887,7 +887,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //Adjust the lines to the new size of the table, when we add a new column.
         if (auto_colspan == true) {
-          colspan = $('.header_compared').length + 1;
+          colspan = $('.header_product').length + 1;
           $('.row_auto_colspan').attr('colspan', colspan);
         }
 

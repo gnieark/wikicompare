@@ -60,9 +60,9 @@ function wikicompare_node_info() {
       'title_label' => t('Title'),
     ),
 
-    'compared' => array(
-      'name' => t('Compared'),
-      'base' => 'compared',
+    'product' => array(
+      'name' => t('Product'),
+      'base' => 'product',
       'title_label' => t('Title'),
     ),
 
@@ -139,8 +139,8 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_toogle_compared_checkbox_callback'] = array(
-    'page callback' => 'wikicompare_toggle_compared_checkbox_response',
+  $items['wikicompare_toogle_product_checkbox_callback'] = array(
+    'page callback' => 'wikicompare_toggle_product_checkbox_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
@@ -309,17 +309,17 @@ function wikicompare_admin() {
   );
 
 
-  //Display the select button to manage the compared parent update.
-  $form['wikicompare_update_compared'] = array(
+  //Display the select button to manage the product parent update.
+  $form['wikicompare_update_product'] = array(
     '#type' => 'select',
-    '#title' => t('Manage parent compared?'),
+    '#title' => t('Manage parent product?'),
     '#options' => array(
       'no-update' => t("No update"),
       'update' => t("Update"),
     ),
-    '#default_value' => variable_get('wikicompare_update_compared', 'no-update'),
-    '#description' => t("Define if the parent compared can also have their own percentage.<br/>
-        In this case, the parent compared will support all the evaluation of his compared children, and we will be able to select the parent compared in the comparative table.<br/>
+    '#default_value' => variable_get('wikicompare_update_product', 'no-update'),
+    '#description' => t("Define if the parent product can also have their own percentage.<br/>
+        In this case, the parent product will support all the evaluation of his product children, and we will be able to select the parent product in the comparative table.<br/>
         <br/>
         Activate this feature can take some time, because the cache table need to be recomputed."),
     '#required' => TRUE,
@@ -374,7 +374,7 @@ function submit_settings($form, $form_state) {
     $res = array();
 
     //For all wikicompare types.
-    $types = array('compared', 'feature', 'evaluation');
+    $types = array('product', 'feature', 'evaluation');
     if (module_exists('wikicompare_profiles')) {
       //Add profile type.
       wikicompare_profiles_node_types($array);
@@ -417,8 +417,8 @@ function submit_settings($form, $form_state) {
 
   }
 
-  //If the wikicompare_update_compared field has changed, we flush the caches to compute the parent compared evaluations.
-  if ($form_state['input']['wikicompare_update_compared'] == 'update' && variable_get('wikicompare_update_compared', 'no-update') == 'no-update') {
+  //If the wikicompare_update_product field has changed, we flush the caches to compute the parent product evaluations.
+  if ($form_state['input']['wikicompare_update_product'] == 'update' && variable_get('wikicompare_update_product', 'no-update') == 'no-update') {
     wikicompare_refresh_caches();
   }
 

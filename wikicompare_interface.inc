@@ -15,7 +15,7 @@ function feature_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
-function compared_form($node, $form_state) {
+function product_form($node, $form_state) {
   return node_content_form($node, $form_state);
 }
 
@@ -25,9 +25,9 @@ function compared_form($node, $form_state) {
  * Implements hook_form_TYPE_node_form_alter().
  * This hook allow us to alter the edit form of the node.
  */
-function wikicompare_form_compared_node_form_alter(&$form, &$form_state, $form_id) {
+function wikicompare_form_product_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
-  wikicompare_build_form('form', $form, $form_state, 'compared');
+  wikicompare_build_form('form', $form, $form_state, 'product');
 }
 function wikicompare_form_feature_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
@@ -221,9 +221,9 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       $output .= render($sequence_field);
     }
 
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Add the fields relative to inherit compared in compared node.
-      wikicompare_inherit_compared_modify_form_no_evaluation($form, $output, $form_type, $type, $node, $nid, $readonly);
+    if (module_exists('wikicompare_inherit_product')) {
+      //Add the fields relative to inherit product in product node.
+      wikicompare_inherit_product_modify_form_no_evaluation($form, $output, $form_type, $type, $node, $nid, $readonly);
     }
 
 /* TODO Not working, textarea work but not text_format.
@@ -276,15 +276,15 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
   //Code specific to evaluation.
   } else {
 
-    //Get information from cache, like guidelines and has_children flag of compared and feature.
+    //Get information from cache, like guidelines and has_children flag of product and feature.
     $query = db_select('cache_evaluation', 'n');
     $query->addField('f', 'title', 'feature');
-    $query->addField('c', 'title', 'compared');
+    $query->addField('c', 'title', 'product');
     $query->addField('f', 'has_children', 'feature_has_children');
-    $query->addField('c', 'has_children', 'compared_has_children');
+    $query->addField('c', 'has_children', 'product_has_children');
     $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines');
     $query->leftjoin('cache_feature', 'f', 'n.feature_id = f.nid');
-    $query->leftjoin('cache_compared', 'c', 'n.compared_id = c.nid');
+    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
     $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
     $query->condition('n.nid', $nid);
     $result = $query->execute();
@@ -300,12 +300,12 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         '#weight' => -2,
       );
 
-      //Transform feature and compared many2one field into simple label.
+      //Transform feature and product many2one field into simple label.
       $form['wikicompare_feature_id'] = array('#markup' => $res->feature);
-      $form['wikicompare_compared_id'] = array('#markup' => $res->compared);
+      $form['wikicompare_product_id'] = array('#markup' => $res->product);
 
       //We can modify the value of the evaluation only it is at the root of the tree in both axis.
-      if (!$res->feature_has_children && !$res->compared_has_children) {
+      if (!$res->feature_has_children && !$res->product_has_children) {
         //If the user has not rights on the node, then he will not be able to change the protected status of the evaluation.
         if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
           //Hide the field in the form. We can't unset it, otherwise it display an error.
@@ -329,10 +329,10 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
           unset($form_state['node']->wikicompare_proofs);
       }
 
-      if (module_exists('wikicompare_inherit_compared')) {
+      if (module_exists('wikicompare_inherit_product')) {
         $test = False;
-        //Add the fields relative to inherit compared in evaluation node.
-        wikicompare_inherit_compared_modify_form_evaluation($form, $output, $readonly, $test, 'form', $type, $node, $fastaction);
+        //Add the fields relative to inherit product in evaluation node.
+        wikicompare_inherit_product_modify_form_evaluation($form, $output, $readonly, $test, 'form', $type, $node, $fastaction);
       }
 
     }
@@ -341,11 +341,11 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
     if ($form_type == 'fastaction') {
 
       //We can modify the value of the evaluation only it is at the root of the tree in both axis.
-      if (!$res->feature_has_children && !$res->compared_has_children) {
+      if (!$res->feature_has_children && !$res->product_has_children) {
         $test = False;
         $disable_support = False;
-        if (module_exists('wikicompare_inherit_compared')) {
-          wikicompare_inherit_compared_modify_form_evaluation($form, $output, $disable_support, $test, 'fastaction', $type, $node, $readonly, $fastaction);
+        if (module_exists('wikicompare_inherit_product')) {
+          wikicompare_inherit_product_modify_form_evaluation($form, $output, $disable_support, $test, 'fastaction', $type, $node, $readonly, $fastaction);
         }
 
         //I wasn't able to use the renderable array, so I coded directly in html
@@ -357,9 +357,9 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
           if ($node->wikicompare_support['und'][0]['value'] == 1) {
             $test_support = True;
           }
-          if (module_exists('wikicompare_inherit_compared')) {
+          if (module_exists('wikicompare_inherit_product')) {
             //Test if the support field must be checked.
-            wikicompare_inherit_compared_test_form_evaluation($test_support, $test, $node);
+            wikicompare_inherit_product_test_form_evaluation($test_support, $test, $node);
           }
           if ($test_support == True) {
             $output .= ' checked="checked"';
@@ -743,8 +743,8 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
     //Insert the form in the page. Note we can't use ajax_command_before or ajax_command_after because it adds an unwanted div.
     switch ($type) {
-      case ('compared'):
-        $commands[] = ajax_command_invoke('#compared_table_children_' . $nid, 'before', array($output));
+      case ('product'):
+        $commands[] = ajax_command_invoke('#product_table_children_' . $nid, 'before', array($output));
         break;
       case ('feature'):
         $commands[] = ajax_command_invoke('#feature_table_' . $nid, 'after', array($output));
@@ -899,9 +899,9 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     } */
 
     $donotupdate = False;
-    if (module_exists('wikicompare_inherit_compared')) {
-      //Assign inherit compared specific fields.
-      wikicompare_inherit_compared_fastaction_submit_element($node, $donotupdate, $_POST);
+    if (module_exists('wikicompare_inherit_product')) {
+      //Assign inherit product specific fields.
+      wikicompare_inherit_product_fastaction_submit_element($node, $donotupdate, $_POST);
     }
 
     //Feature specific fields.
