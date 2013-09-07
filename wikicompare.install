@@ -211,6 +211,13 @@ function wikicompare_node_schema($type) {
   }
 
   switch ($type) {
+    case 'product':
+      $schema['fields']['total'] = array(
+        'description' => 'The total percentage of the product',
+        'type' => 'float',
+        'default' => NULL,
+      );
+      break;
     //Criterion specific fields.
     case 'criterion':
       $schema['fields']['type'] = array(

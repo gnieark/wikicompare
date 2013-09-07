@@ -20,10 +20,13 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
  * @param $nids
  *   The nids of the nodes to update.
  *
+ * @param $first
+ *   Indicate if this is the first call of the recursive function, because it's only at this first call that we compute the total product. Unrequired argument.
+ *
  * @return array
  *   An array containing the evaluations updated by the function.
  */
-function wikicompare_update_compare_tree($type, $nids) {
+function wikicompare_update_compare_tree($type, $nids, $first=True) {
 
   if (!variable_get('wikicompare_computation_status', 1)) {
     return;
@@ -167,7 +170,7 @@ function wikicompare_update_compare_tree($type, $nids) {
    */
   $to_update = array();
   $cache_to_update = array();
-  $res = array();
+  $res = array('products_to_update' => array());
   $update_product_flag = variable_get('wikicompare_update_product', 'no-update');
   foreach($nodes as $node) {
 
@@ -215,6 +218,9 @@ function wikicompare_update_compare_tree($type, $nids) {
       //Update the parent though criterion and product axis if the value changed.
       if ($node->parent_through_criterion_id) {
         $to_update[$node->parent_through_criterion_id] = $node->parent_through_criterion_id;
+      //If their is not parent evaluation on criterion axis, then we need to trigger the total refresh of the product.
+      } else {
+        $res['products_to_update'][$node->cid] = $node->cid;
       }
 
       if ($update_product_flag != 'no-update') {
@@ -251,7 +257,45 @@ function wikicompare_update_compare_tree($type, $nids) {
 
   //Update the parent marked.
   if (!empty($to_update)) {
-    wikicompare_update_compare_tree('evaluation', $to_update);
+    $res_from_parents = wikicompare_update_compare_tree('evaluation', $to_update, False);
+    //Get the list of the products we need to update from the recursive calls
+    $res['products_to_update'] = array_merge($res['products_to_update'], $res_from_parents['products_to_update']);
+  }
+
+  //We update the total product only at the first call of the recursive function. The recursive function give their products to update in their return.
+  if ($first && !empty($res['products_to_update'])) {
+
+    $query = db_select('cache_evaluation', 'n');
+    $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'criterion_id', 'criterion_id');
+    $query->addField('n', 'product_id', 'product_id');
+    $query->addField('n', 'percent', 'percent');
+    $query->addField('n', 'criterion_weight', 'weight');
+    $query->condition('n.product_id', $res['products_to_update'], 'IN');
+    $query->condition('n.criterion_parent_id', NULL);
+    //Only published criterions are used in the computation.
+    $query->condition('n.criterion_state', unserialize(WIKICOMPARE_STATE_PUBLISHED), 'in');
+    $result = $query->execute();
+
+    //We assign the children evaluation in a array with fid and cid as key so their parents can recover them with fid and cid key.
+    $products = array();
+    foreach($result as $record) {
+      $products[$record->product_id][$record->criterion_id] = $record;
+    }
+
+    foreach ($products as $product_id => $evaluations) {
+      $node = new stdClass;
+      $node->type = 'parent-weighted-average';
+      $node = wikicompare_compute_percent($node, $evaluations);
+
+      db_update('cache_product')
+        ->fields(array(
+          'total' => $node->new_percent,
+        ))
+        ->condition('nid', $product_id)
+        ->execute();
+    }
+
   }
 
   return $res;
