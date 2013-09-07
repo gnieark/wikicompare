@@ -362,6 +362,20 @@ function wikicompare_install() {
   field_create_field($field);
 
   $field = array(
+    'field_name' => 'wikicompare_comparable',
+    'type' => 'list_text',
+    'cardinality' => 1,
+    'settings' => array(
+      'allowed_values' => array(
+        'only-without-children' => 'Only if it has no children',
+        'never' => 'Never',
+        'always-combine' => 'Always - Combine the children evaluations',
+      ),
+    ),
+  );
+  field_create_field($field);
+
+  $field = array(
     'field_name' => 'wikicompare_type',
     'type' => 'list_text',
     'cardinality' => 1,
@@ -829,6 +843,25 @@ function wikicompare_node_install($type) {
 
   }
 
+  if ($type == 'product') {
+    $instance = array(
+      'field_name' => 'wikicompare_comparable',
+      'entity_type' => 'node',
+      'bundle' => 'product',
+      'label' => 'Comparable',
+      'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 'only-without-children',
+        ),
+      ),
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+    );
+    field_create_instance($instance);
+  }
+
   if ($type == 'criterion') {
 
     $instance = array(
@@ -958,6 +991,7 @@ function wikicompare_uninstall() {
   field_delete_field('wikicompare_parent_id');
   field_delete_field('wikicompare_user_ids');
   field_delete_field('wikicompare_user_from_parent_ids');
+  field_delete_field('wikicompare_comparable');
   field_delete_field('wikicompare_type');
   field_delete_field('wikicompare_guidelines');
   field_delete_field('wikicompare_weight');

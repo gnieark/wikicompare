@@ -67,7 +67,7 @@ function wikicompare_node_info() {
     ),
 
     'evaluation' => array(
-      'name' => t('evaluation'),
+      'name' => t('Evaluation'),
       'base' => 'evaluation',
       'title_label' => t('Title'),
     ),

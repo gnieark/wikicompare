@@ -87,6 +87,8 @@ function wikicompare_comparative_table() {
   //Generate the comparative table.
   $output .= wikicompare_table_render_comparative_table(wikicompare_initialize_settings());
 
+  //TEMP
+  $output .= wikicompare_table_render_list_product(wikicompare_initialize_settings());
 
   //Add the link to go on FastAction mode.
   $toogle_link = array(
@@ -158,6 +160,31 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
   $output .="</div>";
 
   //Return itemlist.
+  return $output;
+
+}
+
+
+
+/**
+ * Generate the list product
+ *
+ * @param 
+ */
+function wikicompare_table_render_list_product($settings) {
+
+  //Only the main itemlist of the table will be rendered by this function.
+  $settings['context'] = 'table';
+
+  //Find all nodes on the first level of the tree.
+  $nodes = request_db('product', array('has_children' => 0, 'orderby' => 'n.total', 'orderby_direction' => 'DESC'), $settings);
+
+  $output = '<p>';
+  foreach ($nodes as $node) {
+    $output .= $node['data']->title . ' : ' . $node['data']->total . '%.<br/>';
+  }
+  $output .= '</p>';
+
   return $output;
 
 }

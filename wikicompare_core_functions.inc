@@ -677,7 +677,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $query->addField('n', 'has_children', 'has_children');
     $query->addField('n', 'parent_id', 'parent_id');
     //If the nodes to recover are not specify by the nids in argument, then it means we need to use the parent_id.
-    if (!isset($db_settings['nids'])) {
+    if (!isset($db_settings['nids']) && !isset($db_settings['has_children'])) {
       $query->condition('n.parent_id', $db_settings['parent_id']);
       //By default, only published node are return, unless specify in the settings.
       $state = unserialize(WIKICOMPARE_STATE_PUBLISHED);
@@ -689,9 +689,17 @@ function request_db($type, $db_settings = array(), $settings=array()) {
       }
       $query->condition('n.state', $state, 'in');
     }
-    //The returned nodes are ordered by the sequence field.
-    $query->orderby('n.sequence, n.title');
-  //evaluation specific fields.
+    if (isset($db_settings['has_children'])) {
+      $query->condition('n.has_children', $db_settings['has_children']);
+    }
+
+    if (isset($db_settings['orderby'])) {
+      $query->orderby($db_settings['orderby'], $db_settings['orderby_direction']);
+    } else {
+      //The returned nodes are ordered by the sequence field.
+      $query->orderby('n.sequence, n.title');
+    }
+  //Evaluation specific fields.
   } else {
     $query->addField('n', 'criterion_id', 'criterion_id');
     $query->addField('n', 'product_id', 'product_id');
@@ -709,10 +717,14 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $query->condition('n.nid', $db_settings['nids'], 'in');
   }
 
-  //Criterion specific fields.
-  if ($type == 'criterion') {
-    $query->addField('n', 'type', 'type');
-    $query->addField('n', 'weight', 'weight');
+  switch ($type) {
+    case 'product':
+      $query->addField('n', 'total', 'total');
+      break;
+    case 'criterion':
+      $query->addField('n', 'type', 'type');
+      $query->addField('n', 'weight', 'weight');
+      break;
   }
 
   //If fastaction mode is triggered, then we need to recover all the revision of the nodes to test if the user is the author of all the revisions. Otherwise, he will not be able to fastedit the node.
