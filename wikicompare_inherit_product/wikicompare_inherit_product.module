@@ -223,8 +223,8 @@ function wikicompare_inherit_product_from_other_support(&$node) {
 
   //Work only if the product of the evaluation inherit a node and we didn't override the information in the evaluation.
   if ($node->inheriting_product_id && $node->use_from_inherit) {
-    $node->percent = $node->inheriting_evaluation_cache_percent;
-    $node->css_class = $node->inheriting_evaluation_cache_css_class;
+    $node->new_percent = $node->inheriting_evaluation_cache_percent;
+    $node->new_css_class = $node->inheriting_evaluation_cache_css_class;
   }
 
 }

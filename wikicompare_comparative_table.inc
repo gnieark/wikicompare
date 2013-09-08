@@ -408,7 +408,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
         if (in_array($settings['context'], array('table', 'multidialog')) && in_array($node['data']->state, array('published-incomplete', 'published-submitted', 'published'))) {
 
           //We display a checkbox only if the node has children, or for product table if we activated the option.
-          if ($node['data']->has_children != 1 || (variable_get('wikicompare_update_product', 'no-update') != 'no-update' && $settings['context'] == 'table' && $type == 'product')) {
+          if ($node['data']->has_children != 1 || ($settings['context'] == 'table' && $type == 'product')) {
 
             //Generate checkbox.
             $checkbox_settings = array('element' => array(

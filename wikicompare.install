@@ -444,7 +444,6 @@ function wikicompare_install() {
   }
 
   //Set module default settings.
-  variable_set('wikicompare_update_product', 'no-update');
   variable_set('wikicompare_computation_status', 1);
 
   variable_set('revisioning_edit_callback', 1);
@@ -940,7 +939,6 @@ function wikicompare_node_install($type) {
 function wikicompare_uninstall() {
 
   //Delete module settings variable
-  variable_del('wikicompare_update_product');
   variable_del('wikicompare_computation_status');
 
   //Delete all nodes of criterion type.

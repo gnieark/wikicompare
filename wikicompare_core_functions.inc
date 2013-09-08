@@ -171,13 +171,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
   $to_update = array();
   $cache_to_update = array();
   $res = array('products_to_update' => array());
-  $update_product_flag = variable_get('wikicompare_update_product', 'no-update');
   foreach($nodes as $node) {
-
-    //We update only if the update parent isn't set and there is no children on product axis.
-    if (($update_product_flag == 'no-update') && !empty($node->through_product_childs)) {
-      continue;
-    }
 
     //If any misconfiguration, it'll always return 0.
     $node->new_percent = 0;
@@ -223,10 +217,8 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
         $res['products_to_update'][$node->cid] = $node->cid;
       }
 
-      if ($update_product_flag != 'no-update') {
-        if ($node->parent_through_product_id) {
-          $to_update[$node->parent_through_product_id] = $node->parent_through_product_id;
-        }
+      if ($node->parent_through_product_id) {
+        $to_update[$node->parent_through_product_id] = $node->parent_through_product_id;
       }
 
       if (module_exists('wikicompare_inherit_product')) {

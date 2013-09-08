@@ -308,23 +308,6 @@ function wikicompare_admin() {
     '#required' => TRUE,
   );
 
-
-  //Display the select button to manage the product parent update.
-  $form['wikicompare_update_product'] = array(
-    '#type' => 'select',
-    '#title' => t('Manage parent product?'),
-    '#options' => array(
-      'no-update' => t("No update"),
-      'update' => t("Update"),
-    ),
-    '#default_value' => variable_get('wikicompare_update_product', 'no-update'),
-    '#description' => t("Define if the parent product can also have their own percentage.<br/>
-        In this case, the parent product will support all the evaluation of his product children, and we will be able to select the parent product in the comparative table.<br/>
-        <br/>
-        Activate this criterion can take some time, because the cache table need to be recomputed."),
-    '#required' => TRUE,
-  );
-
   //Display the cache status.
   $form['wikicompare_computation_status'] = array(
     '#type' => 'select',
@@ -415,11 +398,6 @@ function submit_settings($form, $form_state) {
     //Change the main language of the wikicompare.
     variable_set('language_default', $languages[$new_key]);
 
-  }
-
-  //If the wikicompare_update_product field has changed, we flush the caches to compute the parent product evaluations.
-  if ($form_state['input']['wikicompare_update_product'] == 'update' && variable_get('wikicompare_update_product', 'no-update') == 'no-update') {
-    wikicompare_refresh_caches();
   }
 
   if ($form_state['input']['wikicompare_computation_status'] == 0 && variable_get('wikicompare_computation_status', 1) == 1) {
