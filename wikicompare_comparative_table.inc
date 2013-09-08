@@ -177,7 +177,7 @@ function wikicompare_table_render_list_product($settings) {
   $settings['context'] = 'table';
 
   //Find all nodes on the first level of the tree.
-  $nodes = request_db('product', array('has_children' => 0, 'orderby' => 'n.total', 'orderby_direction' => 'DESC'), $settings);
+  $nodes = request_db('product', array('get_comparable_products' => 1), $settings);
 
   $output = '<p>';
   foreach ($nodes as $node) {

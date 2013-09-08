@@ -92,6 +92,11 @@ function wikicompare_insert_node($type, $node) {
       'has_children' => 0,
   );
 
+  //Product specific fields.
+  if ($type == 'product') {
+    $fields['comparable'] = $node->wikicompare_comparable['und'][0]['value'];
+  }
+
   //Criterion specific fields.
   if ($type == 'criterion') {
     $fields['type'] = $node->wikicompare_type['und'][0]['value'];
@@ -477,6 +482,11 @@ function wikicompare_revisionapi($op, $node_revision) {
       //evaluation specific fields.
       } else {
         $fields['support']= $node_revision->wikicompare_support['und'][0]['value'];
+      }
+
+      //Product specific fields.
+      if ($node_revision->type == 'product') {
+        $fields['comparable'] = $node_revision->wikicompare_comparable['und'][0]['value'];
       }
 
       //Criterion specific fields.

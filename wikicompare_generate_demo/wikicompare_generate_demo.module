@@ -146,6 +146,9 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   }
   $output .= "\$node->wikicompare_sequence['und'][0]['value'] = " . $node['data']->sequence . ";<br/>";
   $output .= "\$node->wikicompare_state['und'][0]['value'] = '" . $node['data']->state . "';<br/>";
+  if ($type == 'product') {
+    $output .= "\$node->wikicompare_comparable['und'][0]['value'] = '" . $node['data']->comparable . "';<br/>";
+  }
   if ($type == 'criterion') {
     $output .= "\$node->wikicompare_type['und'][0]['value'] = '" . $node['data']->type . "';<br/>";
     $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";

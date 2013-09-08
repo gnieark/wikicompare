@@ -212,6 +212,13 @@ function wikicompare_node_schema($type) {
 
   switch ($type) {
     case 'product':
+      $schema['fields']['comparable'] = array(
+        'description' => 'If the product is comparable even with children',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      );
+      $schema['indexes']['comparable'] = array('comparable');
       $schema['fields']['total'] = array(
         'description' => 'The total percentage of the product',
         'type' => 'float',
@@ -368,7 +375,6 @@ function wikicompare_install() {
     'settings' => array(
       'allowed_values' => array(
         'only-without-children' => 'Only if it has no children',
-        'never' => 'Never',
         'always-combine' => 'Always - Combine the children evaluations',
       ),
     ),

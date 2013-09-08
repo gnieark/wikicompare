@@ -442,6 +442,10 @@ function wikicompare_refresh_caches() {
       $query->leftjoin('field_revision_wikicompare_product_id', 'nc', 'n.vid = nc.revision_id');
       $query->leftjoin('field_revision_wikicompare_support', 'ns', 'n.vid = ns.revision_id');
     }
+    if ($type == 'product') {
+      $query->addField('nc', 'wikicompare_comparable_value', 'comparable');
+      $query->leftjoin('field_revision_wikicompare_comparable', 'nc', 'n.vid = nc.revision_id');
+    }
     if ($type == 'criterion') {
       $query->addField('nt', 'wikicompare_type_value', 'type');
       $query->addField('nw', 'wikicompare_weight_value', 'weight');
@@ -482,6 +486,9 @@ function wikicompare_refresh_caches() {
         $to_insert[$record->nid]['product_id'] = $record->product_id;
         $to_insert[$record->nid]['criterion_id'] = $record->criterion_id;
       }
+      if ($type == 'product') {
+        $to_insert[$record->nid]['comparable'] = $record->comparable;
+      }
       if ($type == 'criterion') {
         $to_insert[$record->nid]['type'] = $record->type;
         $to_insert[$record->nid]['weight'] = $record->weight;
@@ -521,6 +528,9 @@ function wikicompare_refresh_caches() {
       $header[] = 'product_id';
       $header[] = 'criterion_id';
       $header[] = 'support';
+    }
+    if ($type == 'product') {
+      $header[] = 'comparable';
     }
     if ($type == 'criterion') {
       $header[] = 'type';
@@ -677,7 +687,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $query->addField('n', 'has_children', 'has_children');
     $query->addField('n', 'parent_id', 'parent_id');
     //If the nodes to recover are not specify by the nids in argument, then it means we need to use the parent_id.
-    if (!isset($db_settings['nids']) && !isset($db_settings['has_children'])) {
+    if (!isset($db_settings['nids']) && !isset($db_settings['get_comparable_products'])) {
       $query->condition('n.parent_id', $db_settings['parent_id']);
       //By default, only published node are return, unless specify in the settings.
       $state = unserialize(WIKICOMPARE_STATE_PUBLISHED);
@@ -689,16 +699,18 @@ function request_db($type, $db_settings = array(), $settings=array()) {
       }
       $query->condition('n.state', $state, 'in');
     }
-    if (isset($db_settings['has_children'])) {
-      $query->condition('n.has_children', $db_settings['has_children']);
-    }
 
-    if (isset($db_settings['orderby'])) {
-      $query->orderby($db_settings['orderby'], $db_settings['orderby_direction']);
+    if (isset($db_settings['get_comparable_products'])) {
+      $or = db_or();
+      $or->condition('n.has_children', 0);
+      $or->condition('n.comparable', 'always-combine');
+      $query->condition($or);
+      $query->orderby('n.total', 'DESC');
     } else {
       //The returned nodes are ordered by the sequence field.
       $query->orderby('n.sequence, n.title');
     }
+
   //Evaluation specific fields.
   } else {
     $query->addField('n', 'criterion_id', 'criterion_id');
@@ -719,6 +731,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
 
   switch ($type) {
     case 'product':
+      $query->addField('n', 'comparable', 'comparable');
       $query->addField('n', 'total', 'total');
       break;
     case 'criterion':
