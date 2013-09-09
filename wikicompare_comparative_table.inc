@@ -184,7 +184,7 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
   //Only the main itemlist of the table will be rendered by this function.
   $settings['context'] = 'table';
 
-  //Recover comparable products. 
+  //Recover comparable products.
   $products = request_db('product', array('get_comparable_products' => 1), $settings);
   $product_ids = array();
   foreach ($products as $product_id => $product) {
@@ -242,7 +242,7 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
   }
 
   $output = '<p id="comparative_table_product_list">';
-  if ($settings['products_tree_mode']) {
+  if ($settings['products_tree_mode']) { //TODO This if will be useless at final version, because we'll have only one id for the list.
     $output = '<p id="comparative_table_product_tree">';
   }
 
