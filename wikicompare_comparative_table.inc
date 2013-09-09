@@ -89,6 +89,7 @@ function wikicompare_comparative_table() {
 
   //TEMP
   $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings());
+  $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings(array('products_tree_mode' => 1)));
 
   //Add the link to go on FastAction mode.
   $toogle_link = array(
@@ -183,11 +184,19 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
   //Only the main itemlist of the table will be rendered by this function.
   $settings['context'] = 'table';
 
-  //Find all comparable products.
+  //Recover comparable products. 
   $products = request_db('product', array('get_comparable_products' => 1), $settings);
   $product_ids = array();
   foreach ($products as $product_id => $product) {
     $product_ids[$product_id] = $product_id;
+  }
+
+  //If we are in tree mode, we need to get the product in tree mode.
+  if ($settings['products_tree_mode']) {
+    //Get product tree. We can use comparable products as base because it always contain at least all products without children.
+    $products_recursive_data = wikicompare_build_recursive_tree('product', $product_ids, array(), $settings);
+    $product_ids = $products_recursive_data['ids'];
+    $products = $products_recursive_data['data'];
   }
 
   $evaluations = array();
@@ -227,11 +236,49 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
   //Order the products by their percentages.
   arsort($products_sort);
 
-  $output = '<p id="comparative_table_product_list">';
-  foreach ($products_sort as $product_id => $total) {
-    $output .= $products[$product_id]['data']->title . ' : ' . $total . '%.<br/>';
+  //For tree mode, now that we recovered the percentage, we assign the products in tree mode before the call of the recursive function.
+  if ($settings['products_tree_mode']) {
+    $products = $products_recursive_data['tree'];
   }
+
+  $output = '<p id="comparative_table_product_list">';
+  if ($settings['products_tree_mode']) {
+    $output = '<p id="comparative_table_product_tree">';
+  }
+
+  $output .= wikicompare_table_render_product_item($products, $products_sort, $settings);
   $output .= '</p>';
+
+  return $output;
+
+}
+
+
+
+/**
+ * Render the product items in the list.
+ *
+ * @param products
+ *   The products ressources, in tree if in tree mode and computed.
+ *
+ * @param products_sort
+ *   Array containing the percentage computed for each product.
+ *
+ * @param settings
+ *   The context of the table.
+ *
+ * @return output
+ *   The rendered list.
+ */
+function wikicompare_table_render_product_item($products, $products_sort, $settings) {
+
+  $output = '';
+  foreach ($products as $product_id => $product) {
+    $output .= $product['data']->title . ' : ' . $products_sort[$product_id] . '%.<br/>';
+    if (!empty($product['children'])) {
+      $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $settings);
+    }
+  }
 
   return $output;
 
@@ -642,9 +689,8 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
  */
 function wikicompare_build_recursive_data($type, $node_ids, $settings){
 
-  $res = array();
   //Build the recursive tree.
-  $res = wikicompare_build_recursive_tree($type, $node_ids, $res, $settings);
+  $res = wikicompare_build_recursive_tree($type, $node_ids, array(), $settings);
   //From the resurcive tree, build the full title of the nodes.
   $res = wikicompare_build_fulltitle($res, $res['tree'], '');
 
@@ -1373,6 +1419,8 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
   //Regenerate the product list.
   $commands[] = ajax_command_replace('#comparative_table_product_list', wikicompare_table_render_product_list($settings, $criterions));
+  $settings['products_tree_mode'] = 1;
+  $commands[] = ajax_command_replace('#comparative_table_product_tree', wikicompare_table_render_product_list($settings, $criterions));
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
@@ -1636,7 +1684,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 function wikicompare_initialize_settings($args = array()) {
 
   $settings = array();
-  foreach (array('fastaction', 'context', 'product_column_ids', 'selected_criterion_ids', 'forbidden_nid', 'computed', 'states', 'colspan') as $key) {
+  foreach (array('fastaction', 'context', 'product_column_ids', 'selected_criterion_ids', 'forbidden_nid', 'computed', 'products_tree_mode', 'states', 'colspan') as $key) {
 
     //If the key is already set in the argument of the function, we directly use it.
     if (isset($args[$key])) {
