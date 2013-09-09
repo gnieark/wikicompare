@@ -709,6 +709,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $query->addField('n', 'product_id', 'product_id');
     $query->addField('n', 'percent', 'percent');
     $query->addField('n', 'css_class', 'css_class');
+    $query->addField('n', 'criterion_weight', 'weight');
     //If the nodes to recover are not specify by the nids in argument, then it means we need to find them thanks to the products and criterions ids.
     if (!isset($db_settings['nids'])) {
       $query->condition("n.product_id", $db_settings['product_ids'], 'in');

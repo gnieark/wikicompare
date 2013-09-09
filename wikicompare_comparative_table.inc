@@ -88,7 +88,7 @@ function wikicompare_comparative_table() {
   $output .= wikicompare_table_render_comparative_table(wikicompare_initialize_settings());
 
   //TEMP
-  $output .= wikicompare_table_render_list_product(wikicompare_initialize_settings());
+  $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings());
 
   //Add the link to go on FastAction mode.
   $toogle_link = array(
@@ -167,21 +167,69 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 
 
 /**
- * Generate the list product
+ * Generate the product list, ordered by their percentages.
  *
- * @param 
+ * @param criterions
+ *   If specified, the list will be computed with the specified criterions.
+ *
+ * @param settings
+ *   The context of the table.
+ *
+ * @return output
+ *   The rendered list.
  */
-function wikicompare_table_render_list_product($settings) {
+function wikicompare_table_render_product_list($settings, $criterions=array()) {
 
   //Only the main itemlist of the table will be rendered by this function.
   $settings['context'] = 'table';
 
-  //Find all nodes on the first level of the tree.
-  $nodes = request_db('product', array('get_comparable_products' => 1), $settings);
+  //Find all comparable products.
+  $products = request_db('product', array('get_comparable_products' => 1), $settings);
+  $product_ids = array();
+  foreach ($products as $product_id => $product) {
+    $product_ids[$product_id] = $product_id;
+  }
 
-  $output = '<p>';
-  foreach ($nodes as $node) {
-    $output .= $node['data']->title . ' : ' . $node['data']->total . '%.<br/>';
+  $evaluations = array();
+  $products_sort = array();
+  //If we are computing percentage.
+  if ($settings['computed']) {
+    if (!empty($criterions['ids']) && !empty($product_ids)) {
+      //Get the needed evaluation thanks to criterion and product ids.
+      $evaluations = request_db('evaluation', array('criterion_ids' => $criterions['ids'], 'product_ids' => $product_ids), $settings);
+    }
+
+    //Build recursively the criterions data and compute them if necessary.
+    $criterions_row_data = wikicompare_build_rows_data($criterions['tree'], $product_ids, $evaluations, $settings);
+
+    foreach ($products as $product_id => $product) {
+      $node = new stdClass;
+      $node->type = 'parent-weighted-average';
+      $evaluations = array();
+
+      foreach ($criterions_row_data as $criterion_id => $criterion_row_data) {
+        if (isset($criterion_row_data['root'])) {
+          $evaluations[$criterion_id] = $criterion_row_data['evaluations'][$product_id]['data'];
+        }
+      }
+
+      $node = wikicompare_compute_percent($node, $evaluations);
+
+      $products_sort[$product_id] = $node->new_percent;
+    }
+  //Assign percentage from cache_compared total field.
+  } else {
+    foreach ($products as $product_id => $product) {
+      $products_sort[$product_id] = $product['data']->total;
+    }
+  }
+
+  //Order the products by their percentages.
+  arsort($products_sort);
+
+  $output = '<p id="comparative_table_product_list">';
+  foreach ($products_sort as $product_id => $total) {
+    $output .= $products[$product_id]['data']->title . ' : ' . $total . '%.<br/>';
   }
   $output .= '</p>';
 
@@ -789,9 +837,12 @@ function wikicompare_build_rows_data($criterions_tree, $product_ids, $evaluation
 
         //Get the evaluation percent by calling the same function than the one used in update_compare_tree.
         if (!empty($through_criterion_childs)) {
-          $evaluation['data']->percent = 0;
-          $evaluation['data']->css_class = 'cell-support-no';
+          $evaluation['data']->new_percent = 0;
+          $evaluation['data']->new_css_class = 'cell-support-no';
           $evaluation['data'] = wikicompare_compute_percent($evaluation['data'], $through_criterion_childs);
+          //Update percent and css_class for parent computation and render, new_percent and new_css_class are only used in the core_function file.
+          $evaluation['data']->percent = $evaluation['data']->new_percent;
+          $evaluation['data']->css_class = $evaluation['data']->new_css_class;
         }
 
       }
@@ -1302,6 +1353,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
   //Reset the product part of the table.
   $commands[] = ajax_command_replace('#comparative_table_main_product', wikicompare_table_render_main_itemlist('product', 'Products', $settings));
 
+  $criterions = array();
   //Compute the table, unless no criterions was selected. In this case, we just reset it.
   if ($selected_criterion_ids && !isset($_POST['reset'])) {
     //Build the criterion tree.
@@ -1318,6 +1370,9 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
   //Replace the old table.
   $commands[] = ajax_command_replace('#comparative_table', $output);
+
+  //Regenerate the product list.
+  $commands[] = ajax_command_replace('#comparative_table_product_list', wikicompare_table_render_product_list($settings, $criterions));
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
