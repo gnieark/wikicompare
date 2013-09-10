@@ -101,6 +101,7 @@ function wikicompare_insert_node($type, $node) {
   if ($type == 'criterion') {
     $fields['type'] = $node->wikicompare_type['und'][0]['value'];
     $fields['weight'] = $node->wikicompare_weight['und'][0]['value'];
+    $fields['suggest'] = $node->wikicompare_suggest['und'][0]['value'];
   }
 
 
@@ -408,7 +409,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
       //Tests based on criterion specific fields.
       if ($node_revision->type == 'criterion') {
-        if (($node_revision->wikicompare_type['und'][0]['value'] != $current_node->wikicompare_type['und'][0]['value']) || ($node_revision->wikicompare_weight['und'][0]['value'] != $current_node->wikicompare_weight['und'][0]['value']) || ($node_revision->wikicompare_state['und'][0]['value'] != $current_node->wikicompare_state['und'][0]['value'])) {
+        if (($node_revision->wikicompare_type['und'][0]['value'] != $current_node->wikicompare_type['und'][0]['value']) || ($node_revision->wikicompare_weight['und'][0]['value'] != $current_node->wikicompare_weight['und'][0]['value']) || ($node_revision->wikicompare_state['und'][0]['value'] != $current_node->wikicompare_state['und'][0]['value']) || ($node_revision->wikicompare_suggest['und'][0]['value'] != $current_node->wikicompare_suggest['und'][0]['value'])) {
           $to_update[$node_revision->nid] = $node_revision->nid;
         }
       }
@@ -493,6 +494,7 @@ function wikicompare_revisionapi($op, $node_revision) {
       if ($node_revision->type == 'criterion') {
         $fields['type'] = $node_revision->wikicompare_type['und'][0]['value'];
         $fields['weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
+        $fields['suggest'] = $node_revision->wikicompare_suggest['und'][0]['value'];
       }
 
       if (module_exists('wikicompare_inherit_product')) {

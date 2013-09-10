@@ -22,6 +22,48 @@ function wikicompare_schema() {
     $schema['cache_' . $type] = wikicompare_node_schema($type);
   }
 
+  $suggest = array();
+  $suggest['description'] = 'Cache table for the suggestions on the right column of the home page';
+  $suggest['fields']['criterion_id'] = array(
+    'description' => 'The nid of the criterion',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  $suggest['indexes']['criterion_id'] = array('criterion_id');
+  $suggest['foreign keys']['node'] = array(
+    'table' => 'node',
+    'columns' => array('nid' => 'nid'),
+  );
+
+  $suggest['fields']['sequence'] = array(
+    'description' => 'The sequence of the criterion',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  $suggest['indexes']['sequence'] = array('sequence');
+
+  $suggest['fields']['product_id'] = array(
+    'description' => 'The nid of the product',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  $suggest['indexes']['product_id'] = array('product_id');
+  $suggest['foreign keys']['node'] = array(
+    'table' => 'node',
+    'columns' => array('nid' => 'nid'),
+  );
+
+  $suggest['fields']['percent'] = array(
+    'description' => 'The percentage of the product for the criterion',
+    'type' => 'float',
+    'default' => NULL,
+  );
+
+  $schema['cache_wikicompare_suggest'] = $suggest;
+
   return $schema;
 
 }
@@ -240,6 +282,13 @@ function wikicompare_node_schema($type) {
         'unsigned' => TRUE,
         'not null' => TRUE,
       );
+      $schema['fields']['suggest'] = array(
+        'description' => 'The suggest of the criterion node',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      );
+      $schema['indexes']['suggest'] = array('suggest');
       break;
     case 'evaluation':
       $schema['fields']['support'] = array(
@@ -403,6 +452,13 @@ function wikicompare_install() {
 
   $field = array(
     'field_name' => 'wikicompare_weight',
+    'type' => 'number_integer',
+    'cardinality' => 1
+  );
+  field_create_field($field);
+
+  $field = array(
+    'field_name' => 'wikicompare_suggest',
     'type' => 'number_integer',
     'cardinality' => 1
   );
@@ -926,6 +982,23 @@ function wikicompare_node_install($type) {
     );
     field_create_instance($instance);
 
+    $instance = array(
+      'field_name' => 'wikicompare_suggest',
+      'entity_type' => 'node',
+      'bundle' => 'criterion',
+      'label' => 'Use this criterion for home page suggestions',
+      'required' => 1,
+      'default_value' => array(
+        0 => array(
+          'value' => 1,
+        ),
+      ),
+      'widget' => array(
+        'type' => 'number',
+      ),
+    );
+    field_create_instance($instance);
+
   }
 
 }
@@ -999,6 +1072,7 @@ function wikicompare_uninstall() {
   field_delete_field('wikicompare_type');
   field_delete_field('wikicompare_guidelines');
   field_delete_field('wikicompare_weight');
+  field_delete_field('wikicompare_suggest');
   field_delete_field('wikicompare_sequence');
   field_delete_field('wikicompare_state');
   field_delete_field('wikicompare_criterion_id');

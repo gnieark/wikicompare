@@ -90,6 +90,7 @@ function wikicompare_comparative_table() {
   //TEMP
   $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings());
   $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings(array('products_tree_mode' => 1)));
+  $output .= wikicompare_table_render_home_suggest();
 
   //Add the link to go on FastAction mode.
   $toogle_link = array(
@@ -287,6 +288,50 @@ function wikicompare_table_render_product_item($products, $products_sort, $setti
 
 
 /**
+ * Render the product suggestion on home page, based on selected criterions.
+ *
+ * @return $output
+ *   The rendered suggests.
+ */
+function wikicompare_table_render_home_suggest() {
+
+  $res = array();
+  $query = db_select('cache_wikicompare_suggest', 'n');
+  $query->addField('n', 'criterion_id', 'criterion_id');
+  $query->addField('n', 'sequence', 'sequence');
+  $query->addField('n', 'product_id', 'product_id');
+  $query->addField('n', 'percent', 'percent');
+  $query->addField('c', 'title', 'criterion_title');
+  $query->addField('p', 'title', 'product_title');
+  $query->leftjoin('cache_criterion', 'c', 'n.criterion_id = c.nid');
+  $query->leftjoin('cache_product', 'p', 'n.product_id = p.nid');
+  $query->orderby('n.sequence, n.criterion_id');
+  $query->orderby('n.percent', 'DESC');
+  $result = $query->execute();
+//TODO Translate title
+  foreach($result as $record) {
+    $res[$record->criterion_id][$record->product_id] = $record;
+  }
+
+  $output = '';
+  foreach ($res as $criterion) {
+    $first = True;
+    foreach ($criterion as $product) {
+      if ($first) {
+        $output .= '<p>' . $product->criterion_title . '<br/>';
+        $first = False;
+      }
+      $output .= $product->product_title . ' : ' . $product->percent . '%<br/>';
+    }
+  }
+
+  return $output;
+
+}
+
+
+
+/**
  * Generate the comparative table. This function is called by the initial function of the comparative table, by the compute and reset function and by the cleaning function if some important changes was made.
  *
  * @param settings
@@ -451,6 +496,8 @@ function wikicompare_table_render_evaluation($evaluation, $criterion, $cid, $set
 
   return $output;
 }
+
+
 
 /*
  * Render the supertitle of an item. This part is separate from the rest of the render function because we have to be able to call this in cleaning function, to for exemple change a simple title into a link if a node get children.

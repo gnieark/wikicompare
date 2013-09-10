@@ -152,6 +152,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   if ($type == 'criterion') {
     $output .= "\$node->wikicompare_type['und'][0]['value'] = '" . $node['data']->type . "';<br/>";
     $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";
+    $output .= "\$node->wikicompare_suggest['und'][0]['value'] = '" . $node['data']->suggest . "';<br/>";
   }
 
   if (module_exists('wikicompare_profiles')) {

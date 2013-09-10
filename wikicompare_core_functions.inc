@@ -84,7 +84,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'criterion_id', 'fid');
       $query->addField('n', 'product_id', 'cid');
-      $query->addField('n','criterion_parent_id', 'parent_fid');
+      $query->addField('n', 'criterion_parent_id', 'parent_fid');
       $query->addField('n', 'percent', 'percent');
       $query->addField('n', 'criterion_weight', 'weight');
       switch ($type) {
@@ -255,38 +255,43 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
   }
 
   //We update the total product only at the first call of the recursive function. The recursive function give their products to update in their return.
-  if ($first && !empty($res['products_to_update'])) {
+  if ($first) {
 
-    $query = db_select('cache_evaluation', 'n');
-    $query->addField('n', 'nid', 'nid');
-    $query->addField('n', 'criterion_id', 'criterion_id');
-    $query->addField('n', 'product_id', 'product_id');
-    $query->addField('n', 'percent', 'percent');
-    $query->addField('n', 'criterion_weight', 'weight');
-    $query->condition('n.product_id', $res['products_to_update'], 'IN');
-    $query->condition('n.criterion_parent_id', NULL);
-    //Only published criterions are used in the computation.
-    $query->condition('n.criterion_state', unserialize(WIKICOMPARE_STATE_PUBLISHED), 'in');
-    $result = $query->execute();
+    if (!empty($res['products_to_update'])) {
+      $query = db_select('cache_evaluation', 'n');
+      $query->addField('n', 'nid', 'nid');
+      $query->addField('n', 'criterion_id', 'criterion_id');
+      $query->addField('n', 'product_id', 'product_id');
+      $query->addField('n', 'percent', 'percent');
+      $query->addField('n', 'criterion_weight', 'weight');
+      $query->condition('n.product_id', $res['products_to_update'], 'IN');
+      $query->condition('n.criterion_parent_id', NULL);
+      //Only published criterions are used in the computation.
+      $query->condition('n.criterion_state', unserialize(WIKICOMPARE_STATE_PUBLISHED), 'in');
+      $result = $query->execute();
 
-    //We assign the children evaluation in a array with fid and cid as key so their parents can recover them with fid and cid key.
-    $products = array();
-    foreach($result as $record) {
-      $products[$record->product_id][$record->criterion_id] = $record;
+      //We assign the children evaluation in a array with fid and cid as key so their parents can recover them with fid and cid key.
+      $products = array();
+      foreach($result as $record) {
+        $products[$record->product_id][$record->criterion_id] = $record;
+      }
+
+      foreach ($products as $product_id => $evaluations) {
+        $node = new stdClass;
+        $node->type = 'parent-weighted-average';
+        $node = wikicompare_compute_percent($node, $evaluations);
+
+        db_update('cache_product')
+          ->fields(array(
+            'total' => $node->new_percent,
+          ))
+          ->condition('nid', $product_id)
+          ->execute();
+      }
     }
 
-    foreach ($products as $product_id => $evaluations) {
-      $node = new stdClass;
-      $node->type = 'parent-weighted-average';
-      $node = wikicompare_compute_percent($node, $evaluations);
-
-      db_update('cache_product')
-        ->fields(array(
-          'total' => $node->new_percent,
-        ))
-        ->condition('nid', $product_id)
-        ->execute();
-    }
+    //Refresh suggestions on home page. We place the function here because it should be call each time a product percent change, but we should call it only once per compute call. By proceding like this, we can't target directly the criterion to update.
+    wikicompare_refresh_cache_suggest();
 
   }
 
@@ -441,8 +446,10 @@ function wikicompare_refresh_caches() {
     if ($type == 'criterion') {
       $query->addField('nt', 'wikicompare_type_value', 'type');
       $query->addField('nw', 'wikicompare_weight_value', 'weight');
+      $query->addField('nsu', 'wikicompare_suggest_value', 'suggest');
       $query->leftjoin('field_revision_wikicompare_type', 'nt', 'n.vid = nt.revision_id');
       $query->leftjoin('field_revision_wikicompare_weight', 'nw', 'n.vid = nw.revision_id');
+      $query->leftjoin('field_revision_wikicompare_suggest', 'nsu', 'n.vid = nsu.revision_id');
     }
     $query->condition('n.type', $type);
     //Only the main language nodes are concerned.
@@ -484,6 +491,7 @@ function wikicompare_refresh_caches() {
       if ($type == 'criterion') {
         $to_insert[$record->nid]['type'] = $record->type;
         $to_insert[$record->nid]['weight'] = $record->weight;
+        $to_insert[$record->nid]['suggest'] = $record->suggest;
       }
       if (module_exists('wikicompare_inherit_product')) {
         //Prepare the inherit product specific fields in the flush tables function.
@@ -527,6 +535,7 @@ function wikicompare_refresh_caches() {
     if ($type == 'criterion') {
       $header[] = 'type';
       $header[] = 'weight';
+      $header[] = 'suggest';
     }
     if (module_exists('wikicompare_inherit_product')) {
       //Add inherit product specific headers.
@@ -570,12 +579,75 @@ function wikicompare_refresh_caches() {
   //Update compatative table cache. We begin the update at the base of the criterion tree and at the base of the product tree.
   wikicompare_update_compare_tree('criterion', $criterion_without_children);
 
+  //Refresh the suggestions in home page.
+  wikicompare_refresh_cache_suggest();
+
   //We only reactive the website if it wasn't in maintenance at the beginning.
   if ($was_in_maintenance == FALSE) {
     variable_set('maintenance_mode', 0);
   }
 
 }
+
+
+
+/**
+ * Function to refresh the cache of the suggestions on home page.
+ */
+function wikicompare_refresh_cache_suggest() {
+
+  $query = db_delete('cache_wikicompare_suggest');
+  $query->execute();
+
+  $criterions = array();
+  $percents = array();
+  $query = db_select('cache_criterion', 'n');
+  $query->addField('n', 'nid', 'nid');
+  $query->addField('n', 'suggest', 'suggest');
+  $query->addField('e', 'product_id', 'product_id');
+  $query->addField('e', 'percent', 'percent');
+  $query->leftjoin('cache_evaluation', 'e', 'n.nid = e.criterion_id');
+  //TODO Remove this leftjoin by adding comparable in cache_evaluation.
+  $query->leftjoin('cache_product', 'p', 'e.product_id = p.nid');
+  $query->condition('n.suggest', 0, '!=');
+  $or = db_or();
+  $or->condition('p.has_children', 0);
+  $or->condition('p.comparable', 'always-combine');
+  $query->condition($or);
+  $result = $query->execute();
+
+  foreach ($result as $record) {
+    $criterions[$record->nid][$record->product_id] = $record;
+    $percents[$record->nid][$record->product_id] = $record->percent;
+  }
+
+  $to_insert = array();
+  foreach ($percents as $criterion_id => $products) {
+    arsort($products);
+    $i = 0;
+    foreach ($products as $product_id => $product) {
+      $i++;
+      //TODO All products which are eligible for suggestion (aka percent in the top 3) should be store here and randomly displayed, even if more than three.
+      if ($i <= 3) {
+        $record = $criterions[$criterion_id][$product_id];
+        $to_insert[] = array(
+          'criterion_id' => $record->nid,
+          'sequence' => $record->suggest,
+          'product_id' => $record->product_id,
+          'percent' => $record->percent
+        );
+      }
+    }
+  }
+
+  $query = db_insert('cache_wikicompare_suggest')->fields(array('criterion_id', 'sequence', 'product_id', 'percent'));
+  foreach ($to_insert as $fields) {
+    $query->values($fields);
+  }
+  $query->execute();
+
+}
+
 
 
 /**
