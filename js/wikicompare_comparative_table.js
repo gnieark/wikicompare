@@ -146,6 +146,24 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
+     * When we scroll the product list, load the next products at the end of the scroll.
+     */
+    var load = false;
+    //We use the position of the last product as mark.
+    var offset = $('.product_list_item:last').offset();
+    $('#product_list_column').scroll(function(){
+      //If the offset is at the bottom of the scroll, is there is no current loading, if there is more than five displayed product and if all products are not already displayed, then we launch the function.
+      if ((offset.top - $('#product_list_column').height() - 150 <= $('#product_list_column').scrollTop()) && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())){
+//TODO At the third call, the offset.top drastically diminush and so all next product are insta loaded. Instead of a step of 400 between each offset, we have only a step of 100. I don't know why.
+        //Lock the function.
+        load = true;
+        $('#append_product_list_link').click();
+      }
+    });
+
+
+
+    /*
      * When we open a popin, recover the selected criterion from the main page, either the manually selected or the form selected criterions.
      */
     $('#initialize_selected_criterion_dialog_ids:not(.listener_set)').addClass('listener_set').each(function () {
@@ -361,10 +379,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
       //Theses functions does not have nid and so would cause some problem. For example, they would disable the simple_dialog links.
-      if (action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
+      if (action != 'append_product_list' && action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
         //Recover the nid by using a regular expression on the link_id.
         var nid = extract_nid(link_id)[0];
       }
+//TODO Move in send_nid
 
       //Configure the ajax event
       var element_settings = {};
@@ -400,6 +419,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_criterions = false;
         send_evaluations = false;
         send_profiles = false;
+        send_products_tree_mode = false;
         send_manual_selected_criterions = false;
         send_selected_profiles = false;
         send_states = false;
@@ -450,6 +470,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_states = true;
           //The table will be clean after the operation.
           make_cleaning = true;
+        }
+
+        if (action == 'append_product_list') {
+          send_computed = true;
+          send_manual_selected_criterions = true;
+          send_selected_profiles = true;
+          send_products_tree_mode = true;
+          options.data.products_offset = $('#products_offset').text();
         }
 
         //When we want to add a new column in the table.
@@ -760,6 +788,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.profile_ids = profile_ids;
         }
 
+        if (send_products_tree_mode == true) {
+          options.data.products_tree_mode = $('#products_tree_mode').text();
+        }
+
         //Get all manually selected criterions to send their id to drupal.
         if (send_manual_selected_criterions == true) {
           options.data.selected_criterion_ids = manual_selected_criterion_ids;
@@ -883,6 +915,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
           }
 
+        }
+
+        if (action == 'append_product_list') {
+          //Refresh the offset with the value of the last loaded product.
+          offset = $('.product_list_item:last').offset();
+					//We can now scroll and append new products.
+          load = false;
         }
 
         //Adjust the lines to the new size of the table, when we add a new column.

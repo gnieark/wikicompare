@@ -327,7 +327,7 @@ function wikicompare_install() {
   node_types_rebuild();
 
   //Set the front page of the wikicompare on the comparative table.
-  variable_set('site_frontpage', 'compare');
+  variable_set('site_frontpage', 'home');
 
   //Create the body field. We can't use the drupal function because we want a description without summary field.
   $field = field_info_field('body');

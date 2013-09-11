@@ -7,34 +7,19 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
 
 /**
- * Build the wikicompare comparative table.
+ * Build the home page.
  */
-function wikicompare_comparative_table() {
+function wikicompare_home_page() {
 
   //Add the javascript files used in the comparative_table.
   drupal_add_js('/misc/ajax.js');
   drupal_add_js('/misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
 
-  //Add the checkbox to display the draft and closed items in the tables.
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display draft items',
-    '#id' => 'checkbox-draft-items',
-    '#attributes' => array(
-      'class' => array('state_checkbox'),
-    ),
-   );
-  $output = render($checkbox_settings);
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display closed items',
-    '#id' => 'checkbox-closed-items',
-    '#attributes' => array(
-      'class' => array('state_checkbox'),
-    ),
-   );
-  $output .= render($checkbox_settings);
+  /*
+   * Left column.
+   */
+  $output = '<div id="sidebar-first" style="height:500px; float:left;">';
 
   //Add the container which will contain the selected criterion itemlist. It'll be build when we submit the manual selected criterion dialog.
   $output .= '<div id="container-manual-selected-criterions"></div>';
@@ -81,6 +66,78 @@ function wikicompare_comparative_table() {
   );
   $output .= ' ' . render($reset_link) . '</p>';
 
+  $output .= '</div>';
+
+
+
+  /*
+   * Central column.
+   */
+  $output .= '<div id="product_list_column" style="height:500px; width:400px; float:left; overflow:auto;">';
+  $res = wikicompare_table_render_product_list(wikicompare_initialize_settings());
+  $output .= '<span id="nb_products" style="display:none;">' . $res['count'] . '</span>';
+  $output .= '<span id="products_offset" style="display:none;">' . $res['offset'] . '</span>';
+  $output .= $res['output'];
+  $output .= '</div>';
+
+
+
+  /*
+   * Right column.
+   */
+  $output .= '<div id="sidebar-second" style="height:500px; float:right;">';
+  $output .= wikicompare_table_render_home_suggest();
+  $append_link = array(
+    '#type' => 'link',
+    '#title' => 'Append product list',
+    '#href' => 'wikicompare_get_append_product_list_callback/nojs',
+    '#id' => 'append_product_list_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'append_product_list',
+      'style' => 'display:none',
+    ),
+  );
+  $output .= '<p><span id="products_tree_mode" style="display:none;">0</span>' . render($append_link) . '</p>';
+
+  $output .= '</div>';
+
+  return $output;
+
+}
+
+
+
+/**
+ * Build the wikicompare comparative table.
+ */
+function wikicompare_comparative_table() {
+
+  //Add the javascript files used in the comparative_table.
+  drupal_add_js('/misc/ajax.js');
+  drupal_add_js('/misc/progress.js');
+  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+
+  //Add the checkbox to display the draft and closed items in the tables.
+  $checkbox_settings =  array(
+    '#type' => 'checkbox',
+    '#title' => 'Display draft items',
+    '#id' => 'checkbox-draft-items',
+    '#attributes' => array(
+      'class' => array('state_checkbox'),
+    ),
+   );
+  $output = render($checkbox_settings);
+  $checkbox_settings =  array(
+    '#type' => 'checkbox',
+    '#title' => 'Display closed items',
+    '#id' => 'checkbox-closed-items',
+    '#attributes' => array(
+      'class' => array('state_checkbox'),
+    ),
+   );
+  $output .= render($checkbox_settings);
+
   //Generate the main product itemlist.
   $output .= wikicompare_table_render_main_itemlist('product', 'Products', wikicompare_initialize_settings());
 
@@ -88,9 +145,8 @@ function wikicompare_comparative_table() {
   $output .= wikicompare_table_render_comparative_table(wikicompare_initialize_settings());
 
   //TEMP
-  $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings());
-  $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings(array('products_tree_mode' => 1)));
-  $output .= wikicompare_table_render_home_suggest();
+//  $output .= wikicompare_table_render_product_list(wikicompare_initialize_settings(array('products_tree_mode' => 1)));
+
 
   //Add the link to go on FastAction mode.
   $toogle_link = array(
@@ -180,7 +236,7 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
  * @return output
  *   The rendered list.
  */
-function wikicompare_table_render_product_list($settings, $criterions=array()) {
+function wikicompare_table_render_product_list($settings, $criterions=array(), $offset=1) {
 
   //Only the main itemlist of the table will be rendered by this function.
   $settings['context'] = 'table';
@@ -242,15 +298,11 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
     $products = $products_recursive_data['tree'];
   }
 
-  $output = '<p id="comparative_table_product_list">';
-  if ($settings['products_tree_mode']) { //TODO This if will be useless at final version, because we'll have only one id for the list.
-    $output = '<p id="comparative_table_product_tree">';
-  }
+  $limit = 5 + $offset;
 
-  $output .= wikicompare_table_render_product_item($products, $products_sort, $settings);
-  $output .= '</p>';
+  $output = wikicompare_table_render_product_item($products, $products_sort, $offset, $limit, $settings);
 
-  return $output;
+  return array('offset' => $limit, 'count' => count($products), 'output' => $output);
 
 }
 
@@ -271,13 +323,22 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
  * @return output
  *   The rendered list.
  */
-function wikicompare_table_render_product_item($products, $products_sort, $settings) {
+function wikicompare_table_render_product_item($products, $products_sort, $offset, $limit, $settings) {
 
   $output = '';
+  $i = 0;
   foreach ($products as $product_id => $product) {
-    $output .= $product['data']->title . ' : ' . $products_sort[$product_id] . '%.<br/>';
+    $i++;
+    if ($i < $offset) {
+      continue;
+    }
+    if ($i == $limit && !$settings['products_tree_mode']) {
+      break;
+    }
+    $output .= '<p class="product_list_item">' . $product['data']->title . ' : ' . $products_sort[$product_id] . '%.<br/>';
+    $output .= '<br/><br/><br/><br/></p>';
     if (!empty($product['children'])) {
-      $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $settings);
+      $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $offset, $limit, $settings);
     }
   }
 
@@ -1098,6 +1159,44 @@ function wikicompare_get_criterion_children_response($method = 'ajax') {
 
 
 /**
+ * Ajax callback function called by javascript to append the product list.
+ *
+ * @param $method
+ *   Indicate if the call was made with javascript or if it's a simple browser call.
+ *
+ * @param $_POST
+ *   The variables send by the javascript.
+ *
+ * @return $page
+ *   Array containing the instructions for the javascript.
+ */
+function wikicompare_get_append_product_list_response($method = 'ajax') {
+
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($method != 'ajax') {
+    $output = NOJS_MESSAGE;
+    return $output;
+  }
+
+  //Initialize settings with the variable from javascript.
+  $settings = wikicompare_initialize_settings($_POST);
+
+  $commands = array();
+  $res = wikicompare_table_render_product_list($settings, array(), $_POST['products_offset']);
+  $commands[] = ajax_command_invoke('#product_list_column', 'append', array($res['output']));
+  $commands[] = ajax_command_invoke('#products_offset', 'html', array($res['offset']));
+  //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+  $commands[] = ajax_command_after('#product_list_column', '<div class="to_remove"/>');
+
+  //Return the javascript commands.
+  $page = array('#type' => 'ajax', '#commands' => $commands);
+  return $page;
+
+}
+
+
+
+/**
  * Ajax callback function called by javascript to add or remove a column in the comparative table.
  *
  * @param $method
@@ -1465,7 +1564,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
   $commands[] = ajax_command_replace('#comparative_table', $output);
 
   //Regenerate the product list.
-  $commands[] = ajax_command_replace('#comparative_table_product_list', wikicompare_table_render_product_list($settings, $criterions));
+  $commands[] = ajax_command_html('#product_list_column', wikicompare_table_render_product_list($settings, $criterions));
   $settings['products_tree_mode'] = 1;
   $commands[] = ajax_command_replace('#comparative_table_product_tree', wikicompare_table_render_product_list($settings, $criterions));
 

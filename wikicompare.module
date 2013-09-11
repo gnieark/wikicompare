@@ -86,6 +86,17 @@ function wikicompare_menu() {
 
   $items = array();
 
+  //Enable home page URL
+  $items['home'] = array(
+    'title' => 'Home',
+    'description' => 'Home Page',
+    'page callback' => 'wikicompare_home_page',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 0,
+    'file' => 'wikicompare_comparative_table.inc',
+  );
+
   //Enable comparative table URL
   $items['compare'] = array(
     'title' => 'Comparative Table',
@@ -93,7 +104,7 @@ function wikicompare_menu() {
     'page callback' => 'wikicompare_comparative_table',
     'access callback' => TRUE,
     'menu_name' => 'main-menu',
-    'weight' => 0,
+    'weight' => 1,
     'file' => 'wikicompare_comparative_table.inc',
   );
 
@@ -131,6 +142,16 @@ function wikicompare_menu() {
 
   $items['wikicompare_get_criterion_children_callback'] = array(
     'page callback' => 'wikicompare_get_criterion_children_response',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'page arguments' => array(),
+    'type' => MENU_CALLBACK,
+    'file' => 'wikicompare_comparative_table.inc',
+    'delivery callback' => 'ajax_deliver',
+  );
+
+  $items['wikicompare_get_append_product_list_callback'] = array(
+    'page callback' => 'wikicompare_get_append_product_list_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
     'page arguments' => array(),
