@@ -73,20 +73,24 @@ function wikicompare_home_page() {
   /*
    * Central column.
    */
-  $output .= '<div id="product_list_column" style="height:500px; width:400px; float:left; overflow:auto;">';
+  $output .= '<div id="products_list_column" style="height:600px; width:400px; float:left;">';
   $res = wikicompare_table_render_product_list(wikicompare_initialize_settings());
   $output .= '<span id="nb_products" style="display:none;">' . $res['count'] . '</span>';
   $output .= '<span id="products_offset" style="display:none;">' . $res['offset'] . '</span>';
+  $toogle_product_mode_link = array(
+    '#type' => 'link',
+    '#title' => 'Toogle product mode',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
+    '#id' => 'toogle_product_mode_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'toogle_product_mode',
+    ),
+  );
+  $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
+  $output .= '<div id="products_list" style="height:500px; overflow:auto;">';
   $output .= $res['output'];
   $output .= '</div>';
-
-
-
-  /*
-   * Right column.
-   */
-  $output .= '<div id="sidebar-second" style="height:500px; float:right;">';
-  $output .= wikicompare_table_render_home_suggest();
   $append_link = array(
     '#type' => 'link',
     '#title' => 'Append product list',
@@ -99,7 +103,15 @@ function wikicompare_home_page() {
     ),
   );
   $output .= '<p><span id="products_tree_mode" style="display:none;">0</span>' . render($append_link) . '</p>';
+  $output .= '</div>';
 
+
+
+  /*
+   * Right column.
+   */
+  $output .= '<div id="sidebar-second" style="height:500px; float:right;">';
+  $output .= wikicompare_table_render_home_suggest();
   $output .= '</div>';
 
   return $output;
@@ -238,18 +250,27 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
  */
 function wikicompare_table_render_product_list($settings, $criterions=array(), $offset=1) {
 
-  //Only the main itemlist of the table will be rendered by this function.
-  $settings['context'] = 'table';
+  //Only the product in the home page will be rendered by this function.
+  $settings['context'] = 'list';
+
+  //If we are loading the list in standard mode.
+  $db_settings = array('get_comparable_products' => 1);
+  //If we are expanding the children of a node in tree mode.
+  $parent_id = 0;
+  if (isset($settings['nid'])) {
+    $db_settings = array('parent_id' => $settings['nid']);
+    $parent_id = $settings['nid'];
+  }
 
   //Recover comparable products.
-  $products = request_db('product', array('get_comparable_products' => 1), $settings);
+  $products = request_db('product', $db_settings, $settings);
   $product_ids = array();
   foreach ($products as $product_id => $product) {
     $product_ids[$product_id] = $product_id;
   }
 
-  //If we are in tree mode, we need to get the product in tree mode.
-  if ($settings['products_tree_mode']) {
+  //If we are in tree mode, we need to get the product in tree mode. Unless we are getting the children of a node.
+  if ($settings['products_tree_mode'] && !isset($settings['nid'])) {
     //Get product tree. We can use comparable products as base because it always contain at least all products without children.
     $products_recursive_data = wikicompare_build_recursive_tree('product', $product_ids, array(), $settings);
     $product_ids = $products_recursive_data['ids'];
@@ -291,16 +312,18 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
   }
 
   //Order the products by their percentages.
-  arsort($products_sort);
+  if (!$settings['products_tree_mode']) {
+    arsort($products_sort);
+  }
 
   //For tree mode, now that we recovered the percentage, we assign the products in tree mode before the call of the recursive function.
-  if ($settings['products_tree_mode']) {
+  if ($settings['products_tree_mode'] && !isset($settings['nid'])) {
     $products = $products_recursive_data['tree'];
   }
 
   $limit = 5 + $offset;
 
-  $output = wikicompare_table_render_product_item($products, $products_sort, $offset, $limit, $settings);
+  $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
 
   return array('offset' => $limit, 'count' => count($products), 'output' => $output);
 
@@ -317,28 +340,63 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
  * @param products_sort
  *   Array containing the percentage computed for each product.
  *
+ * @param parent_id
+ *   When recursive call, use this value for the parent_id attribute.
+ *
+ * @param offset
+ *   Indicate where we are in the list, the previous value should not be loaded.
+ *
+ * @param limit
+ *   Indicate the number of item we should load.
+ *
+ * @param first
+ *   Indicate if we are at the first call of the recursive function.
+ *
  * @param settings
  *   The context of the table.
  *
  * @return output
  *   The rendered list.
  */
-function wikicompare_table_render_product_item($products, $products_sort, $offset, $limit, $settings) {
+function wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, $first, $settings) {
 
   $output = '';
   $i = 0;
-  foreach ($products as $product_id => $product) {
+  foreach ($products_sort as $product_id => $percent) {
+    //Important mainly in computed tree mode, if the product is not at the current level of the recursive function then we zap it with no effect on the iterator.
+    if (isset($products[$product_id])) {
+      $product = $products[$product_id];
+    } else {
+      continue;
+    }
     $i++;
+    //Zap all products already loaded.
     if ($i < $offset) {
       continue;
     }
-    if ($i == $limit && !$settings['products_tree_mode']) {
+    //In standard mode, zap all products superior to the limit.
+    if ($i == $limit && !$settings['products_tree_mode'] && !$settings['computed']) {
       break;
     }
-    $output .= '<p class="product_list_item">' . $product['data']->title . ' : ' . $products_sort[$product_id] . '%.<br/>';
+    //Unless we are in tree mode, we will not display the get children link for the product node.
+    if (!$settings['products_tree_mode']) {
+      $settings['no_children_link'] = 1;
+    }
+
+    $output .= '<p id="product_list_item_' . $product_id . '" class="product_list_item"';
+    //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level.
+    if (!$first) {
+      $output .= ' style="display:none;"';
+    }
+    //In computed tree mode, we link the children to their parent with this attribute.
+    if ($parent_id) {
+      $output .= ' parent_id="' . $parent_id . '"';
+    }
+    $output .= '>' . wikicompare_table_get_supertitle_item('product', $product, $settings) . ' : ' . $products_sort[$product_id] . '%.<br/>';
     $output .= '<br/><br/><br/><br/></p>';
-    if (!empty($product['children'])) {
-      $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $offset, $limit, $settings);
+    //Recursive call to get the children.
+    if ($settings['computed'] && !empty($product['children'])) {
+      $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $product_id, $offset, $limit, False, $settings);
     }
   }
 
@@ -667,9 +725,9 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
     }
 
     //If the node has children, we replace the title with a link to display the children.
-    if ($node['data']->has_children){
+    if ($node['data']->has_children && !isset($settings['no_children_link'])){
       $class = array('item_link');
-      if ($settings['computed']) {
+      if ($settings['computed'] && in_array($type, array('product', 'criterion'))) {
         $class[] = 'computed';
       }
       //This class is used to prepare the variable for the cleaning function.
@@ -685,8 +743,8 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
     $title = $node['data']->percent . '%';
   }
 
-  //For all table items, we add a link to access the node page and add a div to store the fastaction items.
-  if ($settings['context'] == 'table') {
+  //For all list or table items, we add a link to access the node page and add a div to store the fastaction items.
+  if (in_array($settings['context'], array('table', 'list'))) {
 
     //Create the image link to go to the node page
     $img = theme('image', array(
@@ -760,12 +818,13 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
     }
 
     //If the itemlist is computed and the node has children, then we call the recursive function to get the children.
-    if ($settings['computed'] && $node['data']->has_children) {
-       $items[$nid]['children'] = wikicompare_build_itemlist($type, $node['children'], $nid, $settings);
+//TODO Where do we still need this?
+//    if ($settings['computed'] && $node['data']->has_children) {
+//       $items[$nid]['children'] = wikicompare_build_itemlist($type, $node['children'], $nid, $settings);
     //Else, we just add the div which will contain the children after an ajax call, and the fastaction form.
-    } else {
-      $items[$nid]['data'] .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;"></div>';
-    }
+//    } else {
+    $items[$nid]['data'] .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;"></div>';
+//    }
 
   }
 
@@ -1075,14 +1134,26 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
 
     }
 
-    //Building the data for the itemlist.
-    $itemlist_data = wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
+    if ($settings['context'] != 'list') {
+      //Building the data for the itemlist.
+      $itemlist_data = wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
 
-    //Rendering the itemlist.
-    $output = theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
+      //Rendering the itemlist.
+      $output = theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
-    //We prepared a div under the parent product. This command will fill it with the product children, and replace anything that was here before.
-    $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
+      //We prepared a div under the parent product. This command will fill it with the product children, and replace anything that was here before.
+      $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
+    } else {
+
+      $settings['nid'] = $_POST['nid'];
+      $res = wikicompare_table_render_product_list($settings);
+
+      //We add the new items after the parent item. Note we can't use ajax_command_after because it adds an unwanted div.
+      $commands[] = ajax_command_invoke('#product_list_item_' . $_POST['nid'], 'after', array($res['output']));
+
+      //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
+      $commands[] = ajax_command_after('#products_list_column', '<div class="to_remove"/>');
+    }
 
   }
 
@@ -1183,10 +1254,10 @@ function wikicompare_get_append_product_list_response($method = 'ajax') {
 
   $commands = array();
   $res = wikicompare_table_render_product_list($settings, array(), $_POST['products_offset']);
-  $commands[] = ajax_command_invoke('#product_list_column', 'append', array($res['output']));
+  $commands[] = ajax_command_invoke('#products_list', 'append', array($res['output']));
   $commands[] = ajax_command_invoke('#products_offset', 'html', array($res['offset']));
   //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-  $commands[] = ajax_command_after('#product_list_column', '<div class="to_remove"/>');
+  $commands[] = ajax_command_after('#products_list_column', '<div class="to_remove"/>');
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -1525,7 +1596,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
   //Get the criterions we will use to compute the table.
   $selected_criterion_ids = array();
-  if (!isset($_POST['reset'])) {
+  if ($settings['computed']) {
 
     $selected_criterion_ids = $settings['selected_criterion_ids'];
 
@@ -1547,7 +1618,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
   $criterions = array();
   //Compute the table, unless no criterions was selected. In this case, we just reset it.
-  if ($selected_criterion_ids && !isset($_POST['reset'])) {
+  if ($selected_criterion_ids && $settings['computed']) {
     //Build the criterion tree.
     $criterions = wikicompare_build_recursive_data('criterion', $selected_criterion_ids, $settings);
     //Indicate we are computing the table.
@@ -1564,9 +1635,10 @@ function wikicompare_compute_table_response($method = 'ajax') {
   $commands[] = ajax_command_replace('#comparative_table', $output);
 
   //Regenerate the product list.
-  $commands[] = ajax_command_html('#product_list_column', wikicompare_table_render_product_list($settings, $criterions));
-  $settings['products_tree_mode'] = 1;
-  $commands[] = ajax_command_replace('#comparative_table_product_tree', wikicompare_table_render_product_list($settings, $criterions));
+  $res = wikicompare_table_render_product_list($settings, $criterions);
+  $commands[] = ajax_command_html('#nb_products', $res['count']);
+  $commands[] = ajax_command_html('#products_offset', $res['offset']);
+  $commands[] = ajax_command_html('#products_list', $res['output']);
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
@@ -1829,7 +1901,7 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
  */
 function wikicompare_initialize_settings($args = array()) {
 
-  $settings = array();
+  $settings = $args;
   foreach (array('fastaction', 'context', 'product_column_ids', 'selected_criterion_ids', 'forbidden_nid', 'computed', 'products_tree_mode', 'states', 'colspan') as $key) {
 
     //If the key is already set in the argument of the function, we directly use it.

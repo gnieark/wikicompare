@@ -769,11 +769,11 @@ function request_db($type, $db_settings = array(), $settings=array()) {
       $or->condition('n.has_children', 0);
       $or->condition('n.comparable', 'always-combine');
       $query->condition($or);
-      $query->orderby('n.total', 'DESC');
-    } else {
-      //The returned nodes are ordered by the sequence field.
-      $query->orderby('n.sequence, n.title');
     }
+
+    //The returned nodes are ordered by the sequence field.
+    $query->orderby('n.sequence, n.title');
+
 
   //Evaluation specific fields.
   } else {

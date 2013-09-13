@@ -38,13 +38,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
           var nid = extract_nid(link_id);
           //Display the children if they are not already shown.
           if (!$(this).hasClass('displayed')) {
-            $('.criterion_' + context + '_child_' + nid).show();
+            $('.' + type + '_' + context + '_item[parent_id=' + nid + ']').show();
             //Next time, it'll hide the children.
             $(this).addClass('displayed');
           //Hide the children.
           } else {
             //By using this recursive function, the children will be recursively hidded.
-            remove_children_tree(nid, '#criterion_' + context + '_link_', '.criterion_' + context + '_child_', false);
+            remove_children_tree2(nid, '#' + type + '_' + context + '_link_', '.' + type + '_' + context + '_item', true);
           }
           //Avoid the hyperlink to load another page.
           return false;
@@ -151,13 +151,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
     var load = false;
     //We use the position of the last product as mark.
     var offset = $('.product_list_item:last').offset();
-    $('#product_list_column').scroll(function(){
-      //If the offset is at the bottom of the scroll, is there is no current loading, if there is more than five displayed product and if all products are not already displayed, then we launch the function.
-      if ((offset.top - $('#product_list_column').height() - 150 <= $('#product_list_column').scrollTop()) && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())){
-//TODO At the third call, the offset.top drastically diminush and so all next product are insta loaded. Instead of a step of 400 between each offset, we have only a step of 100. I don't know why.
-        //Lock the function.
-        load = true;
-        $('#append_product_list_link').click();
+    $('#products_list').scroll(function(){
+      //Only in standard mode.
+      if ($('#products_tree_mode').text() == 0) {
+        //If the offset is at the bottom of the scroll, is there is no current loading, if there is more than five displayed product and if all products are not already displayed, then we launch the function.
+        if ((offset.top - $('#products_list').height() - 150 <= $('#products_list').scrollTop()) && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())){
+  //TODO At the third call, the offset.top drastically diminush and so all next product are insta loaded. Instead of a step of 400 between each offset, we have only a step of 100. I don't know why.
+          //Lock the function.
+          load = true;
+          $('#append_product_list_link').click();
+        }
       }
     });
 
@@ -379,7 +382,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
       //Theses functions does not have nid and so would cause some problem. For example, they would disable the simple_dialog links.
-      if (action != 'append_product_list' && action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
+      if (action != 'append_product_list' && action != 'toogle_product_mode' && action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
         //Recover the nid by using a regular expression on the link_id.
         var nid = extract_nid(link_id)[0];
       }
@@ -426,6 +429,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_forbidden_nid = false;
         send_container = false;
         send_colspan = false;
+        computed = false;
         auto_colspan = false;
         make_cleaning = false;
 
@@ -437,6 +441,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           manage_displayed_flag = true;
           //Send the product displayed in the table, so in case of product table we can checked the already displayed items.
           send_products_columns = true;
+          //Send the tree mode flag for the list children expand.
+          send_products_tree_mode = true;
           //Send states if we want to also display the draft and closed items.
           send_states = true;
           //In popin, we may have to block a forbidden nid.
@@ -520,10 +526,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_container = true;
         }
 
-        //If we launched the table computation.
-        if (action == 'compute_table') {
+        //If we change the product list mode.
+        if (action == 'toogle_product_mode') {
           //Send the product displayed in the table, they'll keep display in the new table.
           send_products_columns = true;
+          //Send products mode.
+          send_products_tree_mode = true;
           //Send the criterions manually selected, they'll be used to select the computed criterions.
           send_manual_selected_criterions = true;
           //Send the selected profile. Their criterions will be used to select the computed criterions.
@@ -532,20 +540,55 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_states = true;
           //Send the size of the table to adjust the lines.
           send_colspan = true;
+          //Verify if the table was computed.
+          send_computed = true;
           //Clean the table after the computation.
           make_cleaning = true;
+
+          if ($('#products_tree_mode').text() == 0) {
+            $('#products_tree_mode').html(1);
+          } else {
+            $('#products_tree_mode').html(0);
+          }
+
+        }
+
+        //If we launched the table computation.
+        if (action == 'compute_table') {
+          //Send the product displayed in the table, they'll keep display in the new table.
+          send_products_columns = true;
+          //Send the criterions manually selected, they'll be used to select the computed criterions.
+          send_manual_selected_criterions = true;
+          //Send the selected profile. Their criterions will be used to select the computed criterions.
+          send_selected_profiles = true;
+          //Send products mode.
+          send_products_tree_mode = true;
+          //Send the states.
+          send_states = true;
+          //Send the size of the table to adjust the lines.
+          send_colspan = true;
+          //Verify if the table was computed.
+          send_computed = true;
+          //Clean the table after the computation.
+          make_cleaning = true;
+
+          $('#compute_table_link').addClass('computed');
         }
 
         //If we want to restore the initial state of the table.
         if (action == 'reset_table') {
           //Send the product displayed in the table, they'll keep display in the new table.
           send_products_columns = true;
+          //Send products mode.
+          send_products_tree_mode = true;
           //Send the states.
           send_states = true;
           //Send the size of the table to adjust the lines.
           send_colspan = true;
-          //We call the same ajax function that computation, we use this variable to tell the table we want to reset it.
-          options.data.reset = true;
+          //Verify if the table was computed.
+          send_computed = true;
+
+          $('#compute_table_link').removeClass('computed');
         }
 
         //If we want to display the fastaction form.
@@ -721,8 +764,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //Get and send the computed flag by checking the class on the table.
         if (send_computed == true) {
-          if ($('#comparative_table').hasClass('computed')) {
+          if ($('#compute_table_link').hasClass('computed')) {
             options.data.computed = 1;
+            computed = true;
           } else {
             options.data.computed = 0;
           }
@@ -853,7 +897,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('#' + link_id).addClass('displayed');
 
             //The children are here but hidden, we display them with a slideDown animation.
-            if (action == 'expand_list_children') {
+            if (action == 'expand_list_children' && context != 'list') {
               $('#' + type + '_' + context + '_children_' + nid).slideDown();
             }
 
@@ -895,8 +939,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('#' + link_id).removeClass('displayed');
 
             if (action == 'expand_list_children') {
-              $('#' + type + '_' + context + '_children_' + nid).slideUp();
-              $('.' + type + '_' + context + '_child_' + nid).addClass('to_remove');
+              if (context != 'list') {
+                $('#' + type + '_' + context + '_children_' + nid).slideUp();
+                $('.' + type + '_' + context + '_child_' + nid).addClass('to_remove');
+              } else {
+                remove_children_tree2(nid, '#product_list_link_', '.product_list_item', computed);
+              }
             }
 
             if (action == 'expand_row_children') {
@@ -995,6 +1043,40 @@ Drupal.behaviors.WikicompareComparativeTable = {
         $(children_prefix + nid).addClass('to_remove');
       }
     }
+
+    /*
+     * Function to recursively hide the children of itemlist / row item.
+     *
+     * @param nid
+     *   The nid of the parent node.
+     *
+     * @param link_prefix
+     *   The prefix of the parent link.
+     *
+     * @param children_prefix
+     *   The prefix of the class of the children.
+     *
+     * @param computed
+     *   Boolean indicated if the children are computed or not.
+     */
+    function remove_children_tree2(nid, link_prefix, children_prefix, computed) {
+      //For all children.
+      $(children_prefix + '[parent_id=' + nid + ']').each(function(index) {
+        //Get nid of the child.
+        var child_nid = extract_nid($(this).attr('id'))[0];
+        //Recursively launch the function to hide the children of the child.
+        remove_children_tree2(child_nid, link_prefix, children_prefix, computed);
+      });
+      //Hide the children. Later replace the hide by an animation, slideUp for exemple.
+      $(children_prefix + '[parent_id=' + nid + ']').hide();
+      //Remove the display flag in the parent link.
+      $(link_prefix + nid).removeClass('displayed');
+      //Remove the children from the page, only if it was not computed.
+      if (!computed == true) {
+        $(children_prefix + '[parent_id=' + nid + ']').addClass('to_remove');
+      }
+    }
+//TODO Replace all link to parent by a parent_id attribute. Best if we do this after the browser debug, I suspect that this custom attribute may be the problem.
 
   }
 };
