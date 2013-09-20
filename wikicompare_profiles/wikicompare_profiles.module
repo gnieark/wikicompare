@@ -316,11 +316,11 @@ function wikicompare_profiles_table_prepare_itemlist($nid, &$nodes, $POST) {
  * @param $settings
  *   The settings for the db request.
  */
-function wikicompare_profiles_table_prepare_compute(&$selected_criterion_ids, $POST, $settings) {
+function wikicompare_profiles_table_prepare_compute(&$selected_criterion_ids, $settings) {
 
-  if (!empty($POST['selected_profile_ids'])) {
+  if (!empty($settings['selected_profile_ids'])) {
     //Call the recursive function to add the criterions. The function must be recursive because we only have the nids of the profiles at the base of the tree, and we must also include the criterions of their parents.
-    $selected_criterion_ids += wikicompare_profiles_recover_criterions($POST['selected_profile_ids'], $settings);
+    $selected_criterion_ids += wikicompare_profiles_recover_criterions($settings['selected_profile_ids'], $settings);
   }
 
 }

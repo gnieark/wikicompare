@@ -11,6 +11,10 @@ manual_selected_criterion_ids = {};
 selected_criterion_ids = {};
 //The dictionnary containing the profiles selected in the table.
 selected_profile_ids = {};
+//Some constant dimensions used in the table.
+row_height = 100;
+first_column_width = 30;
+
 
 
 //Drupal.behaviors is the equivalent for Drupal of ready()
@@ -63,6 +67,55 @@ Drupal.behaviors.WikicompareComparativeTable = {
         Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, type, context);
 
       }
+
+    });
+
+
+
+    /*
+     * Ajaxify the criterion links in the comparative table, so they display their children.
+     */
+    $('.criterion_table_link:not(#storage_zone .criterion_table_link):not(.ajax-processed)').addClass('ajax-processed').each(function () {
+
+      //Recover the link_id used later in the functions
+      var link_id = $(this).attr('id');
+//TODO simple_ajaxlink?
+      //Build ajax link.
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children', 'criterion', 'table');
+
+    });
+
+
+
+    /*
+     * Dynamize the breadcrumb so we can click on it to return on superior part of the table.
+     */
+    $('.breadcrumb_item_link:not(.listener-set)').addClass('listener-set').each(function () {
+
+      $(this).click(function() {
+
+        var clicked_depth = extract_nid($(this).attr('id'))[0];
+        var nid = $(this).attr('nid');
+        var max_depth = get_table_depth();
+
+        //Slide the table to return at the clicked depth.
+        $("#comparative_tables").css("transform","translateX(" + (clicked_depth - 1) * -row_height + "%)");
+
+        //Action on each tables hidded by the slide.
+        while ((max_depth + 1) != clicked_depth) {
+          //Mark the table for removal.
+          $("#comparative_table_" + max_depth).addClass('to_remove');
+          //Fade out the breadcrumb part linked to this table and mark it for removal.
+          $("#breadcrumb_item_" + max_depth).fadeOut();
+          $("#breadcrumb_item_" + max_depth).addClass('to_remove');
+
+          max_depth = max_depth - 1;
+        }
+
+        //Block the page loading;
+        return false;
+
+      });
 
     });
 
@@ -199,7 +252,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.state_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
       //Set the onclick event
       $(this).click(function() {
-        $('#make_cleaning_link').click(); 
+        $('#make_cleaning_link').click();
       });
     });
 
@@ -386,7 +439,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //Recover the nid by using a regular expression on the link_id.
         var nid = extract_nid(link_id)[0];
       }
-//TODO Move in send_nid
+//TODO Move in send_nid. Argh we need the nid in the action if, maybe I can try just letting the var nid in any case.
 
       //Configure the ajax event
       var element_settings = {};
@@ -399,15 +452,50 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var ajax = new Drupal.ajax(link_id, object, element_settings);
 
 
-      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal.
-      ajax.old_beforeSerialize = ajax.beforeSerialize;
-      ajax.beforeSerialize = function (element, options) {
+
+      //The eventResponse function is the main function which launch the ajax call, and call beforeSerialize. We will override it to block the ajax call if only our specific code need to be processed, without the ajax call.
+      ajax.old_eventResponse = ajax.eventResponse;
+      ajax.eventResponse = function (element, event) {
+
+        skip_ajax = false;
 
         //We can't remove directly at cleaning otherwise some content will be remove before the end of animation (slideUp, etc...)
         if (action != 'make_cleaning') {
-          //We remove all old element so they can't perturb the computation?
+          //We remove all old elements so they can't perturb the next events.
           $('.to_remove').remove();
         }
+
+        if (action == 'toogle_product_checkbox' && $('#' + link_id).hasClass('displayed')) {
+//TODO try replacing $('#' + link_id) by $(object)
+          skip_ajax = true;
+        }
+
+        if (action == 'expand_row_children') {
+          //We zap the ajax if the table is already in the storage zone.
+          if ($('#comparative_table_stored_' + nid).length) {
+            skip_ajax = true;
+          }
+        }
+
+
+        if (skip_ajax) {
+          //We call our specific code.
+          ajax.beforeSerialize(element, ajax.options);
+          ajax.success('', '');
+          //We block the rest of the ajax call.
+          return false;
+        } else {
+          //Launch regular eventResponse function.
+          return this.old_eventResponse(element, event);
+        }
+
+      }
+
+
+
+      //The beforeSerialize function is launched when drupal build the ajax call. We will override it to alter the variables and send them to drupal.
+      ajax.old_beforeSerialize = ajax.beforeSerialize;
+      ajax.beforeSerialize = function (element, options) {
 
         //Send the fastaction flag, so drupal know if the fastaction mode is activated.
         options.data.fastaction = fastaction;
@@ -429,9 +517,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_forbidden_nid = false;
         send_container = false;
         send_colspan = false;
-        computed = false;
         auto_colspan = false;
         make_cleaning = false;
+        computed = 0;
+        column_number = 0;
+        depth = 0;
 
         //When we want to display the children in an itemlist.
         if (action == 'expand_list_children') {
@@ -468,14 +558,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'expand_row_children') {
           //Send the parent_id so we retrieve the children.
           send_nid = true;
-          //Send the flag, so we know if we display or hide the children.
-          manage_displayed_flag = true;
           //Send the product displayed in the table, so we directly add the cell of these columns in the new lines of the criterion children.
           send_products_columns = true;
           //Send states if we want to also display the draft and closed items.
           send_states = true;
           //The table will be clean after the operation.
           make_cleaning = true;
+
+          //Get the depth of the table.
+          depth = get_table_depth();
+          options.data.depth = depth;
+
+          //Get the height of the table, to know if we need to augment it because of the loaded content.
+          options.data.table_height = $('#comparative_tables').height();
         }
 
         if (action == 'append_product_list') {
@@ -492,6 +587,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_nid = true;
           //Send the flag, so we know if we display or hide the column.
           manage_displayed_flag = true;
+          //Send the number of displayed products. This value is used to compute the new column width.
+          send_products_columns = true;
           //Verify if the table was computed, in such case the data need to be computed with the selected criterion.
           send_computed = true;
           //Send the criterion displayed in the table, so we directly add the cells for these row in the new column.
@@ -572,7 +669,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Clean the table after the computation.
           make_cleaning = true;
 
-          $('#compute_table_link').addClass('computed');
+          //Change the computed status.
+          $('#computed').html(1);
         }
 
         //If we want to restore the initial state of the table.
@@ -588,7 +686,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Verify if the table was computed.
           send_computed = true;
 
-          $('#compute_table_link').removeClass('computed');
+          //Change the computed status.
+          $('#computed').html(0);
         }
 
         //If we want to display the fastaction form.
@@ -743,7 +842,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         }
 
-
         //Get and send the nid.
         if (send_nid == true) {
           options.data.nid = nid;
@@ -764,12 +862,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //Get and send the computed flag by checking the class on the table.
         if (send_computed == true) {
-          if ($('#compute_table_link').hasClass('computed')) {
-            options.data.computed = 1;
-            computed = true;
-          } else {
-            options.data.computed = 0;
-          }
+          computed = $('#computed').text();
+          options.data.computed = computed;
         }
 
         //Get and send the products in the table.
@@ -787,12 +881,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (send_products_columns == true) {
           //Recover all product columns displayed in the table to send their id to drupal, in the right order. This is why we can't use a dictionnary.
           var product_column_ids = [];
-          var i = 0;
+
           $('.header_product').each(function (key, value) {
             if (!$(this).hasClass('to_remove')) {
               var cid = extract_nid($(this).attr('id'))[0];
-              product_column_ids[i] = cid;
-              i = i + 1;
+              product_column_ids[column_number] = cid;
+              column_number = column_number + 1;
             }
           });
           //Add them in the ajax call variables.
@@ -875,8 +969,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.colspan = $('.header_product').length + 1;
         }
 
-        //Launch regular beforeSerialize function
-        this.old_beforeSerialize(element, options);
+        //Launch regular beforeSerialize function, only if we are not skipping the ajax call.
+        if (!skip_ajax) {
+          this.old_beforeSerialize(element, options);
+        }
       }
 
 
@@ -884,8 +980,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.old_success = ajax.success;
       ajax.success = function (response, status) {
 
-        //First launch regular success function
-        this.old_success(response, status);
+        //First launch regular success function, only if we are not skipping the ajax call.
+        if (!skip_ajax) {
+          this.old_success(response, status);
+        }
 
         //If the ajax link of of type active/disactive.
         if (manage_displayed_flag == true) {
@@ -901,21 +999,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('#' + type + '_' + context + '_children_' + nid).slideDown();
             }
 
-            if (action == 'expand_row_children') {
-              $('.criterion_table_child_' + nid).show();
-              //TODO Lines instant display if I put a slideDown(). Use the following fucntion to display them one after another.
-//http://paulirish.com/2008/sequentially-chain-your-callbacks-in-jquery-two-ways/
-//          (function shownext(jq){
-//            jq.eq(0).slideDown("slow", function(){
-//              (jq=jq.slice(1)).length && hidenext(jq);
-//            });
-//          })($(children_id))
-            }
-
             if (action == 'toogle_product_checkbox') {
-              //Display the column with fade animation. We don't fade the header because of some bug with the current template, to check when we will have the final template.
-              $('#header_product_' + nid).show();
-              $('.evaluation_product_' + nid).fadeIn();
+              //We reduce the column width to make the place for the new column, with a css transform animation.
+              var width = (100 - first_column_width) / (column_number + 1);
+              $('.header_product').css("width", width + '%');
+              $('.evaluation_cell').css("width", width + '%');
+
+              //The content of the cells will break the start of the width animation so we display:none; it. Just before the end of the width animation, we start a very short fadeIn to display the content.
+              $('.width_div_' + nid).delay(400).fadeIn(200);
+
+              //We disactivated the product checkbox during the ajax call to avoid user spamming, reactivate it.
+              $('#product_table_checkbox_' + nid).removeAttr('disabled');
             }
 
             //Initialize the selected_criterions_ids when we open a profile fastaction form. Not the same variable than manual_selected_criterions_ids to avoid conflict.
@@ -947,18 +1041,28 @@ Drupal.behaviors.WikicompareComparativeTable = {
               }
             }
 
-            if (action == 'expand_row_children') {
-              //Hide the children recursively.
-              remove_children_tree(nid, '#criterion_table_link_', '.criterion_table_child_', false);
-            }
-
             if (action == 'toogle_product_checkbox') {
+
               //Hide the column. We can't use animation because of the current template, to check when we will have the final template
-              $('#header_product_' + nid).hide();
-              $('.evaluation_product_' + nid).hide();
-              //Mark the column element so they will be remove at the next event. We can't do it now because otherwise it will crash the fade animation
+              //We immediately start a short fadeOut so it'll not crash the width animation.
+              $('.width_div_' + nid).fadeOut(200);
+
+              //We start the animation to hide the removed column. We use a css transform for this.
+              $('#header_product_' + nid).css("width", '0%');
+              $('.evaluation_product_' + nid).css("width", '0%');
+
+              //We find the new width of the others columns, and start the animation to adjust it.
+              var width = (100 - first_column_width) / (column_number - 1);
+              $('.header_product:not(#header_product_' + nid + ')').css("width", width + '%');
+              $('.evaluation_cell:not(.evaluation_product_' + nid + ')').css("width", width + '%');
+
+              //Mark the hidded content for removal.
               $('#header_product_' + nid).addClass('to_remove');
               $('.evaluation_product_' + nid).addClass('to_remove');
+
+              //We disactivated the product checkbox during the ajax call to avoid user spamming, reactivate it.
+              $('#product_table_checkbox_' + nid).removeAttr('disabled');
+
             }
 
           }
@@ -972,6 +1076,31 @@ Drupal.behaviors.WikicompareComparativeTable = {
           load = false;
         }
 
+        if (action == 'expand_row_children') {
+          //We are adding a new depth level.
+          depth = depth + 1;
+
+          //Get the table from the storage zone.
+          var table = '<table id="comparative_table_' + depth + '" nid="' + nid + '" style="float:left; position:absolute; top: 0; left:' + depth * row_height + '%;">';
+          table += $('#comparative_table_stored_' + nid).html();
+          table += '</table>';
+          //Attach the table after the displayed table.
+          $('#comparative_tables').append(table);
+
+          //Slide the tables to display the new one.
+          $("#comparative_tables").css("transform","translateX(-" + (depth) * 100 + "%)");
+
+          //Add the link in the breadcrumb to return on previous levels.
+          var backlink = '<span id="breadcrumb_item_' + depth + '" class="breadcrumb_item" style="display:none;">';
+          if (depth != 1) {
+            backlink += ' / ';
+          }
+          backlink += '<a href="/" id="breadcrumb_item_link_' + depth + '" class="breadcrumb_item_link" nid="' + nid + '">' + $('.criterion_title_' + nid).html() + '</a></span>';
+          $('#breadcrumb_zone').append(backlink);
+          //We display it with a fadeIn.
+          $("#breadcrumb_item_" + (depth)).fadeIn();
+        }
+
         //Adjust the lines to the new size of the table, when we add a new column.
         if (auto_colspan == true) {
           colspan = $('.header_product').length + 1;
@@ -982,6 +1111,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (make_cleaning == true) {
           $('#make_cleaning_link').click();
         }
+
+        //We need to call this function to add the listeners on the added content. It is often called by the Drupal functions, but by calling it here we are sure about it.
+        Drupal.attachBehaviors(context, settings);
 
       }
 
@@ -1077,6 +1209,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
       }
     }
 //TODO Replace all link to parent by a parent_id attribute. Best if we do this after the browser debug, I suspect that this custom attribute may be the problem.
+
+    function get_table_depth() {
+      var max_depth = 0;
+      $('.breadcrumb_item').each(function (key, value) {
+        var depth = extract_nid($(this).attr('id'))[0];
+        depth = parseInt(depth);
+        if (depth > max_depth) {
+          max_depth = depth;
+        }
+      });
+
+      return max_depth;
+    }
 
   }
 };
