@@ -63,8 +63,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           action = 'expand_row_children';
         }
 
+        var aj_settings = {};
+        aj_settings['type'] = type;
+        aj_settings['context'] = context;
+
         //Build ajax link.
-        Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, type, context);
+        Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, aj_settings);
 
       }
 
@@ -80,8 +84,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Recover the link_id used later in the functions
       var link_id = $(this).attr('id');
 //TODO simple_ajaxlink?
+      var aj_settings = {};
+      aj_settings['type'] = 'criterion';
+      aj_settings['context'] = 'table';
+
       //Build ajax link.
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children', 'criterion', 'table');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'expand_row_children', aj_settings);
 
     });
 
@@ -178,7 +186,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var link_id = $(this).attr('id');
       var action = $(this).attr('action');
       //Build ajax link.
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, action);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, {});
     });
 
 
@@ -192,6 +200,40 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //We click on the ajax link attached to the button.
         $('#' + $(this).attr('link')).click();
         //Avoid page redirecting.
+        return false;
+      });
+    });
+
+
+
+    /*
+     * Ajaxify the links which open dialog on the left or right side of the page.
+     */
+    $('.dialog:not(.ajax-processed)').addClass('ajax-processed').each(function () {
+      //Get the link id and the ajax action which will be build.
+      var aj_settings = {}
+      var link_id = $(this).attr('id');
+      aj_settings['action'] = $(this).attr('action');
+      aj_settings['type'] = $(this).attr('ntype');
+      aj_settings['contact'] = $(this).attr('context');
+      aj_settings['container'] = $(this).attr('container');
+      aj_settings['side'] = $(this).attr('side');
+
+      //Build ajax link.
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'open_dialog', aj_settings);
+    });
+
+
+
+    /*
+     * Dynamize the link to close the dialog.
+     */
+    $('.close_dialog:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        var side = $(this).attr('side');
+        $('#' + side + '_dialog').css("transform","translateX(0%)");
+        $('#' + side + '_dialog').addClass('to_remove');
+
         return false;
       });
     });
@@ -239,10 +281,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Recover the link_id
       var link_id = $(this).attr('id');
       //The node type in popin, indicated on an hidden div at the beginning of the popin.
-      type = $('#dialog_type').text();
+      var aj_settings = {};
+      aj_settings['type'] = $('#dialog_type').text();
       //Active the code
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'select_dialog', type);
-
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'select_dialog', aj_settings);
     });
 
 
@@ -287,10 +329,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.fastaction_item:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       //Recover the link_id, the type of the node and the fastaction.
       var link_id = $(this).attr('id');
-      var type = $(this).attr('type');
-      var action = $(this).attr('action');
+
+      var aj_settings = {};
+      aj_settings['type'] = $(this).attr('type');
+      aj_settings['context'] = $(this).attr('action');
       //Build the ajax link.
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastaction_form', type, action);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastaction_form', aj_settings);
     });
 
 
@@ -315,10 +359,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.form_fastaction_submit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       //Recover the link id, the type of the node and the fastaction.
       var link_id = $(this).attr('id');
-      var type = $(this).attr('type');
-      var action = $(this).attr('action');
+
+      var aj_settings = {};
+      aj_settings['type'] = $(this).attr('type');
+      aj_settings['context'] = $(this).attr('action');
       //Build ajax link.
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastaction_form', type, action);
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastaction_form', aj_settings);
     });
 
 
@@ -370,7 +416,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     $('.compute_inherit_link:not(.ajax-processed)').addClass('ajax-processed').each(function () {
       var link_id = $(this).attr('id');
       //Build the ajax link.
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_inherit');
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'compute_inherit', {});
     });
 
 
@@ -430,12 +476,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
      * @param context
      *   The context of the item (table, manual, selected, dialog etc...) or the fastaction (remove, add, edit).
      */
-    function build_ajax_link(link_id, object, action, type=false, context=false) {
-
-
+    function build_ajax_link(link_id, object, action, aj_settings) {
 
       //Theses functions does not have nid and so would cause some problem. For example, they would disable the simple_dialog links.
-      if (action != 'append_product_list' && action != 'toogle_product_mode' && action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
+      if (action != 'append_product_list' && action != 'toogle_product_mode' && action != 'open_dialog' && action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
         //Recover the nid by using a regular expression on the link_id.
         var nid = extract_nid(link_id)[0];
       }
@@ -457,6 +501,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.old_eventResponse = ajax.eventResponse;
       ajax.eventResponse = function (element, event) {
 
+        //Get type and context, which are standard variables, from aj_settings.
+        type = aj_settings['type'];
+        context = aj_settings['context'];
+
         skip_ajax = false;
 
         //We can't remove directly at cleaning otherwise some content will be remove before the end of animation (slideUp, etc...)
@@ -476,6 +524,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
             skip_ajax = true;
           }
         }
+
+/*        if (action == 'open_dialog') {
+          skip_ajax = true; //TODO product in comparative table
+        }*/
 
 
         if (skip_ajax) {
@@ -688,6 +740,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
           //Change the computed status.
           $('#computed').html(0);
+        }
+
+        //If we want to display a dialog on left or right side.
+        if (action == 'open_dialog') {
+          $('#main-wrapper').append('<div id="left_dialog" style="position: absolute; height: 100%; width: 30%; top: 0; left: -30%; background-color:#FFFFFF; border: 1px solid; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">Test<br/><br/><br/><br/>TEST<p style="text-align: right;"><a href="/" class="close_dialog" side="left">Close</a></p></div>');
+
+          //Send the type of the node.
+          send_type = true;
+          options.data.context = context;
+          options.data.container = aj_settings['container'];
+          options.data.side = aj_settings['side'];
         }
 
         //If we want to display the fastaction form.
@@ -1099,6 +1162,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('#breadcrumb_zone').append(backlink);
           //We display it with a fadeIn.
           $("#breadcrumb_item_" + (depth)).fadeIn();
+        }
+
+        if (action == 'open_dialog') {
+          $("#left_dialog").css("transform","translateX(100%)");
         }
 
         //Adjust the lines to the new size of the table, when we add a new column.

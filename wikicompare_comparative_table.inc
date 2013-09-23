@@ -35,19 +35,22 @@ function wikicompare_home_page() {
     'id' => 'select_criterion_link',
   );
   //Render the link thanks to the simple dialog module.
-  $output .= '<p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
-/*  $select_criterion_link = array( TODO
+//  $output .= '<p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
+  $select_criterion_link = array(
     '#type' => 'link',
     '#title' => 'Select criterions',
     '#href' => 'wikicompare_get_dialog_callback/nojs',
     '#id' => 'select_criterion_link',
     '#attributes' => array(
       'class' => array('dialog'),
-//      'class' => array('simple_ajaxlink'),
-      'action' => 'select_criterion',
+      'action' => 'select_dialog',
+      'side' => 'left',
+      'ntype' => 'criterion',
+      'context' => 'multidialog',
+      'container' => 'manual-selected-criterions',
     ),
   );
-  $output .= ' ' . render($select_criterion_link) . '</p>';*/
+  $output .= ' ' . render($select_criterion_link) . '</p>';
 
   if (module_exists('wikicompare_profiles')) {
     //Generate the main profile itemlist in the wikicompare table.
@@ -67,7 +70,7 @@ function wikicompare_home_page() {
     ),
   );
   $output .= '<p><input id="compute_table_button" type="submit" link="compute_table_link" value="Compute table" class="button wikicompare_button"/>' . render($compute_link);
-  $output .= '<span id="computed" style="display:none;">' . $settings['computed'] . '</span>';
+  $output .= '<span id="computed" style="display:none;">0</span>';
 
   //Add the reset link.
   $reset_link = array(
@@ -690,6 +693,8 @@ function wikicompare_table_render_comparative_table($settings, $criterions=array
   return $output;
 
 }
+
+
 
 /**
  * Render the rows for the comparative table. This function is called by the render comparative table function and by the criterion add children ajax call.
@@ -1579,34 +1584,34 @@ function wikicompare_toggle_product_checkbox_response($method = 'ajax'){
 
 
 /**
- * Ajax callback function called by simple dialog module to display a popin in the page.
+ * Ajax callback function to display a dialog in the page.
  *
- * @param $context
- *   The context of the call, if we want to select one or several items in the popin.
+ * @param $method
+ *   Indicate if the call was made with javascript or if it's a simple browser call.
  *
- * @param $type
- *   The type of the displayed nodes.
+ * @param $_POST
+ *   The variables send by the javascript.
  *
- * @param $container
- *   The container we need to update when we submit the popin.
- *
- * @param $nid
- *   The nid of the forbidden node we must not be able to submit in the popin.
- *
- * @return $output
- *   The html code of the popin.
+ * @return $page
+ *   Array containing the instructions for the javascript.
  */
-function wikicompare_get_dialog_response($context, $type, $container, $nid){
+function wikicompare_get_dialog_response($method = 'ajax'){
+//function wikicompare_get_dialog_response($context, $type, $container, $nid){ TODO
+  //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
+  if ($method != 'ajax') {
+    $output = NOJS_MESSAGE;
+    return $output;
+  }
 
   //In the option of the simple dialog, we need to provide an anchor which indicate the content to display in the popin.
-  $output = t("<div id='dialog-content'>");
+//  $output = t("<div id='dialog-content'>");
 
   //Initialize settings with the context. We also display all states to ensure we have access to all nodes in the popin.
-  $settings = wikicompare_initialize_settings(array('context' => $context, 'states' => array('draft' => 'draft', 'closed' => 'closed')));
+  $settings = wikicompare_initialize_settings($_POST);
 
   //Indicate if on submit we must update selected_criterion_ids or manual_selected_criterion_ids in the javascript global variable.
   $output .= '<div id="initialize_selected_criterion_dialog_ids" style="display:none;">';
-  if ($container == 'manual-selected-criterions') {
+  if ($settings['container'] == 'manual-selected-criterions') {
     $output .= 'manual';
   } else {
    $output .= 'form';
@@ -1614,23 +1619,23 @@ function wikicompare_get_dialog_response($context, $type, $container, $nid){
   $output .= '</div>';
 
   //Indicate the type of the nodes displayed in the popin.
-  $output .= '<div id="dialog_type" style="display:none;">' . $type . '</div>';
+  $output .= '<div id="dialog_type" style="display:none;">' . $settings['type'] . '</div>';
 
   //Indicate the container to update when we submit the popin.
-  $output .= '<div id="select_container" style="display:none;">' . $container . '</div>';
+  $output .= '<div id="select_container" style="display:none;">' . $settings['container'] . '</div>';
 
   //If there is a forbiden_id, we indicate it so the javascript can recover him in his ajax call.
-  if ($nid != 0) {
-    $output .= '<div id="forbidden_nid" style="display:none;">' . $nid . '</div>';
+  if ($settings['nid'] != 0) {
+    $output .= '<div id="forbidden_nid" style="display:none;">' . $settings['nid'] . '</div>';
     //We also add it in settings for the itemlist we will build in this function.
-    $settings['forbidden_nid'] = $nid;
+    $settings['forbidden_nid'] = $settings['nid'];
   }
 
   //Find all the nodes on the first level of the tree.
-  $nodes = request_db($type, array('parent_id' => NULL), $settings);
+  $nodes = request_db($settings['type'], array('parent_id' => NULL), $settings);
 
   //Building the data for the itemlist.
-  $itemlist_data = wikicompare_build_itemlist($type, $nodes, 0, $settings);
+  $itemlist_data = wikicompare_build_itemlist($settings['type'], $nodes, 0, $settings);
 
   //Render the itemlist.
   $output .= theme_item_list(array('items' => $itemlist_data, 'type' => 'ul', 'attributes' => array()));
@@ -1651,9 +1656,13 @@ function wikicompare_get_dialog_response($context, $type, $container, $nid){
     $output .= '<p><input id="submitbutton_dialog" type="submit" link="submitlink_dialog" value="Submit" class="button wikicompare_button"/>' . render($submit_link) . '</p>';
   }
 
-  $output .= t("</div>");
+//  $output .= t("</div>");
+  $commands = array();
+  $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog', $output);
 
-  return $output;
+  //Return the javascript commands.
+  $page = array('#type' => 'ajax', '#commands' => $commands);
+  return $page;
 
 }
 
