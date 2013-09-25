@@ -185,8 +185,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Get the link id and the ajax action which will be build.
       var link_id = $(this).attr('id');
       var action = $(this).attr('action');
+
+      var aj_settings = {};
+      if (action == 'submit_infofield') {
+        aj_settings['context'] = $(this).attr('context');
+      }
+
       //Build ajax link.
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, {});
+      Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, aj_settings);
     });
 
 
@@ -213,12 +219,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Get the link id and the ajax action which will be build.
       var aj_settings = {}
       var link_id = $(this).attr('id');
-      aj_settings['action'] = $(this).attr('action');
+      aj_settings['dialog_action'] = $(this).attr('action');
       aj_settings['type'] = $(this).attr('ntype');
-      aj_settings['contact'] = $(this).attr('context');
+      aj_settings['context'] = $(this).attr('context');
       aj_settings['container'] = $(this).attr('container');
       aj_settings['side'] = $(this).attr('side');
-
+      aj_settings['field'] = $(this).attr('field');
+//TODO use directly the .attr in the ajax function, thanks to this we'll probably be able to centralise most of the function
       //Build ajax link.
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'open_dialog', aj_settings);
     });
@@ -386,6 +393,23 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
+     * Dynamize the type field in infofield form to display allowed value field.
+     */
+    $('#form_infofield_type:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).change(function() {
+        //If we select the select type, we display the allowed value field.
+        if ($(this).val() == 'select') {
+          $('#allowed_values_field_div').show();
+        //Else we make sure the field is hidden.
+        } else {
+          $('#allowed_values_field_div').hide();
+        }
+      });
+    });
+
+
+
+    /*
      * Use the wikicompare_criterions field to detect that we are in a profile form. In this case, we recover the settings from Drupal to initiate selected_criterion_ids.
      */
     $('#edit-wikicompare-criterions:not(.ajax-processed)').addClass('ajax-processed').each(function () {
@@ -479,7 +503,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function build_ajax_link(link_id, object, action, aj_settings) {
 
       //Theses functions does not have nid and so would cause some problem. For example, they would disable the simple_dialog links.
-      if (action != 'append_product_list' && action != 'toogle_product_mode' && action != 'open_dialog' && action != 'submit_dialog' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
+      if (action != 'append_product_list' && action != 'toogle_product_mode' && action != 'open_dialog' && action != 'submit_dialog' && action != 'submit_infofield' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
         //Recover the nid by using a regular expression on the link_id.
         var nid = extract_nid(link_id)[0];
       }
@@ -492,6 +516,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         element_settings.url = $(object).attr('href');
         element_settings.event = 'click';
       }
+
       //Create the ajax event
       var ajax = new Drupal.ajax(link_id, object, element_settings);
 
@@ -744,13 +769,29 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //If we want to display a dialog on left or right side.
         if (action == 'open_dialog') {
-          $('#main-wrapper').append('<div id="left_dialog" style="position: absolute; height: 100%; width: 30%; top: 0; left: -30%; background-color:#FFFFFF; border: 1px solid; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">Test<br/><br/><br/><br/>TEST<p style="text-align: right;"><a href="/" class="close_dialog" side="left">Close</a></p></div>');
+
+          //Depending of the side of the dialog, the position change.
+          var position = '-30';
+          if (aj_settings['side'] == 'right') {
+            position = '100';
+          }
+
+          //Add the container outside of the page.
+          $('#main-wrapper').append('<div id="' + aj_settings['side'] + '_dialog" style="position: absolute; height: 100%; width: 30%; top: 0; left: ' + position + '%; background-color:#FFFFFF; border: 1px solid; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">Test<br/><br/><br/><br/>TEST<p style="text-align: right;"><a href="/" id="' + aj_settings['side'] + '_dialog_close" class="close_dialog" side="' + aj_settings['side'] + '">Close</a></p></div>');
 
           //Send the type of the node.
           send_type = true;
           options.data.context = context;
           options.data.container = aj_settings['container'];
           options.data.side = aj_settings['side'];
+
+          if (aj_settings['dialog_action'] == 'infofields') {
+            //Return the field we want to modify.
+            if (context != 'add') {
+              options.data.field = aj_settings['field'];
+            }
+          }
+
         }
 
         //If we want to display the fastaction form.
@@ -816,6 +857,22 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           options.data.revision = $('#form_' + type + '_fast' + context + '_revision_' + nid).val();
           options.data.selectnode = $('#form_' + type + '_fast' + context + '_selectnode_' + nid).val();
+        }
+
+        //If we are submitting the infofield form, return the values of the form.
+        if (action == 'submit_infofield') {
+          options.data.context = context;
+          options.data.name = $('#form_infofield_name').val();
+          options.data.title = $('#form_infofield_title').val();
+          options.data.type = $('#form_infofield_type').val();
+          options.data.allowed_values = $('#form_infofield_allowed_values').val();
+          options.data.sequence = $('#form_infofield_sequence').val();
+          options.data.is_required = $('#form_infofield_is_required').val();
+          options.data.is_active = $('#form_infofield_is_active').val();
+          options.data.is_home = $('#form_infofield_is_home').val();
+          options.data.is_filter = $('#form_infofield_is_filter').val();
+          options.data.category = $('#form_infofield_category').val();
+          options.data.category_sequence = $('#form_infofield_category_sequence').val();
         }
 
         //If we are updating the support value in evaluation form.
@@ -1036,6 +1093,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (!skip_ajax) {
           this.old_beforeSerialize(element, options);
         }
+
       }
 
 
@@ -1165,8 +1223,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'open_dialog') {
-          $("#left_dialog").css("transform","translateX(100%)");
+          //Depending of the side, we change the translate direction.
+          var sign = '';
+          if (aj_settings['side'] == 'right') {
+            sign = '-';
+          }
+
+          //Translate the dialog to display it.
+          $('#' + aj_settings['side'] + '_dialog').css('transform','translateX(' + sign + '100%)');
         }
+
 
         //Adjust the lines to the new size of the table, when we add a new column.
         if (auto_colspan == true) {

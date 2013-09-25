@@ -369,6 +369,8 @@ function wikicompare_generate_demo_settings_page(&$form) {
   );
 }
 
+
+
 /**
  * Function to validate fields values.
  */

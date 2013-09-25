@@ -13,6 +13,8 @@
  */
 function wikicompare_schema() {
 
+  $schema = array();
+
   /**
    * Create cache tables for criterion, product and evaluation records.
    * Theses tables will contains the needed data for the comparative table computation, one line for each record and with the data of the most recent published version.
@@ -21,6 +23,80 @@ function wikicompare_schema() {
   foreach (array('product', 'criterion', 'evaluation') as $type) {
     $schema['cache_' . $type] = wikicompare_node_schema($type);
   }
+
+  $infofields = array();
+  $infofields['description'] = 'Table which store the information regarding the infofields';
+  $infofields['fields']['name'] = array(
+    'description' => 'The name of the field',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
+//  $infofields['primary key'] = array('name'); TODO
+  $infofields['fields']['title'] = array(
+    'description' => 'The title of the field',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
+  $infofields['fields']['type'] = array(
+    'description' => 'The type of the field',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
+  $infofields['fields']['allowed_values'] = array(
+    'description' => 'The allowed values of the field',
+    'type' => 'text',
+  );
+  $infofields['fields']['sequence'] = array(
+    'description' => 'The sequence of the field',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  $infofields['indexes']['sequence'] = array('sequence');
+  $infofields['fields']['is_required'] = array(
+    'description' => "Boolean indicated if the field is required",
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+  );
+  $infofields['fields']['is_active'] = array(
+    'description' => "Boolean indicated if the field is active",
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+  );
+  $infofields['indexes']['is_active'] = array('is_active');
+  $infofields['fields']['is_home'] = array(
+    'description' => "Boolean indicated if the field is on the home page",
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+  );
+  $infofields['indexes']['is_home'] = array('is_home');
+  $infofields['fields']['is_filter'] = array(
+    'description' => "Boolean indicated if the field is a filter",
+    'type' => 'int',
+    'size' => 'tiny',
+    'not null' => TRUE,
+  );
+  $infofields['indexes']['is_filter'] = array('is_filter');
+  $infofields['fields']['category'] = array(
+    'description' => 'The category of the field',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
+  $infofields['fields']['category_sequence'] = array(
+    'description' => 'The category sequence of the field',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  );
+  $infofields['indexes']['category_sequence'] = array('category_sequence');
+  $schema['wikicompare_infofields'] = $infofields;
 
   $suggest = array();
   $suggest['description'] = 'Cache table for the suggestions on the right column of the home page';
@@ -65,7 +141,7 @@ function wikicompare_schema() {
   $schema['cache_wikicompare_suggest'] = $suggest;
 
   return $schema;
-
+//TODO replace cache_ by wikicompare_
 }
 
 /** 
