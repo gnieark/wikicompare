@@ -83,6 +83,12 @@ function wikicompare_schema() {
     'not null' => TRUE,
   );
   $infofields['indexes']['is_filter'] = array('is_filter');
+  $infofields['fields']['filter_type'] = array(
+    'description' => 'The filter type of the field',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
   $infofields['fields']['category'] = array(
     'description' => 'The category of the field',
     'type' => 'varchar',

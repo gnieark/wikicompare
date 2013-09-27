@@ -499,6 +499,7 @@ function wikicompare_admin_infofield_table() {
   $query->addField('f', 'is_active', 'is_active');
   $query->addField('f', 'is_home', 'is_home');
   $query->addField('f', 'is_filter', 'is_filter');
+  $query->addField('f', 'filter_type', 'filter_type');
   $query->addField('f', 'category', 'category');
   $query->addField('f', 'category_sequence', 'category_sequence');
   $query->orderby('f.category_sequence');
@@ -525,11 +526,16 @@ function wikicompare_admin_infofield_table() {
     //Create the link. The html = True indicate that the title of the link contain html.
     $img_link_remove = l($img, 'wikicompare_get_admin_infofield_form_callback/nojs', array('attributes' => array('id' => 'admin_remove_infofield_' . $record->name, 'class' => array('dialog'), 'side' => 'right', 'action' => 'infofields', 'context' => 'remove', 'field' => $record->name), 'html' => True));
 
+    //If we are not in select type, filter_type is irrelevent.
+    if ($record->type != 'select') {
+      $record->filter_type = '';
+    }
+
     //Prepare the row data.
-    $rows[] = array($record->category, $record->category_sequence, $record->name, $record->title, $record->type, $record->sequence, $record->is_required, $record->is_active, $record->is_home, $record->is_filter, $img_link_edit, $img_link_remove);
+    $rows[] = array($record->category, $record->category_sequence, $record->name, $record->title, $record->type, $record->sequence, $record->is_required, $record->is_active, $record->is_home, $record->is_filter, $record->filter_type, $img_link_edit, $img_link_remove);
   }
 
-  $header = array('Category', 'Category Sequence', 'Name', 'Title', 'Type', 'Sequence', 'Is required', 'Is active', 'Is on home', 'Is filter', 'Edit', 'Remove');
+  $header = array('Category', 'Category Sequence', 'Name', 'Title', 'Type', 'Sequence', 'Is required', 'Is active', 'Is on home', 'Is filter', 'Filter type', 'Edit', 'Remove');
 
   //Render the table and return it.
   return theme_table(array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'infofields_table'), 'caption' => '', 'colgroups' => array(), 'sticky' => '', 'empty' => 'No fields for now'));
@@ -673,6 +679,21 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
       '#required' => TRUE,
     );
 
+    //Display the filter type field.
+    $form['filter_type_field'] = array(
+      '#type' => 'select',
+      '#id' => 'form_infofield_filter_type',
+      '#title' => t('Filter Type'),
+      '#options' => array(
+        'select' => t('Select'),
+        'checkboxes' => t('Checkboxes'),
+      ),
+      '#default_value' => 'select',
+      '#required' => TRUE,
+      '#prefix' => '<div id="filter_type_field_div">',
+      '#suffix' => '</div>',
+    );
+
     //Display the category field.
     $form['category_field'] = array(
       '#type' => 'textfield',
@@ -706,6 +727,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
       $query->addField('f', 'is_active', 'is_active');
       $query->addField('f', 'is_home', 'is_home');
       $query->addField('f', 'is_filter', 'is_filter');
+      $query->addField('f', 'filter_type', 'filter_type');
       $query->addField('f', 'category', 'category');
       $query->addField('f', 'category_sequence', 'category_sequence');
       $query->condition('f.name', $_POST['field']);
@@ -720,6 +742,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
         $form['is_active_field']['#value'] = $record->is_active;
         $form['is_home_field']['#value'] = $record->is_home;
         $form['is_filter_field']['#value'] = $record->is_filter;
+        $form['filter_type_field']['#value'] = $record->filter_type;
         $form['category_field']['#value'] = $record->category;
         $form['category_sequence_field']['#value'] = $record->category_sequence;
       }
@@ -737,6 +760,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Unless exception, we hide the allowed values field on loading.
     if (!$test_allowed_values) {
       $form['allowed_values_field']['#prefix'] = '<div id="allowed_values_field_div" style="display:none;">';
+      $form['filter_type_field']['#prefix'] = '<div id="filter_type_field_div" style="display:none;">';
     }
 
   }
@@ -828,16 +852,26 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
 
     //Verify that the field doesn't already exist.
     if ($_POST['context'] == 'add') {
+      $flag = False;
+      //Name is reserved since we use it for the name filter in home page.
+      if ($_POST['name'] == 'name') {
+        $flag = True;
+      }
       $query = db_select('wikicompare_infofields', 'f');
       $query->addField('f', 'name', 'name');
       $query->condition('f.name', $_POST['name']);
       $result = $query->execute();
       foreach ($result as $record) {
+        $flag = True;
+      }
+
+      if ($flag) {
         $commands = array();
         $commands[] = ajax_command_html('#error_zone', $_POST['name'] . ' already exist.');
         $page = array('#type' => 'ajax', '#commands' => $commands);
         return $page;
       }
+
     }
 
     //Validate the name.
@@ -858,31 +892,56 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
       }
     }
 
+    //Create or modify the field.
+    wikicompare_admin_infofield_modify($_POST);
+
+  }
+
+  $commands = array();
+  //Close the dialog.
+  $commands[] = ajax_command_invoke('#right_dialog_close', 'click');
+  //Update the table.
+  $commands[] = ajax_command_html('#infofields_table', wikicompare_admin_infofield_table());
+
+  //Return the javascript commands.
+  $page = array('#type' => 'ajax', '#commands' => $commands);
+  return $page;
+
+}
+
+/**
+ * Create of modify the infofield. This function is used when we submit the form in admin, or in generate_data module.
+ *
+ * @param $_POST
+ *   Array containing the data to insert/update.
+ */
+function wikicompare_admin_infofield_modify($POST) {
+
     $field = array();
     $instance = array();
 
     //Load field and instance from Drupal.
-    if ($_POST['context'] == 'edit') {
-      $field = field_info_field('wikicf_' . $_POST['name']);
-      $instance = field_info_instance('node', 'wikicf_' . $_POST['name'], 'product');
+    if ($POST['context'] == 'edit') {
+      $field = field_info_field('wikicf_' . $POST['name']);
+      $instance = field_info_instance('node', 'wikicf_' . $POST['name'], 'product');
     }
 
     //Only while adding, set the fields we can't modify later.
-    if ($_POST['context'] == 'add') {
-      $field['field_name'] = 'wikicf_' . $_POST['name'];
+    if ($POST['context'] == 'add') {
+      $field['field_name'] = 'wikicf_' . $POST['name'];
       $field['cardinality'] = 1;
-      $instance['field_name'] = 'wikicf_' . $_POST['name'];
+      $instance['field_name'] = 'wikicf_' . $POST['name'];
       $instance['entity_type'] = 'node';
       $instance['bundle'] = 'product';
     }
 
-    $instance['label'] = $_POST['title']; //TODO manage translation of the title
-    $instance['required'] = $_POST['is_required'];
+    $instance['label'] = $POST['title']; //TODO manage translation of the title
+    $instance['required'] = $POST['is_required'];
 
     //Set the type specific settings.
-    switch ($_POST['type']) {
+    switch ($POST['type']) {
       case 'text':
-        if ($_POST['context'] == 'add') {
+        if ($POST['context'] == 'add') {
           $field['type'] = 'text';
         }
         $field['settings'] =  array(
@@ -896,7 +955,7 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
         );
         break;
       case 'number':
-        if ($_POST['context'] == 'add') {
+        if ($POST['context'] == 'add') {
           $field['type'] = 'number_integer';
         }
         $field['settings'] =  array(
@@ -912,17 +971,15 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
         );
         break;
       case 'select':
-        if ($_POST['context'] == 'add') {
+        if ($POST['context'] == 'add') {
           $field['type'] = 'list_text';
         }
 
         //Transform the text field into exploitable array.
-        $_POST['allowed_values'] = str_replace("\n\r", "\n", $_POST['allowed_values']);
+        $POST['allowed_values'] = str_replace("\n\r", "\n", $POST['allowed_values']);
         $allowed_values = array();
-        $i = 0;
-        foreach(explode("\n", $_POST['allowed_values']) as $value) {
-          $allowed_values[$i] = $value;
-          $i++;
+        foreach(explode("\n", $POST['allowed_values']) as $value) {
+          $allowed_values[$value] = $value;
         }
 
         $field['settings'] =  array(
@@ -940,7 +997,7 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
     }
 
     //Create or update the drupal field.
-    if ($_POST['context'] == 'add') {
+    if ($POST['context'] == 'add') {
       field_create_field($field);
       field_create_instance($instance);
     } else {
@@ -950,50 +1007,38 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
 
     //Prepare the field for the wikicompare table, and insert/update it.
     $fields = array(
-      'name' => $_POST['name'],
-      'title' => $_POST['title'],
-      'type' => $_POST['type'],
-      'allowed_values' => $_POST['allowed_values'],
-      'sequence' => $_POST['sequence'],
-      'is_required' => $_POST['is_required'],
-      'is_active' => $_POST['is_active'],
-      'is_home' => $_POST['is_home'],
-      'is_filter' => $_POST['is_filter'],
-      'category' => $_POST['category'],
-      'category_sequence' => $_POST['category_sequence'],
+      'name' => $POST['name'],
+      'title' => $POST['title'],
+      'type' => $POST['type'],
+      'allowed_values' => $POST['allowed_values'],
+      'sequence' => $POST['sequence'],
+      'is_required' => $POST['is_required'],
+      'is_active' => $POST['is_active'],
+      'is_home' => $POST['is_home'],
+      'is_filter' => $POST['is_filter'],
+      'filter_type' => $POST['filter_type'],
+      'category' => $POST['category'],
+      'category_sequence' => $POST['category_sequence'],
     );
 
-    if ($_POST['context'] == 'add') {
+    if ($POST['context'] == 'add') {
       db_insert('wikicompare_infofields')
         ->fields($fields)
         ->execute();
     } else {
       db_update('wikicompare_infofields')
         ->fields($fields)
-        ->condition('name', $_POST['name'])
+        ->condition('name', $POST['name'])
         ->execute();
     }
 
     //When we modify the sequence of a category, the sequence change for all item with this category.
     db_update('wikicompare_infofields')
       ->fields(array(
-        'category_sequence' => $_POST['category_sequence'],
+        'category_sequence' => $POST['category_sequence'],
       ))
-      ->condition('category', $_POST['category'])
+      ->condition('category', $POST['category'])
       ->execute();
-
-  }
-
-  $commands = array();
-  //Close the dialog.
-  $commands[] = ajax_command_invoke('#right_dialog_close', 'click');
-  //Update the table.
-  $commands[] = ajax_command_html('#infofields_table', wikicompare_admin_infofield_table());
-
-  //Return the javascript commands.
-  $page = array('#type' => 'ajax', '#commands' => $commands);
-  return $page;
-
 }
 
 ?>

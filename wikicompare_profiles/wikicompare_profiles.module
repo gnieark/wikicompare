@@ -665,15 +665,15 @@ function wikicompare_profiles_fastaction_submit_after(&$node, $type, $POST) {
  * @param $output
  *   The html code of the export. Passed by reference.
  */
-function wikicompare_profiles_demo_export(&$output) {
+function wikicompare_profiles_demo_export(&$output, $settings) {
 
   $output .= "<p>if (module_exists('wikicompare_profiles')) {";
   $output .= "<p>\$profiles = array();</p>";
   //Find all the criterions on the first level of the tree.
-  $profiles = request_db('profile', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
+  $profiles = request_db('profile', array('parent_id' => NULL, 'dont_translate' => True), $settings);
   foreach ($profiles as $profile) {
     //Get profiles children.
-    wikicompare_generate_demo_export_output_node($output, $profile, 'profile');
+    wikicompare_generate_demo_export_output_node($output, $profile, 'profile', $settings);
   }
   $output .= "}</p>";
 

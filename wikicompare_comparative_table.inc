@@ -15,14 +15,104 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 function wikicompare_home_page() {
 
   //Add the javascript files used in the comparative_table.
-  drupal_add_js('/misc/ajax.js');
-  drupal_add_js('/misc/progress.js');
+  drupal_add_js('misc/ajax.js');
+  drupal_add_js('misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
 
   /*
    * Left column.
    */
   $output = '<div id="sidebar-first" style="height:500px; float:left;">';
+
+  //Generate the filter link which will be called each time we modify a filter. This mainly regenerate the product list.
+  $filter_link = array(
+    '#type' => 'link',
+    '#title' => 'Filter',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
+    '#id' => 'filter_table_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'refresh_list',
+      'mode' => 'filter',
+      'style' => 'display:none',
+    ),
+  );
+  $output .= render($filter_link);
+
+  //The name filter is hardcoded.
+  $name_filter = new stdClass;
+  $name_filter->type = 'text';
+  $name_filter->name = 'name';
+  $name_filter->title = 'Name';
+  $filters = array($name_filter);
+
+  //Get all filters from infofields table.
+  $query = db_select('wikicompare_infofields', 'f');
+  $query->addField('f', 'name', 'name');
+  $query->addField('f', 'title', 'title');
+  $query->addField('f', 'type', 'type');
+  $query->addField('f', 'filter_type', 'filter_type');
+  $query->addField('f', 'allowed_values', 'allowed_values');
+  $query->condition('f.is_filter', 1);
+  $query->condition('f.is_active', 1);
+  $query->orderby('f.sequence');
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $filters[] = $record;
+  }
+
+  //Render filter, depending of the type.
+  foreach ($filters as $record) {
+    $output .= '<p>';
+    switch ($record->type) {
+      case 'text':
+        $filter = array(
+          '#type' => 'textfield',
+          '#id' => 'filter_' . $record->name,
+          '#title' => $record->title,
+          '#size' => 25,
+          '#attributes' => array(
+            'field' => $record->name,
+            'class' => array('home_filter text'),
+          )
+        );
+        $output .= render($filter);
+        break;
+      case 'number':
+        $output .= '<div class="form-item">';
+        $output .= '<label>' . $record->title . '</label>';
+        $output .= '<input id="filter_min_' . $record->name . '" class="home_filter min number" type="text" size="5" field="' . $record->name . '">';
+        $output .= ' - ';
+        $output .= '<input id="filter_max_' . $record->name . '" class="home_filter max number" type="text" size="5" field="' . $record->name . '">';
+        $output .= '</div>';
+        break;
+      //The select type can have two display filter, select or checkboxes.
+      case 'select':
+        switch ($record->filter_type) {
+          case 'select':
+            $output .= '<div class="form-item">';
+            $output .= '<label>' . $record->title . '</label>';
+            $output .= '<select id="filter_' . $record->name . '" class="home_filter" field="' . $record->name . '">';
+            $output .= '<option></option>';
+            foreach (explode("\n", $record->allowed_values) as $value) {
+              $output .= '<option value="' . $value . '">' . $value . '</option>';
+            }
+            $output .= '</select>';
+            $output .= '</div>';
+            break;
+          case 'checkboxes':
+            $output .= '<div class="form-item">';
+            $output .= '<label>' . $record->title . '</label>';
+            foreach (explode("\n", $record->allowed_values) as $value) {
+              $output .= '<input type="checkbox" id="filter_' . $record->name . '" class="home_filter" field="' . $record->name . '" value="' . $value . '"  />' . $value . '<br/>';
+            }
+            $output .= '</div>';
+            break;
+        }
+    }
+
+  }
+
 
   //Add the container which will contain the selected criterion itemlist. It'll be build when we submit the manual selected criterion dialog.
   $output .= '<div id="container-manual-selected-criterions"></div>';
@@ -65,7 +155,8 @@ function wikicompare_home_page() {
     '#id' => 'compute_table_link',
     '#attributes' => array(
       'class' => array('simple_ajaxlink'),
-      'action' => 'compute_table',
+      'action' => 'refresh_list',
+      'mode' => 'compute',
       'style' => 'display:none',
     ),
   );
@@ -80,7 +171,8 @@ function wikicompare_home_page() {
     '#id' => 'reset_table_link',
     '#attributes' => array(
       'class' => array('simple_ajaxlink'),
-      'action' => 'reset_table',
+      'action' => 'refresh_list',
+      'mode' => 'reset',
     ),
   );
   $output .= ' ' . render($reset_link) . '</p>';
@@ -93,7 +185,27 @@ function wikicompare_home_page() {
    * Central column.
    */
   $output .= '<div id="products_list_column" style="height:600px; width:400px; float:left;">';
-  $res = wikicompare_table_render_product_list(wikicompare_initialize_settings());
+  $settings = wikicompare_initialize_settings();
+
+  //Get all infofields displayed on product list. The number of infofield here is limited.
+  $settings['infofields'] = array();
+  $query = db_select('wikicompare_infofields', 'f');
+  $query->addField('f', 'name', 'name');
+  $query->addField('f', 'title', 'title');
+  $query->condition('f.is_home', 1);
+  $query->condition('f.is_active', 1);
+  $query->orderby('f.sequence');
+  $query->orderby('f.title');
+  $query->range(0, 4);
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $settings['infofields'][] = array(
+      'name' => $record->name,
+      'title' => $record->title
+    );
+  }
+
+  $res = wikicompare_table_render_product_list($settings);
   $output .= '<span id="nb_products" style="display:none;">' . $res['count'] . '</span>';
   $output .= '<span id="products_offset" style="display:none;">' . $res['offset'] . '</span>';
   $best_products_link = array(
@@ -110,7 +222,8 @@ function wikicompare_home_page() {
     '#id' => 'toogle_product_mode_link',
     '#attributes' => array(
       'class' => array('simple_ajaxlink'),
-      'action' => 'toogle_product_mode',
+      'action' => 'refresh_list',
+      'mode' => 'toogle_product_mode',
     ),
   );
   $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
@@ -152,8 +265,9 @@ function wikicompare_home_page() {
 function wikicompare_comparative_table($root_criterion, $compared_products, $selected_criterions, $selected_profiles) {
 
   //Add the javascript files used in the comparative_table.
-  drupal_add_js('/misc/ajax.js');
-  drupal_add_js('/misc/progress.js');
+  drupal_add_js('misc/ajax.js');
+  drupal_add_js('misc/progress.js');
+  drupal_add_library('system', 'drupal.collapse');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
 /*
   //Add the checkbox to display the draft and closed items in the tables.
@@ -210,12 +324,60 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   //Initialize settings with the variable from javascript.
   $settings = wikicompare_initialize_settings(array('product_column_ids' => $product_ids, 'selected_criterion_ids' => $selected_criterion_ids, 'selected_profile_ids' => $selected_profile_ids, 'computed' => $computed));
 
+  //Get all active infofields.
+  $settings['infofields'] = array();
+  $query = db_select('wikicompare_infofields', 'f');
+  $query->addField('f', 'name', 'name');
+  $query->addField('f', 'title', 'title');
+  $query->addField('f', 'category', 'category');
+  $query->condition('f.is_active', 1);
+  $query->orderby('f.category_sequence');
+  $query->orderby('f.category');
+  $query->orderby('f.sequence');
+  $query->orderby('f.title');
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $settings['infofields'][] = array(
+      'name' => $record->name,
+      'title' => $record->title,
+      'category' => $record->category
+    );
+  }
+
+  $products = array();
+  if (!empty($product_ids)) {
+    //Get the products data for the header of the table.
+    $products = request_db('product', array('nids' => $product_ids, 'get_infofields' => 1), $settings);
+  }
+
   //Generate the main product itemlist.
   $output = wikicompare_table_render_main_itemlist('product', 'Products', $settings);
 
   //Generate the comparative table.
-  $output .= wikicompare_compute_comparative_table($settings);
+  $output .= wikicompare_table_render_comparative_table($settings, $products);
 
+  //Render the fieldset with the infofield, collapsed at the loading page.
+  $fieldset = '<table><tbody>';
+  $category = '';
+  $settings['width'] = (100 - FIRST_COLUMN_WIDTH) / count($product_ids);
+  foreach ($settings['infofields'] as $infofield) {
+    //Render the row with the category.
+    if ($infofield['category'] != $category) {
+      $fieldset .= '<tr><td class="row_auto_colspan" colspan="' . (1 + count($product_ids)) . '">' . $infofield['category'] . '</td></tr>';
+      $category = $infofield['category'];
+    }
+    //Render the infofield row.
+    $fieldset .= '<tr id="infofield_row_' . $infofield['name'] . '"><td class="infofield_title" style="width:' . FIRST_COLUMN_WIDTH . '%;" field="' . $infofield['name'] . '">' . $infofield['title'] . '</td>';
+    //Render the infofield cells.
+    foreach ($product_ids as $product_id) {
+      $fieldset .= wikicompare_table_render_infofield($products[$product_id], $infofield, $settings);
+    }
+    $fieldset .= '</tr>';
+  }
+  $fieldset .= '</tbody></table>';
+
+  //Render fieldset.
+  $output .= theme_fieldset(array('element' => array('#title' => 'More details...', '#children' => $fieldset, '#collapsible' => true, '#collapsed'  => true, '#attributes' => array('class' => array('collapsible', 'collapsed')))));
 
 /*
   //Add the link to go on FastAction mode.
@@ -312,16 +474,21 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
   $settings['context'] = 'list';
 
   //If we are loading the list in standard mode.
-  $db_settings = array('get_comparable_products' => 1);
+  $db_settings = array('get_comparable_products' => 1, 'get_infofields' => 1);
   //If we are expanding the children of a node in tree mode.
   $parent_id = 0;
   if (isset($settings['nid'])) {
     $db_settings = array('parent_id' => $settings['nid']);
     $parent_id = $settings['nid'];
   }
+  //Assign filters to request from context.
+  if (isset($settings['filters'])) {
+    $db_settings['filters'] = $settings['filters'];
+  }
 
   //Recover comparable products.
   $products = request_db('product', $db_settings, $settings);
+
   $product_ids = array();
   foreach ($products as $product_id => $product) {
     $product_ids[$product_id] = $product_id;
@@ -381,7 +548,18 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
 
   $limit = 5 + $offset;
 
-  $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
+  //Generate product list with a table.
+  $output = '<table><thead>';
+  $output .= '<th>Products</th>';
+  $output .= '<th>Rank</th>';
+  //Infofields header.
+  foreach ($settings['infofields'] as $infofield) {
+    $output .= '<th class="infofield_title" field="' . $infofield['name'] . '">' . $infofield['title'] . '</th>';
+  }
+  $output .= '</thead><tbody>';
+  //Generate items.
+  $output .= wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
+  $output .= '</tbody></table>';
 
   //Generate the best products url.
   $url = 'compare/0';
@@ -468,7 +646,7 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
       $settings['no_children_link'] = 1;
     }
 
-    $output .= '<p id="product_list_item_' . $product_id . '" class="product_list_item"';
+    $output .= '<tr id="product_list_item_' . $product_id . '" class="product_list_item"';
     //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level.
     if (!$first) {
       $output .= ' style="display:none;"';
@@ -477,8 +655,22 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
     if ($parent_id) {
       $output .= ' parent_id="' . $parent_id . '"';
     }
-    $output .= '>' . wikicompare_table_get_supertitle_item('product', $product, $settings) . ' : ' . $products_sort[$product_id] . '%.<br/>';
-    $output .= '<br/><br/><br/><br/></p>';
+    $output .= '>';
+    //Render product name.
+    $output .= '<td>' . wikicompare_table_get_supertitle_item('product', $product, $settings) . '<br/><br/><br/><br/><br/><br/><br/><br/></td>';
+    //Render percentage.
+    $output .= '<td>' . $products_sort[$product_id] . '%</td>';
+    //Render infofields.
+    foreach ($settings['infofields'] as $infofield) {
+      $field = 'wikicf_' . $infofield['name'];
+      $output .= '<td>';
+      //Avoid value = 0;
+      if ($product['data']->$field) {
+        $output .= $product['data']->$field;
+      }
+      $output .= '</td>';
+    }
+    $output .= '</tr>';
     //Recursive call to get the children.
     if ($settings['computed'] && !empty($product['children'])) {
       $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $product_id, $offset, $limit, False, $settings);
@@ -536,7 +728,7 @@ function wikicompare_table_render_home_suggest() {
 
 
 /**
- * Compute the comparative table if the criterions are provided.
+ * Get the criterions ids from settings.
  *
  * @param settings
  *   The context of the table.
@@ -544,7 +736,7 @@ function wikicompare_table_render_home_suggest() {
  * @return $output
  *   The rendered table.
  */
-function wikicompare_compute_comparative_table($settings) {
+function wikicompare_compute_get_criterions($settings) {
 //TODO Maybe we can merge this function directly with render comparative table
   //Get the criterions we will use to compute the table.
   $selected_criterion_ids = array();
@@ -571,10 +763,7 @@ function wikicompare_compute_comparative_table($settings) {
     $criterions = wikicompare_build_recursive_data('criterion', $selected_criterion_ids, $settings);
   }
 
-  //Render and compute the table.
-  $output = wikicompare_table_render_comparative_table($settings, $criterions, $settings['product_column_ids']);
-
-  return $output;
+  return $criterions;
 
 }
 
@@ -595,10 +784,14 @@ function wikicompare_compute_comparative_table($settings) {
  * @return $output
  *   The rendered table.
  */
-function wikicompare_table_render_comparative_table($settings, $criterions=array(), $product_ids=array()){
+function wikicompare_table_render_comparative_table($settings, $products=array()){
 
   //Only the main table will be rendered by this function.
   $settings['context'] = 'table';
+
+  //Get criterions.
+  $criterions = wikicompare_compute_get_criterions($settings);
+  $product_ids = $settings['product_column_ids'];
 
   if (empty($criterions)) {
     //Find all the criterions on the first level of the tree.
@@ -619,12 +812,6 @@ function wikicompare_table_render_comparative_table($settings, $criterions=array
 
   //Build recursively the criterions data and compute them if necessary.
   $criterions_row_data = wikicompare_build_rows_data($criterions['tree'], $product_ids, $evaluations, $settings);
-
-  $products = array();
-  if (!empty($product_ids)) {
-    //Get the products data for the header of the table.
-    $products = request_db('product', array('nids' => $product_ids), $settings);
-  }
 
   $output = '<div id="comparative_table">';
   //Set the computed flag.
@@ -730,7 +917,7 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
 //TODO set all height et width attribute in style, because it's better for the transition.
 
     //Generate the main details of the criterion in the first cell.
-    $output .= '<td style="width: 30%;">' . wikicompare_table_get_supertitle_item('criterion', $criterion, $settings) . '</td>';
+    $output .= '<td style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . wikicompare_table_get_supertitle_item('criterion', $criterion, $settings) . '</td>';
 
     //Add a column for each product.
     foreach ($criterion['evaluations'] as $cid => $evaluation) {
@@ -817,6 +1004,44 @@ function wikicompare_table_render_evaluation($evaluation, $criterion, $cid, $set
   $output .= '</div></td>';
 
   return $output;
+}
+
+
+
+/**
+ * Render the infofield. This fucntion is used in initial table render and when we add a new column.
+ *
+ * @param $product
+ *   The product to render.
+ *
+ * @param infofield
+ *   The infofield to render.
+ *
+ * @param $settings
+ *   The context of the infofield.
+ *
+ * @return $output
+ *   The rendered infofield.
+ */
+function wikicompare_table_render_infofield($product, $infofield, $settings) {
+
+  $field = 'wikicf_' . $infofield['name'];
+  $output = '<td class="infofield_product_' . $product['data']->nid .' infofield_product"  style="width:' . $settings['width'] . '%; padding: 0; text-align: center; -webkit-transition: width 1s ease-in-out; -moz-transition: width 1s ease-in-out; -o-transition: width 1s ease-in-out; transition: width 1s ease-in-out;"><div class="width_div_' . $product['data']->nid . '"';
+
+  //If we are adding a new column with ajax call, we need to hide it to prevent animation crashing.
+  if ($settings['width'] == 0) {
+    $output .= ' style="display: none;"';
+  }
+  $output .= '>';
+
+  //Avoid display if data == 0.
+  if ($product['data']->$field) {
+    $output .= $product['data']->$field;
+  }
+  $output .= '</div></td>';
+
+  return $output;
+
 }
 
 
@@ -966,7 +1191,6 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
     $img = theme('image', array(
       'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
       'alt' => t('Link to ' . $type . ' ') . $node['data']->nid,
-      'height' => '100%',
     ));
     //Create the link. It will redirect to the translated node if any. The html = True indicate that the title of the link contain html.
     $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
@@ -1524,7 +1748,7 @@ function wikicompare_toggle_product_checkbox_response($method = 'ajax'){
   $settings['width'] = 0;
 
   //Recover the detail of the product we want to add, by searching with his nid.
-  $product = request_db('product', array('nids' => array($_POST['nid'])), $settings);
+  $product = request_db('product', array('nids' => array($_POST['nid']), 'get_infofields' => 1), $settings);
 
   //Add the header of the new column, with the product title.
   $header = '<th id="header_product_' . $_POST['nid'] . '" class="header_product" style="width: 0%; padding: 0; text-align: center; -webkit-transition: width 1s ease-in-out; -moz-transition: width 1s ease-in-out; -o-transition: width 1s ease-in-out; transition: width 1s ease-in-out;"><div class="width_div_' . $_POST['nid'] . '" style="display: none;"><span class="product_title_' . $_POST['nid'] . '">' . $product[$_POST['nid']]['data']->title . '</span></div></th>';
@@ -1571,6 +1795,11 @@ function wikicompare_toggle_product_checkbox_response($method = 'ajax'){
     //Add the new cells at the end of each row.
     foreach ($cells as $fid => $cell) {
       $commands[] = ajax_command_append('.criterion_table_' . $fid, $cell);
+    }
+
+    //Add the new infofields in the bottom fieldset table.
+    foreach ($settings['infofields'] as $infofield) {
+      $commands[] = ajax_command_append('#infofield_row_' . $infofield['name'], wikicompare_table_render_infofield($product[$_POST['nid']], $infofield, $settings));
     }
 
   }
@@ -1798,7 +2027,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
 }
 
 
-
+//TODO rename into refresh list
 /**
  * Ajax callback function called by javascript when we launch a compute or a reset table.
  *
@@ -1826,9 +2055,10 @@ function wikicompare_compute_table_response($method = 'ajax') {
   $commands[] = ajax_command_replace('#comparative_table_main_product', wikicompare_table_render_main_itemlist('product', 'Products', $settings));
 
   //Replace the old table.
-  $commands[] = ajax_command_replace('#comparative_table', wikicompare_compute_comparative_table($settings));
+  $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings));
 
   //Regenerate the product list.
+  $criterions = wikicompare_compute_get_criterions($settings);
   $res = wikicompare_table_render_product_list($settings, $criterions);
   $commands[] = ajax_command_html('#nb_products', $res['count']);
   $commands[] = ajax_command_html('#products_offset', $res['offset']);

@@ -174,6 +174,33 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
+     * Dynamize the filters.
+     */
+    $('.home_filter:not(.listener_set)').addClass('listener_set').each(function () {
+
+      $(this).change(function() {
+        var click = true;
+        //Specific case of the number, we only trigger the event if both field are filled.
+        if ($(this).hasClass('number')) {
+          click = false;
+          var counterlimit = 'max';
+          if ($(this).hasClass('max')) {
+            var counterlimit = 'min';
+          }
+          if ($('#filter_' + counterlimit + '_' + $(this).attr('field')).val() != '' && $(this).val() != '') {
+            click = true;
+          }
+        }
+        //Trigger product list reload.
+        if (click) {
+          $('#filter_table_link').click();
+        }
+      });
+
+    });
+
+
+    /*
      * Ajaxify the simple link which has no particular code to manage in the call.
      * Theses links are often hidden and automatically clicked on some event, like checkbox check, click on button or call by ajax.
      * Exemple :
@@ -397,12 +424,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
      */
     $('#form_infofield_type:not(.listener_set)').addClass('listener_set').each(function () {
       $(this).change(function() {
-        //If we select the select type, we display the allowed value field.
+        //If we select the select type, we display the allowed value and filter type field.
         if ($(this).val() == 'select') {
           $('#allowed_values_field_div').show();
-        //Else we make sure the field is hidden.
+          $('#filter_type_field_div').show();
+        //Else we make sure the fields are hidden.
         } else {
           $('#allowed_values_field_div').hide();
+          $('#filter_type_field_div').hide();
         }
       });
     });
@@ -503,7 +532,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function build_ajax_link(link_id, object, action, aj_settings) {
 
       //Theses functions does not have nid and so would cause some problem. For example, they would disable the simple_dialog links.
-      if (action != 'append_product_list' && action != 'toogle_product_mode' && action != 'open_dialog' && action != 'submit_dialog' && action != 'submit_infofield' && action != 'compute_table' && action != 'reset_table' && action != 'make_cleaning') {
+      if (action != 'append_product_list' && action != 'open_dialog' && action != 'submit_dialog' && action != 'submit_infofield' && action != 'refresh_list' && action != 'make_cleaning') {
         //Recover the nid by using a regular expression on the link_id.
         var nid = extract_nid(link_id)[0];
       }
@@ -588,6 +617,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_evaluations = false;
         send_profiles = false;
         send_products_tree_mode = false;
+        send_infofields = false;
         send_manual_selected_criterions = false;
         send_selected_profiles = false;
         send_states = false;
@@ -666,6 +696,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           manage_displayed_flag = true;
           //Send the number of displayed products. This value is used to compute the new column width.
           send_products_columns = true;
+          //Send the infofields displayed in the page.
+          send_infofields = true;
           //Verify if the table was computed, in such case the data need to be computed with the selected criterion.
           send_computed = true;
           //Send the criterion displayed in the table, so we directly add the cells for these row in the new column.
@@ -700,16 +732,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_container = true;
         }
 
-        //If we change the product list mode.
-        if (action == 'toogle_product_mode') {
+        //If we launched the table computation.
+        if (action == 'refresh_list') {
           //Send the product displayed in the table, they'll keep display in the new table.
           send_products_columns = true;
-          //Send products mode.
-          send_products_tree_mode = true;
           //Send the criterions manually selected, they'll be used to select the computed criterions.
           send_manual_selected_criterions = true;
           //Send the selected profile. Their criterions will be used to select the computed criterions.
           send_selected_profiles = true;
+          //Send products mode.
+          send_products_tree_mode = true;
+          //Send infofields.
+          send_infofields = true;
           //Send the states.
           send_states = true;
           //Send the size of the table to adjust the lines.
@@ -719,52 +753,59 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Clean the table after the computation.
           make_cleaning = true;
 
-          if ($('#products_tree_mode').text() == 0) {
-            $('#products_tree_mode').html(1);
-          } else {
-            $('#products_tree_mode').html(0);
+          var mode = $(object).attr('mode');
+          if (mode == 'compute') {
+            //Change the computed status.
+            $('#computed').html(1);
+          }
+          if (mode == 'reset') {
+            //Change the computed status.
+            $('#computed').html(0);
+          }
+          if (mode == 'toogle_product_mode') {
+            if ($('#products_tree_mode').text() == 0) {
+              $('#products_tree_mode').html(1);
+            } else {
+              $('#products_tree_mode').html(0);
+            }
           }
 
-        }
+          //Send the value of all filled filters.
+          var filters = {};
+          $('.home_filter').each(function(index) {
+            //Text filter
+            if  ($(this).hasClass('text') && $(this).val() != '') {
+              filters[$(this).attr('field')] = {};
+              filters[$(this).attr('field')]['type'] = 'text';
+              filters[$(this).attr('field')]['value'] = $(this).val();
+            }
+            //Number filter.
+            if ($(this).hasClass('number') && $(this).hasClass('min') && $(this).val() != '') {
+              if ($('#filter_max_' + $(this).attr('field')).val() != '') {
+                filters[$(this).attr('field')] = {};
+                filters[$(this).attr('field')]['type'] = 'number';
+                filters[$(this).attr('field')]['min'] = $(this).val();
+                filters[$(this).attr('field')]['max'] = $('#filter_max_' + $(this).attr('field')).val();
+              }
+            }
+            //Select filter.
+            if ($(this).is('select') && $(this).val() != '') {
+              filters[$(this).attr('field')] = {};
+              filters[$(this).attr('field')]['type'] = 'select';
+              filters[$(this).attr('field')]['value'] = $(this).val();
+            }
+            //Checkboxes filter.
+            if  ($(this).attr('type') == 'checkbox' && $(this).is(':checked')) {
+              if (!($(this).attr('field') in filters)) {
+                filters[$(this).attr('field')] = {};
+                filters[$(this).attr('field')]['type'] = 'checkboxes';
+                filters[$(this).attr('field')]['values'] = {};
+              }
+              filters[$(this).attr('field')]['values'][$(this).attr('value')] = $(this).attr('value');
+            }
+          });
+          options.data.filters = filters;
 
-        //If we launched the table computation.
-        if (action == 'compute_table') {
-          //Send the product displayed in the table, they'll keep display in the new table.
-          send_products_columns = true;
-          //Send the criterions manually selected, they'll be used to select the computed criterions.
-          send_manual_selected_criterions = true;
-          //Send the selected profile. Their criterions will be used to select the computed criterions.
-          send_selected_profiles = true;
-          //Send products mode.
-          send_products_tree_mode = true;
-          //Send the states.
-          send_states = true;
-          //Send the size of the table to adjust the lines.
-          send_colspan = true;
-          //Verify if the table was computed.
-          send_computed = true;
-          //Clean the table after the computation.
-          make_cleaning = true;
-
-          //Change the computed status.
-          $('#computed').html(1);
-        }
-
-        //If we want to restore the initial state of the table.
-        if (action == 'reset_table') {
-          //Send the product displayed in the table, they'll keep display in the new table.
-          send_products_columns = true;
-          //Send products mode.
-          send_products_tree_mode = true;
-          //Send the states.
-          send_states = true;
-          //Send the size of the table to adjust the lines.
-          send_colspan = true;
-          //Verify if the table was computed.
-          send_computed = true;
-
-          //Change the computed status.
-          $('#computed').html(0);
         }
 
         //If we want to display a dialog on left or right side.
@@ -871,6 +912,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.is_active = $('#form_infofield_is_active').val();
           options.data.is_home = $('#form_infofield_is_home').val();
           options.data.is_filter = $('#form_infofield_is_filter').val();
+          options.data.filter_type = $('#form_infofield_filter_type').val();
           options.data.category = $('#form_infofield_category').val();
           options.data.category_sequence = $('#form_infofield_category_sequence').val();
         }
@@ -1046,8 +1088,22 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.profile_ids = profile_ids;
         }
 
+        //Send product list mode.
         if (send_products_tree_mode == true) {
           options.data.products_tree_mode = $('#products_tree_mode').text();
+        }
+
+        //Send infofields, based on the displayed column / row which mean we use the infofield used at the page loading. This should prevent error if a user load a page while the admin is modify infofields sequence.
+        if (send_infofields == true) {
+          var infofields = [];
+          var i = 0;
+          $('.infofield_title').each(function (key, value) {
+            infofields[i] = {};
+            infofields[i]['name'] = $(this).attr('field');
+            infofields[i]['title'] = $(this).text();
+            i = i + 1;
+          });
+          options.data.infofields = infofields;
         }
 
         //Get all manually selected criterions to send their id to drupal.
@@ -1125,6 +1181,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
               var width = (100 - first_column_width) / (column_number + 1);
               $('.header_product').css("width", width + '%');
               $('.evaluation_cell').css("width", width + '%');
+              $('.infofield_product').css("width", width + '%');
 
               //The content of the cells will break the start of the width animation so we display:none; it. Just before the end of the width animation, we start a very short fadeIn to display the content.
               $('.width_div_' + nid).delay(400).fadeIn(200);
@@ -1171,15 +1228,18 @@ Drupal.behaviors.WikicompareComparativeTable = {
               //We start the animation to hide the removed column. We use a css transform for this.
               $('#header_product_' + nid).css("width", '0%');
               $('.evaluation_product_' + nid).css("width", '0%');
+              $('.infofield_product_' + nid).css("width", '0%');
 
               //We find the new width of the others columns, and start the animation to adjust it.
               var width = (100 - first_column_width) / (column_number - 1);
               $('.header_product:not(#header_product_' + nid + ')').css("width", width + '%');
               $('.evaluation_cell:not(.evaluation_product_' + nid + ')').css("width", width + '%');
+              $('.infofield_product:not(.infofield_product_' + nid + ')').css("width", width + '%');
 
               //Mark the hidded content for removal.
               $('#header_product_' + nid).addClass('to_remove');
               $('.evaluation_product_' + nid).addClass('to_remove');
+              $('.infofield_product_' + nid).addClass('to_remove');
 
               //We disactivated the product checkbox during the ajax call to avoid user spamming, reactivate it.
               $('#product_table_checkbox_' + nid).removeAttr('disabled');

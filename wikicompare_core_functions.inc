@@ -798,10 +798,60 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     case 'product':
       $query->addField('n', 'comparable', 'comparable');
       $query->addField('n', 'total', 'total');
+
+      //Add the specified infofields in the object returned.
+      if (isset($db_settings['get_infofields'])) {
+        foreach ($settings['infofields'] as $infofield) {
+          $query->addField('wikicf_' . $infofield['name'] , 'wikicf_' . $infofield['name'] . '_value', 'wikicf_' . $infofield['name']);
+          $query->leftjoin('field_revision_wikicf_' . $infofield['name'], 'wikicf_' . $infofield['name'], 'n.vid = wikicf_' . $infofield['name'] . '.revision_id');
+        }
+      }
+//TODO centralize the swith type
+      //Filter the returned objects based on the infofields.
+      if (isset($db_settings['filters'])) {
+        foreach($db_settings['filters'] as $name => $filter) {
+          switch ($filter['type']) {
+            case 'text':
+              if ($name == 'name') {//TODO manage translations
+                $query->condition('n.title', '%' . $filter['value'] . '%', 'LIKE');
+              } else {
+                //If it was in infofields, the join is already done.
+                if (!in_array($name, $settings['infofields'])) {
+                  $query->join('field_revision_wikicf_' . $name, 'wikicf_' . $name, 'n.vid = wikicf_' . $name . '.revision_id');
+                }
+                $query->condition('wikicf_' . $name . '.wikicf_' . $name . '_value', '%' . $filter['value'] . '%', 'LIKE');
+              }
+              break;
+            case 'number':
+              //If it was in infofields, the join is already done.
+              if (!in_array($name, $settings['infofields'])) {
+                $query->join('field_revision_wikicf_' . $name, 'wikicf_' . $name, 'n.vid = wikicf_' . $name . '.revision_id');
+              }
+              $query->condition('wikicf_' . $name . '.wikicf_' . $name . '_value', $filter['min'], '>=');
+              $query->condition('wikicf_' . $name . '.wikicf_' . $name . '_value', $filter['max'], '<=');
+              break;
+            case 'select':
+              //If it was in infofields, the join is already done.
+              if (!in_array($name, $settings['infofields'])) {
+                $query->join('field_revision_wikicf_' . $name, 'wikicf_' . $name, 'n.vid = wikicf_' . $name . '.revision_id');
+              }
+              $query->condition('wikicf_' . $name . '.wikicf_' . $name . '_value', $filter['value']);
+              break;
+            case 'checkboxes':
+              //If it was in infofields, the join is already done.
+              if (!in_array($name, $settings['infofields'])) {
+                $query->join('field_revision_wikicf_' . $name, 'wikicf_' . $name, 'n.vid = wikicf_' . $name . '.revision_id');
+              }
+              $query->condition('wikicf_' . $name . '.wikicf_' . $name . '_value', $filter['values'], 'IN');
+              break;
+          }
+        }
+      }
       break;
     case 'criterion':
       $query->addField('n', 'type', 'type');
       $query->addField('n', 'weight', 'weight');
+      $query->addField('n', 'suggest', 'suggest');
       break;
   }
 

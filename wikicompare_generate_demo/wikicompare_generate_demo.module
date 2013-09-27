@@ -48,25 +48,68 @@ function wikicompare_export_page() {
   $output .= "\$language_list[\$key] = \$key;<br/>";
   $output .= "}</p>";
 
+  $settings = wikicompare_initialize_settings(array('states' => array('draft', 'closed')));
+
+  //Get the infofields definition.
+  $settings['infofields'] = array();
+  $query = db_select('wikicompare_infofields', 'f');
+  $query->addField('f', 'name', 'name');
+  $query->addField('f', 'title', 'title');
+  $query->addField('f', 'type', 'type');
+  $query->addField('f', 'allowed_values', 'allowed_values');
+  $query->addField('f', 'sequence', 'sequence');
+  $query->addField('f', 'is_required', 'is_required');
+  $query->addField('f', 'is_active', 'is_active');
+  $query->addField('f', 'is_home', 'is_home');
+  $query->addField('f', 'is_filter', 'is_filter');
+  $query->addField('f', 'filter_type', 'filter_type');
+  $query->addField('f', 'category', 'category');
+  $query->addField('f', 'category_sequence', 'category_sequence');
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $output .= "<p>\$settings = array();<br/>";
+    $output .= "\$settings['context'] = 'add';<br/>";
+    $output .= "\$settings['name'] = '" . $record->name . "';<br/>";
+    $output .= "\$settings['title'] = '" . $record->title . "';<br/>";
+    $output .= "\$settings['type'] = '" . $record->type . "';<br/>";
+    $output .= '$settings["allowed_values"] = "' . str_replace("\n", "\\n", $record->allowed_values) . '";<br/>'; //We need to escape the carriage return and use the " to identify it.
+    $output .= "\$settings['sequence'] = '" . $record->sequence . "';<br/>";
+    $output .= "\$settings['is_required'] = '" . $record->is_required . "';<br/>";
+    $output .= "\$settings['is_active'] = '" . $record->is_active . "';<br/>";
+    $output .= "\$settings['is_home'] = '" . $record->is_home . "';<br/>";
+    $output .= "\$settings['is_filter'] = '" . $record->is_filter . "';<br/>";
+    $output .= "\$settings['filter_type'] = '" . $record->filter_type . "';<br/>";
+    $output .= "\$settings['category'] = '" . $record->category . "';<br/>";
+    $output .= "\$settings['category_sequence'] = '" . $record->category_sequence . "';<br/>";
+    $output .= "wikicompare_admin_infofield_modify(\$settings);</p>";
+
+    //Get the infofields in settings, to prepare the product request.
+    $settings['infofields'][] = array(
+      'name' => $record->name,
+      'title' => $record->title,
+      'category' => $record->category
+    );
+  }
+
   $output .= "<p>\$products = array();</p>";
   //Find all the product on the first level of the tree.
-  $products = request_db('product', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
+  $products = request_db('product', array('parent_id' => NULL, 'dont_translate' => True, 'get_infofields' => 1), $settings);
   foreach ($products as $product) {
     //Get product children.
-    wikicompare_generate_demo_export_output_node($output, $product, 'product');
+    wikicompare_generate_demo_export_output_node($output, $product, 'product', $settings);
   }
 
   $output .= "<p>\$criterions = array();</p>";
   //Find all the criterions on the first level of the tree.
-  $criterions = request_db('criterion', array('parent_id' => NULL, 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
+  $criterions = request_db('criterion', array('parent_id' => NULL, 'dont_translate' => True), $settings);
   foreach ($criterions as $criterion) {
     //Get criterion children.
-    wikicompare_generate_demo_export_output_node($output, $criterion, 'criterion');
+    wikicompare_generate_demo_export_output_node($output, $criterion, 'criterion', $settings);
   }
 
   if (module_exists('wikicompare_profiles')) {
     //Export profiles.
-    wikicompare_profiles_demo_export($output);
+    wikicompare_profiles_demo_export($output, $settings);
   }
 
   if (module_exists('wikicompare_inherit_product')) {
@@ -132,7 +175,7 @@ function wikicompare_export_page() {
  * @param $type
  *   The type of the node.
  */
-function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
+function wikicompare_generate_demo_export_output_node(&$output, $node, $type, $settings) {
 
   //Generate code to import node.
   $output .= "<p>";
@@ -148,6 +191,13 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
   $output .= "\$node->wikicompare_state['und'][0]['value'] = '" . $node['data']->state . "';<br/>";
   if ($type == 'product') {
     $output .= "\$node->wikicompare_comparable['und'][0]['value'] = '" . $node['data']->comparable . "';<br/>";
+    //Export infofield value for the product.
+    foreach ($settings['infofields'] as $infofield) {
+      $field = 'wikicf_' . $infofield['name'];
+      if ($node['data']->$field) {
+        $output .= "\$node->wikicompare_wikicf_" . $infofield['name'] . "['und'][0]['value'] = '" . $node['data']->$field . "';<br/>";
+      }
+    }
   }
   if ($type == 'criterion') {
     $output .= "\$node->wikicompare_type['und'][0]['value'] = '" . $node['data']->type . "';<br/>";
@@ -177,9 +227,9 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type) {
 
   //Export children.
   if ($node['data']->has_children) {
-    $children = request_db($type, array('parent_id' => array($node['data']->nid), 'dont_translate' => True), wikicompare_initialize_settings(array('states' => array('draft', 'closed'))));
+    $children = request_db($type, array('parent_id' => array($node['data']->nid), 'dont_translate' => True, 'get_infofields' => 1), $settings);
     foreach ($children as $child) {
-      wikicompare_generate_demo_export_output_node($output, $child, $type);
+      wikicompare_generate_demo_export_output_node($output, $child, $type, $settings);
     }
   }
 
@@ -604,6 +654,19 @@ function wikicompare_drop_nodes() {
   }
 
   node_delete_multiple($nids);
+
+  //Delete infofields.
+  $query = db_select('wikicompare_infofields', 'f');
+  $query->addField('f', 'name', 'name');
+  $result = $query->execute();
+  foreach ($result as $record) {
+    //Delete the field.
+    field_delete_field('wikicf_' . $record->name);
+  }
+
+  //Delete in wikicompare table.
+  db_delete('wikicompare_infofields')
+    ->execute();
 
   wikicompare_start_computation();
 
