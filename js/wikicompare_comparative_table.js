@@ -104,10 +104,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         var clicked_depth = extract_nid($(this).attr('id'))[0];
         var nid = $(this).attr('nid');
-        var max_depth = get_table_depth();
+        var max_depth = get_table_depth('.breadcrumb_item');
 
         //Slide the table to return at the clicked depth.
-        $("#comparative_tables").css("transform","translateX(" + (clicked_depth - 1) * -row_height + "%)");
+        $("#comparative_tables").css("transform","translateX(" + (clicked_depth - 1) * -100 + "%)");
 
         //Action on each tables hidded by the slide.
         while ((max_depth + 1) != clicked_depth) {
@@ -117,6 +117,37 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $("#breadcrumb_item_" + max_depth).fadeOut();
           $("#breadcrumb_item_" + max_depth).addClass('to_remove');
 
+          max_depth = max_depth - 1;
+        }
+
+        //Block the page loading;
+        return false;
+
+      });
+
+    });
+
+
+
+    /*
+     * Dynamize the itemlist return link so we can click on it to return on superior part of the itemlist.
+     */
+    $('.itemlist_return_link:not(.listener-set)').addClass('listener-set').each(function () {
+
+      $(this).click(function() {
+
+        var clicked_depth = extract_nid($(this).attr('id'))[0];
+        var nid = $(this).attr('nid');
+        var type = $(this).attr('ntype');
+        var max_depth = get_table_depth('.itemlist_return_link');
+
+        //Slide the table to return at the clicked depth.
+        $("#main_" + type + "_itemlists").css("transform","translateX(" + (clicked_depth - 1) * -100 + "%)");
+
+        //Action on each tables hidded by the slide.
+        while ((max_depth + 1) != clicked_depth) {
+          //Mark the table for removal.
+          $("#itemlist_" + max_depth).addClass('to_remove');
           max_depth = max_depth - 1;
         }
 
@@ -567,6 +598,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.to_remove').remove();
         }
 
+        if (action == 'expand_list_children' && $('#' + link_id).hasClass('translate')) {
+          if ($('#itemlist_stored_' + nid).length) {
+            skip_ajax = true;
+          }
+        }
+
         if (action == 'toogle_product_checkbox' && $('#' + link_id).hasClass('displayed')) {
 //TODO try replacing $('#' + link_id) by $(object)
           skip_ajax = true;
@@ -673,7 +710,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           make_cleaning = true;
 
           //Get the depth of the table.
-          depth = get_table_depth();
+          depth = get_table_depth('.breadcrumb_item');
           options.data.depth = depth;
 
           //Get the height of the table, to know if we need to augment it because of the loaded content.
@@ -1173,7 +1210,31 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
             //The children are here but hidden, we display them with a slideDown animation.
             if (action == 'expand_list_children' && context != 'list') {
-              $('#' + type + '_' + context + '_children_' + nid).slideDown();
+
+              if (!$('#' + link_id).hasClass('translate')) {
+
+                $('#' + type + '_' + context + '_children_' + nid).slideDown();
+
+              } else {
+
+                //Only case where we don't need the displayed class.
+                $('#' + link_id).removeClass('displayed');
+
+                //We are adding a new depth level.
+                depth = depth + 1;
+
+                //Get the div from the storage zone.
+                var div = '<div id="itemlist_' + depth + '" nid="' + nid + '" style="float:left; position:absolute; top: 0; left:' + depth * row_height + '%; width:100%;">';
+                div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a></span>';
+                div += $('#itemlist_stored_' + nid).html();
+                div += '</div>';
+                //Attach the table after the displayed table.
+                $('#main_' + type + '_itemlists').append(div);
+
+                //Slide the tables to display the new one.
+                $('#main_' + type + '_itemlists').css("transform","translateX(-" + (depth) * 100 + "%)");
+              }
+
             }
 
             if (action == 'toogle_product_checkbox') {
@@ -1301,9 +1362,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         //Launch the cleaning function.
-        if (make_cleaning == true) {
+/*        if (make_cleaning == true) {
           $('#make_cleaning_link').click();
-        }
+        }*/
 
         //We need to call this function to add the listeners on the added content. It is often called by the Drupal functions, but by calling it here we are sure about it.
         Drupal.attachBehaviors(context, settings);
@@ -1403,9 +1464,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
     }
 //TODO Replace all link to parent by a parent_id attribute. Best if we do this after the browser debug, I suspect that this custom attribute may be the problem.
 
-    function get_table_depth() {
+    function get_table_depth(dom) {
       var max_depth = 0;
-      $('.breadcrumb_item').each(function (key, value) {
+      $(dom).each(function (key, value) {
         var depth = extract_nid($(this).attr('id'))[0];
         depth = parseInt(depth);
         if (depth > max_depth) {
@@ -1420,3 +1481,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 };
 
 })(jQuery);
+/*TODO For custom attribute :
+http://www.electrictoolbox.com/jquery-store-data-in-dom/
+http://stackoverflow.com/questions/4191386/jquery-how-to-find-an-element-based-on-a-data-attribute-value
+http://stackoverflow.com/questions/1735230/can-i-add-custom-attribute-to-html-tag
+*/

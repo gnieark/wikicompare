@@ -124,7 +124,7 @@ function wikicompare_home_page() {
     'path' => 'wikicompare_get_dialog_callback/multidialog/criterion/manual-selected-criterions/0/',//manual_selected_criterions/none',
     'id' => 'select_criterion_link',
   );
-  //Render the link thanks to the simple dialog module.
+  //Render the link thanks to the simple dialog module. //TODO
 //  $output .= '<p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
   $select_criterion_link = array(
     '#type' => 'link',
@@ -251,6 +251,10 @@ function wikicompare_home_page() {
    */
   $output .= '<div id="sidebar-second" style="height:500px; float:right;">';
   $output .= wikicompare_table_render_home_suggest();
+//TODO temp
+  $output .= wikicompare_table_render_footer();
+  $output .= '<div id="storage_zone" style="display:none;">';
+  $output .= '</div>';
   $output .= '</div>';
 
   return $output;
@@ -269,27 +273,6 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   drupal_add_js('misc/progress.js');
   drupal_add_library('system', 'drupal.collapse');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
-/*
-  //Add the checkbox to display the draft and closed items in the tables.
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display draft items',
-    '#id' => 'checkbox-draft-items',
-    '#attributes' => array(
-      'class' => array('state_checkbox'),
-    ),
-   );
-  $output = render($checkbox_settings);
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display closed items',
-    '#id' => 'checkbox-closed-items',
-    '#attributes' => array(
-      'class' => array('state_checkbox'),
-    ),
-   );
-  $output .= render($checkbox_settings);
-*/
 
   $product_ids = array();
   if ($compared_products != 0) {
@@ -379,7 +362,43 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   //Render fieldset.
   $output .= theme_fieldset(array('element' => array('#title' => 'More details...', '#children' => $fieldset, '#collapsible' => true, '#collapsed'  => true, '#attributes' => array('class' => array('collapsible', 'collapsed')))));
 
-/*
+  //TODO temp
+  $output .= wikicompare_table_render_footer();
+
+  //Return the html code.
+  return $output;
+
+}
+
+
+
+/**
+ * Build the wikicompare footer.
+ */
+function wikicompare_table_render_footer() {
+
+  $output = '';
+
+  //Add the checkbox to display the draft and closed items in the tables.
+  $checkbox_settings =  array(
+    '#type' => 'checkbox',
+    '#title' => 'Display draft items',
+    '#id' => 'checkbox-draft-items',
+    '#attributes' => array(
+      'class' => array('state_checkbox'),
+    ),
+   );
+  $output = render($checkbox_settings);
+  $checkbox_settings =  array(
+    '#type' => 'checkbox',
+    '#title' => 'Display closed items',
+    '#id' => 'checkbox-closed-items',
+    '#attributes' => array(
+      'class' => array('state_checkbox'),
+    ),
+   );
+  $output .= render($checkbox_settings);
+
   //Add the link to go on FastAction mode.
   $toogle_link = array(
     '#type' => 'link',
@@ -406,8 +425,7 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
     ),
   );
   $output .= '<p>' . render($cleaning_link) . '</p>';
-*/
-  //Return the html code.
+
   return $output;
 
 }
@@ -433,16 +451,39 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 
   //Only the main itemlist of the table will be rendered by this function.
   $settings['context'] = 'table';
-
+//TODO change table keyword for context into main
   //Find all nodes on the first level of the tree.
   $nodes = request_db($type, array('parent_id' => NULL), $settings);
+
+//TODO move into profile module
+  if (module_exists('wikicompare_profiles')) {
+    if ($type == 'profile' && $settings['context'] == 'table') {
+      $settings['itemlist_translate'] = True;
+    }
+//    wikicompare_profiles_table_prepare_compute($selected_criterion_ids, $settings);
+  }
+
+  $output ="<div id='comparative_table_main_" . $type . "'>";
+
+  if (isset($settings['itemlist_translate'])) {
+    $output .= '<div id="main_' . $type . '_itemlist_container" style="overflow:hidden;">'; //TODO not sure we still need this container.
+    //The container which contain the tables, and will slide to display them.
+    $output .= '<div id="main_' . $type . '_itemlists" style="height: ' . count($nodes) * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
+    $output .= '<div id="itemlist_stored_0"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
+  }
 
   //Building the data for the itemlist.
   $itemlist_data = wikicompare_build_itemlist($type, $nodes, 0, $settings);
 
-  $output ="<div id='comparative_table_main_" . $type . "'>";
   //Render the item list
   $output .= theme_item_list(array('items' => $itemlist_data, 'title' => $title, 'type' => 'ul', 'attributes' => array()));
+
+  if (isset($settings['itemlist_translate'])) {
+    $output .= '</div>';
+    $output .= '</div>';
+    $output .= '</div>';
+  }
+
   //Render the link to add a new node.
   $output .= '<p>' . wikicompare_generate_add_link($type, $settings) . '</p>';
   //We need to add the 0 children div to know where place the fastaction form.
@@ -1171,6 +1212,10 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
       if ($settings['computed'] && ($type == 'criterion' || ($type == 'product' && $settings['context'] == 'list'))) {
         $class[] = 'computed';
       }
+      //Indicate if the itemlist must display his children with translation.
+      if (isset($settings['itemlist_translate'])) {
+        $class[] = 'translate';
+      }
       //This class is used to prepare the variable for the cleaning function.
       if ($settings['context'] == 'table') {
         $class[] = $type . '_table_link';
@@ -1578,11 +1623,39 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       //Building the data for the itemlist.
       $itemlist_data = wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
 
-      //Rendering the itemlist.
-      $output = theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
+    //Initiate the table for each key, if not already done.
+    if (!isset($res[$key])) {
+      $res[$key]['output'] = '<table id="comparative_table_';
+      //Except for root, each tables will be insert in the storage zone.
+      if ($key != 'root') {
+        $res[$key]['output'] .= 'stored_' . $key;
+      } else {
+        $res[$key]['output'] .= 0;
+      }
+      $res[$key]['output'] .= '" style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%;"><tbody>';
+      $res[$key]['count'] = 0;
+    }
 
-      //We prepared a div under the parent product. This command will fill it with the product children, and replace anything that was here before.
-      $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
+      $output = '';
+
+      if (!isset($_POST['translate'])) {
+        $output .= '<div id="itemlist_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;>';
+      }
+
+      //Rendering the itemlist.
+      $output .= theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
+
+      if (!isset($_POST['translate'])) {
+        $output .= '</div>';
+      }
+
+      if (!isset($_POST['translate'])) {
+        //We prepared a div under the parent product. This command will fill it with the product children, and replace anything that was here before.
+        $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
+      } else {
+        //We add the new table in the storage zone, then javascript will copy it after the displayed table. Note we can't use ajax_command_append because it adds an unwanted div.
+        $commands[] = ajax_command_invoke('#storage_zone', 'append', $output);
+      }
     } else {
 
       $settings['nid'] = $_POST['nid'];
@@ -1591,8 +1664,6 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       //We add the new items after the parent item. Note we can't use ajax_command_after because it adds an unwanted div.
       $commands[] = ajax_command_invoke('#product_list_item_' . $_POST['nid'], 'after', array($res['output']));
 
-      //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-      $commands[] = ajax_command_after('#products_list_column', '<div class="to_remove"/>');
     }
 
   }
