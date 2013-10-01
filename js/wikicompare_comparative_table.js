@@ -163,7 +163,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     /*
      * Dynamize the checkboxes.
      */
-    $('.itemlist_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
+    $('.itemlist_checkbox:not(#storage_zone .itemlist_checkbox):not(.listener_set)').addClass('listener_set').each(function () {
 
       //Get link name and nid.
       var link_id = $(this).attr('id');
@@ -196,6 +196,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           } else {
             delete selected_criterion_dialog_ids[nid];
           }
+        }
+
+        if ($(this).attr('checked')) {
+          parent_checked_children('check', $(this).attr('ntype'), $(this).attr('context'), nid);
+        } else {
+          parent_checked_children('uncheck', $(this).attr('ntype'), $(this).attr('context'), nid);
         }
 
       });
@@ -696,6 +702,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if (type == 'profile') {
             send_selected_profiles = true;
           }
+
+          //If we display the children with translation effect, drupal need to know it.
+          if ($('#' + link_id).hasClass('translate')) {
+            options.data.translate = true;
+          }
+
         }
 
         //When we want to display the criterion children in table.
@@ -1231,6 +1243,24 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 //Attach the table after the displayed table.
                 $('#main_' + type + '_itemlists').append(div);
 
+                //Check the marked checkbox.
+                $('.itemlist_checkbox[ntype=' + type + '][context=' + context + '][parent_id=' + nid + ']').each(function(index) {
+                  var check = false;
+
+                  //In main profile itemlist, we check if the profile isn't already in the selected_profile_ids.
+                  if (type == 'profile' && context == 'table') {
+                    if ($(this).attr('nid') in selected_profile_ids) {
+                      check = true;
+                    }
+                  }
+
+                  //If true, we check the checkbox and make sure his parent know they have a checked children.
+                  if (check) {
+                    $('.itemlist_checkbox:[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').attr('checked', 'checked');
+                    parent_checked_children('check', type, context, $(this).attr('nid'));
+                  }
+                });
+
                 //Slide the tables to display the new one.
                 $('#main_' + type + '_itemlists').css("transform","translateX(-" + (depth) * 100 + "%)");
               }
@@ -1391,7 +1421,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var patt = /[0-9]+/g;
       //Execute.
       var nid = patt.exec(link_id);
-
+//TODO set nid as attribute so we don't need this function anymore
       return nid;
     }
 
@@ -1475,6 +1505,34 @@ Drupal.behaviors.WikicompareComparativeTable = {
       });
 
       return max_depth;
+    }
+
+    /*
+     * Function to recursively update the has_checked_children flag on itemlist.
+     */
+    function parent_checked_children(action, type, context, nid) {
+
+      //If we want the parent to know they have a checked children.
+      if (action == 'check') {
+        //We mark the current item.
+        $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').addClass('has_checked_children');
+      //If we are unchecking a children.
+      } else {
+        //We unmark the current item.
+        $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').removeClass('has_checked_children');
+        //We check if it has other checked children, in this case we remark it.
+        $('.' + type + '_item[context=' + context + '][parent_id=' + nid + ']').each(function(index) {
+          if ($(this).hasClass('has_checked_children')) {
+            $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').addClass('has_checked_children');
+          }
+        });
+      }
+
+      //Get the parent id, and recursively call the function.
+      var parent_id = $('#' + type + '_' + context + '_item_' + nid).attr('parent_id');
+      if (parent_id != 0) {
+        parent_checked_children(action, type, context, parent_id)
+      }
     }
 
   }

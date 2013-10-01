@@ -1156,6 +1156,8 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
                 'class' => array('itemlist_checkbox'),
                 'ntype' => $type,
                 'context' => $settings['context'],
+                'nid' => $node['data']->nid,
+                'parent_id' => $settings['parent_id'],
               ),
             ));
             //We check it immediately if it was check before (a product which already has his column in table, a criterion present in the global array in javascript etc...
@@ -1284,10 +1286,13 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
     //Id of the item.
     $items[$nid]['id'] = $type . '_' . $settings['context'] . '_item_' .  $nid;
     //Name of the item.
+    $settings['parent_id'] = $parent_node;
     $items[$nid]['data'] = wikicompare_table_get_supertitle_item($type, $node, $settings);
     //Needed argument for javascript.
     $items[$nid]['type'] =  $type;
     $items[$nid]['context'] = $settings['context'];
+    $items[$nid]['nid'] = $nid;
+    $items[$nid]['parent_id'] = $settings['parent_id'];
     //Class used to prepare variable for cleaning function.
     $items[$nid]['class'] = array($type . '_item');
     if ($node['data']->has_children){
@@ -1623,29 +1628,16 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       //Building the data for the itemlist.
       $itemlist_data = wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
 
-    //Initiate the table for each key, if not already done.
-    if (!isset($res[$key])) {
-      $res[$key]['output'] = '<table id="comparative_table_';
-      //Except for root, each tables will be insert in the storage zone.
-      if ($key != 'root') {
-        $res[$key]['output'] .= 'stored_' . $key;
-      } else {
-        $res[$key]['output'] .= 0;
-      }
-      $res[$key]['output'] .= '" style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%;"><tbody>';
-      $res[$key]['count'] = 0;
-    }
-
       $output = '';
 
-      if (!isset($_POST['translate'])) {
+      if (isset($_POST['translate'])) {
         $output .= '<div id="itemlist_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;>';
       }
 
       //Rendering the itemlist.
       $output .= theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
 
-      if (!isset($_POST['translate'])) {
+      if (isset($_POST['translate'])) {
         $output .= '</div>';
       }
 
@@ -1654,7 +1646,7 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
         $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
       } else {
         //We add the new table in the storage zone, then javascript will copy it after the displayed table. Note we can't use ajax_command_append because it adds an unwanted div.
-        $commands[] = ajax_command_invoke('#storage_zone', 'append', $output);
+        $commands[] = ajax_command_invoke('#storage_zone', 'append', array($output));
       }
     } else {
 
