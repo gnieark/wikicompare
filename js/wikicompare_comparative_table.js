@@ -798,6 +798,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           //Send the container we need to update in the main page.
           send_container = true;
+          //Send the side of the dialog.
+          options.data.side = $('#' + link_id).attr('side');
         }
 
         //If we launched the table computation.
@@ -865,6 +867,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
             if (context != 'add') {
               options.data.field = aj_settings['field'];
             }
+          }
+
+          if (aj_settings['dialog_action'] == 'select_manual_criterions') {
+            options.data.displayed_ids = manual_selected_criterion_ids;
           }
 
         }
@@ -1283,7 +1289,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
                   //Get the div from the storage zone.
                   var div = '<div id="itemlist_' + depth + '" nid="' + nid + '" style="float:left; position:absolute; top: 0; left:' + depth * row_height + '%; width:100%;">';
-                  div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a></span><br/>';
+                  div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a><br/>';
                   div += $('#itemlist_stored_' + nid).html();
                   div += '</div>';
                   //Attach the table after the displayed table.
@@ -1602,8 +1608,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //We unmark the current item.
           $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').removeClass('has_checked_children');
           //We hide the item in checked zone and mark it for remove.
-          $('#' + type + '_' + context + '_children_checked_' + parent_id + ' .' + type + '_item[context=' + context + '][nid=' + nid + ']').slideUp();
-          $('#' + type + '_' + context + '_children_checked_' + parent_id + ' .' + type + '_item[context=' + context + '][nid=' + nid + ']').addClass('to_remove');
+          if (type != 'profile' || context != 'table') {
+            $('#' + type + '_' + context + '_children_checked_' + parent_id + ' .' + type + '_item[context=' + context + '][nid=' + nid + ']').slideUp();
+            $('#' + type + '_' + context + '_children_checked_' + parent_id + ' .' + type + '_item[context=' + context + '][nid=' + nid + ']').addClass('to_remove');
+          }
         }
 
       }

@@ -133,7 +133,7 @@ function wikicompare_home_page() {
     '#id' => 'select_criterion_link',
     '#attributes' => array(
       'class' => array('dialog'),
-      'action' => 'select_dialog',
+      'action' => 'select_manual_criterions',
       'side' => 'left',
       'ntype' => 'criterion',
       'context' => 'multidialog',
@@ -1301,12 +1301,12 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
       $output .= ' has_checked_children';
     }
     $output .= '" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $nid . '" parent_id="' . $parent_node .'"';
-    if ($parent_node != 0) {
+/*TODO still used?    if ($parent_node != 0) {
       //If the itemlist is computed, all children are hidden.
       if ($settings['computed']) {
         $output .= ' style="display:none"';
       }
-    }
+    }*/
     $output .= '>';
 
     //Name of the item.
@@ -1640,7 +1640,7 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       $output = '';
 
       if (isset($_POST['translate'])) {
-        $output .= '<div id="itemlist_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;>';
+        $output .= '<div id="itemlist_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
       }
 
       //Rendering the itemlist.
@@ -1932,14 +1932,15 @@ function wikicompare_get_dialog_response($method = 'ajax'){
     $settings['forbidden_nid'] = $settings['nid'];
   }
 
-  //Find all the nodes on the first level of the tree.
-  $nodes = request_db($settings['type'], array('parent_id' => NULL), $settings);
+  $settings['include_root_items'] = True;
+
+  //Find all nodes which are displayed or in the root of the itemlist, and organize them into a tree.
+  $nodes = wikicompare_build_recursive_data($settings['type'], $settings['displayed_ids'], $settings);
+  $nodes = $nodes['tree'];
 
   //Building the data for the itemlist.
-  $itemlist_data = wikicompare_build_itemlist($settings['type'], $nodes, 0, $settings);
+  $output .= wikicompare_build_itemlist($settings['type'], $nodes, 0, $settings);
 
-  //Render the itemlist.
-  $output .= theme_item_list(array('items' => $itemlist_data, 'type' => 'ul', 'attributes' => array()));
 
   //If we have to select several items, then we add a button at the end of the popin. This button is linked to an hidden javascript link.
   if ($settings['context'] == 'multidialog') {
@@ -1951,6 +1952,7 @@ function wikicompare_get_dialog_response($method = 'ajax'){
       '#attributes' => array(
         'class' => array('simple_ajaxlink'),
         'action' => 'submit_dialog',
+        'side' => $settings['side'],
         'style' => 'display:none',
       ),
     );
@@ -2092,6 +2094,8 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
   $commands[] = ajax_command_html('#wikicompare-criterions-values', $hidden);
   //Update the fastedit field for fastedit submit.
   $commands[] = ajax_command_html('#wikicompare-criterions', $hidden_fastaction);
+  //Close the dialog
+  $commands[] = ajax_command_invoke('#' . $settings['side'] . '_dialog_close', 'click', array());
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
