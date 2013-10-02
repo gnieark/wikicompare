@@ -614,6 +614,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
           if ($('#' + link_id).hasClass('translate') && $('#itemlist_stored_' + nid).length) {
             skip_ajax = true;
           }
+
+          //List in tree mode.
+          if (context == 'list' && ($('#' + link_id).hasClass('displayed') || $('#' + link_id).hasClass('stored'))) {
+            skip_ajax = true;
+          }
+
         }
 
         if (action == 'toogle_product_checkbox' && $('#' + link_id).hasClass('displayed')) {
@@ -667,6 +673,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_profiles = false;
         send_products_tree_mode = false;
         send_infofields = false;
+        send_filters = false;
         send_manual_selected_criterions = false;
         send_selected_profiles = false;
         send_states = false;
@@ -714,6 +721,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.translate = true;
           }
 
+          if (context == 'list') {
+            send_infofields = true;
+          }
+
         }
 
         //When we want to display the criterion children in table.
@@ -740,6 +751,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_manual_selected_criterions = true;
           send_selected_profiles = true;
           send_products_tree_mode = true;
+          send_infofields = true;
+          send_filters = true;
           options.data.products_offset = $('#products_offset').text();
         }
 
@@ -799,6 +812,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_products_tree_mode = true;
           //Send infofields.
           send_infofields = true;
+          //Send filters.
+          send_filters = true;
           //Send the states.
           send_states = true;
           //Send the size of the table to adjust the lines.
@@ -824,42 +839,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('#products_tree_mode').html(0);
             }
           }
-
-          //Send the value of all filled filters.
-          var filters = {};
-          $('.home_filter').each(function(index) {
-            //Text filter
-            if  ($(this).hasClass('text') && $(this).val() != '') {
-              filters[$(this).attr('field')] = {};
-              filters[$(this).attr('field')]['type'] = 'text';
-              filters[$(this).attr('field')]['value'] = $(this).val();
-            }
-            //Number filter.
-            if ($(this).hasClass('number') && $(this).hasClass('min') && $(this).val() != '') {
-              if ($('#filter_max_' + $(this).attr('field')).val() != '') {
-                filters[$(this).attr('field')] = {};
-                filters[$(this).attr('field')]['type'] = 'number';
-                filters[$(this).attr('field')]['min'] = $(this).val();
-                filters[$(this).attr('field')]['max'] = $('#filter_max_' + $(this).attr('field')).val();
-              }
-            }
-            //Select filter.
-            if ($(this).is('select') && $(this).val() != '') {
-              filters[$(this).attr('field')] = {};
-              filters[$(this).attr('field')]['type'] = 'select';
-              filters[$(this).attr('field')]['value'] = $(this).val();
-            }
-            //Checkboxes filter.
-            if  ($(this).attr('type') == 'checkbox' && $(this).is(':checked')) {
-              if (!($(this).attr('field') in filters)) {
-                filters[$(this).attr('field')] = {};
-                filters[$(this).attr('field')]['type'] = 'checkboxes';
-                filters[$(this).attr('field')]['values'] = {};
-              }
-              filters[$(this).attr('field')]['values'][$(this).attr('value')] = $(this).attr('value');
-            }
-          });
-          options.data.filters = filters;
 
         }
 
@@ -1161,6 +1140,44 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.infofields = infofields;
         }
 
+        if (send_filters == true) {
+          //Send the value of all filled filters.
+          var filters = {};
+          $('.home_filter').each(function(index) {
+            //Text filter
+            if  ($(this).hasClass('text') && $(this).val() != '') {
+              filters[$(this).attr('field')] = {};
+              filters[$(this).attr('field')]['type'] = 'text';
+              filters[$(this).attr('field')]['value'] = $(this).val();
+            }
+            //Number filter.
+            if ($(this).hasClass('number') && $(this).hasClass('min') && $(this).val() != '') {
+              if ($('#filter_max_' + $(this).attr('field')).val() != '') {
+                filters[$(this).attr('field')] = {};
+                filters[$(this).attr('field')]['type'] = 'number';
+                filters[$(this).attr('field')]['min'] = $(this).val();
+                filters[$(this).attr('field')]['max'] = $('#filter_max_' + $(this).attr('field')).val();
+              }
+            }
+            //Select filter.
+            if ($(this).is('select') && $(this).val() != '') {
+              filters[$(this).attr('field')] = {};
+              filters[$(this).attr('field')]['type'] = 'select';
+              filters[$(this).attr('field')]['value'] = $(this).val();
+            }
+            //Checkboxes filter.
+            if  ($(this).attr('type') == 'checkbox' && $(this).is(':checked')) {
+              if (!($(this).attr('field') in filters)) {
+                filters[$(this).attr('field')] = {};
+                filters[$(this).attr('field')]['type'] = 'checkboxes';
+                filters[$(this).attr('field')]['values'] = {};
+              }
+              filters[$(this).attr('field')]['values'][$(this).attr('value')] = $(this).attr('value');
+            }
+          });
+          options.data.filters = filters;
+        }
+
         //Get all manually selected criterions to send their id to drupal.
         if (send_manual_selected_criterions == true) {
           options.data.selected_criterion_ids = manual_selected_criterion_ids;
@@ -1227,69 +1244,78 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('#' + link_id).addClass('displayed');
 
             //The children are here but hidden, we display them with a slideDown animation.
-            if (action == 'expand_list_children' && context != 'list') {
+            if (action == 'expand_list_children') {
 
-              //Standard case.
-              if (!$('#' + link_id).hasClass('translate')) {
+              if (context != 'list') {
 
-                //We replace each line by the line from checked zone, to keep the checked children information and other stuff.
-                $('#' + type + '_' + context + '_children_checked_' + nid + ' li').each(function(index) {
-                  $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + ']').replaceWith($(this).clone());
-                  //Since we only copy it, we need to remove the listener class on checkbox and link so they can have their own listener.
-                  $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .listener_set').removeClass('listener_set');
-                  $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .ajax-processed').removeClass('ajax-processed');
-//TODO centralize listener_set and ajax-processed
-                });
+                //Standard case.
+                if (!$('#' + link_id).hasClass('translate')) {
 
-                //Switch children zone and checked zone.
-                $('#' + type + '_' + context + '_children_checked_' + nid).slideUp(600);
-                $('#' + type + '_' + context + '_children_' + nid).slideDown(600);
+                  //We replace each line by the line from checked zone, to keep the checked children information and other stuff.
+                  $('#' + type + '_' + context + '_children_checked_' + nid + ' li').each(function(index) {
+                    $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + ']').replaceWith($(this).clone());
+                    //Since we only copy it, we need to remove the listener class on checkbox and link so they can have their own listener.
+                    $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .listener_set').removeClass('listener_set');
+                    $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .ajax-processed').removeClass('ajax-processed');
+  //TODO centralize listener_set and ajax-processed
+                  });
 
-                //Search for all displayed items. If not a parent of this node, we close it.
-                var parent_ids = get_parent_ids(nid, type, context);
-                $('.item_link:.displayed[ntype=' + type + '][context=' + context + '][nid!=' + nid + ']').each(function(index) {
-                  if (!($(this).attr('nid') in parent_ids)) {
-                    $(this).click();
-                  }
-                });
+                  //Switch children zone and checked zone.
+                  $('#' + type + '_' + context + '_children_checked_' + nid).slideUp(600);
+                  $('#' + type + '_' + context + '_children_' + nid).slideDown(600);
 
-              //Display itemlist with translation effect.
-              } else {
-
-                //Only case where we don't need the displayed class.
-                $('#' + link_id).removeClass('displayed');
-
-                //We are adding a new depth level.
-                depth = depth + 1;
-
-                //Get the div from the storage zone.
-                var div = '<div id="itemlist_' + depth + '" nid="' + nid + '" style="float:left; position:absolute; top: 0; left:' + depth * row_height + '%; width:100%;">';
-                div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a></span><br/>';
-                div += $('#itemlist_stored_' + nid).html();
-                div += '</div>';
-                //Attach the table after the displayed table.
-                $('#main_' + type + '_itemlists').append(div);
-
-                //Check the marked checkbox.
-                $('.itemlist_checkbox[ntype=' + type + '][context=' + context + '][parent_id=' + nid + ']').each(function(index) {
-                  var check = false;
-
-                  //In main profile itemlist, we check if the profile isn't already in the selected_profile_ids.
-                  if (type == 'profile' && context == 'table') {
-                    if ($(this).attr('nid') in selected_profile_ids) {
-                      check = true;
+                  //Search for all displayed items. If not a parent of this node, we close it.
+                  var parent_ids = get_parent_ids(nid, type, context);
+                  $('.item_link:.displayed[ntype=' + type + '][context=' + context + '][nid!=' + nid + ']').each(function(index) {
+                    if (!($(this).attr('nid') in parent_ids)) {
+                      $(this).click();
                     }
-                  }
+                  });
 
-                  //If true, we check the checkbox and make sure his parent know they have a checked children.
-                  if (check) {
-                    $('.itemlist_checkbox[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').attr('checked', 'checked');
-                    parent_checked_children('check', type, context, $(this).attr('nid'));
-                  }
-                });
+                //Display itemlist with translation effect.
+                } else {
 
-                //Slide the tables to display the new one.
-                $('#main_' + type + '_itemlists').css("transform","translateX(-" + (depth) * 100 + "%)");
+                  //Only case where we don't need the displayed class.
+                  $('#' + link_id).removeClass('displayed');
+
+                  //We are adding a new depth level.
+                  depth = depth + 1;
+
+                  //Get the div from the storage zone.
+                  var div = '<div id="itemlist_' + depth + '" nid="' + nid + '" style="float:left; position:absolute; top: 0; left:' + depth * row_height + '%; width:100%;">';
+                  div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a></span><br/>';
+                  div += $('#itemlist_stored_' + nid).html();
+                  div += '</div>';
+                  //Attach the table after the displayed table.
+                  $('#main_' + type + '_itemlists').append(div);
+
+                  //Check the marked checkbox.
+                  $('.itemlist_checkbox[ntype=' + type + '][context=' + context + '][parent_id=' + nid + ']').each(function(index) {
+                    var check = false;
+
+                    //In main profile itemlist, we check if the profile isn't already in the selected_profile_ids.
+                    if (type == 'profile' && context == 'table') {
+                      if ($(this).attr('nid') in selected_profile_ids) {
+                        check = true;
+                      }
+                    }
+
+                    //If true, we check the checkbox and make sure his parent know they have a checked children.
+                    if (check) {
+                      $('.itemlist_checkbox[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').attr('checked', 'checked');
+                      parent_checked_children('check', type, context, $(this).attr('nid'));
+                    }
+                  });
+
+                  //Slide the tables to display the new one.
+                  $('#main_' + type + '_itemlists').css("transform","translateX(-" + (depth) * 100 + "%)");
+                }
+
+              //Product list.
+              } else {
+                $('#' + link_id).addClass('stored');
+                $('.product_list_item[parent_id=' + nid + ']').show();
+//TODO collapse other displayed item, like we did in itemlist
               }
 
             }
@@ -1345,7 +1371,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 $('#' + type + '_' + context + '_children_' + nid).slideUp(600);
                 $('#' + type + '_' + context + '_children_checked_' + nid).slideDown(600);
               } else {
-                remove_children_tree2(nid, '#product_list_link_', '.product_list_item', computed);
+                remove_children_tree2(nid, '#product_list_link_', '.product_list_item', true);
               }
             }
 

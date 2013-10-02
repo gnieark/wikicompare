@@ -274,7 +274,8 @@ function wikicompare_profiles_after_update_fields($node_revision) {
  */
 function wikicompare_profiles_comparative_table_main_output(&$output) {
   //Call the generic function which generate the main itemlist.
-  $output .= wikicompare_table_render_main_itemlist('profile', 'Profiles', wikicompare_initialize_settings());
+  $settings = wikicompare_initialize_settings(array('displayed_ids' => array()));
+  $output .= wikicompare_table_render_main_itemlist('profile', 'Profiles', $settings);
 }
 
 

@@ -206,6 +206,7 @@ function wikicompare_home_page() {
   }
 
   $res = wikicompare_table_render_product_list($settings);
+
   $output .= '<span id="nb_products" style="display:none;">' . $res['count'] . '</span>';
   $output .= '<span id="products_offset" style="display:none;">' . $res['offset'] . '</span>';
   $best_products_link = array(
@@ -228,7 +229,17 @@ function wikicompare_home_page() {
   );
   $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
   $output .= '<div id="products_list" style="height:500px; overflow:auto;">';
+  //Generate product list with a table.
+  $output .= '<table><thead>';
+  $output .= '<th>Products</th>';
+  $output .= '<th>Rank</th>';
+  //Infofields header.
+  foreach ($settings['infofields'] as $infofield) {
+    $output .= '<th class="infofield_title" field="' . $infofield['name'] . '">' . $infofield['title'] . '</th>';
+  }
+  $output .= '</thead><tbody>';
   $output .= $res['output'];
+  $output .= '</tbody></table>';
   $output .= '</div>';
   $append_link = array(
     '#type' => 'link',
@@ -519,13 +530,16 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
   $settings['context'] = 'list';
 
   //If we are loading the list in standard mode.
-  $db_settings = array('get_comparable_products' => 1, 'get_infofields' => 1);
+  $db_settings = array('get_infofields' => 1);
   //If we are expanding the children of a node in tree mode.
   $parent_id = 0;
   if (isset($settings['nid'])) {
-    $db_settings = array('parent_id' => $settings['nid']);
+    $db_settings['parent_id'] = $settings['nid'];
     $parent_id = $settings['nid'];
+  } else {
+    $db_settings['get_comparable_products'] = 1;
   }
+
   //Assign filters to request from context.
   if (isset($settings['filters'])) {
     $db_settings['filters'] = $settings['filters'];
@@ -593,18 +607,8 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
 
   $limit = 5 + $offset;
 
-  //Generate product list with a table.
-  $output = '<table><thead>';
-  $output .= '<th>Products</th>';
-  $output .= '<th>Rank</th>';
-  //Infofields header.
-  foreach ($settings['infofields'] as $infofield) {
-    $output .= '<th class="infofield_title" field="' . $infofield['name'] . '">' . $infofield['title'] . '</th>';
-  }
-  $output .= '</thead><tbody>';
   //Generate items.
-  $output .= wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
-  $output .= '</tbody></table>';
+  $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
 
   //Generate the best products url.
   $url = 'compare/0';
@@ -692,8 +696,8 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
     }
 
     $output .= '<tr id="product_list_item_' . $product_id . '" class="product_list_item"';
-    //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level.
-    if (!$first) {
+    //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level or if we are displaying a children.
+    if (!$first || isset($settings['nid'])) {
       $output .= ' style="display:none;"';
     }
     //In computed tree mode, we link the children to their parent with this attribute.
@@ -708,6 +712,7 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
     //Render infofields.
     foreach ($settings['infofields'] as $infofield) {
       $field = 'wikicf_' . $infofield['name'];
+
       $output .= '<td>';
       //Avoid value = 0;
       if ($product['data']->$field) {
@@ -1385,6 +1390,9 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
   if (isset($settings['include_root_items']) && !isset($settings['not_first'])) {
     $db_settings['parent_id'] = NULL;
   }
+  if (isset($settings['infofields'])) {
+    $db_settings['get_infofields'] = 1;
+  }
   $nodes = request_db($type, $db_settings, $settings);
 
   $parent_ids = array();
@@ -1772,10 +1780,8 @@ function wikicompare_get_append_product_list_response($method = 'ajax') {
 
   $commands = array();
   $res = wikicompare_table_render_product_list($settings, array(), $_POST['products_offset']);
-  $commands[] = ajax_command_invoke('#products_list', 'append', array($res['output']));
+  $commands[] = ajax_command_invoke('#products_list tbody', 'append', array($res['output']));
   $commands[] = ajax_command_invoke('#products_offset', 'html', array($res['offset']));
-  //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-  $commands[] = ajax_command_after('#products_list_column', '<div class="to_remove"/>');
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -2129,7 +2135,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
   $commands[] = ajax_command_html('#nb_products', $res['count']);
   $commands[] = ajax_command_html('#products_offset', $res['offset']);
   $commands[] = ajax_command_invoke('#best_products_link', 'attr', array('href', $res['url']));
-  $commands[] = ajax_command_html('#products_list', $res['output']);
+  $commands[] = ajax_command_invoke('#products_list tbody', 'html', array($res['output']));
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;

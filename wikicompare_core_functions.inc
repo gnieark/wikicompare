@@ -779,7 +779,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   $or = db_or();
 
   //If we didn't used another method to recover the nids.
-  if (isset($db_settings['nids'])) {
+  if (isset($db_settings['nids']) && !empty($db_settings['nids'])) {
     $or->condition('n.nid', $db_settings['nids'], 'in');
   }
 
