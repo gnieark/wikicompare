@@ -752,7 +752,6 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $query->addField('n', 'parent_id', 'parent_id');
     //If the nodes to recover are not specify by the nids in argument, then it means we need to use the parent_id.
     if (!isset($db_settings['nids']) && !isset($db_settings['get_comparable_products'])) {
-      $query->condition('n.parent_id', $db_settings['parent_id']);
       //By default, only published node are return, unless specify in the settings.
       $state = unserialize(WIKICOMPARE_STATE_PUBLISHED);
       if (isset($settings['states']['draft'])) {
@@ -762,13 +761,6 @@ function request_db($type, $db_settings = array(), $settings=array()) {
         $state = array_merge($state, array('rejected', 'disactivated'));
       }
       $query->condition('n.state', $state, 'in');
-    }
-
-    if (isset($db_settings['get_comparable_products'])) {
-      $or = db_or();
-      $or->condition('n.has_children', 0);
-      $or->condition('n.comparable', 'always-combine');
-      $query->condition($or);
     }
 
     //The returned nodes are ordered by the sequence field.
@@ -782,17 +774,32 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $query->addField('n', 'percent', 'percent');
     $query->addField('n', 'css_class', 'css_class');
     $query->addField('n', 'criterion_weight', 'weight');
-    //If the nodes to recover are not specify by the nids in argument, then it means we need to find them thanks to the products and criterions ids.
-    if (!isset($db_settings['nids'])) {
-      $query->condition("n.product_id", $db_settings['product_ids'], 'in');
-      $query->condition("n.criterion_id", $db_settings['criterion_ids'], 'in');
-    }
   }
+
+  $or = db_or();
 
   //If we didn't used another method to recover the nids.
   if (isset($db_settings['nids'])) {
-    $query->condition('n.nid', $db_settings['nids'], 'in');
+    $or->condition('n.nid', $db_settings['nids'], 'in');
   }
+
+  //We can't use isset because the value of parent_id can be null.
+  if (array_key_exists('parent_id', $db_settings)) {
+    $or->condition('n.parent_id', $db_settings['parent_id']);
+  }
+
+  if (isset($db_settings['get_comparable_products'])) {
+    $or->condition('n.has_children', 0);
+    $or->condition('n.comparable', 'always-combine');
+  }
+
+  //If the nodes to recover are not specify by the nids in argument, then it means we need to find them thanks to the products and criterions ids.
+  if ($type == 'evaluation' && !isset($db_settings['nids'])) {
+    $or->condition("n.product_id", $db_settings['product_ids'], 'in');
+    $or->condition("n.criterion_id", $db_settings['criterion_ids'], 'in');
+  }
+
+  $query->condition($or);
 
   switch ($type) {
     case 'product':

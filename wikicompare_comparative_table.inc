@@ -334,6 +334,7 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   }
 
   //Generate the main product itemlist.
+  $settings['displayed_ids'] = $settings['product_column_ids'];
   $output = wikicompare_table_render_main_itemlist('product', 'Products', $settings);
 
   //Generate the comparative table.
@@ -452,8 +453,12 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
   //Only the main itemlist of the table will be rendered by this function.
   $settings['context'] = 'table';
 //TODO change table keyword for context into main
-  //Find all nodes on the first level of the tree.
-  $nodes = request_db($type, array('parent_id' => NULL), $settings);
+
+  $settings['include_root_items'] = True;
+
+  //Find all nodes which are displayed or in the root of the itemlist, and organize them into a tree.
+  $nodes = wikicompare_build_recursive_data($type, $settings['displayed_ids'], $settings);
+  $nodes = $nodes['tree'];
 
 //TODO move into profile module
   if (module_exists('wikicompare_profiles')) {
@@ -465,6 +470,8 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 
   $output ="<div id='comparative_table_main_" . $type . "'>";
 
+  $output .= '<h3>' . $title . '</h3>';
+
   if (isset($settings['itemlist_translate'])) {
     $output .= '<div id="main_' . $type . '_itemlist_container" style="overflow:hidden;">'; //TODO not sure we still need this container.
     //The container which contain the tables, and will slide to display them.
@@ -473,10 +480,7 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
   }
 
   //Building the data for the itemlist.
-  $itemlist_data = wikicompare_build_itemlist($type, $nodes, 0, $settings);
-
-  //Render the item list
-  $output .= theme_item_list(array('items' => $itemlist_data, 'title' => $title, 'type' => 'ul', 'attributes' => array()));
+  $output .= wikicompare_build_itemlist($type, $nodes, 0, $settings);
 
   if (isset($settings['itemlist_translate'])) {
     $output .= '</div>';
@@ -1161,7 +1165,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
               ),
             ));
             //We check it immediately if it was check before (a product which already has his column in table, a criterion present in the global array in javascript etc...
-            if (isset($node['data']->displayed)) {
+            if (isset($settings['displayed_ids']) && in_array($node['data']->nid, $settings['displayed_ids'])) { //TODO replace everywhere isset($node['data']->displayed)) {
               $checkbox_settings['element']['#checked'] = True;
             }
 
@@ -1180,7 +1184,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
                   'style' => 'display:none',
                 )
               );
-              if (isset($node['data']->displayed)) {
+              if (isset($settings['displayed_ids']) && in_array($node['data']->nid, $settings['displayed_ids'])) {
                 $checkbox_link['#attributes']['class'][] = 'displayed';
               }
               $prefix .= render($checkbox_link);
@@ -1223,7 +1227,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
         $class[] = $type . '_table_link';
       }
       //Replace the title by the link.
-      $title = l($title, $url,  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context']), 'html' => True));
+      $title = l($title, $url,  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context'], 'nid' => $node['data']->nid, 'parent_id' => $node['data']->parent_id), 'html' => True));
     }
 
   } else {
@@ -1280,50 +1284,49 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
  */
 function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
 
-  $items = array();
+  $output = '<ul>';
   //Add each node in the returned array.
   foreach ($nodes as $nid => $node){
-    //Id of the item.
-    $items[$nid]['id'] = $type . '_' . $settings['context'] . '_item_' .  $nid;
-    //Name of the item.
-    $settings['parent_id'] = $parent_node;
-    $items[$nid]['data'] = wikicompare_table_get_supertitle_item($type, $node, $settings);
-    //Needed argument for javascript.
-    $items[$nid]['type'] =  $type;
-    $items[$nid]['context'] = $settings['context'];
-    $items[$nid]['nid'] = $nid;
-    $items[$nid]['parent_id'] = $settings['parent_id'];
-    //Class used to prepare variable for cleaning function.
-    $items[$nid]['class'] = array($type . '_item');
+    $output .= '<li id="' . $type . '_' . $settings['context'] . '_item_' .  $nid . '" class ="' . $type . '_item';
     if ($node['data']->has_children){
-      $items[$nid]['class'][] = 'has_children';
+      $output .= ' has_children';
     }
-    //Class used to easily act on the children of a node.
+    //If a node has children on initialization or is himself in displayed_ids, then it means he had checked children.
+    if (!empty($node['children']) || in_array($nid, $settings['displayed_ids'])) {
+      $output .= ' has_checked_children';
+    }
+    $output .= '" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $nid . '" parent_id="' . $parent_node .'"';
     if ($parent_node != 0) {
-      $items[$nid]['class'] = array_merge($items[$nid]['class'], array($type . '_' . $settings['context'] . '_child_' . $parent_node));
       //If the itemlist is computed, all children are hidden.
       if ($settings['computed']) {
-        $items[$nid]['style'] = 'display:none';
+        $output .= ' style="display:none"';
       }
     }
+    $output .= '>';
 
-    //If the itemlist is computed and the node has children, then we call the recursive function to get the children.
-//TODO Where do we still need this?
-//    if ($settings['computed'] && $node['data']->has_children) {
-//       $items[$nid]['children'] = wikicompare_build_itemlist($type, $node['children'], $nid, $settings);
-    //Else, we just add the div which will contain the children after an ajax call, and the fastaction form.
-//    } else {
-    $items[$nid]['data'] .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;"></div>';
-//    }
+    //Name of the item.
+    $settings['parent_id'] = $parent_node;
+    $output .= wikicompare_table_get_supertitle_item($type, $node, $settings);
 
+    //Set the checked zone.
+    $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_checked_' . $nid . '" class="'. $type . '_children">';
+    //Get the children.
+    $output .= wikicompare_build_itemlist($type, $node['children'], $nid, $settings);
+    $output .= '</div>';
+    //Set the children zone.
+    $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;">';
+    $output .= '</div>';
+    $output .= '</li>';
   }
+
+  $output .= '</ul>';
 
   //Display an error message if we try to build an itemlist without data yet.
-  if (empty($items)) {
-    $items[]['data'] = "There is no data yet.";
-  }
+/* TODO set the message outside of the function  if (empty($nodes)) {
+    $output = "<p>There is no data yet.</p>";
+  }*/
 
-  return $items;
+  return $output;
 
 }
 
@@ -1377,22 +1380,28 @@ function wikicompare_build_recursive_data($type, $node_ids, $settings){
  */
 function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
 
-  $parent_ids = array();
-
   //Get the details of the specified nodes. No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
-  $nodes = request_db($type, array('nids' => $node_ids), $settings);
+  $db_settings = array('nids' => $node_ids);
+  if (isset($settings['include_root_items']) && !isset($settings['not_first'])) {
+    $db_settings['parent_id'] = NULL;
+  }
+  $nodes = request_db($type, $db_settings, $settings);
 
+  $parent_ids = array();
   foreach ($nodes as $nid => $node) {
-
-    //Check if some children of this node launched the recursive function to find this node as their parent. Then assign them as children of this node and unset the node in the array.
-    if (isset($res['parent_ressource'][$nid]['children'])) {
-      $node['children'] = $res['parent_ressource'][$nid]['children'];
-      unset($res['parent_ressource'][$nid]);
-    }
 
     //If the parent was already set on the tree by a child on a different level
     if (isset($res['tree'][$nid])) {
       $node['children'] = $res['tree'][$nid]['children'] + $node['children'];
+    }
+
+    //Check if some children of this node launched the recursive function to find this node as their parent. Then assign them as children of this node and unset the node in the array.
+    if (isset($res['parent_ressource'][$nid]['children'])) {
+      //Note that parent_ressource is prioritary before $res['tree'] so we insert it after. Also, we can't use operator +.
+      foreach ($res['parent_ressource'][$nid]['children'] as $child_id => $child) {
+        $node['children'][$child_id] = $child;
+      }
+      unset($res['parent_ressource'][$nid]);
     }
 
     //Keep all ids and object outside of the tree, for other uses.
@@ -1410,11 +1419,13 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
   }
 
   //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
-  if ($parent_ids){
+  if (!empty($parent_ids)){
+    $settings['not_first'] = True;
     $res = wikicompare_build_recursive_tree($type, $parent_ids, $res, $settings);
   } else {
     unset($res['parent_ressource']);
   }
+
 
   return $res;
 
@@ -1598,35 +1609,25 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
     //Initialize settings with the variable from javascript.
     $settings = wikicompare_initialize_settings($_POST);
 
+    //If a product table is already displayed in the table, we check it by default.
+    if ($_POST['type'] == 'product' && $settings['context'] == 'table') {
+      $settings['displayed_ids'] = $settings['product_column_ids'];
+    }
+
+    //If a multidialog criterion is already checked in javascript global variable, we check it by default.
+    if ($_POST['type'] == 'criterion' && $settings['context'] == 'multidialog') {
+      $settings['displayed_ids'] = $settings['selected_criterion_ids'];
+    }
+
+    if (module_exists('wikicompare_profiles')) {
+      //Auto check the already selected profiles in main table.
+      wikicompare_profiles_table_prepare_itemlist($settings);
+    }
+
     //Get the children, with the parent nid.
     $nodes = request_db($_POST['type'], array('parent_id' => $_POST['nid']),  $settings);
 
-    foreach ($nodes as $nid => $node) {
-
-      //If a product table is already displayed in the table, we check it by default.
-      if ($_POST['type'] == 'product' && $settings['context'] == 'table') {
-        if (in_array($nid, $settings['product_column_ids'])) {
-          $nodes[$nid]['data']->displayed = True;
-        }
-      }
-
-      //If a multidialog criterion is already checked in javascript global variable, we check it by default.
-      if ($_POST['type'] == 'criterion' && $settings['context'] == 'multidialog') {
-        if (in_array($nid, $settings['selected_criterion_ids'])) {
-          $nodes[$nid]['data']->displayed = True;
-        }
-      }
-
-      if (module_exists('wikicompare_profiles')) {
-        //Auto check the already selected profiles in main table.
-        wikicompare_profiles_table_prepare_itemlist($nid, $nodes, $_POST);
-      }
-
-    }
-
     if ($settings['context'] != 'list') {
-      //Building the data for the itemlist.
-      $itemlist_data = wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
 
       $output = '';
 
@@ -1635,7 +1636,7 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       }
 
       //Rendering the itemlist.
-      $output .= theme_item_list(array('items' => $itemlist_data, 'title' => '',  'type' => 'ul', 'attributes' => array()));
+      $output .= wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
 
       if (isset($_POST['translate'])) {
         $output .= '</div>';
@@ -1644,6 +1645,8 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       if (!isset($_POST['translate'])) {
         //We prepared a div under the parent product. This command will fill it with the product children, and replace anything that was here before.
         $commands[] = ajax_command_html('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], $output);
+        //We mark the children zone as stored. Next time, no ajax call will be made.
+        $commands[] = ajax_command_invoke('#'. $_POST['type'] . '_' . $settings['context'] . '_children_' . $_POST['nid'], 'addClass', array('stored'));
       } else {
         //We add the new table in the storage zone, then javascript will copy it after the displayed table. Note we can't use ajax_command_append because it adds an unwanted div.
         $commands[] = ajax_command_invoke('#storage_zone', 'append', array($output));

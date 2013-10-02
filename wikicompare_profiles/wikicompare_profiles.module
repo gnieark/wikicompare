@@ -291,13 +291,11 @@ function wikicompare_profiles_comparative_table_main_output(&$output) {
  * @param $POST
  *   The data coming from the javascript.
  */
-function wikicompare_profiles_table_prepare_itemlist($nid, &$nodes, $POST) {
+function wikicompare_profiles_table_prepare_itemlist(&$settings) {
 
   if (!empty($POST['selected_profile_ids'])) {
     //If the node is in the global variable of the javascript, we mark it to be checked.
-    if (in_array($nid, $POST['selected_profile_ids'])) {
-      $nodes[$nid]['data']->displayed = True;
-    }
+    $settings['displayed_ids'] = $settings['selected_profile_ids'];
   }
 
 }

@@ -604,8 +604,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('.to_remove').remove();
         }
 
-        if (action == 'expand_list_children' && $('#' + link_id).hasClass('translate')) {
-          if ($('#itemlist_stored_' + nid).length) {
+        if (action == 'expand_list_children') {
+          //Stored itemlist under children div.
+          if ($('#' + type + '_' + context + '_children_' + nid).hasClass('stored')) {
+            skip_ajax = true;
+          }
+
+          //Stored itemlist in the stored zone.
+          if ($('#' + link_id).hasClass('translate') && $('#itemlist_stored_' + nid).length) {
             skip_ajax = true;
           }
         }
@@ -1223,10 +1229,31 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //The children are here but hidden, we display them with a slideDown animation.
             if (action == 'expand_list_children' && context != 'list') {
 
+              //Standard case.
               if (!$('#' + link_id).hasClass('translate')) {
 
-                $('#' + type + '_' + context + '_children_' + nid).slideDown();
+                //We replace each line by the line from checked zone, to keep the checked children information and other stuff.
+                $('#' + type + '_' + context + '_children_checked_' + nid + ' li').each(function(index) {
+                  $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + ']').replaceWith($(this).clone());
+                  //Since we only copy it, we need to remove the listener class on checkbox and link so they can have their own listener.
+                  $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .listener_set').removeClass('listener_set');
+                  $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .ajax-processed').removeClass('ajax-processed');
+//TODO centralize listener_set and ajax-processed
+                });
 
+                //Switch children zone and checked zone.
+                $('#' + type + '_' + context + '_children_checked_' + nid).slideUp(600);
+                $('#' + type + '_' + context + '_children_' + nid).slideDown(600);
+
+                //Search for all displayed items. If not a parent of this node, we close it.
+                var parent_ids = get_parent_ids(nid, type, context);
+                $('.item_link:.displayed[ntype=' + type + '][context=' + context + '][nid!=' + nid + ']').each(function(index) {
+                  if (!($(this).attr('nid') in parent_ids)) {
+                    $(this).click();
+                  }
+                });
+
+              //Display itemlist with translation effect.
               } else {
 
                 //Only case where we don't need the displayed class.
@@ -1237,7 +1264,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
                 //Get the div from the storage zone.
                 var div = '<div id="itemlist_' + depth + '" nid="' + nid + '" style="float:left; position:absolute; top: 0; left:' + depth * row_height + '%; width:100%;">';
-                div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a></span>';
+                div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a></span><br/>';
                 div += $('#itemlist_stored_' + nid).html();
                 div += '</div>';
                 //Attach the table after the displayed table.
@@ -1256,7 +1283,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
                   //If true, we check the checkbox and make sure his parent know they have a checked children.
                   if (check) {
-                    $('.itemlist_checkbox:[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').attr('checked', 'checked');
+                    $('.itemlist_checkbox[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').attr('checked', 'checked');
                     parent_checked_children('check', type, context, $(this).attr('nid'));
                   }
                 });
@@ -1303,8 +1330,20 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
             if (action == 'expand_list_children') {
               if (context != 'list') {
-                $('#' + type + '_' + context + '_children_' + nid).slideUp();
-                $('.' + type + '_' + context + '_child_' + nid).addClass('to_remove');
+                //Fill the checked zone with a copy of the checked item in children zone.
+                $('#' + type + '_' + context + '_children_checked_' + nid).empty();
+                $('#' + type + '_' + context + '_children_checked_' + nid).append('<ul></ul>');
+                $('.' + type + '_item:.has_checked_children[context=' + context + '][parent_id=' + nid + ']').each(function (key, value) {
+                  //Append the item to the checked zone. The first is important because we are adding item containing ul, otherwise the second item will be add to the first etc...
+                  $('#' + type + '_' + context + '_children_checked_' + nid + ' ul').first().append($(this).clone());
+                  //Since we only copy it, we need to remove the listener class on checkbox and link so they can have their own listener.
+                  $('#' + type + '_' + context + '_children_checked_' + nid + ' .' + type + '_item:.has_checked_children[context=' + context + '][parent_id=' + nid + '] .listener_set').removeClass('listener_set');
+                  $('#' + type + '_' + context + '_children_checked_' + nid + ' .' + type + '_item:.has_checked_children[context=' + context + '][parent_id=' + nid + '] .ajax-processed').removeClass('ajax-processed');
+                });
+
+                //Switch checked and children zone.
+                $('#' + type + '_' + context + '_children_' + nid).slideUp(600);
+                $('#' + type + '_' + context + '_children_checked_' + nid).slideDown(600);
               } else {
                 remove_children_tree2(nid, '#product_list_link_', '.product_list_item', computed);
               }
@@ -1332,8 +1371,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('.evaluation_product_' + nid).addClass('to_remove');
               $('.infofield_product_' + nid).addClass('to_remove');
 
-              //We disactivated the product checkbox during the ajax call to avoid user spamming, reactivate it.
-              $('#product_table_checkbox_' + nid).removeAttr('disabled');
+              //We disactivated the product checkbox during the ajax call to avoid user spamming, reactivate it. We use a class base because the checkbox to reactive can be the one on checked zone or the one on children zone.
+              $('.itemlist_checkbox[ntype=product][context=table][nid=' + nid + ']').removeAttr('disabled');
 
             }
 
@@ -1512,27 +1551,58 @@ Drupal.behaviors.WikicompareComparativeTable = {
      */
     function parent_checked_children(action, type, context, nid) {
 
+      var test = false;
+      var parent_id = $('#' + type + '_' + context + '_item_' + nid).attr('parent_id');
+
       //If we want the parent to know they have a checked children.
       if (action == 'check') {
         //We mark the current item.
         $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').addClass('has_checked_children');
       //If we are unchecking a children.
       } else {
-        //We unmark the current item.
-        $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').removeClass('has_checked_children');
-        //We check if it has other checked children, in this case we remark it.
+
+        //We check if it has other checked children, in this case we save it.
         $('.' + type + '_item[context=' + context + '][parent_id=' + nid + ']').each(function(index) {
           if ($(this).hasClass('has_checked_children')) {
-            $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').addClass('has_checked_children');
+            test = true;
           }
         });
+        //If the item is himself checked, we also save it.
+        if ($('.itemlist_checkbox[ntype=' + type + '][context=' + context + '][nid=' + nid + ']').is(':checked')) {
+          test = true;
+        }
+
+        if (!test) {
+          //We unmark the current item.
+          $('.' + type + '_item[context=' + context + '][nid=' + nid + ']').removeClass('has_checked_children');
+          //We hide the item in checked zone and mark it for remove.
+          $('#' + type + '_' + context + '_children_checked_' + parent_id + ' .' + type + '_item[context=' + context + '][nid=' + nid + ']').slideUp();
+          $('#' + type + '_' + context + '_children_checked_' + parent_id + ' .' + type + '_item[context=' + context + '][nid=' + nid + ']').addClass('to_remove');
+        }
+
       }
 
-      //Get the parent id, and recursively call the function.
-      var parent_id = $('#' + type + '_' + context + '_item_' + nid).attr('parent_id');
-      if (parent_id != 0) {
-        parent_checked_children(action, type, context, parent_id)
+      //Get the parent id, and recursively call the function. We only do it if we are checking or if the current item didn't kept his has_checked_children class.
+      if (!test) {
+        if (parent_id != 0) {
+          parent_checked_children(action, type, context, parent_id)
+        }
       }
+    }
+
+    /*
+     * Function to recursively get a associative array of a given nid.
+     */
+    function get_parent_ids(current_nid, type, context) {
+      var parent_ids = {};
+      var parent_id = $('.' + type + '_item[context=' + context + '][nid=' + current_nid + ']').attr('parent_id');
+      parent_ids[parent_id] = parent_id;
+      if (parent_id != 0) {
+        parent_ids = $.extend(parent_ids, get_parent_ids(parent_id, type, context));
+      }
+
+      return parent_ids;
+
     }
 
   }
