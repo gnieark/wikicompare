@@ -159,14 +159,24 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         $res = wikicompare_build_recursive_data($type, array($parent_id), wikicompare_initialize_settings());
         $parent_name = $res['data'][$parent_id]['data']->fulltitle;
       }
-      //TODO We need to remove the keyword context in simple_dialog.js to make this link work.
+
       //Link which will open a popin where we can select the parent.
       $select_parent_link = array(
-        'text' => 'Select parent',
-        'title' => 'Select parent',
-        'selector' => 'dialog-content',
-        'path' => 'wikicompare_get_dialog_callback/selectdialog/' . $type . '/wikicompare-parent-id/' . $nid,
+        '#type' => 'link',
+        '#title' => 'Select parent',
+        '#href' => 'wikicompare_get_dialog_callback/nojs',
+        '#id' => 'select_parent_link_' . $nid,
+        '#attributes' => array(
+          'class' => array('dialog'),
+          'action' => 'selectdialog',
+          'side' => 'left',
+          'nid' => $nid,
+          'ntype' => $type,
+          'context' => 'selectdialog',
+          'container' => 'wikicompare-parent-id',
+        ),
       );
+
       //Link which will reset the parent.
       $clear_parent_link = l('Clear', '/',  array('attributes' => array('class' => array('clear_link'), 'type' => $type)));
 
@@ -180,7 +190,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
           '#id' => 'container-wikicompare-parent-id',
           '#weight' => -3,
           //We add the link after the container.
-          '#suffix' => '<p>' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>'
+          '#suffix' => '<p>' . render($select_parent_link) . ' ' . $clear_parent_link . '</p>'
         );
         //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the parent.
         $form['wikicompare_parent_id']['#attributes']['style'] = 'display:none;';
@@ -192,7 +202,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         $output .= '<p><span id="container-wikicompare-parent-id">' . $parent_name . '</span>';
         if ($readonly != True) {
           //Span with the parent_id, which will be recovered by the submit function and updated by javascript. Followed by the link.
-          $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $parent_id . '</span> ' . theme('simple_dialog_link', $select_parent_link) . ' ' . $clear_parent_link . '</p>';
+          $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $parent_id . '</span> ' . render($select_parent_link) . ' ' . $clear_parent_link . '</p>';
         }
       }
 
@@ -541,37 +551,21 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
  */
 function add_fastaction_items($type, $node_array){
 
-  //The space between the node detail and the fastaction items.
-  $output = ' ';
+
   $nid = $node_array['data']->nid;
+  $actions = array();
 
   //If the node is an evaluation, then we can only fastedit the item, not fastadd or fastremove.
   if ($type == 'evaluation') {
 
     //Unless the database say the user can't fastedit the node, for exemple if he's not the author of some of the revisions.
     if (!isset($node_array['no-edit'])) {
-      //Create the image link to edit the node
-      $img = theme('image', array(
-        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to edit ') . $type . ' ' . $nid,
-        'height' => '100%',
-      ));
-      //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastaction_item '), 'type' => $type, 'action' => 'edit'), 'html' => True));
-      $output .= $img_link_to_edit;
+      $actions['edit'] = 'edit';
     }
 
   //We can fastadd / fastedit / fastremove all the other node types.
   } else {
-    //Create the image link to add a new node.
-    $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-      'alt' => t('Link to add children ') . $type . ' ' . $nid,
-      'height' => '100%',
-    ));
-    //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_to_add = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_add_link_' . $nid, 'class' => array('fastaction_item '), 'type' => $type, 'action' => 'add'), 'html' => True));
-    $output .= $img_link_to_add;
+    $actions['add'] = 'add';
 
     //Test if we can fastedit the item, based on the information of the database query function.
     $test = False;
@@ -586,29 +580,28 @@ function add_fastaction_items($type, $node_array){
 
     //If the user can display the fastedit item.
     if ($test == False) {
-      //Create the image link to edit the node.
-      $img = theme('image', array(
-        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-        'alt' => t('Link to edit ') . $type . ' ' . $nid,
-        'height' => '100%',
-      ));
-      //Create the link. The html = True indicate that the title of the link contain html.
-      $img_link_to_edit = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_edit_link_' . $nid, 'class' => array('fastaction_item '), 'type' => $type, 'action' => 'edit'), 'html' => True));
-      $output .= $img_link_to_edit;
+      $actions['edit'] = 'edit';
 
       //If the user can display the fastremove item.
       if (!isset($node_array['no-remove'])) {
-        //Create the image link to remove the node.
-        $img = theme('image', array(
-          'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
-          'alt' => t('Link to remove ') . $type . ' ' . $nid,
-          'height' => '100%',
-        ));
-        //Create the link. The html = True indicate that the title of the link contain html.
-        $img_link_to_remove = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_remove_link_' . $nid, 'class' => array('fastaction_item '), 'type' => $type, 'action' => 'remove'), 'html' => True));
-        $output .= $img_link_to_remove;
+        $actions['remove'] = 'remove';
       }
     }
+  }
+
+  //The space between the node detail and the fastaction items.
+  $output = ' ';
+
+  foreach ($actions as $action) {
+    //Create the image link to edit the node
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'alt' => 'Link to ' . $action . ' ' . $type . ' ' . $nid,
+      'height' => '100%',
+    ));
+    //Create the link. The html = True indicate that the title of the link contain html.
+    $img_link = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_' . $action . '_link_' . $nid, 'class' => array('dialog'), 'nid' => $nid,'ntype' => $type, 'action' => 'fastaction', 'fastaction' => $action, 'side' => 'right'), 'html' => True));
+    $output .= $img_link;
   }
 
   //Return the html code.
@@ -640,130 +633,84 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
   $type = $_POST['type'];
   $fastaction = $_POST['fastaction'];
 
-
   $commands = array();
-  //If we want to display the form.
-  if ($_POST['display']) {
 
-    $output = '';
+  $output = '<form id="form_fastaction_' . $nid . '" class="form_fastaction">';
 
-    //Define if we want to display the form after an itemlist or after a row in the table.
-    $display_type = 'itemlist';
-    if (in_array($type, array('criterion','evaluation'))) {
-      $display_type = 'row_table';
-    }
-
-    if ($display_type == 'row_table') {
-      $colspan = '';
-      //Automatically adjust to the size of the table.
-      if (isset($_POST['colspan'])) {
-        $colspan = 'colspan="' . $_POST['colspan'] . '"';
-      }
-      $output .= '<tr id="form_fastaction_' . $nid . '" class="form_fastaction"><td class="row_auto_colspan" ' . $colspan . '>';
-    }
-    $output .= '<form id="form_fastaction_' . $nid . '" class="form_fastaction">';
-
-    //If we want to fastremove the node.
-    if ($fastaction == 'remove') {
-      //Display a confirmation message
-      $label = array(
-        '#markup' => t('Do you really want to remove this ') . $type . '<br/>',
-      );
-      $output .= render($label);
-
-    //Else, display the form.
-    } else {
-
-      //Preparing the new object, in case of a node creation.
-      $node = new stdClass;
-      $node->type = $type;
-      $readonly = False;
-      $tnode = new stdClass;
-      $readonly_translation = False;
-
-      //If we are fastediting the node, we load its informations from database.
-      if ($fastaction == 'edit') {
-        //Load node from database.
-        $node = node_load($nid);
-
-        //Test if we can fastedit the main language node.
-        $query = db_select('node_revision', 'n');
-        $query->addField('n', 'nid', 'nid');
-        $query->addField('n', 'uid', 'uid');
-        $query->condition('n.nid', $nid);
-        $result = $query->execute();
-        foreach ($result as $record) {
-          if ($GLOBALS['user']->uid != $record->uid) {
-            $readonly = True;
-          }
-        }
-
-        if (module_exists('wikicompare_translation')) {
-          //Get tnode and test if we can fastedit it.
-          wikicompare_translation_fastaction_get_tnode($tnode, $readonly_translation, $node);
-        }
-
-      //If we are just fastadding a node, then we insert an hidden span containing the id of the parent.
-      } else {
-        $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $nid . '</span>';
-      }
-
-      $form = array();
-      $form_state = array();
-      //Call the generic function which will build the form. $output will be updated with the form.
-      wikicompare_build_form('fastaction', $form, $form_state, $type, $output, $nid, $fastaction, $node, $readonly, $tnode, $readonly_translation);
-
-    }
-
-    //Add an error zone which will be filled if we badly submit the form.
-    $output .= '<div id="form_fastaction_error_zone"></div>';
-
-    //Add the submit button, followed by his hidden ajax link.
-    $output .= '<input id="form_fastaction_submit_' . $nid . '" type="submit" value="Confirm" class="form_fastaction_submit button"/>';
-    $submit_link = array(
-      '#type' => 'link',
-      '#title' => 'submit',
-      '#href' => 'wikicompare_table_fastaction_submit_callback/nojs/',
-      '#id' => 'form_fastaction_submit_link_' . $nid ,
-      '#attributes' => array(
-        'class' => 'form_fastaction_submit_link',
-        'style' => 'display:none',
-        'type' => $type,
-        'action' => $fastaction,
-      )
+  //If we want to fastremove the node.
+  if ($fastaction == 'remove') {
+    //Display a confirmation message
+    $label = array(
+      '#markup' => t('Do you really want to remove this ') . $type . '<br/>',
     );
-    $output .= render($submit_link);
-    //Add the cancel button.
-    $output .= '<input id="form_fastaction_cancel_ ' . $nid . '" type="button" value="Cancel" class="form_fastaction_cancel button"/>';
-    $output .= '</form>';
+    $output .= render($label);
 
-    if ($display_type == 'row_table') {
-      $output .= '</td></tr>';
+  //Else, display the form.
+  } else {
+
+    //Preparing the new object, in case of a node creation.
+    $node = new stdClass;
+    $node->type = $type;
+    $readonly = False;
+    $tnode = new stdClass;
+    $readonly_translation = False;
+
+    //If we are fastediting the node, we load its informations from database.
+    if ($fastaction == 'edit') {
+      //Load node from database.
+      $node = node_load($nid);
+
+      //Test if we can fastedit the main language node.
+      $query = db_select('node_revision', 'n');
+      $query->addField('n', 'nid', 'nid');
+      $query->addField('n', 'uid', 'uid');
+      $query->condition('n.nid', $nid);
+      $result = $query->execute();
+      foreach ($result as $record) {
+        if ($GLOBALS['user']->uid != $record->uid) {
+          $readonly = True;
+        }
+      }
+
+      if (module_exists('wikicompare_translation')) {
+        //Get tnode and test if we can fastedit it.
+        wikicompare_translation_fastaction_get_tnode($tnode, $readonly_translation, $node);
+      }
+
+    //If we are just fastadding a node, then we insert an hidden span containing the id of the parent.
+    } else {
+      $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $nid . '</span>';
     }
 
-    //Insert the form in the page. Note we can't use ajax_command_before or ajax_command_after because it adds an unwanted div.
-    switch ($type) {
-      case ('product'):
-        $commands[] = ajax_command_invoke('#product_table_children_' . $nid, 'before', array($output));
-        break;
-      case ('criterion'):
-        $commands[] = ajax_command_invoke('#criterion_table_' . $nid, 'after', array($output));
-        break;
-      case ('evaluation'):
-        $commands[] = ajax_command_invoke('#criterion_table_' . $node->wikicompare_criterion_id['und'][0]['target_id'], 'after', array($output));
-        break;
-    }
-
-    if (module_exists('wikicompare_profiles')) {
-      //Add the fastaction form after the profile item.
-      wikicompare_profiles_fastaction_command($commands, $type, $nid, $output);
-    }
-
-    //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-    $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
-
+    $form = array();
+    $form_state = array();
+    //Call the generic function which will build the form. $output will be updated with the form.
+    wikicompare_build_form('fastaction', $form, $form_state, $type, $output, $nid, $fastaction, $node, $readonly, $tnode, $readonly_translation);
 
   }
+
+  //Add an error zone which will be filled if we badly submit the form.
+  $output .= '<div id="form_fastaction_error_zone"></div>';
+
+  //Add the submit button, followed by his hidden ajax link.
+  $output .= '<input id="form_fastaction_submit_' . $nid . '" type="submit" value="Confirm" class="form_fastaction_submit button"/>';
+  $submit_link = array(
+    '#type' => 'link',
+    '#title' => 'submit',
+    '#href' => 'wikicompare_table_fastaction_submit_callback/nojs/',
+    '#id' => 'form_fastaction_submit_link_' . $nid ,
+    '#attributes' => array(
+      'class' => 'form_fastaction_submit_link',
+      'style' => 'display:none',
+      'type' => $type,
+      'fastaction' => $fastaction,
+      'side' => $_POST['side']
+    )
+  );
+  $output .= render($submit_link);
+  $output .= '</form>';
+
+  $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog', $output);
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -976,10 +923,11 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
         }
       }
 
-      //Clean the table, it'll remove the fastaction form.
+      //Close the dialog
+      $commands[] = ajax_command_invoke('#' . $_POST['side'] . '_dialog_close', 'click', array());
+
+      //Update the table.
       $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
-      //Ensure we can reopen the form by clicking on the fastaction item.
-      $commands[] = ajax_command_invoke('.fastaction_item:.displayed', 'removeClass', array('displayed'));
 
     //If a required field is missing.
     } else {

@@ -537,11 +537,9 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
     //Build the itemlist from the criterions of the object.
     $criterions = array();
     if (!empty($selected_criterion_ids)) {
-      $settings = wikicompare_initialize_settings(array('context' => 'selected', 'computed' => 1));
+      $settings = wikicompare_initialize_settings(array('context' => 'selected', 'computed' => 1, 'no_children_link' => 1));
       $criterions = wikicompare_build_recursive_data('criterion', $selected_criterion_ids, $settings);
-      $itemlist_data = wikicompare_build_itemlist('criterion', $criterions['tree'], 0, $settings);
-      //Render the item list
-      $selected_criterion_itemlist = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected criterions', 'type' => 'ul', 'attributes' => array()));
+      $selected_criterion_itemlist = wikicompare_build_itemlist('criterion', $criterions['tree'], 0, $settings);
       foreach ($selected_criterion_ids as $criterion_id) {
         $selected_criterion_hidden .= '<div class="profile_criterion">' . $criterion_id . '</div>';
       }
@@ -549,11 +547,19 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
 
     //Link which will open a popin where we can select the criterions.
     $select_criterion_link = array(
-      'text' => 'Select criterions',
-      'title' => 'Select criterions',
-      'selector' => 'dialog-content',
-      'path' => 'wikicompare_get_dialog_callback/multidialog/criterion/wikicompare-criterions/0/',
-      'id' => 'select_criterion_link',
+      '#type' => 'link',
+      '#title' => 'Select criterions',
+      '#href' => 'wikicompare_get_dialog_callback/nojs',
+      '#id' => 'select_criterion_link_' . $nid,
+      '#attributes' => array(
+        'class' => array('dialog'),
+        'action' => 'select_criterions_profile',
+        'side' => 'left',
+        'nid' => $nid,
+        'ntype' => 'criterion',
+        'context' => 'multidialog',
+        'container' => 'wikicompare-criterions',
+      ),
     );
 
     if ($form_type == 'form') {
@@ -567,7 +573,7 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
 
       //The link is visible only in the main language node.
       if ($node->language == language_default('language')) {
-        $form['container_selected_criterion']['#suffix'] = '<div id="initialize_profile_criterions"/><p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
+        $form['container_selected_criterion']['#suffix'] = '<div id="initialize_profile_criterions"/><p>' . render($select_criterion_link) . '</p>';
       }
 
       //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the parent.
@@ -577,7 +583,7 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
     if ($form_type == 'fastaction') {
       $output .= '<div id="container-wikicompare-criterions">';
       $output .= $selected_criterion_itemlist;
-      $output .= '</div><div id="wikicompare-criterions" style="display:none;">' . $selected_criterion_hidden . '</div><p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
+      $output .= '</div><div id="wikicompare-criterions" style="display:none;">' . $selected_criterion_hidden . '</div><p>' . render($select_criterion_link) . '</p>';
     }
 
   }
@@ -593,31 +599,6 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
 *    FASTACTION
 *
 *****************************************************************/
-
-
-
-/**
- * Add the fastaction form after the profile item.
- *
- * @param $commands
- *   The commands which will be send to javascript. Passed by reference.
- *
- * @param $type
- *   The type of the node.
- *
- * @param $nid
- *   The nid of the node.
- *
- * @param output
- *   The generated form.
- */
-function wikicompare_profiles_fastaction_command(&$commands, $type, $nid, $output) {
-
-  if ($type == 'profile') {
-    $commands[] = ajax_command_invoke('#profile_table_children_' . $nid, 'before', array($output));
-  }
-
-}
 
 
 

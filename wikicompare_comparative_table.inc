@@ -118,15 +118,6 @@ function wikicompare_home_page() {
   $output .= '<div id="container-manual-selected-criterions"></div>';
   //Add the link to open the select criterion popup
   $select_criterion_link = array(
-    'text' => 'Select criterions',
-    'title' => 'Select criterions',
-    'selector' => 'dialog-content',
-    'path' => 'wikicompare_get_dialog_callback/multidialog/criterion/manual-selected-criterions/0/',//manual_selected_criterions/none',
-    'id' => 'select_criterion_link',
-  );
-  //Render the link thanks to the simple dialog module. //TODO
-//  $output .= '<p>' . theme('simple_dialog_link', $select_criterion_link) . '</p>';
-  $select_criterion_link = array(
     '#type' => 'link',
     '#title' => 'Select criterions',
     '#href' => 'wikicompare_get_dialog_callback/nojs',
@@ -1205,7 +1196,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
             'height' => '100%',
           ));
           //Create the link. The html = True indicate that the title of the link contain html.
-          $prefix .= l($img, 'wikicompare_select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog')), 'html' => True)) . ' ';
+          $prefix .= l($img, 'wikicompare_select_dialog_callback/nojs', array('attributes' => array('id' => 'select_dialog_' . $node['data']->nid, 'class' => array('selectlink_dialog'), 'side' => $settings['side']), 'html' => True)) . ' ';
         }
 
       }
@@ -1932,6 +1923,21 @@ function wikicompare_get_dialog_response($method = 'ajax'){
     $settings['forbidden_nid'] = $settings['nid'];
   }
 
+//TODO profile
+  if (module_exists('wikicompare_profiles')) {
+    if ($settings['action'] == 'select_criterions_profile') {
+      $node = node_load($settings['nid']);
+      if (isset($node->wikicompare_criterions['und'])) {
+        $selected_criterion_ids = array();
+        foreach ($node->wikicompare_criterions['und'] as $array) {
+          $fid = $array['target_id'];
+          $selected_criterion_ids[$fid] = $fid;
+        }
+        $settings['displayed_ids'] = $selected_criterion_ids;
+      }
+    }
+  }
+
   $settings['include_root_items'] = True;
 
   //Find all nodes which are displayed or in the root of the itemlist, and organize them into a tree.
@@ -2011,6 +2017,8 @@ function wikicompare_select_dialog_response($method = 'ajax'){
   $commands[] = ajax_command_html('#edit-' . $_POST['container'], $hidden);
   //Update the fastedit field for fastedit submit.
   $commands[] = ajax_command_html('#' . $_POST['container'], $parent['data']->nid);
+  //Close the dialog
+  $commands[] = ajax_command_invoke('#' . $settings['side'] . '_dialog_close', 'click', array());
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
@@ -2057,11 +2065,11 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
     $criterions = wikicompare_build_recursive_data('criterion', $settings['selected_criterion_ids'], $settings);
   }
 
-  //Building the data for the itemlist.
-  $itemlist_data = wikicompare_build_itemlist('criterion', $criterions['tree'], 0, $settings);
+  //The children will be directly displayed, so no link on parent.
+  $settings['no_children_link'] = 1;
 
-  //Render the itemlist.
-  $output = theme_item_list(array('items' => $itemlist_data, 'title' => 'Selected criterions', 'type' => 'ul', 'attributes' => array()));
+  //Building the data for the itemlist.
+  $output = wikicompare_build_itemlist('criterion', $criterions['tree'], 0, $settings);
 
   //In form, generate the drupal field many2many so drupal can find it on submit.
   $hidden = '<tbody>';

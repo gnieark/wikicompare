@@ -289,7 +289,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       aj_settings['container'] = $(this).attr('container');
       aj_settings['side'] = $(this).attr('side');
       aj_settings['field'] = $(this).attr('field');
-//TODO use directly the .attr in the ajax function, thanks to this we'll probably be able to centralise most of the function
+      aj_settings['fastaction'] = $(this).attr('fastaction');
+//TODO use directly the .attr in the ajax function, thanks to this we'll probably be able to centralise most of the functions
       //Build ajax link.
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'open_dialog', aj_settings);
     });
@@ -394,21 +395,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
-    /*
-     * Ajaxify the fastaction items, to display the fastaction form.
-     */
-    $('.fastaction_item:not(.ajax-processed)').addClass('ajax-processed').each(function () {
-      //Recover the link_id, the type of the node and the fastaction.
-      var link_id = $(this).attr('id');
-
-      var aj_settings = {};
-      aj_settings['type'] = $(this).attr('type');
-      aj_settings['context'] = $(this).attr('action');
-      //Build the ajax link.
-      Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'show_fastaction_form', aj_settings);
-    });
-
-
 
     /*
      * Call the ajax submit link of the fastaction form when we submit it.
@@ -433,25 +419,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       var aj_settings = {};
       aj_settings['type'] = $(this).attr('type');
-      aj_settings['context'] = $(this).attr('action');
+      aj_settings['fastaction'] = $(this).attr('fastaction');
+      aj_settings['side'] = $(this).attr('side');
       //Build ajax link.
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'submit_fastaction_form', aj_settings);
-    });
-
-
-
-    /*
-     * Dynamize the cancel button so it remove the form.
-     */
-    $('.form_fastaction_cancel:not(.listener_set)').addClass('listener_set').each(function () {
-      $(this).click(function() {
-        //Make sure the next time we click on the item it open the form.
-        $('.fastaction_item:.displayed').removeClass('displayed');
-        //The form will be clean by the function.
-        $('#make_cleaning_link').click();
-        //Block the page loading
-        return false;
-      });
     });
 
 
@@ -672,6 +643,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_evaluations = false;
         send_profiles = false;
         send_products_tree_mode = false;
+        send_side = false;
         send_infofields = false;
         send_filters = false;
         send_manual_selected_criterions = false;
@@ -784,6 +756,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_type = true;
           //Send the container we need to update in the main page.
           send_container = true;
+          //Send side to close the dialog.
+          send_side = true;
         }
 
         //If we are selecting several items in popin.
@@ -798,8 +772,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
           //Send the container we need to update in the main page.
           send_container = true;
-          //Send the side of the dialog.
-          options.data.side = $('#' + link_id).attr('side');
+          //Send side to close the dialog.
+          send_side = true;
         }
 
         //If we launched the table computation.
@@ -858,9 +832,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
           //Send the type of the node.
           send_type = true;
+          send_side = true;
           options.data.context = context;
           options.data.container = aj_settings['container'];
-          options.data.side = aj_settings['side'];
 
           if (aj_settings['dialog_action'] == 'infofields') {
             //Return the field we want to modify.
@@ -873,26 +847,20 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.displayed_ids = manual_selected_criterion_ids;
           }
 
-        }
-
-        //If we want to display the fastaction form.
-        if (action == 'show_fastaction_form') {
-          //Send the nid of the form.
-          send_nid = true;
-          //Send the type of the node.
-          send_type = true;
-          //Send the flag, so we know if we display or hide the column.
-          manage_displayed_flag = true;
-          //Send the size of the table to adjust the colspan of the form.
-          send_colspan = true;
-          //Send the fastaction (add, edit, remove).
-          options.data.fastaction = context;
-
-          //We remove all other fastaction form by calling the cleaning function.
-          if ($('#' + link_id).hasClass('displayed')) {
-            make_cleaning = true;
+          if (aj_settings['dialog_action'] == 'selectdialog' || aj_settings['dialog_action'] == 'select_criterions_profile') {
+            options.data.action = aj_settings['dialog_action'];
+            options.data.nid = $('#' + link_id).attr('nid');
           }
 
+          if (aj_settings['dialog_action'] == 'fastaction') {
+            nid = $('#' + link_id).attr('nid'); //TODO 
+            //Send the nid of the form.
+            send_nid = true;
+            //Send the type of the node.
+            send_type = true;
+            //Send the fastaction (add, edit, remove).
+            options.data.fastaction = aj_settings['fastaction'];
+          }
 
         }
 
@@ -902,26 +870,28 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Send the type of the node.
           send_type = true;
           //Send the fastaction (add, edit, remove).
-          options.data.fastaction = context;
+          options.data.fastaction = aj_settings['fastaction'];
+          //Send dialog side.
+          send_side = true;
 
           //Get value of all fields in the fastaction form, and send them to Drupal.
           if (type != 'evaluation') {
-            options.data.title = $('#form_' + type + '_fast' + context + '_title_' + nid).val();
-            options.data.title_translation = $('#form_' + type + '_fast' + context + '_title_' + nid + '_translation').val();
+            options.data.title = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_title_' + nid).val();
+            options.data.title_translation = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_title_' + nid + '_translation').val();
             options.data.parent_id = $('#wikicompare-parent-id').text();
-            options.data.sequence = $('#form_' + type + '_fast' + context + '_sequence_' + nid).val();
-            options.data.state = $('#form_' + type + '_fast' + context + '_state_' + nid).val();
+            options.data.sequence = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_sequence_' + nid).val();
+            options.data.state = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_state_' + nid).val();
           }
-          options.data.description = $('#form_' + type + '_fast' + context + '_description_' + nid).val();
-          options.data.description_translation = $('#form_' + type + '_fast' + context + '_description_' + nid + '_translation').val();
+          options.data.description = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_description_' + nid).val();
+          options.data.description_translation = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_description_' + nid + '_translation').val();
           if (type == 'product') {
             options.data.inherit_id = $('#wikicompare-inherit-product-id').text();
           }
           if (type == 'criterion') {
-            options.data.criterion_type = $('#form_' + type + '_fast' + context + '_type_' + nid).val();
-            options.data.guidelines = $('#form_' + type + '_fast' + context + '_guidelines_' + nid).val();
-            options.data.guidelines_translation = $('#form_' + type + '_fast' + context + '_guidelines_' + nid + '_translation').val();
-            options.data.weight = $('#form_' + type + '_fast' + context + '_weight_' + nid).val();
+            options.data.criterion_type = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_type_' + nid).val();
+            options.data.guidelines = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_guidelines_' + nid).val();
+            options.data.guidelines_translation = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_guidelines_' + nid + '_translation').val();
+            options.data.weight = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_weight_' + nid).val();
           }
           if (type == 'evaluation') {
             options.data.support = $('#edit-wikicompare-support-und').is(':checked');
@@ -936,8 +906,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
             });
             options.data.profile_criterion_ids = profile_criterion_ids;
           }
-          options.data.revision = $('#form_' + type + '_fast' + context + '_revision_' + nid).val();
-          options.data.selectnode = $('#form_' + type + '_fast' + context + '_selectnode_' + nid).val();
+          options.data.revision = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_revision_' + nid).val();
+          options.data.selectnode = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_selectnode_' + nid).val();
         }
 
         //If we are submitting the infofield form, return the values of the form.
@@ -1131,6 +1101,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //Send product list mode.
         if (send_products_tree_mode == true) {
           options.data.products_tree_mode = $('#products_tree_mode').text();
+        }
+
+        if (send_side == true) {
+          options.data.side = $('#' + link_id).attr('side');
         }
 
         //Send infofields, based on the displayed column / row which mean we use the infofield used at the page loading. This should prevent error if a user load a page while the admin is modify infofields sequence.
@@ -1340,19 +1314,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('#product_table_checkbox_' + nid).removeAttr('disabled');
             }
 
-            //Initialize the selected_criterions_ids when we open a profile fastaction form. Not the same variable than manual_selected_criterions_ids to avoid conflict.
-            if (action == 'show_fastaction_form') {
-              if (type == 'profile') {
-                var profile_criterion_ids = {};
-                $('.profile_criterion').each(function (key, value) {
-                  fid = $(this).text();
-                  profile_criterion_ids[fid] = fid;
-                });
-                //Insert actual criterions in global variable.
-                selected_criterion_ids = profile_criterion_ids;
-              }
-            }
-
           //When we want to hide the children.
           //I'd like to move this case out of this ajax function so the children removing would be manage only by javascript, without making a useless ajax call. Unfortunately, the ajax call is made each time we click on the link, so I found no solution.
           } else {
@@ -1410,6 +1371,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
           }
 
+        }
+
+        //Initialize the selected_criterions_ids when we open a profile fastaction form. Not the same variable than manual_selected_criterions_ids to avoid conflict.
+        if (action == 'open_dialog' && aj_settings['fastaction']) {
+          if (type == 'profile') {
+            var profile_criterion_ids = {};
+            $('.profile_criterion').each(function (key, value) {
+              fid = $(this).text();
+              profile_criterion_ids[fid] = fid;
+            });
+            //Insert actual criterions in global variable.
+            selected_criterion_ids = profile_criterion_ids;
+          }
         }
 
         if (action == 'append_product_list') {
