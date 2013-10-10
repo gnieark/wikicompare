@@ -403,6 +403,7 @@ function wikicompare_profiles_table_send_compute(&$commands, $settings) {
 function wikicompare_profiles_table_clean_reset(&$commands, $type, $reset, $settings) {
 
   if ($type == 'profile' && $reset == True) {
+    $settings['displayed_ids'] = $settings['selected_profile_ids'];
     $commands[] = ajax_command_replace('#comparative_table_main_profile', wikicompare_table_render_main_itemlist('profile', 'Profiles', $settings));
   }
 

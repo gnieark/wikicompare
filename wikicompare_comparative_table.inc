@@ -340,7 +340,13 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   $output = wikicompare_table_render_main_itemlist('product', 'Products', $settings);
 
   //Generate the comparative table.
-  $output .= wikicompare_table_render_comparative_table($settings, $products);
+  $res = wikicompare_table_render_comparative_table($settings, $products);
+  $output .= $res['output'];
+
+  //Add the storage zone where we will store the tables. Of course, this zone is hidden.
+  $output .= '<div id="storage_zone" style="display:none;">';
+  $output .= $res['storage_zone'];
+  $output .= '</div>';
 
   //Render the fieldset with the infofield, collapsed at the loading page.
   $fieldset = '<table><tbody>';
@@ -406,8 +412,12 @@ function wikicompare_table_render_footer() {
   $toogle_link = array(
     '#type' => 'link',
     '#title' => 'Toogle FastAction',
-    '#href' => 'toogle_fastaction_callback/nojs',
+    '#href' => 'wikicompare_make_cleaning_callback/nojs',
     '#id' => 'toogle_fastaction_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'toogle_fastaction',
+    ),
   );
   //Fastaction is only available for authenticated users.
   if (user_is_anonymous() != True) {
@@ -465,7 +475,7 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 //TODO move into profile module
   if (module_exists('wikicompare_profiles')) {
     if ($type == 'profile' && $settings['context'] == 'table') {
-      $settings['itemlist_translate'] = True;
+      $settings['translate'] = True;
     }
 //    wikicompare_profiles_table_prepare_compute($selected_criterion_ids, $settings);
   }
@@ -474,26 +484,22 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 
   $output .= '<h3>' . $title . '</h3>';
 
-  if (isset($settings['itemlist_translate'])) {
+  if (isset($settings['translate'])) {
     $output .= '<div id="main_' . $type . '_itemlist_container" style="overflow:hidden;">'; //TODO not sure we still need this container.
     //The container which contain the tables, and will slide to display them.
     $output .= '<div id="main_' . $type . '_itemlists" style="height: ' . count($nodes) * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
-    $output .= '<div id="itemlist_stored_0"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
+    $output .= '<div id="itemlist_0"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
   }
 
   //Building the data for the itemlist.
-  $output .= wikicompare_build_itemlist($type, $nodes, 0, $settings);
+  $output .= wikicompare_build_itemlist($type, $nodes, NULL, $settings);
 
-  if (isset($settings['itemlist_translate'])) {
+  if (isset($settings['translate'])) {
     $output .= '</div>';
     $output .= '</div>';
     $output .= '</div>';
   }
 
-  //Render the link to add a new node.
-  $output .= '<p>' . wikicompare_generate_add_link($type, $settings) . '</p>';
-  //We need to add the 0 children div to know where place the fastaction form.
-  $output .= '<div id="' . $type . '_table_children_0"></div>';
   $output .="</div>";
 
   //Return itemlist.
@@ -866,6 +872,7 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
   $output .= '<th style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . t('Criterions') . '</th>';
   //Get the columns width.
   $settings['width'] = (100 - FIRST_COLUMN_WIDTH) / count($products);
+  $settings['colspan'] = 1 + count($products);
   foreach ($products as $cid => $product) {
     $output .= '<th id="header_product_' . $cid . '" class="header_product" style="width: ' . $settings['width'] . '%; padding: 0; text-align: center; -webkit-transition: width 1s ease-in-out; -moz-transition: width 1s ease-in-out; -o-transition: width 1s ease-in-out; transition: width 1s ease-in-out;"><div class="width_div_' . $cid . '"><span class="product_title_' . $cid . '">' . $product['data']->title . '</span></div></th>';
   }
@@ -875,11 +882,11 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
   //Get rows.
   $rows = wikicompare_table_render_rows($criterions_row_data, $settings);
 
-  $root_row = $rows['root'];
+  $root_row = $rows[0];
   $storage_zone_content = '';
   //Get all the needed tables.
   if ($settings['computed']) {
-    unset($rows['root']);
+    unset($rows[0]);
     foreach ($rows as $parent_id => $row) {
       $storage_zone_content .= $row['output'];
       //If some of the children table have a greater size that the root table, so we can adjust the height.
@@ -891,25 +898,10 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
 
   $output .= '<div id="comparative_tables_container" style="overflow:hidden;">'; //TODO not sure we still need this container.
   //The container which contain the tables, and will slide to display them.
-  $output .= '<div id="comparative_tables" style="height: ' . $root_row['count'] * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
+  $output .= '<div id="comparative_tables" style="height: ' . ($root_row['count'] + 1) * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
   //Display the root rows.
   $output .= $root_row['output'];
   $output .= '</div>';
-  $output .= '</div>';
-
-  //Add an small table for the add link.
-  $output .= '<table>';
-  $output .= '<tbody>';
-  $output .= '<tr id="criterion_table_0"><td class="row_auto_colspan" ';
-  if (isset($settings['colspan'])) {
-    $output .= 'colspan="' . $settings['colspan'] . '"';
-  }
-  $output .= '>';
-  $output .= wikicompare_generate_add_link('criterion', $settings);
-//TODO it's probably best to display them out of a table. Check on generate_add_link if there is not tr in it.
-  $output .= '</td><tr>';
-  $output .= '</tbody>';
-  $output .= '</table>';
   $output .= '</div>';
 
   //Add the storage zone where we will store the tables. Of course, this zone is hidden.
@@ -918,7 +910,7 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
   $output .= '</div>';
 
   //Return the table.
-  return $output;
+  return array('output' => $output, 'storage_zone' => $storage_zone_content);
 
 }
 
@@ -944,7 +936,7 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
   foreach ($criterions_row_data as $fid => $criterion) {
 
     //We need to add the id as class because this id is used for two items when we add a new columns with a computed table.
-    $output = '<tr id="criterion_table_'. $fid . '" class="criterion_row criterion_table_'. $fid;
+    $output = '<tr id="criterion_table_item_'. $fid . '" class="criterion_item criterion_table_'. $fid;
 
     //If the criterion has parent, we add it in the class to find them later. Thanks to this class, we can for exemple easily remove the children of a node.
     if ($criterion['data']->parent_id) {
@@ -954,7 +946,7 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
     if ($criterion['data']->has_children){
       $output .= ' has_children';
     }
-    $output .= '" height="100px">';
+    $output .= '" nid="' . $fid . '" parent_id="' . $criterion['data']->parent_id . '"  height="100px">';
 //TODO set all height et width attribute in style, because it's better for the transition.
 
     //Generate the main details of the criterion in the first cell.
@@ -969,7 +961,7 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
     $output .= '</tr>';
 
     //Assign each rows with root of parent_id as keys.
-    $key = 'root';
+    $key = 0;
     if (isset($criterion['data']->parent_id)) {
       $key = $criterion['data']->parent_id;
     }
@@ -996,6 +988,14 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
 
   //Close each tables.
   foreach ($res as $key => $output) {
+    //Add the add button at the end of the table.
+    $res[$key]['output'] .= '<tr id="criterion_table_add_' . $key . '"><td class="row_auto_colspan" ';
+    if (isset($settings['colspan'])) {
+      $res[$key]['output'] .= 'colspan="' . $settings['colspan'] . '"';
+    }
+    $res[$key]['output'] .= '>';
+    $res[$key]['output'] .= wikicompare_generate_add_link('criterion', $settings, $key);
+    $res[$key]['output'] .='</td><tr>';
     $res[$key]['output'] .= '</tbody></table>';
   }
 
@@ -1112,6 +1112,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
 
     //Get the title of the item, which can be a translated title.
     $title = '<span class="' . $type . '_title_' . $node['data']->nid . '">' . $node['data']->title . '</span>';
+    $simple_title = $title;
 
     //Specify the most used ajax call to display children.
     $url = 'wikicompare_get_itemlist_children_callback/nojs/';
@@ -1215,20 +1216,22 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
         $class[] = 'computed';
       }
       //Indicate if the itemlist must display his children with translation.
-      if (isset($settings['itemlist_translate'])) {
+      if (isset($settings['translate'])) {
         $class[] = 'translate';
       }
       //This class is used to prepare the variable for the cleaning function.
       if ($settings['context'] == 'table') {
         $class[] = $type . '_table_link';
       }
+      $attributes = array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context'], 'nid' => $node['data']->nid, 'parent_id' => $node['data']->parent_id);
       //Replace the title by the link.
-      $title = l($title, $url,  array('attributes' => array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context'], 'nid' => $node['data']->nid, 'parent_id' => $node['data']->parent_id), 'html' => True));
+      $title = l($title, $url,  array('attributes' => $attributes, 'html' => True));
     }
 
   } else {
     //An evaluation has no title, we simply display his percentage.
     $title = $node['data']->percent . '%';
+    $simple_title = $title;
   }
 
   //For all list or table items, we add a link to access the node page and add a div to store the fastaction items.
@@ -1243,7 +1246,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
     $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
 
     //Add fastaction item if fastaction flag is set, or else at least the div which will contains them.
-    $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '">';
+    $suffix .= '<span id="fastaction_items_' . $node['data']->nid . '" class="fastaction_items_' . $node['data']->nid . '">';
     if ($settings['fastaction']) {
       $suffix .=  add_fastaction_items($type, $node);
     }
@@ -1252,7 +1255,23 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
   }
 
   //Return the supertitle rendered in a span so we can easily update it in the cleaning function.
-  return '<span id="' . $type . '_' . $settings['context'] . '_supertitle_' . $node['data']->nid . '">' . $prefix . $title . $suffix . '</span>';
+  $output = '<span id="' . $type . '_' . $settings['context'] . '_supertitle_' . $node['data']->nid . '">' . $prefix;
+  //Render normaltitle and simpletitle, and display the one need in the situation. Simple title is display in checked zone, we can't click on them to display children in checked zone.
+  $output .= '<span class="normaltitle" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $node['data']->nid . '"';
+  $flag = True;
+  if (isset($settings['zone']) && $settings['zone'] == 'checked') {
+    $output .= ' style="display:none;"';
+    $flag = False;
+  }
+  $output .= '>' . $title . '</span>';
+  $output .= '<span class="simpletitle" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $node['data']->nid . '"';
+  if ($flag) {
+    $output .= ' style="display:none;"';
+  }
+  $output .= '>' . $simple_title . '</span>';
+  $output .= $suffix . '</span>';
+
+  return $output;
 
 }
 
@@ -1283,7 +1302,7 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
   $output = '<ul>';
   //Add each node in the returned array.
   foreach ($nodes as $nid => $node){
-    $output .= '<li id="' . $type . '_' . $settings['context'] . '_item_' .  $nid . '" class ="' . $type . '_item';
+    $output .= '<li id="' . $type . '_' . $settings['context'] . '_item_' .  $nid . '" class ="' . $type . '_item ' . $type . '_' . $settings['context'] . '_item_' .  $nid;
     if ($node['data']->has_children){
       $output .= ' has_children';
     }
@@ -1307,7 +1326,9 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
     //Set the checked zone.
     $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_checked_' . $nid . '" class="'. $type . '_children">';
     //Get the children.
-    $output .= wikicompare_build_itemlist($type, $node['children'], $nid, $settings);
+    $children_settings = $settings;
+    $children_settings['zone'] = 'checked';
+    $output .= wikicompare_build_itemlist($type, $node['children'], $nid, $children_settings);
     $output .= '</div>';
     //Set the children zone.
     $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;">';
@@ -1316,6 +1337,11 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
   }
 
   $output .= '</ul>';
+
+  //Render the link to add a new node if we are at the first level of the itemlist or if we are in translate mode.
+  if ($settings['context'] == 'table' && !empty($nodes) && (!$parent_node || isset($settings['translate']))) {
+    $output .= '<p>' . wikicompare_generate_add_link($type, $settings, $parent_node) . '</p>';
+  }
 
   //Display an error message if we try to build an itemlist without data yet.
 /* TODO set the message outside of the function  if (empty($nodes)) {
@@ -1629,12 +1655,12 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
     if ($settings['context'] != 'list') {
 
       $output = '';
-
       if (isset($_POST['translate'])) {
         $output .= '<div id="itemlist_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
       }
 
       //Rendering the itemlist.
+      $settings['zone'] = 'children';
       $output .= wikicompare_build_itemlist($_POST['type'], $nodes, $_POST['nid'], $settings);
 
       if (isset($_POST['translate'])) {
@@ -2157,7 +2183,7 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
 
 /**
- * Ajax callback function called by javascript when we launch a cleaning table.
+ * Simple function which simply launch the control function.
  *
  * @param $method
  *   Indicate if the call was made with javascript or if it's a simple browser call.
@@ -2178,217 +2204,8 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
 
   //Initialize settings with the variable from javascript.
   $settings = wikicompare_initialize_settings($_POST);
-
-  $commands = array();
-  $update_selected_criterions = false;
-
-  //Execute for all wikicompare node type, except evaluation.
-  $types = array('product', 'criterion');
-  if (module_exists('wikicompare_profiles')) {
-    //Add profile type.
-    wikicompare_profiles_node_types($types);
-  }
-
-  $criterions = array();
-  foreach ($types as $type) {
-
-    //We must not touch anything on a computed table.
-    if ($type == 'criterion' && $settings['computed']) {
-      continue;
-    }
-
-    //Security for the TYPE_ids, it's an array but javascript return a string when empty.
-    if ($_POST[$type . '_ids'] == '') {
-      $_POST[$type . '_ids'] = array();
-    }
-
-    //Security for the TYPE_displayed_ids, it's an array but javascript return a string when empty.
-    if ($_POST[$type . '_displayed_ids'] == '') {
-      $_POST[$type . '_displayed_ids'] = array();
-    }
-
-    //Get the ids of all the nodes in the table.
-    $node_ids = array();
-    foreach ($_POST[$type . '_ids'] as $nid => $node) {
-      $node_ids[$nid] = $nid;
-    }
-
-    //Get the details from database of all the nodes displayed in the table.
-    $nodes = array();
-    if (!empty($node_ids)) {
-      $nodes = request_db($type, array('nids' => $node_ids), $settings);
-      //We need to keep the criterions details for the part with the evaluations.
-      if ($type == 'criterion') {
-        $criterions = $nodes;
-      }
-    }
-
-    //Get from database the list of the nodes at the top of the tree.
-    $in_db_nodes = request_db($type, array('parent_id' => NULL), $settings);
-    //Extract nids.
-    $in_db_nodes_ids = array();
-    foreach ($in_db_nodes as $nid => $node) {
-      $in_db_nodes_ids[$nid] = $nid;
-    }
-
-    $in_table_node_ids = array();
-    $reset = False;
-    //We test all nodes present in the table. The TYPE_ids array contain the nids of the node, his parent id and the has_children flag.
-    foreach ($_POST[$type . '_ids'] as $nid => $node_from_table) {
-
-      //Listing all node present in table in a array for later use.
-      $in_table_node_ids[$nid] = $nid;
-
-      //If the node has a parent in the table.
-      if (isset($node_from_table['parent_id'])) {
-
-        //If the parent of the node in the table is different then the parent of the node in db.
-        if ($node_from_table['parent_id'] != $nodes[$nid]['data']->parent_id) {
-
-          if ($type == 'criterion') {
-            //In the case of a criterion, it means there is a structural change so better refresh the manual_selected_criterion itemlist.
-            $update_selected_criterions = true;
-          }
-
-          //If the parent in table is currently displaying his children, then the tested node is displayed as his child but isn't anymore, so we need to hide it
-          if (in_array($node_from_table['parent_id'], $_POST[$type . '_displayed_ids'])) {
-            $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node_from_table['parent_id'], 'click', array());
-          }
-
-          //If the parent of the node in db is displaying his children in the table, then the tested node is missing among the children so we need to hide the children of the parent. Also, if the tested node is now without parent, then we need to reset the table to display it.
-          if (in_array($nodes[$nid]['data']->parent_id, $_POST[$type . '_displayed_ids']) || $nodes[$nid]['data']->parent_id == NULL) {
-            if ($nodes[$nid]['data']->parent_id != NULL) {
-              $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $nodes[$nid]['data']->parent_id, 'click', array());
-            } else {
-              $reset = True;
-            }
-          }
-
-        }
-
-      }
-
-      //If the has_children flag is different in table or in db, then we need to reset the supertitle to display a label or a link at title of the node.
-      if ($node_from_table['has_children'] != $nodes[$nid]['data']->has_children) {
-        $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $nid, wikicompare_table_get_supertitle_item($type, $nodes[$nid], $settings));
-        if (!$nodes[$nid]['data']->has_children) {
-          $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $nid, 'removeClass', array('has_children'));
-        }
-      }
-
-      //If one of the node without parent displayed in table isn't in the first level in db anymore.
-      if ((!in_array($nid, $in_db_nodes_ids)) && !isset($node_from_table['parent_id'])) {
-        $reset = True;
-      }
-
-    }
-
-    foreach ($in_db_nodes_ids as $nid) {
-      //If one of the node present in the first level in db isn't displayed in the table.
-      if (!in_array($nid, $in_table_node_ids)) {
-        $reset = True;
-      }
-    }
-
-    //We get from database all the children of the parent which are currently displaying his children. If one children is missing on the table, then we force the concerned parent to hide his children.
-    if (!empty($_POST[$type . '_displayed_ids'])) {
-      //Get children from database by searching from parent_ids.
-      $in_db_nodes_with_parent = request_db($type, array('parent_id' => $_POST[$type . '_displayed_ids']), $settings);
-      foreach ($in_db_nodes_with_parent as $node) {
-        //If one of the children isn't in the table.
-        if (!in_array($node['data']->nid, $in_table_node_ids)) {
-          //Then we collapse the children of the parent.
-          $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $node['data']->parent_id, 'click', array());
-        }
-      }
-    }
-
-    //If during the previous tests, we ask to reset the table. Only the part concerned by the node type will be reset.
-    if ($reset == True) {
-      switch ($type) {
-        case 'product':
-          $commands[] = ajax_command_replace('#comparative_table_main_product', wikicompare_table_render_main_itemlist('product', 'Products', $settings));
-          break;
-        case 'criterion':
-          $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings, array(), $_POST['product_column_ids']));
-          break;
-      }
-
-    }
-
-    if (module_exists('wikicompare_profiles')) {
-      //Add commmand to reset the profile part of the table.
-      wikicompare_profiles_table_clean_reset($commands, $type, $reset, $settings);
-    }
-
-    //Reset all fields displayed in the table. All field are in a span to easily refresh them.
-    foreach($nodes as $nid => $node) {
-      $commands[] = ajax_command_invoke('.' . $type . '_title_' . $nid, 'html', array($node['data']->title));
-      if ($type == 'criterion') {
-        $commands[] = ajax_command_invoke('.criterion_title_' . $nid, 'html', array($node['data']->title));
-        $commands[] = ajax_command_invoke('.criterion_weight_' . $nid, 'html', array($node['data']->weight));
-        $commands[] = ajax_command_invoke('.criterion_type_' . $nid, 'html', array($node['data']->type));
-        $commands[] = ajax_command_invoke('.criterion_state_' . $nid, 'html', array($node['data']->state));
-      }
-      //If we are in fastaction mode, then we also refresh the fastaction items. This for exemple allow us to remove a fastedit item if someone else add a revision on a node while the author is browsing the comparative table.
-      if ($settings['fastaction']) {
-        $commands[] = ajax_command_invoke('#fastaction_items_' . $nid, 'html', array(add_fastaction_items($type , $node)));
-      }
-    }
-
-    //Add fastaction items to the Add link.
-    if ($settings['fastaction']) {
-      $node = array(
-        'data' => new stdClass(),
-      );
-      $node['data']->nid = 0;
-      $commands[] = ajax_command_invoke('#add_' . $type . '_link_fastaction', 'html', array(add_fastaction_items($type , $node)));
-    }
-
-  }
-
-  //We refresh the evaluations only if the table wasn't computed.
-  if (!$_POST['computed']) {
-
-    //Extract criterion_ids.
-    $criterion_ids = array();
-    foreach ($_POST['criterion_ids'] as $criterion) {
-      $criterion_ids[$criterion['nid']] = $criterion['nid'];
-    }
-
-    //Get evaluations details.
-    $evaluations = array();
-    if (!empty($settings['product_column_ids']) && !empty($criterion_ids)) {
-      $evaluations = request_db('evaluation', array('product_ids' => $settings['product_column_ids'], 'criterion_ids' => $criterion_ids), $settings);
-    }
-
-    //Rerender all the evaluations displayed in the table.
-    foreach($evaluations as $fid => $products_evaluations) {
-      foreach ($products_evaluations as $cid => $evaluation) {
-        $commands[] = ajax_command_replace('#evaluation_' . $evaluation['data']->nid, wikicompare_table_render_evaluation($evaluation, $criterions[$evaluation['data']->criterion_id], $cid, $settings));
-      }
-    }
-
-  }
-
-  //If during the tests, we asked for a reset of the selected criterions itemlist.
-  if ($update_selected_criterions) {
-    $criterions = array('tree' => array());
-    if ($settings['selected_criterion_ids']) {
-      $criterions = wikicompare_build_recursive_data('criterion', $settings['selected_criterion_ids']);
-    }
-    //Building the data for the itemlist.
-    $itemlist_data = wikicompare_build_itemlist('criterion', $criterions['tree'], 0, array('computed' => 1));
-    //Render the itemlist.
-    $output = theme_item_list(array('items' => $itemlist_data, 'title' => 'Manually selected criterions', 'type' => 'ul', 'attributes' => array()));
-    $commands[] = ajax_command_html('#container-manual-selected-criterions', $output);
-  }
-
-  //We remove all fastaction form.
-  $commands[] = ajax_command_invoke('.form_fastaction', 'remove', array());
-
-  //ajax_command_invoke does not call the Drupal.behaviors, so the added content isn't ajaxified. By adding this dummy content, the Drupal.behaviors will be call.
-  $commands[] = ajax_command_after('#comparative_table', '<div class="to_remove"/>');
+  //Launch control function.
+  $commands = wikicompare_control_table($settings);
 
   $page = array('#type' => 'ajax', '#commands' => $commands);
   return $page;
@@ -2450,16 +2267,21 @@ function wikicompare_initialize_settings($args = array()) {
  * @return $settings
  *   The context of the table.
  */
-function wikicompare_generate_add_link($type, $settings) {
+function wikicompare_generate_add_link($type, $settings, $nid=0) {
+
+  if ($nid == NULL) {
+    $nid = 0;
+  }
 
   //Add the html code of the add link.
-  $output = '<a id="add_' . $type . '_link" href="?q=node/add/' . $type . '">Add</a><span id="add_' . $type . '_link_fastaction">';
+  $output = '<a id="add_' . $type . '_link" href="?q=node/add/' . $type . '">Add</a><span id="add_' . $type . '_link_' . $nid . '" class="link_fastaction" ntype="' . $type . '" nid="' . $nid . '">';
   //If fastaction mode is activated, we add the fastadd item.
   if ($settings['fastaction']) {
     $node = array(
       'data' => new stdClass(),
     );
-    $node['data']->nid = 0;
+    $node['data']->nid = $nid;
+    $node['add'] = True;
     $output .= add_fastaction_items($type , $node);
   }
   $output .= '</span>';
@@ -2467,5 +2289,313 @@ function wikicompare_generate_add_link($type, $settings) {
   return $output;
 
 }
+
+
+
+/**
+ * Generic function which will check the table and correct out-of-date informations.
+ *
+ * @param $settings
+ *   Contails the function settings.
+ *
+ * @return $commands
+ *   Array containing the instructions for the javascript.
+ */
+function wikicompare_control_table($settings) {
+
+  $commands = array();
+  $update_selected_criterions = false;
+
+  //If a type was selected, we will only control this type. Otherwise, get and control all types.
+  $types = array();
+  if (isset($settings['control_type'])) {
+    if ($settings['control_type'] != 'evaluation') {
+      $types = array($settings['control_type']);
+    }
+  } else {
+    //Execute for all wikicompare node type, except evaluation.
+    $types = array('product', 'criterion');
+    if (module_exists('wikicompare_profiles')) {
+      //Add profile type.
+      wikicompare_profiles_node_types($types);
+    }
+  }
+
+  foreach ($types as $type) {
+
+    //We must not touch anything on a computed table.
+    if ($type == 'criterion' && $settings['computed']) {
+      continue;
+    }
+
+//TODO profile
+    //Initialize the translate flag for needed situation.
+    if ($type == 'profile') {
+      $settings['translate'] = True;
+    }
+
+    //Security for the TYPE_ids, it's an array but javascript return a string when empty.
+    if ($settings[$type . '_ids'] == '') {
+      $settings[$type . '_ids'] = array();
+    }
+
+    //Security for the TYPE_displayed_ids, it's an array but javascript return a string when empty.
+    if ($settings[$type . '_displayed_ids'] == '') {
+      $settings[$type . '_displayed_ids'] = array();
+    }
+
+    //Get the ids of all the nodes in the table.
+    $node_ids = array();
+    foreach ($settings[$type . '_ids'] as $nid => $node) {
+      $node_ids[$nid] = $nid;
+    }
+
+    //Get the details from database of all the nodes displayed in the table.
+    $nodes = array();
+    if (!empty($node_ids)) {
+      $nodes = request_db($type, array('nids' => $node_ids), $settings);
+    }
+
+    //Get from database the list of the nodes at the top of the tree.
+    $in_db_nodes = request_db($type, array('parent_id' => NULL), $settings);
+    //Extract nids.
+    $in_db_nodes_ids = array();
+    foreach ($in_db_nodes as $nid => $node) {
+      $in_db_nodes_ids[$nid] = $nid;
+    }
+
+    //Make some control based on the nids. We will not make it if we are only displaying fastaction items, and we will only control the targeted nids in nid mode.
+    if (in_array($settings['control_mode'], array('nid', 'complete'))) {
+      $in_table_node_ids = array();
+      $reset = False;
+      $refresh_parents = array();
+      //We test all nodes present in the table. The TYPE_ids array contain the nids of the node, his parent id and the has_children flag.
+      foreach ($settings[$type . '_ids'] as $nid => $node_from_table) {
+
+        //Listing all node present in table in a array for later use.
+        $in_table_node_ids[$nid] = $nid;
+
+        //If the node has a parent in the table.
+        if (isset($node_from_table['parent_id'])) {
+
+          //If the parent of the node in the table is different then the parent of the node in db.
+          if ($node_from_table['parent_id'] != $nodes[$nid]['data']->parent_id) {
+
+            //If the parent of the node in db is displaying his children in the table, then the tested node is missing among the children so we need to hide the children of the parent. Also, if the tested node is now without parent, then we need to reset the table to display it.
+            if (isset($nodes[$nid]) && (in_array($nodes[$nid]['data']->parent_id, $settings[$type . '_displayed_ids']) || $nodes[$nid]['data']->parent_id == NULL)) {
+              if ($nodes[$nid]['data']->parent_id != NULL) {
+                $refresh_parents[$nodes[$nid]['data']->parent_id] = $nodes[$nid]['data']->parent_id;
+              } else {
+                $reset = True;
+              }
+            }
+
+            //If the parent in table is currently displaying his children, then the tested node is displayed as his child but isn't anymore, so we need to hide it
+            if (in_array($node_from_table['parent_id'], $settings[$type . '_displayed_ids'])) {
+              $refresh_parents[$node_from_table['parent_id']] = $node_from_table['parent_id'];
+            }
+
+          }
+
+        }
+
+        //If the has_children flag is different in table or in db, then we need to reset the supertitle to display a label or a link at title of the node.
+        if (isset($nodes[$nid]) && $node_from_table['has_children'] != $nodes[$nid]['data']->has_children) {
+          $commands[] = ajax_command_replace('#' . $type . '_table_supertitle_' . $nid, wikicompare_table_get_supertitle_item($type, $nodes[$nid], $settings));
+          //If the node lost his children.
+          if (!$nodes[$nid]['data']->has_children) {
+            //We remove his has_children flag.
+            $commands[] = ajax_command_invoke('.' . $type . '_table_item_' . $nid, 'removeClass', array('has_children'));
+            //TODO I don't remember why I do that.
+            $commands[] = ajax_command_invoke('#' . $type . '_table_children_checked_' . $nid, 'show', array());
+            $commands[] = ajax_command_invoke('#' . $type . '_table_children_' . $nid, 'hide', array());
+          //If the node won a children.
+          } else {
+            //We give it the has_children flag.
+            $commands[] = ajax_command_invoke('.' . $type . '_table_item_' . $nid, 'addClass', array('has_children'));
+          }
+        }
+
+        //If one of the node without parent displayed in table isn't in the first level in db anymore.
+        if ((!in_array($nid, $in_db_nodes_ids)) && $node_from_table['parent_id'] == NULL) {
+          $reset = True;
+        }
+
+      }
+
+      //In nid mode, we make this control only if the modified node hadn't parent.
+      if (($settings['control_mode'] == 'nid' && $settings['control_parent_id'] == NULL) || $settings['control_mode'] == 'complete') {
+        foreach ($in_db_nodes_ids as $nid) {
+          //If one of the node present in the first level in db isn't displayed in the table.
+          if (!in_array($nid, $in_table_node_ids)) {
+            $reset = True;
+          }
+        }
+      }
+
+      //We get from database all the children of the parent which are currently displaying his children. If one children is missing on the table, then we force the concerned parent to hide his children.
+      if (!empty($settings[$type . '_displayed_ids'])) {
+        //Get children from database by searching from parent_ids.
+        $in_db_nodes_with_parent = request_db($type, array('parent_id' => $settings[$type . '_displayed_ids']), $settings);
+        foreach ($in_db_nodes_with_parent as $node) {
+          //If one of the children isn't in the table.
+          if (!in_array($node['data']->nid, $in_table_node_ids)) {
+            //Then we collapse the children of the parent.
+            $refresh_parents[$node_from_table['parent_id']] = $node_from_table['parent_id'];
+          }
+        }
+      }
+
+      //Translate into commands.
+      $first = True;
+      foreach ($refresh_parents as $pid) {
+        if ($type != 'product') {
+          if ($first) {
+            //We close the node in error which is at the hightest level of the displayed node.
+            if ($type == 'criterion') {
+              $commands[] = ajax_command_invoke('.breadcrumb_item_link[nid="' . $pid . '"]', 'click', array());
+            } else { //TODO centralize breadcrumb and itemlist_return_link
+              $commands[] = ajax_command_invoke('.itemlist_return_link[nid="' . $pid . '"]', 'click', array());
+            }
+          }
+          //We clean the cache datas.
+          if ($type == 'criterion') {
+            $commands[] = ajax_command_invoke('#comparative_table_stored_' . $pid, 'addClass', array('to_remove'));
+          } else { //TODO centralize stored table
+            $commands[] = ajax_command_invoke('#itemlist_stored_' . $pid, 'addClass', array('to_remove'));
+          }
+          //We reopen the opened nodes.
+          $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $pid, 'click', array());
+        } else {
+          //We close the node in error which is at the hightest level of the displayed node.
+          if ($first) {
+            $commands[] = ajax_command_invoke('.' . $type . '_table_link[nid="' . $pid . '"]', 'click', array());
+          }
+          //We clean the cache datas.
+          $commands[] = ajax_command_invoke('#' . $type . '_table_children_' . $pid . ' *', 'remove', array());
+          $commands[] = ajax_command_invoke('#' . $type . '_table_children_' . $pid, 'removeClass', array('stored'));
+          //We reopen the opened nodes.
+          $commands[] = ajax_command_invoke('.' . $type . '_table_link[nid="' . $pid . '"]', 'click', array());
+        }
+        $first = False;
+      }
+
+      //If during the previous tests, we ask to reset the table. Only the part concerned by the node type will be reset.
+      if ($reset == True) {
+        switch ($type) {
+          case 'product':
+            $settings['displayed_ids'] = $settings['product_column_ids'];
+            $commands[] = ajax_command_replace('#comparative_table_main_product', wikicompare_table_render_main_itemlist('product', 'Products', $settings));
+            break;
+          case 'criterion':
+            if (!empty($settings['product_column_ids'])) {
+              $products = request_db('product', array('nids' => $settings['product_column_ids']), $settings);
+            }
+            $res = wikicompare_table_render_comparative_table($settings, $products);
+            $commands[] = ajax_command_replace('#comparative_table', $res['output']);
+            break;
+        }
+
+      }
+      if (module_exists('wikicompare_profiles')) {
+        //Add commmand to reset the profile part of the table.
+        wikicompare_profiles_table_clean_reset($commands, $type, $reset, $settings);
+      }
+    }
+
+    //Reset all fields displayed in the table. All field are in a span to easily refresh them.
+    foreach($nodes as $nid => $node) {
+      //In nid mode, we reset only the modified nid.
+      if (($settings['control_mode'] == 'nid' && $settings['control_nid'] == $nid) || $settings['control_mode'] == 'complete') {
+        $commands[] = ajax_command_invoke('.' . $type . '_title_' . $nid, 'html', array($node['data']->title));
+        if ($type == 'criterion') {
+          $commands[] = ajax_command_invoke('.criterion_weight_' . $nid, 'html', array($node['data']->weight));
+          $commands[] = ajax_command_invoke('.criterion_type_' . $nid, 'html', array($node['data']->type));
+          $commands[] = ajax_command_invoke('.criterion_state_' . $nid, 'html', array($node['data']->state));
+        }
+      }
+
+      //We don't reset fastaction in nid mode, except for the modified nid.
+      if ($settings['control_mode'] == 'nid' && $settings['control_nid'] != $nid) {
+        continue;
+      }
+      //If we are in fastaction mode, then we refresh the fastaction items.
+      if ($settings['fastaction']) {
+        $commands[] = ajax_command_invoke('.fastaction_items_' . $nid, 'html', array(add_fastaction_items($type , $node)));
+      //Remove fastactions items.
+      } else {
+        $commands[] = ajax_command_invoke('.fastaction_items_' . $nid, 'html', array());
+      }
+    }
+
+    //Reset the fastactions items in fastactions_add zones.
+    if (in_array($settings['control_mode'], array('toogle_fastaction', 'complete'))) {
+      //Add fastaction items to the Add link.
+      if ($settings['fastaction']) {
+        foreach($settings[$type . '_fastaction_adds'] as $nid) {
+          $node = array(
+            'data' => new stdClass(),
+          );
+          $node['data']->nid = $nid;
+          $node['add'] = True;
+          $commands[] = ajax_command_invoke('#add_' . $type . '_link_' . $nid, 'html', array(add_fastaction_items($type , $node)));
+        }
+      //Remove fastactions items.
+      } else {
+        foreach($settings[$type . '_fastaction_adds'] as $nid) {
+          $commands[] = ajax_command_invoke('#add_' . $type . '_link_' . $nid, 'html', array());
+        }
+      }
+    }
+
+  }
+
+  //Display fastaction in evaluation, only if the evaluations will not be reset.
+  if (!in_array($settings['control_mode'], array('nid','complete'))) {
+
+    if (!empty($settings['evaluation_ids'])) {
+      $evaluations = request_db('evaluation', array('nids' => $settings['evaluation_ids']), $settings);
+    }
+
+    foreach ($settings['evaluation_ids'] as $nid) {
+      //If we are in fastaction mode, then we refresh the fastaction items.
+      if ($settings['fastaction']) {
+        $commands[] = ajax_command_invoke('.fastaction_items_' . $nid, 'html', array(add_fastaction_items(evaluation , $node)));
+      //Remove fastactions items.
+      } else {
+        $commands[] = ajax_command_invoke('.fastaction_items_' . $nid, 'html', array());
+      }
+    }
+  }
+
+  //We refresh the evaluations only if the table wasn't computed.
+  if (in_array($settings['control_mode'], array('nid','complete')) && !$settings['computed']) {
+
+    //Security for the criterion_complete_ids, it's an array but javascript return a string when empty.
+    if ($settings['criterion_complete_ids'] == '') {
+      $settings['criterion_complete_ids'] = array();
+    }
+
+    $criterions = request_db('criterion', array('nids' => $settings['criterion_complete_ids']), $settings);
+
+    //Get evaluations details.
+    $evaluations = array();
+    if (!empty($settings['product_column_ids']) && !empty($settings['criterion_complete_ids'])) {
+      $evaluations = request_db('evaluation', array('product_ids' => $settings['product_column_ids'], 'criterion_ids' => $settings['criterion_complete_ids']), $settings);
+    }
+
+    //Rerender all the evaluations displayed in the table.
+    foreach($evaluations as $fid => $products_evaluations) {
+      foreach ($products_evaluations as $cid => $evaluation) {
+        $commands[] = ajax_command_replace('#evaluation_' . $evaluation['data']->nid, wikicompare_table_render_evaluation($evaluation, $criterions[$evaluation['data']->criterion_id], $cid, $settings));
+      }
+    }
+
+  }
+
+  return $commands;
+
+}
+
 
 ?>

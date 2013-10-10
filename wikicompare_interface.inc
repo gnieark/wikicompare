@@ -202,7 +202,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         $output .= '<p><span id="container-wikicompare-parent-id">' . $parent_name . '</span>';
         if ($readonly != True) {
           //Span with the parent_id, which will be recovered by the submit function and updated by javascript. Followed by the link.
-          $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $parent_id . '</span> ' . render($select_parent_link) . ' ' . $clear_parent_link . '</p>';
+          $output .= '<span id="wikicompare-old-parent-id" style="display:none;">' . $parent_id . '</span><span id="wikicompare-parent-id" style="display:none;">' . $parent_id . '</span> ' . render($select_parent_link) . ' ' . $clear_parent_link . '</p>';
         }
       }
 
@@ -390,6 +390,29 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
 
   if ($form_type == 'fastaction') {
 
+    //Product specific fields.
+    if ($type == 'product') {
+
+      $comparable_field = array(
+        '#type' => 'select',
+        '#title' => t('Comparable'),
+        '#required' => TRUE,
+        '#options' => array(
+          'only-without-children' => 'Only if it has no children',
+          'always-combine' => 'Always - Combine the children evaluations',
+        ),
+        '#id' => 'form_' . $type . '_fast' . $fastaction . '_comparable_' . $nid,
+      );
+      if ($fastaction == 'edit') {
+        $comparable_field['#value'] = $node->wikicompare_comparable['und'][0]['value'];
+      }
+      if ($readonly == True) {
+        $comparable_field['#attributes']['disabled'] = True;
+      }
+      $output .= render($comparable_field);
+
+    }
+
     //Criterion specific fields.
     if ($type == 'criterion') {
 
@@ -467,6 +490,27 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         $weight_field['#attributes']['disabled'] = True;
       }
       $output .= render($weight_field);
+
+      $user = $GLOBALS['user'];
+
+      if (user_access('administer wikicompare', $user)) {
+        $suggest_field = array(
+          '#type' => 'textfield',
+          '#title' => t('Use this criterion for home page suggestions'),
+          '#required' => TRUE,
+          '#value' => 0,
+          '#element_validate' => array('element_validate_integer_positive_or_null'),
+          '#id' => 'form_' . $type . '_fast' . $fastaction . '_suggest_' . $nid,
+
+        );
+        if ($fastaction == 'edit') {
+          $suggest_field['#value'] = $node->wikicompare_suggest['und'][0]['value'];
+        }
+        if ($readonly == True) {
+          $suggest_field['#attributes']['disabled'] = True;
+        }
+        $output .= render($suggest_field);
+      }
 
     }
 
@@ -565,11 +609,16 @@ function add_fastaction_items($type, $node_array){
 
   //We can fastadd / fastedit / fastremove all the other node types.
   } else {
-    $actions['add'] = 'add';
+    //In translation mode, we display the add fastaction in item only if they don't have children. Else, the fastadd is at the bottom of the children zone.
+    if (!in_array($type, array('criterion', 'profile')) || !$node_array['data']->has_children) {
+      $actions['add'] = 'add';
+    }
 
     //Test if we can fastedit the item, based on the information of the database query function.
     $test = False;
-    if (isset($node_array['no-edit']) || $nid == 0) {
+
+    //We don't display edit nor remove if the security test in request_db failed or if we are in a add zone.
+    if (isset($node_array['no-edit']) || isset($node_array['add'])) {
       $test = True;
     }
 
@@ -600,7 +649,7 @@ function add_fastaction_items($type, $node_array){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_' . $action . '_link_' . $nid, 'class' => array('dialog'), 'nid' => $nid,'ntype' => $type, 'action' => 'fastaction', 'fastaction' => $action, 'side' => 'right'), 'html' => True));
+    $img_link = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_' . $action . '_link_' . $nid, 'class' => array('dialog'), 'nid' => $nid, 'parent_id' => $node_array['data']->parent_id, 'ntype' => $type, 'action' => 'fastaction', 'fastaction' => $action, 'side' => 'right'), 'html' => True));
     $output .= $img_link;
   }
 
@@ -644,6 +693,8 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
       '#markup' => t('Do you really want to remove this ') . $type . '<br/>',
     );
     $output .= render($label);
+    $output .= '<span id="wikicompare-old-parent-id" style="display:none;">' . $_POST['parent_id'] . '</span>';
+    $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $_POST['parent_id'] . '</span>';
 
   //Else, display the form.
   } else {
@@ -679,6 +730,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
 
     //If we are just fastadding a node, then we insert an hidden span containing the id of the parent.
     } else {
+      $output .= '<span id="wikicompare-old-parent-id" style="display:none;">' . $nid . '</span>';
       $output .= '<span id="wikicompare-parent-id" style="display:none;">' . $nid . '</span>';
     }
 
@@ -737,6 +789,9 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     return $output;
   }
 
+  //Initialize settings with the variable from javascript.
+  $settings = wikicompare_initialize_settings($_POST);
+
   //Security to avoid firebug hacking while the user is anonymous.
   if (user_is_anonymous() == True) {
     return "You can only use fastaction if you are logged";
@@ -744,7 +799,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
   //Get some variables from javascript.
   $type = $_POST['type'];
-  $fastaction = $_POST['fastaction'];
+  $fastaction = $_POST['action'];
 
   //If we are not fastadding, we get the information from database to proceed an ultimate check of the user right. This should protect us from firebug hacking.
   $from_db_record = array();
@@ -760,13 +815,14 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     //Delete the node.
     node_delete($_POST['nid']);
 
-    //Remove the item in table.
-    $commands[] = ajax_command_remove('#' . $type . '_table_supertitle_'. $_POST['nid']);
-    $commands[] = ajax_command_invoke('#' . $type . '_table_item_'. $_POST['nid'], 'addClass', array('to_remove'));
     //Display a confirmatio message.
     $commands[] = ajax_command_html('#form_fastaction_' . $_POST['nid'], 'The node is correctly removed');
-    //Call the cleaning function.
-    $commands[] = ajax_command_invoke('#wikicompare_make_cleaning_link', 'click', array());
+
+    //Close the dialog
+    $commands[] = ajax_command_invoke('#' . $_POST['side'] . '_dialog_close', 'click', array());
+
+    //Update the table.
+    $commands = array_merge($commands, wikicompare_control_table($settings));
 
   //If we are fastadding / fasteditting and the user has the right for it.
   } elseif (!isset($from_db_record['no-edit'])) {
@@ -851,6 +907,16 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       wikicompare_inherit_product_fastaction_submit_element($node, $donotupdate, $_POST);
     }
 
+    //Product specific fields.
+    if ($type == 'product') {
+      //Assign comparable field.
+      if ($_POST['product_comparable'] != NULL) {
+        $node->wikicompare_comparable['und'][0]['value'] = $_POST['product_comparable'];
+      } else {
+        $missing_field = TRUE;
+      }
+    }
+
     //Criterion specific fields.
     if ($type == 'criterion') {
 
@@ -876,6 +942,18 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
         $node->wikicompare_weight['und'][0]['value'] = $_POST['weight'];
       } else {
         $missing_field = True;
+      }
+
+      //Assign suggest field.
+      $user = $GLOBALS['user'];
+
+      $node->wikicompare_suggest['und'][0]['value'] = 0;
+      if (user_access('administer wikicompare', $user)) {
+        if ($_POST['suggest'] != NULL) {
+          $node->wikicompare_suggest['und'][0]['value'] = $_POST['suggest'];
+        } else {
+          $missing_field = True;
+        }
       }
 
     }
@@ -927,7 +1005,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       $commands[] = ajax_command_invoke('#' . $_POST['side'] . '_dialog_close', 'click', array());
 
       //Update the table.
-      $commands[] = ajax_command_invoke('#make_cleaning_link', 'click', array());
+      $commands = array_merge($commands, wikicompare_control_table($settings));
 
     //If a required field is missing.
     } else {

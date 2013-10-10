@@ -108,6 +108,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //Slide the table to return at the clicked depth.
         $("#comparative_tables").css("transform","translateX(" + (clicked_depth - 1) * -100 + "%)");
+        //Remove the flag on link.
+        $('.criterion_table_link[nid=' + nid + ']').removeClass('displayed');
 
         //Action on each tables hidded by the slide.
         while ((max_depth + 1) != clicked_depth) {
@@ -143,6 +145,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         //Slide the table to return at the clicked depth.
         $("#main_" + type + "_itemlists").css("transform","translateX(" + (clicked_depth - 1) * -100 + "%)");
+        //Remove the flag on link.
+        $('.' + type + '_table_link[nid=' + nid + ']').removeClass('displayed');
 
         //Action on each tables hidded by the slide.
         while ((max_depth + 1) != clicked_depth) {
@@ -375,28 +379,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * Dynamize the toogle fastaction link to display the fastaction items.
-     */
-    $('#toogle_fastaction_link:not(.listener_set)').addClass('listener_set').each(function () {
-      $(this).click(function() {
-        //On click, we change the fastaction flag.
-        if (fastaction == 0) {
-          fastaction = 1;
-        } else {
-          fastaction = 0;
-          //Remove the displayed fastaction item.
-          $('.fastaction_item').remove();
-        }
-        //Then we call the cleaning function, which will add the fastaction item since we changed the fastaction flag.
-        $('#make_cleaning_link').click();
-        //Avoid page redirection.
-        return false;
-      });
-    });
-
-
-
-    /*
      * Call the ajax submit link of the fastaction form when we submit it.
      */
     $('.form_fastaction').submit(function () {
@@ -540,7 +522,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function build_ajax_link(link_id, object, action, aj_settings) {
 
       //Theses functions does not have nid and so would cause some problem. For example, they would disable the simple_dialog links.
-      if (action != 'append_product_list' && action != 'open_dialog' && action != 'submit_dialog' && action != 'submit_infofield' && action != 'refresh_list' && action != 'make_cleaning') {
+      if (action != 'append_product_list' && action != 'open_dialog' && action != 'submit_dialog' && action != 'submit_infofield' && action != 'refresh_list' && action != 'toogle_fastaction' && action != 'make_cleaning') {
         //Recover the nid by using a regular expression on the link_id.
         var nid = extract_nid(link_id)[0];
       }
@@ -629,9 +611,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
       ajax.old_beforeSerialize = ajax.beforeSerialize;
       ajax.beforeSerialize = function (element, options) {
 
-        //Send the fastaction flag, so drupal know if the fastaction mode is activated.
-        options.data.fastaction = fastaction;
-
         //Initialize all the information we can send to Drupal. This is a way to centralize the code.
         send_nid = false;
         send_type = false;
@@ -653,7 +632,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         send_container = false;
         send_colspan = false;
         auto_colspan = false;
-        make_cleaning = false;
+        send_fastaction = false;
+        send_control = {};
         computed = 0;
         column_number = 0;
         depth = 0;
@@ -672,6 +652,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_states = true;
           //In popin, we may have to block a forbidden nid.
           send_forbidden_nid = true;
+          send_fastaction = true;
           options.data.type = type;
           options.data.context = context;
 
@@ -691,6 +672,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //If we display the children with translation effect, drupal need to know it.
           if ($('#' + link_id).hasClass('translate')) {
             options.data.translate = true;
+            depth = get_table_depth('.itemlist_return_link');
+            options.data.depth = depth;
           }
 
           if (context == 'list') {
@@ -703,10 +686,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'expand_row_children') {
           //Send the parent_id so we retrieve the children.
           send_nid = true;
+          //Send the flag, so we know if we display or hide the children.
+          manage_displayed_flag = true;
           //Send the product displayed in the table, so we directly add the cell of these columns in the new lines of the criterion children.
           send_products_columns = true;
           //Send states if we want to also display the draft and closed items.
           send_states = true;
+          send_fastaction = true;
           //The table will be clean after the operation.
           make_cleaning = true;
 
@@ -744,6 +730,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_criterions = true;
           //Resize all lines to the new size of the table.
           auto_colspan = true;
+          send_fastaction = true;
           //The table will be clean after the operation.
           make_cleaning = true;
         }
@@ -860,31 +847,46 @@ Drupal.behaviors.WikicompareComparativeTable = {
             send_type = true;
             //Send the fastaction (add, edit, remove).
             options.data.fastaction = aj_settings['fastaction'];
+            options.data.parent_id = $('#' + link_id).attr('parent_id');
           }
 
         }
 
         if (action == 'submit_fastaction_form') {
+
           //Send the nid of the node.
           send_nid = true;
           //Send the type of the node.
           send_type = true;
           //Send the fastaction (add, edit, remove).
-          options.data.fastaction = aj_settings['fastaction'];
+          options.data.action = aj_settings['fastaction'];
           //Send dialog side.
           send_side = true;
+
+          //Prepare data for the control function.
+          options.data.control_mode = 'nid';
+          options.data.control_type = type;
+          options.data.control_nid = nid;
+          options.data.control_parent_id = $('#wikicompare-parent-id').text();
+          if (options.data.control_parent_id == 0) {
+            options.data.control_parent_id = '';
+          }
+          if (options.data.control_parent_id != $('#wikicompare-old-parent-id').text()) {
+            options.data.control_old_parent_id = $('#wikicompare-old-parent-id').text();
+          }
 
           //Get value of all fields in the fastaction form, and send them to Drupal.
           if (type != 'evaluation') {
             options.data.title = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_title_' + nid).val();
             options.data.title_translation = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_title_' + nid + '_translation').val();
-            options.data.parent_id = $('#wikicompare-parent-id').text();
+            options.data.parent_id = options.data.control_parent_id;
             options.data.sequence = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_sequence_' + nid).val();
             options.data.state = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_state_' + nid).val();
           }
           options.data.description = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_description_' + nid).val();
           options.data.description_translation = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_description_' + nid + '_translation').val();
           if (type == 'product') {
+            options.data.product_comparable = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_comparable_' + nid).val();
             options.data.inherit_id = $('#wikicompare-inherit-product-id').text();
           }
           if (type == 'criterion') {
@@ -892,6 +894,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.guidelines = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_guidelines_' + nid).val();
             options.data.guidelines_translation = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_guidelines_' + nid + '_translation').val();
             options.data.weight = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_weight_' + nid).val();
+            options.data.suggest = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_suggest_' + nid).val();
           }
           if (type == 'evaluation') {
             options.data.support = $('#edit-wikicompare-support-und').is(':checked');
@@ -935,8 +938,21 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.use_from_inherit = $('#edit-wikicompare-use-from-inherit-und').attr('checked');
         }
 
+        if (action == 'toogle_fastaction') {
+
+          //On click, we change the fastaction flag.
+          if (fastaction == 0) {
+            fastaction = 1;
+          } else {
+            fastaction = 0;
+            //Remove the displayed fastaction item.
+            $('.fastaction_item').remove();
+          }
+          options.data.control_mode = 'toogle_fastaction';
+        }
+
         //If we want to clean the table.
-        if (action == 'make_cleaning') {
+        if (typeof(options.data.control_mode) != 'undefined') {
 
           //Send computed state, the table will not be touched if it was computed.
           send_computed = true;
@@ -948,49 +964,55 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_selected_criterions = true;
           //Send states.
           send_states = true;
+          send_fastaction = true;
+
+//TODO centralize with send_criterions
+          var criterion_ids = {};
+          $('.criterion_item').each(function (key, value) {
+            var fid = extract_nid($(this).attr('id'))[0];
+            criterion_ids[fid] = fid;
+          });
+          //Add them in the ajax call variables.
+          options.data.criterion_complete_ids = criterion_ids;
 
           //We will send all nodes in the cleaning function, and check which parent is displaying his children.
           var a = ['product', 'criterion', 'profile'];
+          //If a type is defined, we will only control this type.
+          if (typeof(options.data.control_type) != 'undefined') {
+            a = [type];
+          }
           for (index = 0; index < a.length; ++index) {
 
             //The node type we are working on.
             var ftype = a[index];
             var node_ids = {};
-            //Get the class to find the item in the table.
-            var item = ftype + '_item';
-            if (ftype == 'criterion') {
-              item = 'criterion_row';
+            //Get the items in table.
+            var selector = '.' + ftype + '_item';
+            if (typeof(options.data.control_nid) != 'undefined') {
+              c = selector;
+              selector = selector + '[nid=' + options.data.control_nid + ']';
+              //If parent_id, we want to select it in item so we can change his supertitle is has_children changed and his children to know if his children changed.
+              if (typeof(options.data.control_parent_id) != 'undefined') {
+                selector = selector + ',' + c + '[parent_id=' + options.data.control_parent_id + '],' + c + '[nid=' + options.data.control_parent_id + ']';
+                //Same for the old parent.
+                if (typeof(options.data.control_old_parent_id) != 'undefined') {
+                  selector = selector + ',' + c + '[parent_id=' + options.data.control_old_parent_id + '],' + c + '[nid=' + options.data.control_old_parent_id + ']';
+                }
+              }
             }
 
-            //For all item in the table.
-            $('.' + item).each(function (key, value) {
-              //In the make cleaning function, the to_remove items are not already remove to not break the slideUp, but they still must not be send.
-              if (!$(this).hasClass('to_remove')) {
-                //Extract nid.
-                nid = extract_nid($(this).attr('id'))[0];
-                node_ids[nid] = {};
-                //Assign the nid.
-                node_ids[nid]['nid'] = nid;
-                //Get the parent id from the table.
-                if (ftype == 'criterion') {
-                  var patt = /[0-9]+/g;
-                  //The only numerical value in the class of a criterion item is his parent.
-                  if (patt.test($(this).attr('class'))) {
-                    var pid = $(this).attr('class');
-                    node_ids[nid]['parent_id'] = extract_nid(pid)[0];
-                  }
-                } else {
-                  //Extract parent by checking the upper item of the itemlist.
-                  if ($(this).parent().parent().parent().hasClass(ftype + '_children')) {
-                    pid = $(this).parent().parent().parent().attr('id');
-                    node_ids[nid]['parent_id'] = extract_nid(pid)[0];
-                  }
-                }
-                //Check if the node has children.
-                node_ids[nid]['has_children'] = 0;
-                if ($(this).hasClass('has_children')) {
-                  node_ids[nid]['has_children'] = 1;
-                }
+            //Get nid, parent_id and has_children flag of all the items.
+            $(selector).each(function (key, value) {
+              //Extract nid.
+              inid = extract_nid($(this).attr('id'))[0];
+              node_ids[inid] = {};
+              //Assign the nid.
+              node_ids[inid]['nid'] = inid;
+              node_ids[inid]['parent_id'] = $(this).attr('parent_id');
+              //Check if the node has children.
+              node_ids[inid]['has_children'] = 0;
+              if ($(this).hasClass('has_children')) {
+                node_ids[inid]['has_children'] = 1;
               }
             });
             //Add them in the ajax call variables.
@@ -998,19 +1020,39 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
             //Then we need to find which item are displaying his children.
             var node_displayed_ids = {};
+            var selector = '.' + ftype + '_table_link';
+            //If nid mode, we only check the parent.
+            if (typeof(options.data.control_nid) != 'undefined') {
+              var c = selector;
+              selector = c + '[nid=' + options.data.control_parent_id + ']';
+              //And the old parent.
+              if (typeof(options.data.control_old_parent_id) != 'undefined') {
+                selector = c + ',' + c + '[nid=' + options.data.control_old_parent_id + ']';
+              }
+            }
+
             //For each item which have children (since they have link).
-            $('.' + ftype + '_table_link').each(function (key, value) {
+            $(selector).each(function (key, value) {
               //Check if the item is displaying his children.
               if ($(this).hasClass('displayed')) {
                 //Extract nid.
-                var nid = extract_nid($(this).attr('id'))[0];
-                node_displayed_ids[nid] = nid;
+                var inid = extract_nid($(this).attr('id'))[0];
+                node_displayed_ids[inid] = inid;
               }
             });
             //Add them in the ajax call variables
             options.data[ftype + '_displayed_ids'] = node_displayed_ids;
 
+            //Get the fastaction add so we can set their fastadd picture.
+            var fastaction_adds = {};
+            $('.link_fastaction[ntype=' + ftype + ']').each(function (key, value) {
+              fastaction_adds[$(this).attr('nid')] = $(this).attr('nid');
+            });
+            options.data[ftype + '_fastaction_adds'] = fastaction_adds;
+
           }
+
+
 
         }
 
@@ -1063,12 +1105,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
           });
           //Add them in the ajax call variables.
           options.data.product_column_ids = product_column_ids;
+          //Each time we send the product_column, we also need the width of the columns.
+          options.data.width = (100 - first_column_width) / (column_number);
         }
 
         //Get and send the criterions in the table.
         if (send_criterions == true) {
           var criterion_ids = {};
-          $('.criterion_row').each(function (key, value) {
+          $('.criterion_item').each(function (key, value) {
             var fid = extract_nid($(this).attr('id'))[0];
             criterion_ids[fid] = fid;
           });
@@ -1197,6 +1241,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.colspan = $('.header_product').length + 1;
         }
 
+        if (send_fastaction == true) {
+          //Send the fastaction flag, so drupal know if the fastaction mode is activated.
+          options.data.fastaction = fastaction;
+        }
+
         //Launch regular beforeSerialize function, only if we are not skipping the ajax call.
         if (!skip_ajax) {
           this.old_beforeSerialize(element, options);
@@ -1231,9 +1280,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 //Standard case.
                 if (!$('#' + link_id).hasClass('translate')) {
 
-                  //We replace each line by the line from checked zone, to keep the checked children information and other stuff.
-                  $('#' + type + '_' + context + '_children_checked_' + nid + ' li').each(function(index) {
+                  //For each line in checked zone.
+                  $('#' + type + '_' + context + '_children_checked_' + nid + '>ul>li').each(function(index) {
+                    //We replace each line in children zone by the line from checked zone, to keep the checked children information and other stuff.
                     $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + ']').replaceWith($(this).clone());
+                    //Then we remove all data in checked zone, to prevent them to catch the selector of others functions.
+                    $('#' + type + '_' + context + '_children_checked_' + nid + ' #' + $(this).attr('id') + ' *').addClass('to_remove');
+                    //In itemlist, we switch normal and simple title. Simple titles doesn't have link to display children.
+                    $('#' + type + '_' + context + '_children_' + nid + ' .simpletitle[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').hide();
+                    $('#' + type + '_' + context + '_children_' + nid + ' .normaltitle[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').show();
+
                     //Since we only copy it, we need to remove the listener class on checkbox and link so they can have their own listener.
                     $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .listener_set').removeClass('listener_set');
                     $('#' + type + '_' + context + '_children_' + nid + ' li[context=' + context + '][nid=' + $(this).attr('nid') + '] .ajax-processed').removeClass('ajax-processed');
@@ -1254,9 +1310,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
                 //Display itemlist with translation effect.
                 } else {
-
-                  //Only case where we don't need the displayed class.
-                  $('#' + link_id).removeClass('displayed');
 
                   //We are adding a new depth level.
                   depth = depth + 1;
@@ -1326,9 +1379,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 //Fill the checked zone with a copy of the checked item in children zone.
                 $('#' + type + '_' + context + '_children_checked_' + nid).empty();
                 $('#' + type + '_' + context + '_children_checked_' + nid).append('<ul></ul>');
+
+                //For each checked line in children zone.
                 $('.' + type + '_item:.has_checked_children[context=' + context + '][parent_id=' + nid + ']').each(function (key, value) {
                   //Append the item to the checked zone. The first is important because we are adding item containing ul, otherwise the second item will be add to the first etc...
                   $('#' + type + '_' + context + '_children_checked_' + nid + ' ul').first().append($(this).clone());
+                  //Then we remove all checked link in children zone, to prevent them to catch the selector of others functions.
+                  $('#' + type + '_' + context + '_children_' + nid + ' #' + $(this).attr('id') + ' *').addClass('to_remove');
+                  //In itemlist, we switch normal and simple title. Simple titles doesn't have link to display children.
+                  $('#' + type + '_' + context + '_children_checked_' + nid + ' .normaltitle[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').hide();
+                  $('#' + type + '_' + context + '_children_checked_' + nid + ' .simpletitle[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').show();
+
                   //Since we only copy it, we need to remove the listener class on checkbox and link so they can have their own listener.
                   $('#' + type + '_' + context + '_children_checked_' + nid + ' .' + type + '_item:.has_checked_children[context=' + context + '][parent_id=' + nid + '] .listener_set').removeClass('listener_set');
                   $('#' + type + '_' + context + '_children_checked_' + nid + ' .' + type + '_item:.has_checked_children[context=' + context + '][parent_id=' + nid + '] .ajax-processed').removeClass('ajax-processed');
@@ -1435,11 +1496,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           colspan = $('.header_product').length + 1;
           $('.row_auto_colspan').attr('colspan', colspan);
         }
-
-        //Launch the cleaning function.
-/*        if (make_cleaning == true) {
-          $('#make_cleaning_link').click();
-        }*/
 
         //We need to call this function to add the listeners on the added content. It is often called by the Drupal functions, but by calling it here we are sure about it.
         Drupal.attachBehaviors(context, settings);

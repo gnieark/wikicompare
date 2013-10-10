@@ -777,29 +777,37 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   }
 
   $or = db_or();
+  $flag = False;
 
   //If we didn't used another method to recover the nids.
   if (isset($db_settings['nids']) && !empty($db_settings['nids'])) {
     $or->condition('n.nid', $db_settings['nids'], 'in');
+    $flag = True;
   }
 
   //We can't use isset because the value of parent_id can be null.
   if (array_key_exists('parent_id', $db_settings)) {
     $or->condition('n.parent_id', $db_settings['parent_id']);
+    $flag = True;
   }
 
   if (isset($db_settings['get_comparable_products'])) {
     $or->condition('n.has_children', 0);
     $or->condition('n.comparable', 'always-combine');
+    $flag = True;
+  }
+
+  if ($flag) {
+    $query->condition($or);
   }
 
   //If the nodes to recover are not specify by the nids in argument, then it means we need to find them thanks to the products and criterions ids.
   if ($type == 'evaluation' && !isset($db_settings['nids'])) {
-    $or->condition("n.product_id", $db_settings['product_ids'], 'in');
-    $or->condition("n.criterion_id", $db_settings['criterion_ids'], 'in');
+    $query->condition("n.product_id", $db_settings['product_ids'], 'in');
+    $query->condition("n.criterion_id", $db_settings['criterion_ids'], 'in');
   }
 
-  $query->condition($or);
+
 
   switch ($type) {
     case 'product':
@@ -887,7 +895,6 @@ function request_db($type, $db_settings = array(), $settings=array()) {
 
   //Launch the request
   $result = $query->execute();
-
 
   $res = array();
   $profile_criterions = array();
