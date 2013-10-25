@@ -94,6 +94,7 @@ function wikicompare_insert_node($type, $node) {
 
   //Product specific fields.
   if ($type == 'product') {
+    $fields['short_description'] = $node->wikicompare_short_description['und'][0]['value'];
     $fields['comparable'] = $node->wikicompare_comparable['und'][0]['value'];
   }
 
@@ -487,6 +488,7 @@ function wikicompare_revisionapi($op, $node_revision) {
 
       //Product specific fields.
       if ($node_revision->type == 'product') {
+        $fields['short_description'] = $node_revision->wikicompare_short_description['und'][0]['value'];
         $fields['comparable'] = $node_revision->wikicompare_comparable['und'][0]['value'];
       }
 

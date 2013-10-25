@@ -644,12 +644,12 @@ function add_fastaction_items($type, $node_array){
   foreach ($actions as $action) {
     //Create the image link to edit the node
     $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/fast' . $action . '.png',
       'alt' => 'Link to ' . $action . ' ' . $type . ' ' . $nid,
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_' . $action . '_link_' . $nid, 'class' => array('dialog'), 'nid' => $nid, 'parent_id' => $node_array['data']->parent_id, 'ntype' => $type, 'action' => 'fastaction', 'fastaction' => $action, 'side' => 'right'), 'html' => True));
+    $img_link = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_' . $action . '_link_' . $nid, 'class' => array('dialog','fastaction_item'), 'nid' => $nid, 'parent_id' => $node_array['data']->parent_id, 'ntype' => $type, 'action' => 'fastaction', 'fastaction' => $action, 'side' => 'right'), 'html' => True));
     $output .= $img_link;
   }
 

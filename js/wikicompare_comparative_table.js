@@ -3,8 +3,9 @@
 /*
  * Set global variable. Executed only once at the load of the file.
  */
-//The fastaction status of the table.
-fastaction = 0;
+
+//The dictionnary containing the products selected in products list
+selectedProducts = {};
 //The dictionnary containing the criterion manually selected.
 manual_selected_criterion_ids = {};
 //The dictionnary containing the criterion selected in forms.
@@ -14,6 +15,8 @@ selected_profile_ids = {};
 //Some constant dimensions used in the table.
 row_height = 100;
 first_column_width = 30;
+//Boolean which block the loading in product list while another loading is performing.
+load = false;
 
 
 
@@ -134,7 +137,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     /*
      * Dynamize the itemlist return link so we can click on it to return on superior part of the itemlist.
      */
-    $('.itemlist_return_link:not(.listener-set)').addClass('listener-set').each(function () {
+    $('.itemlist_return_link:not(#storage_zone .itemlist_return_link):not(.listener-set)').addClass('listener-set').each(function () {
 
       $(this).click(function() {
 
@@ -241,6 +244,30 @@ Drupal.behaviors.WikicompareComparativeTable = {
     });
 
 
+
+    /*
+     * Dynamize the compare buttons.
+     */
+    $('.compare-button:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        var nid = $(this).attr('nid');
+        if (!$(this).hasClass('selected')) {
+          //Add it in dictionary
+          selectedProducts[nid] = nid;
+          $(this).addClass('selected');
+        } else {
+          delete selectedProducts[nid];
+          $(this).removeClass('selected');
+          //Empty the Compare now link of this product is displayed.
+          $('.compare_link[nid=' + nid + ']').html('');
+        }
+
+        refreshCompareUrl();
+      });
+    });
+
+
+
     /*
      * Ajaxify the simple link which has no particular code to manage in the call.
      * Theses links are often hidden and automatically clicked on some event, like checkbox check, click on button or call by ajax.
@@ -261,6 +288,42 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Build ajax link.
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, action, aj_settings);
+    });
+
+
+
+    /*
+     * When we click on toogle fastaction in footer.
+     */
+    $('#fastaction-footer:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        if (!$(this).hasClass('selected')) {
+          $(this).addClass('selected');
+        } else {
+          $(this).removeClass('selected');
+          //Remove the displayed fastaction item.
+          $('.fastaction_item').remove();
+        }
+        //Launch ajax link.
+        $('#toogle_fastaction_link').click();
+      });
+    });
+
+
+
+    /*
+     * Launch a cleaning ajax call when we check a state checkbox, to reset the tables if necessary.
+     */
+    $('#state-draft-footer:not(.listener_set),#state-closed-footer:not(.listener_set)').addClass('listener_set').each(function () {
+      //Set the onclick event
+      $(this).click(function() {
+        if (!$(this).hasClass('selected')) {
+          $(this).addClass('selected');
+        } else {
+          $(this).removeClass('selected');
+        }
+        $('#make_cleaning_link').click();
+      });
     });
 
 
@@ -317,22 +380,67 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
 
     /*
-     * When we scroll the product list, load the next products at the end of the scroll.
+     * Dynamize the compare product link in footer, to display or hide the product list in table.
      */
-    var load = false;
-    //We use the position of the last product as mark.
-    var offset = $('.product_list_item:last').offset();
-    $('#products_list').scroll(function(){
-      //Only in standard mode.
-      if ($('#products_tree_mode').text() == 0) {
-        //If the offset is at the bottom of the scroll, is there is no current loading, if there is more than five displayed product and if all products are not already displayed, then we launch the function.
-        if ((offset.top - $('#products_list').height() - 150 <= $('#products_list').scrollTop()) && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())){
-  //TODO At the third call, the offset.top drastically diminush and so all next product are insta loaded. Instead of a step of 400 between each offset, we have only a step of 100. I don't know why.
-          //Lock the function.
-          load = true;
-          $('#append_product_list_link').click();
+    $('#compare-link-footer:not(.listener_set)').addClass('listener_set').each(function () {
+      $(this).click(function() {
+        var sign = '';
+        if (!$(this).hasClass('displayed')) {
+          $(this).addClass('displayed');
+        } else {
+          $(this).removeClass('displayed');
+          //Change sign so the dialog will be hide
+          sign = '-';
+          //Close all displayed product.
+          $('.product_table_link:.displayed').click();
         }
+        //Translate the dialog to display or hide it.
+        $('#comparative_table_main_product').css('transform','translateX(' + sign + '100%)');
+      });
+      //Initiate the number of product displayed in the table.
+      $('#nb-products-footer').html($('.header_product').length);
+    });
+
+
+
+    /*
+     * Initiate Charts
+     */
+    $('.chart:not(.listener_set)').addClass('listener_set').each(function () {
+      var ctx = $(this).get(0).getContext("2d");
+      var percent = parseFloat($(this).attr('percent'));
+
+      //Get background color.
+      var color = '#fafafa';
+      if ($(this).closest(".odd").length) { //TODO not work
+        color = '#f1f1f1';
       }
+
+      //Build data
+      var data = [
+        {
+          value: percent,
+          color: "#b7cf37"
+        },
+        {
+          value : 100 - percent,
+          color : "#cb5f34"
+        }
+      ];
+
+      //Build Chart
+      var myNewChart = new Chart(ctx).Doughnut(data, {
+        //Color of segment.
+        segmentStrokeColor : color,
+        //Width of segment
+	      segmentStrokeWidth : 1,
+        //The space in the chart take 70% of the chart.
+	      percentageInnerCutout : 70,
+        //Animation duration.
+	      animationSteps : 75,
+        //Animation type.
+        animationEasing : "easeOutQuart",
+      });
     });
 
 
@@ -361,17 +469,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
       aj_settings['type'] = $('#dialog_type').text();
       //Active the code
       Drupal.ajax[link_id] = build_ajax_link(link_id, this, 'select_dialog', aj_settings);
-    });
-
-
-    /*
-     * Launch a cleaning ajax call when we check a state checkbox, to reset the tables if necessary.
-     */
-    $('.state_checkbox:not(.listener_set)').addClass('listener_set').each(function () {
-      //Set the onclick event
-      $(this).click(function() {
-        $('#make_cleaning_link').click();
-      });
     });
 
 
@@ -815,7 +912,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
 
           //Add the container outside of the page.
-          $('#main-wrapper').append('<div id="' + aj_settings['side'] + '_dialog" style="position: absolute; height: 100%; width: 30%; top: 0; left: ' + position + '%; background-color:#FFFFFF; border: 1px solid; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">Test<br/><br/><br/><br/>TEST<p style="text-align: right;"><a href="/" id="' + aj_settings['side'] + '_dialog_close" class="close_dialog" side="' + aj_settings['side'] + '">Close</a></p></div>');
+          $('body').append('<div id="' + aj_settings['side'] + '_dialog" class="wikicompare-dialog" style="left: ' + position + '%;"><p style="text-align: right;"><a href="/" id="' + aj_settings['side'] + '_dialog_close" class="close_dialog" side="' + aj_settings['side'] + '">Close</a></p></div>');
 
           //Send the type of the node.
           send_type = true;
@@ -939,15 +1036,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'toogle_fastaction') {
-
-          //On click, we change the fastaction flag.
-          if (fastaction == 0) {
-            fastaction = 1;
-          } else {
-            fastaction = 0;
-            //Remove the displayed fastaction item.
-            $('.fastaction_item').remove();
-          }
           options.data.control_mode = 'toogle_fastaction';
         }
 
@@ -1242,6 +1330,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (send_fastaction == true) {
+          var fastaction = 0;
+          if ($('#fastaction-footer').hasClass('selected')) {
+            fastaction = 1;
+          }
           //Send the fastaction flag, so drupal know if the fastaction mode is activated.
           options.data.fastaction = fastaction;
         }
@@ -1315,8 +1407,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
                   depth = depth + 1;
 
                   //Get the div from the storage zone.
-                  var div = '<div id="itemlist_' + depth + '" nid="' + nid + '" style="float:left; position:absolute; top: 0; left:' + depth * row_height + '%; width:100%;">';
-                  div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a><br/>';
+                  var div = '<div id="itemlist_' + depth + '" nid="' + nid + '" class="itemlist_translate" style="left:' + depth * 100 + '%;">';
+//TODO remove                  div += '<a href="/" id="main_' + type + '_itemlist_return_link_' + depth + '" class="itemlist_return_link" nid="' + nid + '" ntype="' + type + '">Return</a><br/>';
                   div += $('#itemlist_stored_' + nid).html();
                   div += '</div>';
                   //Attach the table after the displayed table.
@@ -1349,6 +1441,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 $('#' + link_id).addClass('stored');
                 $('.product_list_item[parent_id=' + nid + ']').show();
 //TODO collapse other displayed item, like we did in itemlist
+                //Update the scrollbar length.
+                $('#products_list').mCustomScrollbar("update");
+                //Refresh oddeven.
+                odd_even_product_list('.product_list_item');
               }
 
             }
@@ -1400,6 +1496,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 $('#' + type + '_' + context + '_children_checked_' + nid).slideDown(600);
               } else {
                 remove_children_tree2(nid, '#product_list_link_', '.product_list_item', true);
+                //Update the scrollbar length.
+                $('#products_list').mCustomScrollbar("update");
+                //Refresh oddeven.
+                odd_even_product_list('.product_list_item');
               }
             }
 
@@ -1424,6 +1524,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
               $('#header_product_' + nid).addClass('to_remove');
               $('.evaluation_product_' + nid).addClass('to_remove');
               $('.infofield_product_' + nid).addClass('to_remove');
+
+              //Update product number in footer.
+              $('#nb-products-footer').html($('.header_product').length - 1);
 
               //We disactivated the product checkbox during the ajax call to avoid user spamming, reactivate it. We use a class base because the checkbox to reactive can be the one on checked zone or the one on children zone.
               $('.itemlist_checkbox[ntype=product][context=table][nid=' + nid + ']').removeAttr('disabled');
@@ -1450,8 +1553,22 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'append_product_list') {
           //Refresh the offset with the value of the last loaded product.
           offset = $('.product_list_item:last').offset();
-					//We can now scroll and append new products.
-          load = false;
+          //Update the scrollbar length.
+          $('#products_list').mCustomScrollbar("update");
+          //Refresh oddeven.
+          odd_even_product_list('.product_list_item');
+          //We can now scroll and append new products. We wait a second before allowing a new append to make sure all actions have finished, otherwise it could trigger immediately another append.
+          setTimeout(function () {
+            load = false;
+          }, 1000);
+
+        }
+
+        if (action == 'refresh_list') {
+          //Update the scrollbar length.
+          $('#products_list').mCustomScrollbar("update");
+          //Refresh oddeven.
+          odd_even_product_list('.product_list_item');
         }
 
         if (action == 'expand_row_children') {
@@ -1477,6 +1594,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $('#breadcrumb_zone').append(backlink);
           //We display it with a fadeIn.
           $("#breadcrumb_item_" + (depth)).fadeIn();
+
+          //Refresh oddeven, especially for the new table.
+          odd_even_product_list('.criterion_item');
+
         }
 
         if (action == 'open_dialog') {
@@ -1597,7 +1718,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     function get_table_depth(dom) {
       var max_depth = 0;
-      $(dom).each(function (key, value) {
+      $(dom + ':not(#storage_zone ' + dom + ')').each(function (key, value) {
         var depth = extract_nid($(this).attr('id'))[0];
         depth = parseInt(depth);
         if (depth > max_depth) {
@@ -1669,9 +1790,138 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
     }
 
+
+
+    /*
+     * Refresh all the links which send to the comparative table.
+     */
+    function refreshCompareUrl() {
+      //If we selected some products.
+      if (!jQuery.isEmptyObject(selectedProducts)) {
+        //Get prefix from drupal.
+        var url = $('#prefix-compare-url').text() + '0/';
+        var first = true;
+        var i = 0;
+        //Concat all selected product nid with -.
+        for(var nid in selectedProducts) {
+          if (!first) {
+            url += '-' + nid;
+          } else {
+            url += nid;
+          }
+          first = false;
+
+          i++;
+        }
+        //Get suffix from drupal.
+        url += $('#suffix-compare-url').text();
+        //Update number product in footer.
+        $('#nb-products-footer').html(i);
+        //Make sure we replace Compare Best by Compare products.
+        $('#compare-text-footer').html('Compare products');
+      //If we selected no products
+      } else {
+        //Replace the url by the best products url computed by drupal.
+        var url = $('#best-compare-url').text();
+        //The best product url contain only three products.
+        $('#nb-products-footer').html(3);
+        //Make sure we replace Compare Best by Compare products.
+        $('#compare-text-footer').html('Compare best');
+      }
+
+      //We display Compare now links only if two products are selected.
+      if (i >= 2) {
+        for(var nid in selectedProducts) {
+          $('.compare_link[nid=' + nid + ']').html('<a class="compare-url" href="#">Compare now</a>');
+        }
+      }
+
+      //If less than two products are selected, we remove all Compare now links.
+      if (i < 2) {
+        $('.compare_link').html('');
+      }
+
+      //Attach compare link in footer.
+      $('.compare-url').attr('href', url);
+
+    }
+
+
+
+    /*
+     * Refresh odd even in tables.
+     */
+    function odd_even_product_list(dom) {
+      var oddeven = 'odd';
+      var parent_id = '';
+      $(dom).each(function(index) {
+        $(this).removeClass('even');
+        $(this).removeClass('odd');
+
+        //Reinitiate with odd if we start a new table.
+        if (parent_id != $(this).attr('parent_id')) {
+          oddeven = 'odd';
+          parent_id = $(this).attr('parent_id');
+        }
+
+        $(this).addClass(oddeven);
+        if (oddeven == 'even') {
+          oddeven = 'odd';
+        } else {
+          oddeven = 'even';
+        }
+      });
+    }
+
+
+    /*
+     * Create the styled scrollbar.
+     */
+    totalScrollOffsetH=$("#products_list").height();
+    $('#products_list:not(.mCustomScrollbar),.itemlist_translate ul:not(.mCustomScrollbar)').each(function () {
+      $(this).mCustomScrollbar({
+        //Almost no inertia.
+        scrollInertia:150,
+        callbacks:{
+          //When we hit the end of the scrollbar in product list, we append new products.
+          onTotalScroll:function(){
+            if ($(this).attr('id') == 'products_list') {
+              //Only in standard mode, if another append isn't processin and we didn't already load all the items.
+              if ($('#products_tree_mode').text() == 0 && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())) {
+                //Block another append.
+                load = true;
+                //Launch append.
+                $('#append_product_list_link').click();
+              }
+            }
+          },
+          onTotalScrollOffset:totalScrollOffsetH
+        }
+      });
+    });
+
+    /*
+     * Code executed when we load the home page.
+     */
+    $('#products_list_column:not(.init-set)').addClass('init-set').each(function () {
+      //Refresh oddeven at the end of the page load.
+      odd_even_product_list('.product_list_item');
+      //Refresh compare url on footer.
+      refreshCompareUrl();
+    });
+
+    /*
+     * Code executed when we load the compare page.
+     */
+    $('#comparative_table:not(.init-set)').addClass('init-set').each(function () {
+      //Refresh oddeven at the end of the page load.
+      odd_even_product_list('.criterion_item');
+    });
+
   }
 };
 
+//TODO revoir nom function javascript, exemple oddEvenProductList, remplacer _ par - dans les class et id
 })(jQuery);
 /*TODO For custom attribute :
 http://www.electrictoolbox.com/jquery-store-data-in-dom/

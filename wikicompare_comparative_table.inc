@@ -5,6 +5,8 @@ define('NOJS_MESSAGE', "You need to activate javascript to use the comparative t
 //Some constant dimensions used in the table.
 define('ROW_HEIGHT', 100);
 define('FIRST_COLUMN_WIDTH', 30);
+define('LIST_COLUMN_PRODUCT_WIDTH', 30);
+define('LIST_COLUMN_RANK_WIDTH', 20);
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
 
@@ -18,11 +20,34 @@ function wikicompare_home_page() {
   drupal_add_js('misc/ajax.js');
   drupal_add_js('misc/progress.js');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+  drupal_add_library('wikicompare', 'chart');
+  drupal_add_library('wikicompare', 'mCustomScrollbar');
+  drupal_add_library('wikicompare', 'mousewheel');
+
+  $output = '<div id="home">';
 
   /*
    * Left column.
    */
-  $output = '<div id="sidebar-first" style="height:500px; float:left;">';
+  $output .= '<div id="sidebar-first">';
+
+  $output .= '<h2 id="filter-title">My Filter</h2>';
+
+  //Add the reset link.
+  $reset_link = array(
+    '#type' => 'link',
+    '#title' => 'Clear all',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
+    '#id' => 'reset_table_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'refresh_list',
+      'mode' => 'reset',
+    ),
+  );
+  $output .= ' ' . render($reset_link) . '</p>';
+
+  $output .= '<br/><br/><br/>';
 
   //Generate the filter link which will be called each time we modify a filter. This mainly regenerate the product list.
   $filter_link = array(
@@ -38,6 +63,8 @@ function wikicompare_home_page() {
     ),
   );
   $output .= render($filter_link);
+
+  $output .= '<div id="filters_zone">';
 
   //The name filter is hardcoded.
   $name_filter = new stdClass;
@@ -61,15 +88,19 @@ function wikicompare_home_page() {
     $filters[] = $record;
   }
 
+  $img = theme('image', array(
+    'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/icon-filters.png',
+    'alt' => 'Filter',
+  ));
+
   //Render filter, depending of the type.
   foreach ($filters as $record) {
-    $output .= '<p>';
     switch ($record->type) {
       case 'text':
         $filter = array(
           '#type' => 'textfield',
           '#id' => 'filter_' . $record->name,
-          '#title' => $record->title,
+          '#title' => $record->title . $img,
           '#size' => 25,
           '#attributes' => array(
             'field' => $record->name,
@@ -80,7 +111,7 @@ function wikicompare_home_page() {
         break;
       case 'number':
         $output .= '<div class="form-item">';
-        $output .= '<label>' . $record->title . '</label>';
+        $output .= '<label>' . $record->title . $img . '</label>';
         $output .= '<input id="filter_min_' . $record->name . '" class="home_filter min number" type="text" size="5" field="' . $record->name . '">';
         $output .= ' - ';
         $output .= '<input id="filter_max_' . $record->name . '" class="home_filter max number" type="text" size="5" field="' . $record->name . '">';
@@ -91,7 +122,7 @@ function wikicompare_home_page() {
         switch ($record->filter_type) {
           case 'select':
             $output .= '<div class="form-item">';
-            $output .= '<label>' . $record->title . '</label>';
+            $output .= '<label>' . $record->title . $img . '</label>';
             $output .= '<select id="filter_' . $record->name . '" class="home_filter" field="' . $record->name . '">';
             $output .= '<option></option>';
             foreach (explode("\n", $record->allowed_values) as $value) {
@@ -102,7 +133,7 @@ function wikicompare_home_page() {
             break;
           case 'checkboxes':
             $output .= '<div class="form-item">';
-            $output .= '<label>' . $record->title . '</label>';
+            $output .= '<label>' . $record->title . $img . '</label>';
             foreach (explode("\n", $record->allowed_values) as $value) {
               $output .= '<input type="checkbox" id="filter_' . $record->name . '" class="home_filter" field="' . $record->name . '" value="' . $value . '"  />' . $value . '<br/>';
             }
@@ -113,9 +144,12 @@ function wikicompare_home_page() {
 
   }
 
+  $output .= '</div>';
+
 
   //Add the container which will contain the selected criterion itemlist. It'll be build when we submit the manual selected criterion dialog.
   $output .= '<div id="container-manual-selected-criterions"></div>';
+
   //Add the link to open the select criterion popup
   $select_criterion_link = array(
     '#type' => 'link',
@@ -129,9 +163,10 @@ function wikicompare_home_page() {
       'ntype' => 'criterion',
       'context' => 'multidialog',
       'container' => 'manual-selected-criterions',
+      'style' => 'display:none',
     ),
   );
-  $output .= ' ' . render($select_criterion_link) . '</p>';
+  $output .= '<div class="button-wrapper"><div id="select_criterion_button" link="select_criterion_link" class="button wikicompare_button"><button>Select Criterions</button></div>' . render($select_criterion_link) . '</div>';
 
   if (module_exists('wikicompare_profiles')) {
     //Generate the main profile itemlist in the wikicompare table.
@@ -151,22 +186,8 @@ function wikicompare_home_page() {
       'style' => 'display:none',
     ),
   );
-  $output .= '<p><input id="compute_table_button" type="submit" link="compute_table_link" value="Compute table" class="button wikicompare_button"/>' . render($compute_link);
+  $output .= '<div class="button-wrapper"><div  id="compute_table_button" link="compute_table_link" class="button wikicompare_button"><button>Compute</button></div>' . render($compute_link) . '</div>';
   $output .= '<span id="computed" style="display:none;">0</span>';
-
-  //Add the reset link.
-  $reset_link = array(
-    '#type' => 'link',
-    '#title' => 'Reset table',
-    '#href' => 'wikicompare_compute_table_callback/nojs',
-    '#id' => 'reset_table_link',
-    '#attributes' => array(
-      'class' => array('simple_ajaxlink'),
-      'action' => 'refresh_list',
-      'mode' => 'reset',
-    ),
-  );
-  $output .= ' ' . render($reset_link) . '</p>';
 
   $output .= '</div>';
 
@@ -175,7 +196,7 @@ function wikicompare_home_page() {
   /*
    * Central column.
    */
-  $output .= '<div id="products_list_column" style="height:600px; width:400px; float:left;">';
+  $output .= '<div id="products_list_column">';
   $settings = wikicompare_initialize_settings();
 
   //Get all infofields displayed on product list. The number of infofield here is limited.
@@ -198,40 +219,26 @@ function wikicompare_home_page() {
 
   $res = wikicompare_table_render_product_list($settings);
 
-  $output .= '<span id="nb_products" style="display:none;">' . $res['count'] . '</span>';
-  $output .= '<span id="products_offset" style="display:none;">' . $res['offset'] . '</span>';
-  $best_products_link = array(
-    '#type' => 'link',
-    '#title' => 'Compare the three best',
-    '#href' => $res['url'],
-    '#id' => 'best_products_link',
-  );
-  $output .= '<p>' . render($best_products_link) . '</p>';
-  $toogle_product_mode_link = array(
-    '#type' => 'link',
-    '#title' => 'Toogle product mode',
-    '#href' => 'wikicompare_compute_table_callback/nojs',
-    '#id' => 'toogle_product_mode_link',
-    '#attributes' => array(
-      'class' => array('simple_ajaxlink'),
-      'action' => 'refresh_list',
-      'mode' => 'toogle_product_mode',
-    ),
-  );
-  $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
-  $output .= '<div id="products_list" style="height:500px; overflow:auto;">';
   //Generate product list with a table.
-  $output .= '<table><thead>';
-  $output .= '<th>Products</th>';
-  $output .= '<th>Rank</th>';
+  $output .= '<table id="products-list-header"><thead>';
+  $output .= '<th class="list-column-product">Products</th>';
+  $output .= '<th class="list-column-rank">Rank</th>';
+  $settings['width'] = (100 - LIST_COLUMN_PRODUCT_WIDTH - LIST_COLUMN_RANK_WIDTH) / count($settings['infofields']);
   //Infofields header.
   foreach ($settings['infofields'] as $infofield) {
-    $output .= '<th class="infofield_title" field="' . $infofield['name'] . '">' . $infofield['title'] . '</th>';
+    $output .= '<th class="infofield_title" field="' . $infofield['name'] . '" style="width:' . $settings['width'] . '%">' . $infofield['title'] . '</th>';
   }
-  $output .= '</thead><tbody>';
+  $output .= '</thead></table>';
+  $output .= '<div id="products_list" style="height:500px; overflow:auto;">';
+  $output .= '<table>';
+  $output .= '<col class="list-column-product"/><col class="list-column-rank"/>';
+  foreach ($settings['infofields'] as $infofield) {
+    $output .= '<col style="width:' .   $settings['width'] . '%"/>';
+  }
   $output .= $res['output'];
-  $output .= '</tbody></table>';
+  $output .= '</table>';
   $output .= '</div>';
+
   $append_link = array(
     '#type' => 'link',
     '#title' => 'Append product list',
@@ -244,6 +251,12 @@ function wikicompare_home_page() {
     ),
   );
   $output .= '<p><span id="products_tree_mode" style="display:none;">0</span>' . render($append_link) . '</p>';
+  $output .= '<span id="nb_products" style="display:none;">' . $res['count'] . '</span>';
+  $output .= '<span id="products_offset" style="display:none;">' . $res['offset'] . '</span>';
+  $output .= '<span id="prefix-compare-url" style="display:none;">' . $res['url']['prefix'] . '</span>';
+  $output .= '<span id="best-compare-url" style="display:none;">' . $res['url']['best-url'] . '</span>';
+  $output .= '<span id="suffix-compare-url" style="display:none;">' . $res['url']['suffix'] . '</span>';
+
   $output .= '</div>';
 
 
@@ -251,12 +264,26 @@ function wikicompare_home_page() {
   /*
    * Right column.
    */
-  $output .= '<div id="sidebar-second" style="height:500px; float:right;">';
+  $output .= '<div id="sidebar-second">';
   $output .= wikicompare_table_render_home_suggest();
-//TODO temp
-  $output .= wikicompare_table_render_footer();
+
+  $toogle_product_mode_link = array(
+    '#type' => 'link',
+    '#title' => 'Toogle product mode',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
+    '#id' => 'toogle_product_mode_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'refresh_list',
+      'mode' => 'toogle_product_mode',
+    ),
+  );
+  $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
+
   $output .= '<div id="storage_zone" style="display:none;">';
   $output .= '</div>';
+  $output .= '</div>';
+
   $output .= '</div>';
 
   return $output;
@@ -275,6 +302,7 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   drupal_add_js('misc/progress.js');
   drupal_add_library('system', 'drupal.collapse');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+  drupal_add_library('wikicompare', 'chart');
 
   $product_ids = array();
   if ($compared_products != 0) {
@@ -371,74 +399,7 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   //Render fieldset.
   $output .= theme_fieldset(array('element' => array('#title' => 'More details...', '#children' => $fieldset, '#collapsible' => true, '#collapsed'  => true, '#attributes' => array('class' => array('collapsible', 'collapsed')))));
 
-  //TODO temp
-  $output .= wikicompare_table_render_footer();
-
   //Return the html code.
-  return $output;
-
-}
-
-
-
-/**
- * Build the wikicompare footer.
- */
-function wikicompare_table_render_footer() {
-
-  $output = '';
-
-  //Add the checkbox to display the draft and closed items in the tables.
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display draft items',
-    '#id' => 'checkbox-draft-items',
-    '#attributes' => array(
-      'class' => array('state_checkbox'),
-    ),
-   );
-  $output = render($checkbox_settings);
-  $checkbox_settings =  array(
-    '#type' => 'checkbox',
-    '#title' => 'Display closed items',
-    '#id' => 'checkbox-closed-items',
-    '#attributes' => array(
-      'class' => array('state_checkbox'),
-    ),
-   );
-  $output .= render($checkbox_settings);
-
-  //Add the link to go on FastAction mode.
-  $toogle_link = array(
-    '#type' => 'link',
-    '#title' => 'Toogle FastAction',
-    '#href' => 'wikicompare_make_cleaning_callback/nojs',
-    '#id' => 'toogle_fastaction_link',
-    '#attributes' => array(
-      'class' => array('simple_ajaxlink'),
-      'action' => 'toogle_fastaction',
-    ),
-  );
-  //Fastaction is only available for authenticated users.
-  if (user_is_anonymous() != True) {
-    $output .= '<p>' . render($toogle_link) . '</p>';
-  }
-
-
-  //Add the link to launch a cleaning on the table.
-  $cleaning_link = array(
-    '#type' => 'link',
-    '#title' => 'Clean',
-    '#href' => 'wikicompare_make_cleaning_callback/nojs',
-    '#id' => 'make_cleaning_link',
-    '#attributes' => array(
-      'class' => array('simple_ajaxlink'),
-      'action' => 'make_cleaning',
-      'style' => 'display:none',
-    ),
-  );
-  $output .= '<p>' . render($cleaning_link) . '</p>';
-
   return $output;
 
 }
@@ -482,13 +443,13 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 
   $output ="<div id='comparative_table_main_" . $type . "'>";
 
-  $output .= '<h3>' . $title . '</h3>';
+  $output .= '<h2>' . $title . '</h2>';
 
   if (isset($settings['translate'])) {
-    $output .= '<div id="main_' . $type . '_itemlist_container" style="overflow:hidden;">'; //TODO not sure we still need this container.
+    $output .= '<div id="main_' . $type . '_itemlist_container">'; //TODO not sure we still need this container.
     //The container which contain the tables, and will slide to display them.
-    $output .= '<div id="main_' . $type . '_itemlists" style="height: ' . count($nodes) * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
-    $output .= '<div id="itemlist_0"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
+    $output .= '<div id="main_' . $type . '_itemlists">';
+    $output .= '<div id="itemlist_0"  class="itemlist_translate" style="left:' . $settings['depth'] * ROW_HEIGHT . '%;">';
   }
 
   //Building the data for the itemlist.
@@ -608,7 +569,9 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
   $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
 
   //Generate the best products url.
-  $url = 'compare/0';
+  $prefix = 'compare/';
+  $url = $prefix . '0';
+  $suffix = '';
   $is_products = True;
   //Generate the three argument products/criterions/profiles.
   foreach (array($products_sort, $settings['selected_criterion_ids'], $settings['selected_profile_ids']) as $array) { //TODO move profile_ids in module
@@ -630,11 +593,14 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
       }
     }
     $url .= '/' . $ids_url;
+    if (!$is_products) {
+      $suffix .= '/' . $ids_url;
+    }
     //The products are first and the only ones to be limited to three, so we use this variable as flag to recognize them.
     $is_products = False;
   }
 
-  return array('offset' => $limit, 'count' => count($products), 'url' => $url, 'output' => $output);
+  return array('offset' => $limit, 'count' => count($products), 'url' => array('prefix' => $prefix, 'best-url' => $url, 'suffix' => $suffix), 'output' => $output);
 
 }
 
@@ -692,7 +658,7 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
       $settings['no_children_link'] = 1;
     }
 
-    $output .= '<tr id="product_list_item_' . $product_id . '" class="product_list_item"';
+    $output .= '<tr id="product_list_item_' . $product_id . '" class="product_list_item" nid="' . $product_id . '"';
     //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level or if we are displaying a children.
     if (!$first || isset($settings['nid'])) {
       $output .= ' style="display:none;"';
@@ -703,9 +669,17 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
     }
     $output .= '>';
     //Render product name.
-    $output .= '<td>' . wikicompare_table_get_supertitle_item('product', $product, $settings) . '<br/><br/><br/><br/><br/><br/><br/><br/></td>';
+//TODO replace all _ in class and id by -.
+    $output .= '<td class="list-column-product">' . wikicompare_table_get_supertitle_item('product', $product, $settings) . '<br/>';
+    $output .= '<span class="short_description">' . $product['data']->short_description . '</span>';
+    $output .= '<div class="button compare-button" nid="' . $product_id . '"><button>Compare</button></div>';
+    $output .= '<span class="compare_link" nid="' . $product_id . '"></span>';
+    $output .= '</td>';
     //Render percentage.
-    $output .= '<td>' . $products_sort[$product_id] . '%</td>';
+    $output .= '<td class="list-column-rank"><div>';
+    $output .= '<canvas class="chart" height="100%" width="100%" percent="' . $products_sort[$product_id] . '"></canvas>';
+    $output .= '<div class="chart-percent">' .$products_sort[$product_id] . '</div>';
+    $output .= '</div></td>';
     //Render infofields.
     foreach ($settings['infofields'] as $infofield) {
       $field = 'wikicf_' . $infofield['name'];
@@ -869,12 +843,23 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
   $output .= '<table id="table_header"><thead>';
   //Build header.
   $output .= '<tr id="comparative_table_header">';
-  $output .= '<th style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . t('Criterions') . '</th>';
+  $output .= '<th class="first" style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . t('Criterions') . '</th>';
   //Get the columns width.
   $settings['width'] = (100 - FIRST_COLUMN_WIDTH) / count($products);
   $settings['colspan'] = 1 + count($products);
+  $first = True;
   foreach ($products as $cid => $product) {
-    $output .= '<th id="header_product_' . $cid . '" class="header_product" style="width: ' . $settings['width'] . '%; padding: 0; text-align: center; -webkit-transition: width 1s ease-in-out; -moz-transition: width 1s ease-in-out; -o-transition: width 1s ease-in-out; transition: width 1s ease-in-out;"><div class="width_div_' . $cid . '"><span class="product_title_' . $cid . '">' . $product['data']->title . '</span></div></th>';
+    $output .= '<th id="header_product_' . $cid . '" class="header_product" style="width: ' . $settings['width'] . '%; padding: 0; text-align: center; -webkit-transition: width 1s ease-in-out; -moz-transition: width 1s ease-in-out; -o-transition: width 1s ease-in-out; transition: width 1s ease-in-out;"><div class="width_div_' . $cid . '">';
+    //Display a VS icon between products header.
+    if (!$first) {
+      $img = theme('image', array(
+        'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/vs-icon.png',
+        'alt' => 'VS',
+      ));
+      $output .= '<span class="vs-icon">' . render($img) . '</span>';
+    }
+    $output .= '<span class="product_title_' . $cid . '">' . $product['data']->title . '</span></div></th>';
+    $first = False;
   }
   $output .= '</tr>';
   $output .= '</thead>';
@@ -950,7 +935,7 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
 //TODO set all height et width attribute in style, because it's better for the transition.
 
     //Generate the main details of the criterion in the first cell.
-    $output .= '<td style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . wikicompare_table_get_supertitle_item('criterion', $criterion, $settings) . '</td>';
+    $output .= '<td class="first" style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . wikicompare_table_get_supertitle_item('criterion', $criterion, $settings) . '</td>';
 
     //Add a column for each product.
     foreach ($criterion['evaluations'] as $cid => $evaluation) {
@@ -1039,7 +1024,9 @@ function wikicompare_table_render_evaluation($evaluation, $criterion, $cid, $set
 
   //We hide the evaluation for all non-published criterion, to more easily distinct them from the published ones.
   if (in_array($criterion['data']->state, unserialize(WIKICOMPARE_STATE_PUBLISHED)) || $criterion == NULL) {
-    //Render the evaluation.
+    //Render the chart with percent inside and link/fastaction after.
+    $output .= '<canvas class="chart" height="100%" percent="' . $evaluation['data']->percent . '"></canvas>';
+    $output .= '<div class="chart-percent">' .$evaluation['data']->percent . '</div>';
     $output .= wikicompare_table_get_supertitle_item('evaluation', $evaluation, $settings);
   }
   $output .= '</div></td>';
@@ -1107,6 +1094,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
 
   $prefix = '';
   $suffix = '';
+  $flag_translate_children = False;
 
   if ($type != 'evaluation') {
 
@@ -1122,12 +1110,12 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
       //The ajax call is not the same.
       $url = 'wikicompare_get_criterion_children_callback/nojs/';
       //Creating the first cell of the row, containing the criterion details.
-      $suffix .= '<br/> Weight : <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
+      $suffix .= '<br/><b>Weight :</b> <span class="' . $type . '_weight_' . $node['data']->nid . '">' .  $node['data']->weight . '</span>';
       //We display the type only for the parent criterion, no interest in case of only children criterions.
       if ($node['data']->has_children){
-        $suffix .= '<br/> Type : <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
+        $suffix .= '<br/><b>Type :</b> <span class="' . $type . '_type_' . $node['data']->nid . '">' .  $node['data']->type . '</span>';
       }
-      $suffix .= '<br/> State : <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
+      $suffix .= '<br/><b>State :</b> <span class="' . $type . '_state_' . $node['data']->nid . '">' .  $node['data']->state . '</span>';
 
     //In this case, we are in an itemlist.
     } else {
@@ -1224,13 +1212,22 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
         $class[] = $type . '_table_link';
       }
       $attributes = array('id' => $type . '_' . $settings['context'] . '_link_' . $node['data']->nid, 'class' => $class, 'ntype' => $type, 'context' => $settings['context'], 'nid' => $node['data']->nid, 'parent_id' => $node['data']->parent_id);
-      //Replace the title by the link.
-      $title = l($title, $url,  array('attributes' => $attributes, 'html' => True));
+      //Replace the title by the link, except in translation mode since the link will be in a picture.
+      if (!isset($settings['translate'])) {
+        $title = l($title, $url,  array('attributes' => $attributes, 'html' => True));
+      } else {
+        $img = theme('image', array(
+          'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/icon-next.png',
+          'alt' => 'Display children'
+        ));
+        $link_children = l($img, $url,  array('attributes' => $attributes, 'html' => True));
+        $flag_translate_children = True;
+      }
     }
 
   } else {
     //An evaluation has no title, we simply display his percentage.
-    $title = $node['data']->percent . '%';
+    $title = '';
     $simple_title = $title;
   }
 
@@ -1239,8 +1236,9 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
 
     //Create the image link to go to the node page
     $img = theme('image', array(
-      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/link-icon.png',
       'alt' => t('Link to ' . $type . ' ') . $node['data']->nid,
+      'attributes' => array('class' => array('link-icon'))
     ));
     //Create the link. It will redirect to the translated node if any. The html = True indicate that the title of the link contain html.
     $suffix .= ' ' . l($img, 'node/' . $node['data']->tnid, array('attributes' => array('id' => $type . '_node_link_' . $node['data']->nid), 'html' => True));
@@ -1252,23 +1250,29 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
     }
     $suffix .= '</span>';
 
+    if ($flag_translate_children) {
+      $suffix .= $link_children;
+    }
+
   }
 
   //Return the supertitle rendered in a span so we can easily update it in the cleaning function.
-  $output = '<span id="' . $type . '_' . $settings['context'] . '_supertitle_' . $node['data']->nid . '">' . $prefix;
-  //Render normaltitle and simpletitle, and display the one need in the situation. Simple title is display in checked zone, we can't click on them to display children in checked zone.
-  $output .= '<span class="normaltitle" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $node['data']->nid . '"';
-  $flag = True;
-  if (isset($settings['zone']) && $settings['zone'] == 'checked') {
-    $output .= ' style="display:none;"';
-    $flag = False;
+  $output = '<span id="' . $type . '_' . $settings['context'] . '_supertitle_' . $node['data']->nid . '" class="supertitle">' . $prefix;
+  if ($type != 'evaluation') {
+    //Render normaltitle and simpletitle, and display the one need in the situation. Simple title is display in checked zone, we can't click on them to display children in checked zone.
+    $output .= '<span class="normaltitle" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $node['data']->nid . '"';
+    $flag = True;
+    if (isset($settings['zone']) && $settings['zone'] == 'checked') {
+      $output .= ' style="display:none;"';
+      $flag = False;
+    }
+    $output .= '>' . $title . '</span>';
+    $output .= '<span class="simpletitle" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $node['data']->nid . '"';
+    if ($flag) {
+      $output .= ' style="display:none;"';
+    }
+    $output .= '>' . $simple_title . '</span>';
   }
-  $output .= '>' . $title . '</span>';
-  $output .= '<span class="simpletitle" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $node['data']->nid . '"';
-  if ($flag) {
-    $output .= ' style="display:none;"';
-  }
-  $output .= '>' . $simple_title . '</span>';
   $output .= $suffix . '</span>';
 
   return $output;
@@ -1323,16 +1327,19 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
     $settings['parent_id'] = $parent_node;
     $output .= wikicompare_table_get_supertitle_item($type, $node, $settings);
 
-    //Set the checked zone.
-    $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_checked_' . $nid . '" class="'. $type . '_children">';
-    //Get the children.
-    $children_settings = $settings;
-    $children_settings['zone'] = 'checked';
-    $output .= wikicompare_build_itemlist($type, $node['children'], $nid, $children_settings);
-    $output .= '</div>';
-    //Set the children zone.
-    $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;">';
-    $output .= '</div>';
+    //Set the children zone, except in translation mode.
+    if (!isset($settings['translate'])) {
+      //Set the checked zone.
+      $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_checked_' . $nid . '" class="'. $type . '_children">';
+      //Get the children.
+      $children_settings = $settings;
+      $children_settings['zone'] = 'checked';
+      $output .= wikicompare_build_itemlist($type, $node['children'], $nid, $children_settings);
+      $output .= '</div>';
+      //Set the children zone.
+      $output .= '<div id="' . $type . '_' . $settings['context'] . '_children_' . $nid . '" class="'. $type . '_children" style="display:none;">';
+      $output .= '</div>';
+    }
     $output .= '</li>';
   }
 
@@ -1340,7 +1347,12 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
 
   //Render the link to add a new node if we are at the first level of the itemlist or if we are in translate mode.
   if ($settings['context'] == 'table' && !empty($nodes) && (!$parent_node || isset($settings['translate']))) {
-    $output .= '<p>' . wikicompare_generate_add_link($type, $settings, $parent_node) . '</p>';
+    $output .= '<p>';
+    //If we are in a children table of a translate itemlist, we add a return link.
+    if (isset($settings['translate']) && $settings['depth']) {
+      $output .= '<a href="/" id="main_' . $type . '_itemlist_return_link_' . $settings['depth'] . '" class="itemlist_return_link" nid="' . $parent_node . '" ntype="' . $type . '">Return</a>';
+    }
+    $output .= wikicompare_generate_add_link($type, $settings, $parent_node) . '</p>';
   }
 
   //Display an error message if we try to build an itemlist without data yet.
@@ -1655,7 +1667,8 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
     if ($settings['context'] != 'list') {
 
       $output = '';
-      if (isset($_POST['translate'])) {
+      if (isset($settings['translate'])) {
+        $settings['depth'] = $settings['depth'] + 1;
         $output .= '<div id="itemlist_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
       }
 
@@ -1840,9 +1853,21 @@ function wikicompare_toggle_product_checkbox_response($method = 'ajax'){
   $product = request_db('product', array('nids' => array($_POST['nid']), 'get_infofields' => 1), $settings);
 
   //Add the header of the new column, with the product title.
-  $header = '<th id="header_product_' . $_POST['nid'] . '" class="header_product" style="width: 0%; padding: 0; text-align: center; -webkit-transition: width 1s ease-in-out; -moz-transition: width 1s ease-in-out; -o-transition: width 1s ease-in-out; transition: width 1s ease-in-out;"><div class="width_div_' . $_POST['nid'] . '" style="display: none;"><span class="product_title_' . $_POST['nid'] . '">' . $product[$_POST['nid']]['data']->title . '</span></div></th>';
+  $header = '<th id="header_product_' . $_POST['nid'] . '" class="header_product" style="width: 0%; padding: 0; text-align: center; -webkit-transition: width 1s ease-in-out; -moz-transition: width 1s ease-in-out; -o-transition: width 1s ease-in-out; transition: width 1s ease-in-out;"><div class="width_div_' . $_POST['nid'] . '" style="display: none;">';
+  //Add a VS icon if we product we are adding isn't the first one.
+  if (!empty($settings['product_column_ids'])) {
+    $img = theme('image', array(
+      'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/vs-icon.png',
+      'alt' => 'VS',
+    ));
+    $header .= '<span class="vs-icon">' . render($img) . '</span>';
+  }
+  $header .= '<span class="product_title_' . $_POST['nid'] . '">' . $product[$_POST['nid']]['data']->title . '</span></div></th>';
   //Add the new cell at the end of the header.
   $commands[] = ajax_command_append('#comparative_table_header', $header);
+
+  //Update the number of products in footer.
+  $commands[] = ajax_command_invoke('#nb-products-footer', 'html', array(count($settings['product_column_ids']) + 1));
 
   //We recover from javascript argument the id of the row displayed in the table, to know the cell we have to add
   if (!empty($_POST['criterion_ids'])) {
@@ -2172,7 +2197,9 @@ function wikicompare_compute_table_response($method = 'ajax') {
   $res = wikicompare_table_render_product_list($settings, $criterions);
   $commands[] = ajax_command_html('#nb_products', $res['count']);
   $commands[] = ajax_command_html('#products_offset', $res['offset']);
-  $commands[] = ajax_command_invoke('#best_products_link', 'attr', array('href', $res['url']));
+  $commands[] = ajax_command_invoke('#prefix-compare-url', 'html', array($res['url']['prefix']));
+  $commands[] = ajax_command_invoke('#best-compare-url', 'html', array($res['url']['best-url']));
+  $commands[] = ajax_command_invoke('#suffix-compare-url', 'html', array($res['url']['suffix']));
   $commands[] = ajax_command_invoke('#products_list tbody', 'html', array($res['output']));
 
   $page = array('#type' => 'ajax', '#commands' => $commands);

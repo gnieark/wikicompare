@@ -440,6 +440,8 @@ function wikicompare_refresh_caches() {
       $query->leftjoin('field_revision_wikicompare_support', 'ns', 'n.vid = ns.revision_id');
     }
     if ($type == 'product') {
+      $query->addField('nsd', 'wikicompare_short_description_value', 'short_description');
+      $query->leftjoin('field_revision_wikicompare_short_description', 'nsd', 'n.vid = nsd.revision_id');
       $query->addField('nc', 'wikicompare_comparable_value', 'comparable');
       $query->leftjoin('field_revision_wikicompare_comparable', 'nc', 'n.vid = nc.revision_id');
     }
@@ -486,6 +488,7 @@ function wikicompare_refresh_caches() {
         $to_insert[$record->nid]['criterion_id'] = $record->criterion_id;
       }
       if ($type == 'product') {
+        $to_insert[$record->nid]['short_description'] = $record->short_description;
         $to_insert[$record->nid]['comparable'] = $record->comparable;
       }
       if ($type == 'criterion') {
@@ -530,6 +533,7 @@ function wikicompare_refresh_caches() {
       $header[] = 'support';
     }
     if ($type == 'product') {
+      $header[] = 'short_description';
       $header[] = 'comparable';
     }
     if ($type == 'criterion') {
@@ -811,6 +815,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
 
   switch ($type) {
     case 'product':
+      $query->addField('n', 'short_description', 'short_description');
       $query->addField('n', 'comparable', 'comparable');
       $query->addField('n', 'total', 'total');
 
@@ -899,6 +904,13 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   $res = array();
   $profile_criterions = array();
   foreach ($result as $record) {
+
+    //We round the percent with a precision of 1.
+    foreach (array('percent', 'total') as $field) {
+      if (isset($record->$field)) {
+        $record->$field = round($record->$field, 1);
+      }
+    }
 
     //Start building the ressource which will be returned for this node.
     $node_array = array(
