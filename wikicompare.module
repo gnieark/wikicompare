@@ -291,6 +291,14 @@ function wikicompare_permission() {
 function wikicompare_library() {
   $path = drupal_get_path('module', 'wikicompare');
 
+  $libraries['wikicompare_global'] = array(
+    'title' => 'Wikicompare Global',
+    'version' => '1.0',
+    'js' => array(
+       $path . "/js/wikicompare_global.js" => array(),
+    ),
+  );
+
   $libraries['wikicompare_comparative_table'] = array(
     'title' => 'Wikicompare Table',
     'version' => '1.0',
@@ -324,6 +332,16 @@ function wikicompare_library() {
   );
 
   return $libraries;
+}
+
+
+
+/**
+ * Implements hook_init().
+ * Perform instructions on any pages.
+ */
+function wikicompare_init() {
+  drupal_add_library('wikicompare', 'wikicompare_global');
 }
 
 

@@ -745,7 +745,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
   $output .= '<div id="form_fastaction_error_zone"></div>';
 
   //Add the submit button, followed by his hidden ajax link.
-  $output .= '<input id="form_fastaction_submit_' . $nid . '" type="submit" value="Confirm" class="form_fastaction_submit button"/>';
+  $output .= '<div class="button-wrapper"><div  id="compute_table_button" link="compute_table_link" class="button wikicompare_button"><input id="form_fastaction_submit_' . $nid . '" type="submit" value="Confirm" class="form_fastaction_submit button"/></div></div>';
   $submit_link = array(
     '#type' => 'link',
     '#title' => 'submit',
@@ -762,7 +762,9 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
   $output .= render($submit_link);
   $output .= '</form>';
 
-  $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog', $output);
+  $output .= '<br/>';
+
+  $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog_content', $output);
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);

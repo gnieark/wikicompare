@@ -15,6 +15,7 @@ selected_profile_ids = {};
 //Some constant dimensions used in the table.
 row_height = 100;
 first_column_width = 30;
+suggest_height = 15;
 //Boolean which block the loading in product list while another loading is performing.
 load = false;
 
@@ -441,6 +442,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //Animation type.
         animationEasing : "easeOutQuart",
       });
+    });
+
+
+
+    /*
+     * Animate suggest slideshow on home page
+     */
+    $('#suggest-slideshow:not(.listener_set)').addClass('listener_set').each(function () {
+      setInterval(function(){ 
+        $('#suggest-slideshow').animate({marginTop:'-' + suggest_height + 'em'},800,function(){  //
+           $('#suggest-slideshow').css({marginTop:0}).find("li:last").after($('#suggest-slideshow').find("li:first"));  
+        }) 
+      }, 10000);  
     });
 
 
@@ -912,7 +926,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
 
           //Add the container outside of the page.
-          $('body').append('<div id="' + aj_settings['side'] + '_dialog" class="wikicompare-dialog" style="left: ' + position + '%;"><p style="text-align: right;"><a href="/" id="' + aj_settings['side'] + '_dialog_close" class="close_dialog" side="' + aj_settings['side'] + '">Close</a></p></div>');
+          $('body').append('<div id="' + aj_settings['side'] + '_dialog" class="wikicompare-dialog" style="left: ' + position + '%;"><div id="' + aj_settings['side'] + '_dialog_content" class="wikicompare-dialog-content"><p style="text-align: right;"><a href="/" id="' + aj_settings['side'] + '_dialog_close" class="close_dialog" side="' + aj_settings['side'] + '">Close</a></p></div></div>');
 
           //Send the type of the node.
           send_type = true;
@@ -1601,6 +1615,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'open_dialog') {
+
+          $('#' + aj_settings['side'] + '_dialog').addClass('with-custom-scrollbar');
+
           //Depending of the side, we change the translate direction.
           var sign = '';
           if (aj_settings['side'] == 'right') {
@@ -1878,7 +1895,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
      * Create the styled scrollbar.
      */
     totalScrollOffsetH=$("#products_list").height();
-    $('#products_list:not(.mCustomScrollbar),.itemlist_translate ul:not(.mCustomScrollbar)').each(function () {
+    $('.with-custom-scrollbar:not(.mCustomScrollbar),.itemlist_translate ul:not(.mCustomScrollbar)').each(function () {
       $(this).mCustomScrollbar({
         //Almost no inertia.
         scrollInertia:150,

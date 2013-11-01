@@ -7,6 +7,7 @@ define('ROW_HEIGHT', 100);
 define('FIRST_COLUMN_WIDTH', 30);
 define('LIST_COLUMN_PRODUCT_WIDTH', 30);
 define('LIST_COLUMN_RANK_WIDTH', 20);
+define('SUGGEST_LIST_HEIGHT', 15);
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
 
@@ -123,13 +124,15 @@ function wikicompare_home_page() {
           case 'select':
             $output .= '<div class="form-item">';
             $output .= '<label>' . $record->title . $img . '</label>';
+            $output .= '<div class="select">';
+            $output .= '<span></span>';
             $output .= '<select id="filter_' . $record->name . '" class="home_filter" field="' . $record->name . '">';
             $output .= '<option></option>';
             foreach (explode("\n", $record->allowed_values) as $value) {
               $output .= '<option value="' . $value . '">' . $value . '</option>';
             }
             $output .= '</select>';
-            $output .= '</div>';
+            $output .= '</div></div>';
             break;
           case 'checkboxes':
             $output .= '<div class="form-item">';
@@ -229,7 +232,7 @@ function wikicompare_home_page() {
     $output .= '<th class="infofield_title" field="' . $infofield['name'] . '" style="width:' . $settings['width'] . '%">' . $infofield['title'] . '</th>';
   }
   $output .= '</thead></table>';
-  $output .= '<div id="products_list" style="height:500px; overflow:auto;">';
+  $output .= '<div id="products_list" class="with-custom-scrollbar" style="height:500px; overflow:auto;">';
   $output .= '<table>';
   $output .= '<col class="list-column-product"/><col class="list-column-rank"/>';
   foreach ($settings['infofields'] as $infofield) {
@@ -265,6 +268,9 @@ function wikicompare_home_page() {
    * Right column.
    */
   $output .= '<div id="sidebar-second">';
+
+  $output .= '<h2>Top Criterions</h2>';
+
   $output .= wikicompare_table_render_home_suggest();
 
   $toogle_product_mode_link = array(
@@ -730,17 +736,24 @@ function wikicompare_table_render_home_suggest() {
     $res[$record->criterion_id][$record->product_id] = $record;
   }
 
-  $output = '';
+  $output = '<div id="suggest-slideshow-wrapper" style="height:' . 2 * SUGGEST_LIST_HEIGHT . 'em;">';
+  $output .= '<ul id="suggest-slideshow">';
   foreach ($res as $criterion) {
     $first = True;
+    $output .= '<li style="height:' . SUGGEST_LIST_HEIGHT . 'em;">';
     foreach ($criterion as $product) {
       if ($first) {
-        $output .= '<p>' . $product->criterion_title . '<br/>';
+        $output .= '<dl><dt class="suggest-criterion">' . $product->criterion_title . '</dt><dd>';
         $first = False;
       }
       $output .= $product->product_title . ' : ' . $product->percent . '%<br/>';
+      if ($first) {
+        '</dd></dl>';
+      }
     }
+    $output .= '</li>';
   }
+  $output .= '</ul></div>';
 
   return $output;
 
@@ -2018,7 +2031,7 @@ function wikicompare_get_dialog_response($method = 'ajax'){
 
 //  $output .= t("</div>");
   $commands = array();
-  $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog', $output);
+  $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog_content', $output);
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
