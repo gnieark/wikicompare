@@ -1616,6 +1616,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
         if (action == 'open_dialog') {
 
+          //We add the scrollbar only now because before we didn't had the content and so the scrollbar size.
           $('#' + aj_settings['side'] + '_dialog').addClass('with-custom-scrollbar');
 
           //Depending of the side, we change the translate direction.
