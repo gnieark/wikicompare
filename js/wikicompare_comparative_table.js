@@ -1414,6 +1414,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
                     }
                   });
 
+                  //We are in a dialog, we update the scroll bar.
+                  $('#left_dialog').mCustomScrollbar("update");
+
                 //Display itemlist with translation effect.
                 } else {
 
@@ -1455,8 +1458,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 $('#' + link_id).addClass('stored');
                 $('.product_list_item[parent_id=' + nid + ']').show();
 //TODO collapse other displayed item, like we did in itemlist
-                //Update the scrollbar length.
-                $('#products_list').mCustomScrollbar("update");
                 //Refresh oddeven.
                 odd_even_product_list('.product_list_item');
               }
@@ -1508,10 +1509,14 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 //Switch checked and children zone.
                 $('#' + type + '_' + context + '_children_' + nid).slideUp(600);
                 $('#' + type + '_' + context + '_children_checked_' + nid).slideDown(600);
+
+                if (!$('#' + link_id).hasClass('translate')) {
+                  //We are in a dialog, we update the scroll bar.
+                  $('#left_dialog').mCustomScrollbar("update");
+                }
+
               } else {
                 remove_children_tree2(nid, '#product_list_link_', '.product_list_item', true);
-                //Update the scrollbar length.
-                $('#products_list').mCustomScrollbar("update");
                 //Refresh oddeven.
                 odd_even_product_list('.product_list_item');
               }
@@ -1574,8 +1579,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'refresh_list') {
-          //Update the scrollbar length.
-          $('#products_list').mCustomScrollbar("update");
           //Refresh oddeven.
           odd_even_product_list('.product_list_item');
         }
@@ -1890,7 +1893,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
     /*
      * Create the styled scrollbar.
      */
-    $('.with-custom-scrollbar:not(.mCustomScrollbar),.itemlist_translate ul:not(.mCustomScrollbar)').each(function () {
+
+    $('.with-custom-scrollbar:not(.mCustomScrollbar)').each(function () {
       $(this).mCustomScrollbar({
         //Almost no inertia.
         scrollInertia:150,

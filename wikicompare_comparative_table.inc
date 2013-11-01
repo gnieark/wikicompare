@@ -20,10 +20,10 @@ function wikicompare_home_page() {
   //Add the javascript files used in the comparative_table.
   drupal_add_js('misc/ajax.js');
   drupal_add_js('misc/progress.js');
-  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
   drupal_add_library('wikicompare', 'chart');
   drupal_add_library('wikicompare', 'mCustomScrollbar');
   drupal_add_library('wikicompare', 'mousewheel');
+  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
 
   $output = '<div id="home">';
 
@@ -134,24 +134,6 @@ function wikicompare_home_page() {
 
   $output .= '</div>';
 
-  //Generate the filter link which will be called each time we modify a filter. This mainly regenerate the product list.
-  $filter_link = array(
-    '#type' => 'link',
-    '#title' => 'Filter',
-    '#href' => 'wikicompare_compute_table_callback/nojs',
-    '#id' => 'filter_table_link',
-    '#attributes' => array(
-      'class' => array('simple_ajaxlink'),
-      'action' => 'refresh_list',
-      'mode' => 'filter',
-      'style' => 'display:none',
-    ),
-  );
-  $output .= render($filter_link);
-
-  //Add the container which will contain the selected criterion itemlist. It'll be build when we submit the manual selected criterion dialog.
-  $output .= '<div id="container-manual-selected-criterions"></div>';
-
   //Add the link to open the select criterion popup
   $select_criterion_link = array(
     '#type' => 'link',
@@ -169,6 +151,21 @@ function wikicompare_home_page() {
     ),
   );
   $output .= '<div class="button-wrapper"><div id="select_criterion_button" link="select_criterion_link" class="button wikicompare_button"><button>Select Criterions</button></div>' . render($select_criterion_link) . '</div>';
+
+  //Generate the filter link which will be called each time we modify a filter. This mainly regenerate the product list.
+  $filter_link = array(
+    '#type' => 'link',
+    '#title' => 'Filter',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
+    '#id' => 'filter_table_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'refresh_list',
+      'mode' => 'filter',
+      'style' => 'display:none',
+    ),
+  );
+  $output .= render($filter_link);
 
   if (module_exists('wikicompare_profiles')) {
     //Generate the main profile itemlist in the wikicompare table.
@@ -306,8 +303,10 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   drupal_add_js('misc/ajax.js');
   drupal_add_js('misc/progress.js');
   drupal_add_library('system', 'drupal.collapse');
-  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
   drupal_add_library('wikicompare', 'chart');
+  drupal_add_library('wikicompare', 'mCustomScrollbar');
+  drupal_add_library('wikicompare', 'mousewheel');
+  drupal_add_library('wikicompare', 'wikicompare_comparative_table');
 
   $product_ids = array();
   if ($compared_products != 0) {
@@ -446,7 +445,11 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
 //    wikicompare_profiles_table_prepare_compute($selected_criterion_ids, $settings);
   }
 
-  $output ="<div id='comparative_table_main_" . $type . "'>";
+  $output ="<div id='comparative_table_main_" . $type . "'";
+  if ($type == 'product') {
+    $output .= ' class="with-custom-scrollbar"';
+  }
+  $output .= '>';
 
   $output .= '<h2>' . $title . '</h2>';
 
@@ -1320,7 +1323,11 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
  */
 function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
 
-  $output = '<ul>';
+  $output = '<ul';
+  if (isset($settings['translate'])) {
+    $output .= ' class="with-custom-scrollbar"';
+  }
+  $output .= '>';
   //Add each node in the returned array.
   foreach ($nodes as $nid => $node){
     $output .= '<li id="' . $type . '_' . $settings['context'] . '_item_' .  $nid . '" class ="' . $type . '_item ' . $type . '_' . $settings['context'] . '_item_' .  $nid;
@@ -2030,7 +2037,7 @@ function wikicompare_get_dialog_response($method = 'ajax'){
         'style' => 'display:none',
       ),
     );
-    $output .= '<p><input id="submitbutton_dialog" type="submit" link="submitlink_dialog" value="Submit" class="button wikicompare_button"/>' . render($submit_link) . '</p>';
+    $output .= '<p><div class="button-wrapper"><div  id="submitbutton_dialog" link="submitlink_dialog" class="button wikicompare_button"><input type="submit" value="Confirm" class="button"/></div></div>' . render($submit_link) . '</p>';
   }
 
 //  $output .= t("</div>");
