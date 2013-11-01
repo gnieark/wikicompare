@@ -1567,15 +1567,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'append_product_list') {
           //Refresh the offset with the value of the last loaded product.
           offset = $('.product_list_item:last').offset();
-          //Update the scrollbar length.
-          $('#products_list').mCustomScrollbar("update");
           //Refresh oddeven.
           odd_even_product_list('.product_list_item');
-          //We can now scroll and append new products. We wait a second before allowing a new append to make sure all actions have finished, otherwise it could trigger immediately another append.
-          setTimeout(function () {
-            load = false;
-          }, 1000);
-
+          //We can now scroll and append new products.
+          load = false;
         }
 
         if (action == 'refresh_list') {
@@ -1895,33 +1890,32 @@ Drupal.behaviors.WikicompareComparativeTable = {
     /*
      * Create the styled scrollbar.
      */
-    totalScrollOffsetH=$("#products_list").height();
     $('.with-custom-scrollbar:not(.mCustomScrollbar),.itemlist_translate ul:not(.mCustomScrollbar)').each(function () {
       $(this).mCustomScrollbar({
         //Almost no inertia.
         scrollInertia:150,
-        callbacks:{
-          //When we hit the end of the scrollbar in product list, we append new products.
-          onTotalScroll:function(){
-            if ($(this).attr('id') == 'products_list') {
-              //Only in standard mode, if another append isn't processin and we didn't already load all the items.
-              if ($('#products_tree_mode').text() == 0 && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())) {
-                //Block another append.
-                load = true;
-                //Launch append.
-                $('#append_product_list_link').click();
-              }
-            }
-          },
-          onTotalScrollOffset:totalScrollOffsetH
-        }
       });
     });
+
+
 
     /*
      * Code executed when we load the home page.
      */
     $('#products_list_column:not(.init-set)').addClass('init-set').each(function () {
+
+      //When the user is scrolling.
+      $(window).scroll(function()
+      {
+        //When we hit the end of the scrollbar in product list, we append new products. Only in standard mode, if another append isn't processin and we didn't already load all the items.
+        if (($(window).scrollTop() + $(window).height()) + 150 > $(document).height() && $('#products_tree_mode').text() == 0 && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())) {
+          //Block another append.
+          load = true;
+          //Launch append.
+          $('#append_product_list_link').click();
+        }
+      });
+
       //Refresh oddeven at the end of the page load.
       odd_even_product_list('.product_list_item');
       //Refresh compare url on footer.

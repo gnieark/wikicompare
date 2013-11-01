@@ -583,6 +583,10 @@ function wikicompare_generate_demo_create_children($settings, &$nodes_created) {
       $node->wikicompare_parent_id['und'][0]['target_id'] = $settings['parent_id'];
       $node->wikicompare_parent_id['und'][0]['target_type'] = "node";
     }
+    if ($settings['type'] == 'product') {
+      $node->wikicompare_short_description['und'][0]['value'] = "This is a short description";
+      $node->wikicompare_comparable['und'][0]['value'] = "only-without-children";
+    }
     if ($settings['type'] == 'criterion') {
       //Define random weight in taking account of the parent type and the settings.
       if ($settings['parent_type'] == 'parent-weighted-average') {

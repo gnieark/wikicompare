@@ -50,21 +50,6 @@ function wikicompare_home_page() {
 
   $output .= '<br/><br/><br/>';
 
-  //Generate the filter link which will be called each time we modify a filter. This mainly regenerate the product list.
-  $filter_link = array(
-    '#type' => 'link',
-    '#title' => 'Filter',
-    '#href' => 'wikicompare_compute_table_callback/nojs',
-    '#id' => 'filter_table_link',
-    '#attributes' => array(
-      'class' => array('simple_ajaxlink'),
-      'action' => 'refresh_list',
-      'mode' => 'filter',
-      'style' => 'display:none',
-    ),
-  );
-  $output .= render($filter_link);
-
   $output .= '<div id="filters_zone">';
 
   //The name filter is hardcoded.
@@ -149,6 +134,20 @@ function wikicompare_home_page() {
 
   $output .= '</div>';
 
+  //Generate the filter link which will be called each time we modify a filter. This mainly regenerate the product list.
+  $filter_link = array(
+    '#type' => 'link',
+    '#title' => 'Filter',
+    '#href' => 'wikicompare_compute_table_callback/nojs',
+    '#id' => 'filter_table_link',
+    '#attributes' => array(
+      'class' => array('simple_ajaxlink'),
+      'action' => 'refresh_list',
+      'mode' => 'filter',
+      'style' => 'display:none',
+    ),
+  );
+  $output .= render($filter_link);
 
   //Add the container which will contain the selected criterion itemlist. It'll be build when we submit the manual selected criterion dialog.
   $output .= '<div id="container-manual-selected-criterions"></div>';
@@ -232,7 +231,7 @@ function wikicompare_home_page() {
     $output .= '<th class="infofield_title" field="' . $infofield['name'] . '" style="width:' . $settings['width'] . '%">' . $infofield['title'] . '</th>';
   }
   $output .= '</thead></table>';
-  $output .= '<div id="products_list" class="with-custom-scrollbar" style="height:500px; overflow:auto;">';
+  $output .= '<div id="products_list">';
   $output .= '<table>';
   $output .= '<col class="list-column-product"/><col class="list-column-rank"/>';
   foreach ($settings['infofields'] as $infofield) {
@@ -569,7 +568,12 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
     $products = $products_recursive_data['tree'];
   }
 
-  $limit = 5 + $offset;
+  $nb_product_to_add = 5;
+  //We load 15 product at the page load, then 5 for each load.
+  if ($offset == 1) {
+    $nb_product_to_add = 15;
+  }
+  $limit = $nb_product_to_add + $offset;
 
   //Generate items.
   $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
