@@ -1009,6 +1009,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.description_translation = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_description_' + nid + '_translation').val();
           if (type == 'product') {
             options.data.product_comparable = $('#form_' + type + '_fast' + aj_settings['fastaction'] + '_comparable_' + nid).val();
+            var fastaction_infofields = {};
+            var i = 0;
+            $('.fastaction_infofield').each(function (key, value) {
+              infofield = {};
+              infofield['name'] = $(this).attr('field');
+              infofield['value'] = $(this).val();
+              infofield['required'] = $(this).attr('required');
+              fastaction_infofields[i] = infofield;
+              i = i + 1;
+            });
+            options.data.fastaction_infofields = fastaction_infofields;
             options.data.inherit_id = $('#wikicompare-inherit-product-id').text();
           }
           if (type == 'criterion') {

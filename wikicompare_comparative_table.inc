@@ -26,6 +26,7 @@ function wikicompare_home_page() {
   drupal_add_library('wikicompare', 'mCustomScrollbar');
   drupal_add_library('wikicompare', 'mousewheel');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+  $_SESSION['current_path'] = current_path();
 
   $output = '<div id="home">';
 
@@ -284,6 +285,8 @@ function wikicompare_home_page() {
   );
   $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
 
+  $output .= '<p>' . wikicompare_generate_add_link('product', $settings) . '</p>';
+
   $output .= '<div id="storage_zone" style="display:none;">';
   $output .= '</div>';
   $output .= '</div>';
@@ -309,6 +312,7 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   drupal_add_library('wikicompare', 'mCustomScrollbar');
   drupal_add_library('wikicompare', 'mousewheel');
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
+  $_SESSION['current_path'] = current_path();
 
   $product_ids = array();
   if ($compared_products != 0) {
@@ -713,7 +717,7 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
 
       $i++;
 
-      $output .= '<tr id="product_list_item_' . $product_id . '" nid="' . $product_id . '" class="product_list_item';
+      $output .= '<tr id="product_list_item_' . $product_id . '" nid="' . $product_id . '" class="product_item product_list_item';
       //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level or if we are displaying a children.
       if (!$first || isset($settings['nid'])) {
         $output .= ' hidden" style="display:none;';
@@ -955,7 +959,7 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
 
   $output .= '<div id="comparative_tables_container" style="overflow:hidden;">'; //TODO not sure we still need this container.
   //The container which contain the tables, and will slide to display them.
-  $output .= '<div id="comparative_tables" style="height: ' . ($root_row['count'] + 1) * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
+  $output .= '<div id="comparative_tables" style="height: ' . ($root_row['count'] + 2) * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
   //Display the root rows.
   $output .= $root_row['output'];
   $output .= '</div>';

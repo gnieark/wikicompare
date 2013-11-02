@@ -411,6 +411,50 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       }
       $output .= render($comparable_field);
 
+      //Get all active infofields.
+      $settings['infofields'] = array();
+      $query = db_select('wikicompare_infofields', 'f');
+      $query->addField('f', 'name', 'name');
+      $query->addField('f', 'title', 'title');
+      $query->addField('f', 'type', 'type');
+      $query->addField('f', 'category', 'category');
+      $query->addField('f', 'allowed_values', 'allowed_values');
+      $query->addField('f', 'is_required', 'is_required');
+      $query->condition('f.is_active', 1);
+      $query->orderby('f.category_sequence');
+      $query->orderby('f.category');
+      $query->orderby('f.sequence');
+      $query->orderby('f.title');
+      $result = $query->execute();
+      foreach ($result as $record) {
+        $infofield_name = 'wikicf_' . $record->name;
+        $infofield_type = 'textfield';
+        if ($record->type == 'select') {
+          $infofield_type = 'select';
+        }
+        //Transform the text field into exploitable array.
+        $record->allowed_values = str_replace("\n\r", "\n", $record->allowed_values);
+        $allowed_values = array();
+        foreach(explode("\n", $record->allowed_values) as $value) {
+          $allowed_values[$value] = $value;
+        }
+        $infofield = array(
+          '#type' => $infofield_type,
+          '#title' => $record->title,
+          '#required' => $record->is_required,
+          '#options' => $allowed_values,
+          '#id' => 'form_' . $type . '_fast' . $fastaction . '_wikicf_' . $record->name . '_' . $nid,
+          '#attributes' => array('class' => array('fastaction_infofield'), 'field' => $record->name, 'required' => $record->is_required),
+        );
+        if ($fastaction == 'edit') {
+          $infofield_value = $node->$infofield_name;
+          $infofield['#value'] = $infofield_value['und'][0]['value'];
+        }
+        if ($readonly == True) {
+          $comparable_field['#attributes']['disabled'] = True;
+        }
+        $output .= render($infofield);
+      }
     }
 
     //Criterion specific fields.
@@ -610,7 +654,7 @@ function add_fastaction_items($type, $node_array){
   //We can fastadd / fastedit / fastremove all the other node types.
   } else {
     //In translation mode, we display the add fastaction in item only if they don't have children. Else, the fastadd is at the bottom of the children zone.
-    if (!in_array($type, array('criterion', 'profile')) || !$node_array['data']->has_children) {
+    if ((in_array($type, array('criterion', 'profile')) && !$node_array['data']->has_children) || ($type == 'product' && ($_SESSION['current_path'] != 'home' || $nid == 0))) {
       $actions['add'] = 'add';
     }
 
@@ -916,6 +960,18 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
         $node->wikicompare_comparable['und'][0]['value'] = $_POST['product_comparable'];
       } else {
         $missing_field = TRUE;
+      }
+
+      //Assign infofields.
+      foreach ($_POST['fastaction_infofields'] as $infofield) {
+        $infofield_name = 'wikicf_' . $infofield['name'];
+        if ($infofield['value'] != NULL || !$infofield['required']) {
+          $infofield_array = array();
+          $infofield_array['und'][0]['value'] = $infofield['value'];
+          $node->$infofield_name = $infofield_array;
+        } else {
+          $missing_field = TRUE;
+        }
       }
     }
 
