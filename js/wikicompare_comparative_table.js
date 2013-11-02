@@ -39,14 +39,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //If the itemlist was computed, then the children are already in the itemlist, we just need to display them.
       if ($(this).hasClass('computed')) {
-
         //What happen when we click on the link.
         $(this).click(function() {
           //Get the nid of the node.
           var nid = extract_nid(link_id);
           //Display the children if they are not already shown.
           if (!$(this).hasClass('displayed')) {
-            $('.' + type + '_' + context + '_item[parent_id=' + nid + ']').show();
+            $('.' + type + '_' + context + '_item[parent_id=' + nid + ']').show().removeClass('hidden');
             //Next time, it'll hide the children.
             $(this).addClass('displayed');
           //Hide the children.
@@ -54,6 +53,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //By using this recursive function, the children will be recursively hidded.
             remove_children_tree2(nid, '#' + type + '_' + context + '_link_', '.' + type + '_' + context + '_item', true);
           }
+          //Refresh oddeven.
+          odd_even_product_list('.product_list_item');
           //Avoid the hyperlink to load another page.
           return false;
         });
@@ -822,7 +823,17 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_products_tree_mode = true;
           send_infofields = true;
           send_filters = true;
-          options.data.products_offset = $('#products_offset').text();
+
+          //Send all product already listed, so we don't append them again.
+          var product_listed_ids = {};
+          $('.product_list_item').each(function (key, value) {
+            var pid = $(this).attr('nid');
+            product_listed_ids[pid] = pid;
+          });
+          options.data.product_listed_ids = product_listed_ids;
+
+          //Send the minimum percent displayed, to avoid adding a product with a higher percent in the middle of the list.
+          options.data.last_percent = $('.product_list_item:last .chart-percent').text();
         }
 
         //When we want to add a new column in the table.
@@ -1728,6 +1739,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
       //Remove the children from the page, only if it was not computed.
       if (!computed == true) {
         $(children_prefix + '[parent_id=' + nid + ']').addClass('to_remove');
+      } else {
+        $(children_prefix + '[parent_id=' + nid + ']').addClass('hidden');
       }
     }
 //TODO Replace all link to parent by a parent_id attribute. Best if we do this after the browser debug, I suspect that this custom attribute may be the problem.
@@ -1868,23 +1881,29 @@ Drupal.behaviors.WikicompareComparativeTable = {
      * Refresh odd even in tables.
      */
     function odd_even_product_list(dom) {
+
       var oddeven = 'odd';
       var parent_id = '';
       $(dom).each(function(index) {
-        $(this).removeClass('even');
-        $(this).removeClass('odd');
 
-        //Reinitiate with odd if we start a new table.
-        if (parent_id != $(this).attr('parent_id')) {
-          oddeven = 'odd';
-          parent_id = $(this).attr('parent_id');
-        }
+        if (!$(this).hasClass('hidden')) {
+          $(this).removeClass('even');
+          $(this).removeClass('odd');
 
-        $(this).addClass(oddeven);
-        if (oddeven == 'even') {
-          oddeven = 'odd';
-        } else {
-          oddeven = 'even';
+          if (dom != '.product_list_item') {
+            //Reinitiate with odd if we start a new table, in comparative table.
+            if (parent_id != $(this).attr('parent_id')) {
+              oddeven = 'odd';
+              parent_id = $(this).attr('parent_id');
+            }
+          }
+
+          $(this).addClass(oddeven);
+          if (oddeven == 'even') {
+            oddeven = 'odd';
+          } else {
+            oddeven = 'even';
+          }
         }
       });
     }
@@ -1912,7 +1931,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       $(window).scroll(function()
       {
         //When we hit the end of the scrollbar in product list, we append new products. Only in standard mode, if another append isn't processin and we didn't already load all the items.
-        if (($(window).scrollTop() + $(window).height()) + 150 > $(document).height() && $('#products_tree_mode').text() == 0 && load==false && ($('.product_list_item').size()>=5) && ($('.product_list_item').size()!=$('#nb_products').text())) {
+        if (($(window).scrollTop() + $(window).height()) + 150 > $(document).height() && $('#products_tree_mode').text() == 0 && load==false && ($('.product_list_item').size()!=$('#nb_products').text())) {
           //Block another append.
           load = true;
           //Launch append.

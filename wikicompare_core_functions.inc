@@ -629,18 +629,21 @@ function wikicompare_refresh_cache_suggest() {
   foreach ($percents as $criterion_id => $products) {
     arsort($products);
     $i = 0;
+    $previous_percent = 0;
     foreach ($products as $product_id => $product) {
+      $record = $criterions[$criterion_id][$product_id];
+      $to_insert[] = array(
+        'criterion_id' => $record->nid,
+        'sequence' => $record->suggest,
+        'product_id' => $record->product_id,
+        'percent' => $record->percent
+      );
       $i++;
-      //TODO All products which are eligible for suggestion (aka percent in the top 3) should be store here and randomly displayed, even if more than three.
-      if ($i <= 3) {
-        $record = $criterions[$criterion_id][$product_id];
-        $to_insert[] = array(
-          'criterion_id' => $record->nid,
-          'sequence' => $record->suggest,
-          'product_id' => $record->product_id,
-          'percent' => $record->percent
-        );
+      //We keep only the first 3 products. We also keep the products which has the same percent than the third product, even if the total make more than 3 products.
+      if ($i > 3 && $previous_percent != $record->percent) {
+        break;
       }
+      $previous_percent = $record->percent;
     }
   }
 
@@ -742,6 +745,8 @@ function wikicompare_start_computation() {
  */
 function request_db($type, $db_settings = array(), $settings=array()) {
 
+  $orderbysequence = False;
+
   //Start build the request.
   $query = db_select('cache_' . $type, 'n');
   $query->addField('n', 'nid', 'nid');
@@ -767,9 +772,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
       $query->condition('n.state', $state, 'in');
     }
 
-    //The returned nodes are ordered by the sequence field.
-    $query->orderby('n.sequence, n.title');
-
+    $orderbysequence = True;
 
   //Evaluation specific fields.
   } else {
@@ -799,6 +802,21 @@ function request_db($type, $db_settings = array(), $settings=array()) {
     $or->condition('n.has_children', 0);
     $or->condition('n.comparable', 'always-combine');
     $flag = True;
+    $orderbysequence = False;
+    $query->orderby('n.total', 'DESC');
+    //After total, products need to be sent in random order. We make the shuffle here because later we will not have all products to make it.
+    $query->orderRandom();
+    if (isset($settings['products_limit']) && !$settings['computed']) {
+      $query->range(0,$settings['products_limit']);
+    }
+    //Only used when we append the product list, we will not append any product which is already displayed or is lesser than the last displayed product.
+    if (isset($settings['product_listed_ids']) && !empty($settings['product_listed_ids'])) {
+      $query->condition('n.nid', $settings['product_listed_ids'], 'not in');
+      //In computed mode we can't filter the last_percent here, because the final percent may be lesser than last_percent.
+      if (!$settings['computed']) {
+        $query->condition('n.total', $settings['last_percent'], '<=');
+      }
+    }
   }
 
   if ($flag) {
@@ -896,6 +914,11 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   if (module_exists('wikicompare_profiles')) {
     //Need specific fields.
     wikicompare_profiles_request_db($query, $type);
+  }
+
+  if ($orderbysequence) {
+    //The returned nodes are ordered by the sequence field.
+    $query->orderby('n.sequence, n.title');
   }
 
   //Launch the request

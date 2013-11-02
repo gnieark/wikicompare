@@ -8,9 +8,11 @@ define('FIRST_COLUMN_WIDTH', 30);
 define('LIST_COLUMN_PRODUCT_WIDTH', 30);
 define('LIST_COLUMN_RANK_WIDTH', 20);
 define('SUGGEST_LIST_HEIGHT', 15);
+define('NB_PRODUCT_AT_PAGE_LOAD', 15);
+define('NB_PRODUCT_PER_APPEND', 5);
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
-
+//TODO disable filter when the list is computed
 
 /**
  * Build the home page.
@@ -216,6 +218,7 @@ function wikicompare_home_page() {
     );
   }
 
+  $settings['products_limit'] = NB_PRODUCT_AT_PAGE_LOAD;
   $res = wikicompare_table_render_product_list($settings);
 
   //Generate product list with a table.
@@ -251,7 +254,6 @@ function wikicompare_home_page() {
   );
   $output .= '<p><span id="products_tree_mode" style="display:none;">0</span>' . render($append_link) . '</p>';
   $output .= '<span id="nb_products" style="display:none;">' . $res['count'] . '</span>';
-  $output .= '<span id="products_offset" style="display:none;">' . $res['offset'] . '</span>';
   $output .= '<span id="prefix-compare-url" style="display:none;">' . $res['url']['prefix'] . '</span>';
   $output .= '<span id="best-compare-url" style="display:none;">' . $res['url']['best-url'] . '</span>';
   $output .= '<span id="suffix-compare-url" style="display:none;">' . $res['url']['suffix'] . '</span>';
@@ -490,7 +492,7 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
  * @return output
  *   The rendered list.
  */
-function wikicompare_table_render_product_list($settings, $criterions=array(), $offset=1) {
+function wikicompare_table_render_product_list($settings, $criterions=array()) {
 
   //Only the product in the home page will be rendered by this function.
   $settings['context'] = 'list';
@@ -499,9 +501,14 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
   $db_settings = array('get_infofields' => 1);
   //If we are expanding the children of a node in tree mode.
   $parent_id = 0;
-  if (isset($settings['nid'])) {
-    $db_settings['parent_id'] = $settings['nid'];
-    $parent_id = $settings['nid'];
+
+  //We can't use isset here because in tree mode first load nid exist but is null.
+  if (array_key_exists('nid', $settings)) {
+    //In computed tree mode we need all products.
+    if (!$settings['computed']) {
+      $db_settings['parent_id'] = $settings['nid'];
+      $parent_id = $settings['nid'];
+    }
   } else {
     $db_settings['get_comparable_products'] = 1;
   }
@@ -520,7 +527,7 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
   }
 
   //If we are in tree mode, we need to get the product in tree mode. Unless we are getting the children of a node.
-  if ($settings['products_tree_mode'] && !isset($settings['nid'])) {
+  if ($settings['products_tree_mode'] && !isset($settings['nid']) && $settings['computed']) {
     //Get product tree. We can use comparable products as base because it always contain at least all products without children.
     $products_recursive_data = wikicompare_build_recursive_tree('product', $product_ids, array(), $settings);
     $product_ids = $products_recursive_data['ids'];
@@ -552,42 +559,70 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
 
       $node = wikicompare_compute_percent($node, $evaluations);
 
-      $products_sort[$product_id] = $node->new_percent;
+      $percent = round($node->new_percent, 1);
+      $products[$product_id]['data']->total = $percent;
+
+      //Security to avoid breaking the note sequence. In computed mode we can't put it in the db request.
+      if (isset($settings['last_percent']) && $settings['last_percent'] < $percent) {
+        continue;
+      }
+
+      //In tree mode, we need to set all product on the same priority.
+      if ($settings['products_tree_mode']) {
+        $percent = 0;
+      }
+      $products_sort[(string) $percent][] = $product_id;
+
     }
   //Assign percentage from cache_compared total field.
   } else {
     foreach ($products as $product_id => $product) {
-      $products_sort[$product_id] = $product['data']->total;
+      $percent = $product['data']->total;
+      //In tree mode, we need to set all product on the same priority.
+      if ($settings['products_tree_mode']) {
+        $percent = 0;
+      }
+      $products_sort[(string) $percent][] = $product_id;
     }
   }
 
   //Order the products by their percentages.
   if (!$settings['products_tree_mode']) {
-    arsort($products_sort);
+    krsort($products_sort);
   }
 
   //For tree mode, now that we recovered the percentage, we assign the products in tree mode before the call of the recursive function.
-  if ($settings['products_tree_mode'] && !isset($settings['nid'])) {
+  if ($settings['products_tree_mode'] && !isset($settings['nid']) && $settings['computed']) {
     $products = $products_recursive_data['tree'];
   }
 
-  $nb_product_to_add = 5;
-  //We load 15 product at the page load, then 5 for each load.
-  if ($offset == 1) {
-    $nb_product_to_add = 15;
-  }
-  $limit = $nb_product_to_add + $offset;
-
   //Generate items.
-  $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, True, $settings);
+  $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, True, $settings);
 
   //Generate the best products url.
   $prefix = 'compare/';
   $url = $prefix . '0';
   $suffix = '';
   $is_products = True;
+  $best_product_ids = array();
+  $i = 0;
+  $stop = 0;
+  foreach ($products_sort as $percent => $product_ids) {
+    shuffle($product_ids);
+    foreach ($product_ids as $product_id) {
+      $best_product_ids[$product_id] = $product_id;
+      $i++;
+      if ($i == 3) {
+        $stop = 1;
+        break;
+      }
+    }
+    if ($stop) {
+      break;
+    }
+  }
   //Generate the three argument products/criterions/profiles.
-  foreach (array($products_sort, $settings['selected_criterion_ids'], $settings['selected_profile_ids']) as $array) { //TODO move profile_ids in module
+  foreach (array($best_product_ids, $settings['selected_criterion_ids'], $settings['selected_profile_ids']) as $array) { //TODO move profile_ids in module
     $i = 0;
     $first = True;
     $ids_url = 0;
@@ -600,10 +635,6 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
       }
       $first = false;
       $i++;
-      //We limit the product passed to the comparative table.
-      if ($i == 3 && $is_products) {
-        break;
-      }
     }
     $url .= '/' . $ids_url;
     if (!$is_products) {
@@ -613,7 +644,14 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
     $is_products = False;
   }
 
-  return array('offset' => $limit, 'count' => count($products), 'url' => array('prefix' => $prefix, 'best-url' => $url, 'suffix' => $suffix), 'output' => $output);
+  //Get the total number of products, only at the list reload to avoid unnecessary db request when we append.
+  $products = array();
+  if (empty($settings['product_listed_ids'])) {
+    unset($settings['products_limit']);
+    $products = request_db('product', $db_settings, $settings);
+  }
+
+  return array('count' => count($products), 'url' => array('prefix' => $prefix, 'best-url' => $url, 'suffix' => $suffix), 'output' => $output);
 
 }
 
@@ -646,69 +684,76 @@ function wikicompare_table_render_product_list($settings, $criterions=array(), $
  * @return output
  *   The rendered list.
  */
-function wikicompare_table_render_product_item($products, $products_sort, $parent_id, $offset, $limit, $first, $settings) {
+function wikicompare_table_render_product_item($products, $products_sort, $parent_id, $first, $settings) {
 
   $output = '';
   $i = 0;
-  foreach ($products_sort as $product_id => $percent) {
-    //Important mainly in computed tree mode, if the product is not at the current level of the recursive function then we zap it with no effect on the iterator.
-    if (isset($products[$product_id])) {
-      $product = $products[$product_id];
-    } else {
-      continue;
-    }
-    $i++;
-    //Zap all products already loaded.
-    if ($i < $offset) {
-      continue;
-    }
-    //In standard mode, zap all products superior to the limit.
-    if ($i == $limit && !$settings['products_tree_mode'] && !$settings['computed']) {
-      break;
-    }
-    //Unless we are in tree mode, we will not display the get children link for the product node.
+  foreach ($products_sort as $percent => $product_ids) {
+    //Display product with same percent in random order. We shuffle here even if there is another shuffle in db request because of the computed case, where we have all products. We don't shuffle in tree mode.
     if (!$settings['products_tree_mode']) {
-      $settings['no_children_link'] = 1;
+      shuffle($product_ids);
     }
-
-    $output .= '<tr id="product_list_item_' . $product_id . '" class="product_list_item" nid="' . $product_id . '"';
-    //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level or if we are displaying a children.
-    if (!$first || isset($settings['nid'])) {
-      $output .= ' style="display:none;"';
-    }
-    //In computed tree mode, we link the children to their parent with this attribute.
-    if ($parent_id) {
-      $output .= ' parent_id="' . $parent_id . '"';
-    }
-    $output .= '>';
-    //Render product name.
-//TODO replace all _ in class and id by -.
-    $output .= '<td class="list-column-product">' . wikicompare_table_get_supertitle_item('product', $product, $settings) . '<br/>';
-    $output .= '<span class="short_description">' . $product['data']->short_description . '</span>';
-    $output .= '<div class="button compare-button" nid="' . $product_id . '"><button>Compare</button></div>';
-    $output .= '<span class="compare_link" nid="' . $product_id . '"></span>';
-    $output .= '</td>';
-    //Render percentage.
-    $output .= '<td class="list-column-rank"><div>';
-    $output .= '<canvas class="chart" height="100%" width="100%" percent="' . $products_sort[$product_id] . '"></canvas>';
-    $output .= '<div class="chart-percent">' .$products_sort[$product_id] . '</div>';
-    $output .= '</div></td>';
-    //Render infofields.
-    foreach ($settings['infofields'] as $infofield) {
-      $field = 'wikicf_' . $infofield['name'];
-
-      $output .= '<td>';
-      //Avoid value = 0;
-      if ($product['data']->$field) {
-        $output .= $product['data']->$field;
+    foreach ($product_ids as $product_id) {
+      //Important mainly in computed tree mode, if the product is not at the current level of the recursive function then we zap it with no effect on the iterator.
+      if (isset($products[$product_id])) {
+        $product = $products[$product_id];
+      } else {
+        continue;
       }
+
+      //Unless we are in tree mode, we will not display the get children link for the product node.
+      if (!$settings['products_tree_mode']) {
+        $settings['no_children_link'] = 1;
+      }
+
+      //Zap all products superior to the limit. We usually use the limit in the db request, this code is only used in computed mode.
+      if (isset($settings['products_limit']) && $i == $settings['products_limit']) {
+        break;
+      }
+
+      $i++;
+
+      $output .= '<tr id="product_list_item_' . $product_id . '" nid="' . $product_id . '" class="product_list_item';
+      //In computed tree mode (the only mode which can have first = false), we hide the item if not at the root level or if we are displaying a children.
+      if (!$first || isset($settings['nid'])) {
+        $output .= ' hidden" style="display:none;';
+      }
+      $output .= '"';
+      //In computed tree mode, we link the children to their parent with this attribute.
+      if ($parent_id) {
+        $output .= ' parent_id="' . $parent_id . '"';
+      }
+      $output .= '>';
+      //Render product name.
+  //TODO replace all _ in class and id by -.
+      $output .= '<td class="list-column-product">' . wikicompare_table_get_supertitle_item('product', $product, $settings) . '<br/>';
+      $output .= '<span class="short_description">' . $product['data']->short_description . '</span>';
+      $output .= '<div class="button compare-button" nid="' . $product_id . '"><button>Compare</button></div>';
+      $output .= '<span class="compare_link" nid="' . $product_id . '"></span>';
       $output .= '</td>';
+      //Render percentage.
+      $output .= '<td class="list-column-rank"><div>';
+      $output .= '<canvas class="chart" height="100%" width="100%" percent="' . $product['data']->total . '"></canvas>';
+      $output .= '<div class="chart-percent">' . $product['data']->total . '</div>';
+      $output .= '</div></td>';
+      //Render infofields.
+      foreach ($settings['infofields'] as $infofield) {
+        $field = 'wikicf_' . $infofield['name'];
+
+        $output .= '<td>';
+        //Avoid value = 0;
+        if ($product['data']->$field) {
+          $output .= $product['data']->$field;
+        }
+        $output .= '</td>';
+      }
+      $output .= '</tr>';
+      //Recursive call to get the children.
+      if ($settings['computed'] && !empty($product['children'])) {
+        $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $product_id, False, $settings);
+      }
     }
-    $output .= '</tr>';
-    //Recursive call to get the children.
-    if ($settings['computed'] && !empty($product['children'])) {
-      $output .= wikicompare_table_render_product_item($product['children'], $products_sort, $product_id, $offset, $limit, False, $settings);
-    }
+
   }
 
   return $output;
@@ -740,24 +785,31 @@ function wikicompare_table_render_home_suggest() {
   $result = $query->execute();
 //TODO Translate title
   foreach($result as $record) {
-    $res[$record->criterion_id][$record->product_id] = $record;
+    $res[$record->criterion_id]['title'] = $record->criterion_title;
+    $res[$record->criterion_id]['percents'][$record->percent][] = $record;
   }
 
   $output = '<div id="suggest-slideshow-wrapper" style="height:' . 2 * SUGGEST_LIST_HEIGHT . 'em;">';
   $output .= '<ul id="suggest-slideshow">';
   foreach ($res as $criterion) {
-    $first = True;
+    $i = 0;
     $output .= '<li style="height:' . SUGGEST_LIST_HEIGHT . 'em;">';
-    foreach ($criterion as $product) {
-      if ($first) {
-        $output .= '<dl><dt class="suggest-criterion">' . $product->criterion_title . '</dt><dd>';
-        $first = False;
+    $output .= '<dl><dt class="suggest-criterion">' . $criterion['title'] . '</dt><dd>';
+    foreach ($criterion['percents'] as $percent) {
+      //Randomize the order
+      shuffle($percent);
+      foreach ($percent as $product) {
+        $output .= $product->product_title . ' : ' . $product->percent . '%<br/>';
+        $i++;
+        if ($i >= 3) {
+          break;
+        }
       }
-      $output .= $product->product_title . ' : ' . $product->percent . '%<br/>';
-      if ($first) {
-        '</dd></dl>';
+      if ($i >= 3) {
+        break;
       }
     }
+    $output .= '</dd></dl>';
     $output .= '</li>';
   }
   $output .= '</ul></div>';
@@ -1831,11 +1883,12 @@ function wikicompare_get_append_product_list_response($method = 'ajax') {
 
   //Initialize settings with the variable from javascript.
   $settings = wikicompare_initialize_settings($_POST);
-
+  $settings['products_limit'] = NB_PRODUCT_PER_APPEND;
   $commands = array();
-  $res = wikicompare_table_render_product_list($settings, array(), $_POST['products_offset']);
+  //Regenerate the product list.
+  $criterions = wikicompare_compute_get_criterions($settings);
+  $res = wikicompare_table_render_product_list($settings, $criterions);
   $commands[] = ajax_command_invoke('#products_list tbody', 'append', array($res['output']));
-  $commands[] = ajax_command_invoke('#products_offset', 'html', array($res['offset']));
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -2218,9 +2271,14 @@ function wikicompare_compute_table_response($method = 'ajax') {
 
   //Regenerate the product list.
   $criterions = wikicompare_compute_get_criterions($settings);
+
+  if (!$settings['products_tree_mode']) {
+    $settings['products_limit'] = NB_PRODUCT_AT_PAGE_LOAD;
+  } else {
+    $settings['nid'] = NULL;
+  }
   $res = wikicompare_table_render_product_list($settings, $criterions);
-  $commands[] = ajax_command_html('#nb_products', $res['count']);
-  $commands[] = ajax_command_html('#products_offset', $res['offset']);
+  $commands[] = ajax_command_invoke('#nb_products', 'html', array( $res['count']));
   $commands[] = ajax_command_invoke('#prefix-compare-url', 'html', array($res['url']['prefix']));
   $commands[] = ajax_command_invoke('#best-compare-url', 'html', array($res['url']['best-url']));
   $commands[] = ajax_command_invoke('#suffix-compare-url', 'html', array($res['url']['suffix']));
