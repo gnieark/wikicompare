@@ -431,8 +431,9 @@ function wikicompare_admin() {
     '#href' => 'wikicompare_get_admin_infofield_form_callback/nojs',
     '#id' => 'admin_add_infofield',
     '#attributes' => array(
-      'class' => array('dialog'),
-      'action' => 'infofields',
+      'class' => array('ajaxlink'),
+      'action' => 'open_dialog',
+      'dialog_action' => 'infofields',
       'context' => 'add',
       'side' => 'right',
     ),
@@ -557,7 +558,7 @@ function wikicompare_admin_infofield_table() {
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_edit = l($img, 'wikicompare_get_admin_infofield_form_callback/nojs', array('attributes' => array('id' => 'admin_edit_infofield_' . $record->name, 'class' => array('dialog'), 'side' => 'right', 'action' => 'infofields', 'context' => 'edit', 'field' => $record->name), 'html' => True));
+    $img_link_edit = l($img, 'wikicompare_get_admin_infofield_form_callback/nojs', array('attributes' => array('id' => 'admin_edit_infofield_' . $record->name, 'class' => array('ajaxlink'), 'side' => 'right', 'action' => 'open_dialog', 'dialog_action' => 'infofields', 'context' => 'edit', 'field' => $record->name), 'html' => True));
 
     //Generate the remove link.
     $img = theme('image', array(
@@ -566,7 +567,7 @@ function wikicompare_admin_infofield_table() {
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_remove = l($img, 'wikicompare_get_admin_infofield_form_callback/nojs', array('attributes' => array('id' => 'admin_remove_infofield_' . $record->name, 'class' => array('dialog'), 'side' => 'right', 'action' => 'infofields', 'context' => 'remove', 'field' => $record->name), 'html' => True));
+    $img_link_remove = l($img, 'wikicompare_get_admin_infofield_form_callback/nojs', array('attributes' => array('id' => 'admin_remove_infofield_' . $record->name, 'class' => array('ajaxlink'), 'side' => 'right', 'action' => 'open_dialog', 'dialog_action' => 'infofields', 'context' => 'remove', 'field' => $record->name), 'html' => True));
 
     //If we are not in select type, filter_type is irrelevent.
     if ($record->type != 'select') {
@@ -820,7 +821,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     '#id' => 'submit_infofield',
     '#prefix' => '<input id="submit_infofield_button" type="submit" link="submit_infofield" value="Submit" class="button wikicompare_button"/>',
     '#attributes' => array(
-      'class' => array('simple_ajaxlink'),
+      'class' => array('ajaxlink'),
       'action' => 'submit_infofield',
       'context' => $_POST['context'],
       'style' => 'display:none',

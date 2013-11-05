@@ -806,8 +806,9 @@ function wikicompare_inherit_product_modify_form_evaluation(&$form, &$output, &$
           '#href' => 'compute_inherit_callback/nojs',
           '#id' => 'compute_inherit_link_' . $node-> nid,
           '#attributes' => array(
-            'class' => array('compute_inherit_link'),
+            'class' => array('ajaxlink'),
             'style' => 'display:none',
+            'action' => 'compute_inherit',
           ),
         );
         //Add the link after the Drupal field.
@@ -850,8 +851,9 @@ function wikicompare_inherit_product_modify_form_evaluation(&$form, &$output, &$
           '#href' => 'compute_inherit_callback/nojs',
           '#id' => 'compute_inherit_link_' . $node-> nid,
           '#attributes' => array(
-            'class' => array('compute_inherit_link'),
+            'class' => array('ajaxlink'),
             'style' => 'display:none',
+            'action' => 'compute_inherit'
           ),
         );
 

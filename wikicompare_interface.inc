@@ -167,8 +167,9 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
         '#href' => 'wikicompare_get_dialog_callback/nojs',
         '#id' => 'select_parent_link_' . $nid,
         '#attributes' => array(
-          'class' => array('dialog'),
-          'action' => 'selectdialog',
+          'class' => array('ajaxlink'),
+          'action' => 'open_dialog',
+          'dialog_action' => 'selectdialog',
           'side' => 'left',
           'nid' => $nid,
           'ntype' => $type,
@@ -693,7 +694,7 @@ function add_fastaction_items($type, $node_array){
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_' . $action . '_link_' . $nid, 'class' => array('dialog','fastaction_item'), 'nid' => $nid, 'parent_id' => $node_array['data']->parent_id, 'ntype' => $type, 'action' => 'fastaction', 'fastaction' => $action, 'side' => 'right'), 'html' => True));
+    $img_link = l($img, 'wikicompare_table_fastaction_form_callback/nojs', array('attributes' => array('id' => $type . '_' . $action . '_link_' . $nid, 'class' => array('ajaxlink','fastaction_item'), 'action' => 'open_dialog', 'nid' => $nid, 'parent_id' => $node_array['data']->parent_id, 'ntype' => $type, 'dialog_action' => 'fastaction', 'fastaction' => $action, 'side' => 'right'), 'html' => True));
     $output .= $img_link;
   }
 
@@ -796,9 +797,11 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
     '#href' => 'wikicompare_table_fastaction_submit_callback/nojs/',
     '#id' => 'form_fastaction_submit_link_' . $nid ,
     '#attributes' => array(
-      'class' => 'form_fastaction_submit_link',
+      'class' => 'ajaxlink',
+      'action' => 'submit_fastaction_form',
       'style' => 'display:none',
-      'type' => $type,
+      'nid' => $nid,
+      'ntype' => $type,
       'fastaction' => $fastaction,
       'side' => $_POST['side']
     )
