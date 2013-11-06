@@ -203,6 +203,121 @@ function wikicompare_translation_move_field_language($field_name, $ids) {
 
 
 
+/**
+ * Get translations for the infofield admin table.
+ */
+function wikicompare_translation_infofield_admin_table_request(&$query) {
+  global $language;
+  $query->addField('ft', 'translation', 'title_translated');
+  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+}
+
+
+
+/**
+ * Insert translations in infofield admin table.
+ */
+function wikicompare_translation_infofield_admin_table_row(&$row, $record) {
+  global $language;
+  if ($language->language != language_default('language')) {
+    $row[] = $record->title_translated;
+  }
+}
+
+
+
+/**
+ * Insert translations header in infofield admin table.
+ */
+function wikicompare_translation_infofield_admin_table_header(&$header) {
+  global $language;
+  if ($language->language != language_default('language')) {
+    $header[] = 'Translation';
+  }
+}
+
+
+
+/**
+ * Insert translation title infofield form.
+ */
+function wikicompare_translation_infofield_admin_form(&$form, $POST) {
+  global $language;
+  if ($language->language != language_default('language')) {
+    //Display the translated title field.
+    $form['translated_title_field'] = array(
+      '#type' => 'textfield',
+      '#id' => 'form_infofield_translated_title',
+      '#title' => t('Translated title'),
+    );
+    $query = db_select('wikicompare_infofields_translations', 't');
+    $query->addField('t', 'translation', 'translation');
+    $query->condition('t.language', $language->language);
+    $query->condition('t.infofield', $POST['field']);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $form['translated_title_field']['#value'] = $record->translation;
+    }
+  }
+}
+
+
+
+/**
+ * Remove translation of a field.
+ */
+function wikicompare_translation_infofield_admin_remove($POST) {
+  global $language;
+  db_delete('wikicompare_infofields_translations')
+    ->condition('infofield', $POST['name'])
+    ->execute();
+}
+
+
+
+/**
+ * Insert/Update translation of a field.
+ */
+function wikicompare_translation_infofield_admin_insert($POST) {
+  global $language;
+  if (isset($POST['translated_title'])) {
+    $fields = array(
+      'language' => $language->language,
+      'infofield' => $POST['name'],
+      'translation' => $POST['translated_title'],
+    );
+
+    $exist = False;
+    $query = db_select('wikicompare_infofields_translations', 't');
+    $query->addField('t', 'infofield', 'title');
+    $query->condition('t.language', $language->language);
+    $query->condition('t.infofield', $POST['name']);
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $exist = True;
+    }
+
+    if ($exist) {
+      db_update('wikicompare_infofields_translations')
+        ->fields($fields)
+        ->condition('language', $language->language)
+        ->condition('infofield', $POST['name'])
+        ->execute();
+    } else {
+      db_insert('wikicompare_infofields_translations')
+        ->fields($fields)
+        ->execute();
+    }
+  } else {
+    db_delete('wikicompare_infofields_translations')
+      ->condition('language', $language->language)
+      ->condition('infofield', $POST['name'])
+      ->execute();
+  }
+}
+
+
+
 
 
 /*****************************************************************
@@ -337,6 +452,61 @@ function wikicompare_translation_delete_after($node) {
 
 }
 
+
+
+
+
+/*****************************************************************
+*
+*    COMPARATIVE TABLE
+*
+*****************************************************************/
+
+/**
+ * Update the request in infofield to get the translated title of the infofield.
+ */
+function wikicompare_translation_infofield_request_db(&$query) {
+  global $language;
+  $query->addField('ft', 'translation', 'title_translated');
+  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+}
+
+
+/**
+ * Update the result of request in infofield to replace with the translated title of the infofield.
+ */
+function wikicompare_translation_infofield_request_db_after(&$record) {
+  if ($record->title_translated) {
+    $record->title = $record->title_translated;
+  }
+}
+
+
+
+/**
+ * Update the request in suggestion to get the translated title of criterion and product.
+ */
+function wikicompare_translation_suggest_request_db(&$query) {
+  global $language;
+  $query->addField('ct', 'title', 'criterion_translated');
+  $query->leftjoin('node', 'ct', 'c.nid = ct.tnid');
+  $query->where("ct.language = '" . $language->language . "' OR ct.language IS NULL");
+  $query->addField('pt', 'title', 'product_translated');
+  $query->leftjoin('node', 'pt', 'p.nid = pt.tnid');
+  $query->where("pt.language = '" . $language->language . "' OR pt.language IS NULL");
+}
+
+/**
+ * Update the result of the request in suggestion to replace with the translated title.
+ */
+function wikicompare_translation_suggest_request_db_after(&$res, &$record) {
+  if ($record->criterion_translated != NULL) {
+    $res[$record->criterion_id]['title'] = $record->criterion_translated;
+  }
+  if ($record->product_translated != NULL) {
+    $record->product_title = $record->product_translated;
+  }
+}
 
 
 
@@ -809,6 +979,42 @@ function wikicompare_translation_fastaction_submit_after(&$node, $tnode, $POST, 
 *****************************************************************/
 
 /**
+ * Get all infofields translations.
+ */
+function wikicompare_translation_demo_export_infofield_request(&$translations) {
+  global $language;
+  $query = db_select('wikicompare_infofields_translations', 't');
+  $query->addField('t', 'language', 'language');
+  $query->addField('t', 'infofield', 'infofield');
+  $query->addField('t', 'translation', 'translation');
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $translations[$record->infofield][$record->language] = $record->translation;
+  }
+}
+
+
+
+/**
+ * Export infofield translations.
+ */
+function wikicompare_translation_demo_export_infofield_after(&$output, $translations, $record) {
+  if (isset($translations[$record->name])) {
+    $output .= "<p>if (module_exists('wikicompare_translation')) {</p>";
+    foreach($translations[$record->name] as $infofield_language => $translation) {
+      $output .= "<p>if (in_array('" . $infofield_language . "', \$language_list)) {<br/>";
+      $output .= "db_insert('wikicompare_infofields_translations')<br/>";
+      $output .= '->fields(array("language" => "' . $infofield_language . '", "infofield" => "' . $record->name . '", "translation" => "' . $translation . '"))<br/>';
+      $output .= "->execute();<br/>";
+      $output .= "}</p>";
+    }
+    $output .= "<p>}</p>";
+  }
+}
+
+
+
+/**
  * Export translations of a node.
  *
  * @param $output
@@ -943,6 +1149,16 @@ function wikicompare_translation_demo_submit_generate($node, $settings, $i) {
 
   }
 
+}
+
+
+
+/**
+ * Drop infofield translations.
+ */
+function wikicompare_translation_demo_drop_infofield_translations() {
+  db_delete('wikicompare_infofields_translations')
+    ->execute();
 }
 
 ?>

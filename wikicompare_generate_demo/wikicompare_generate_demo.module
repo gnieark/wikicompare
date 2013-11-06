@@ -50,15 +50,10 @@ function wikicompare_export_page() {
 
   $settings = wikicompare_initialize_settings(array('states' => array('draft', 'closed')));
 
-  global $language; //TODO move in translation
-  $translations = array();
-  $query = db_select('wikicompare_infofields_translations', 't');
-  $query->addField('t', 'language', 'language');
-  $query->addField('t', 'infofield', 'infofield');
-  $query->addField('t', 'translation', 'translation');
-  $result = $query->execute();
-  foreach ($result as $record) {
-    $translations[$record->infofield][$record->language] = $record->translation;
+  if (module_exists('wikicompare_translation')) {
+    $translations = array();
+    //Get all infofields translations
+    wikicompare_translation_demo_export_infofield_request($translations);
   }
 
   //Get the infofields definition.
@@ -94,16 +89,9 @@ function wikicompare_export_page() {
     $output .= "\$settings['category_sequence'] = '" . $record->category_sequence . "';<br/>";
     $output .= "wikicompare_admin_infofield_modify(\$settings);</p>";
 
-    if (isset($translations[$record->name])) {
-      $output .= "<p>if (module_exists('wikicompare_translation')) {</p>"; //TODO move in translate
-      foreach($translations[$record->name] as $infofield_language => $translation) {
-        $output .= "<p>if (in_array('" . $infofield_language . "', \$language_list)) {<br/>";
-        $output .= "db_insert('wikicompare_infofields_translations')<br/>";
-        $output .= '->fields(array("language" => "' . $infofield_language . '", "infofield" => "' . $record->name . '", "translation" => "' . $translation . '"))<br/>';
-        $output .= "->execute();<br/>";
-        $output .= "}</p>";
-      }
-      $output .= "<p>}</p>";
+    if (module_exists('wikicompare_translation')) {
+      //Export infofield translations.
+      wikicompare_translation_demo_export_infofield_after($output, $translations, $record);
     }
 
     //Get the infofields in settings, to prepare the product request.
@@ -696,9 +684,10 @@ function wikicompare_drop_nodes() {
   db_delete('wikicompare_infofields')
     ->execute();
 
-  //Delete in wikicompare table. //TODO move in translation
-  db_delete('wikicompare_infofields_translations')
-    ->execute();
+  if (module_exists('wikicompare_translation')) {
+    //Drop infofield translations.
+    wikicompare_translation_demo_drop_infofield_translations();
+  }
 
   wikicompare_start_computation();
 

@@ -73,14 +73,16 @@ function wikicompare_home_page() {
   $query->condition('f.is_active', 1);
   $query->orderby('f.sequence');
 
-  global $language; //TODO move in translation
-  $query->addField('ft', 'translation', 'title_translated');
-  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+  if (module_exists('wikicompare_translation')) {
+    //Update the request in infofield to get the translated title of the infofield.
+    wikicompare_translation_infofield_request_db($query);
+  }
 
   $result = $query->execute();
   foreach ($result as $record) {
-    if ($record->title_translated) { //TODO move in translation
-      $record->title = $record->title_translated;
+    if (module_exists('wikicompare_translation')) {
+      //Update the result of request in infofield to replace with the translated title of the infofield.
+      wikicompare_translation_infofield_request_db_after($record);
     }
     $filters[] = $record;
   }
@@ -221,14 +223,16 @@ function wikicompare_home_page() {
   $query->orderby('f.title');
   $query->range(0, 4);
 
-  global $language; //TODO move in translation
-  $query->addField('ft', 'translation', 'title_translated');
-  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+  if (module_exists('wikicompare_translation')) {
+    //Update the request in infofield to get the translated title of the infofield.
+    wikicompare_translation_infofield_request_db($query);
+  }
 
   $result = $query->execute();
   foreach ($result as $record) {
-    if ($record->title_translated) { //TODO move in translation
-      $record->title = $record->title_translated;
+    if (module_exists('wikicompare_translation')) {
+      //Update the result of request in infofield to replace with the translated title of the infofield.
+      wikicompare_translation_infofield_request_db_after($record);
     }
     $settings['infofields'][] = array(
       'name' => $record->name,
@@ -376,14 +380,16 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   $query->orderby('f.sequence');
   $query->orderby('f.title');
 
-  global $language; //TODO move in translation
-  $query->addField('ft', 'translation', 'title_translated');
-  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+  if (module_exists('wikicompare_translation')) {
+    //Update the request in infofield to get the translated title of the infofield.
+    wikicompare_translation_infofield_request_db($query);
+  }
 
   $result = $query->execute();
   foreach ($result as $record) {
-    if ($record->title_translated) { //TODO move in translation
-      $record->title = $record->title_translated;
+    if (module_exists('wikicompare_translation')) {
+      //Update the result of request in infofield to replace with the translated title of the infofield.
+      wikicompare_translation_infofield_request_db_after($record);
     }
     $settings['infofields'][] = array(
       'name' => $record->name,
@@ -468,12 +474,9 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
   $nodes = wikicompare_build_recursive_data($type, $settings['displayed_ids'], $settings);
   $nodes = $nodes['tree'];
 
-//TODO move into profile module
   if (module_exists('wikicompare_profiles')) {
-    if ($type == 'profile' && $settings['context'] == 'table') {
-      $settings['translate'] = True;
-    }
-//    wikicompare_profiles_table_prepare_compute($selected_criterion_ids, $settings);
+    //Set the profile itemlist as translate type.
+    wikicompare_profiles_comparative_table_main_output_translate($settings, $type);
   }
 
   $output ="<div id='comparative_table_main_" . $type . "'";
@@ -485,7 +488,7 @@ function wikicompare_table_render_main_itemlist($type, $title, $settings) {
   $output .= '<h2>' . $title . '</h2>';
 
   if (isset($settings['translate'])) {
-    $output .= '<div id="main_' . $type . '_itemlist_container">'; //TODO not sure we still need this container.
+    $output .= '<div id="main_' . $type . '_itemlist_container">';
     //The container which contain the tables, and will slide to display them.
     $output .= '<div id="' . $type . '_tables">';
     $output .= '<div id="' . $type . '_table_0"  class="itemlist_translate" style="left:' . $settings['depth'] * ROW_HEIGHT . '%;">';
@@ -787,25 +790,19 @@ function wikicompare_table_render_home_suggest() {
   $query->orderby('n.sequence, n.criterion_id');
   $query->orderby('n.percent', 'DESC');
 
-  global $language; //TODO move in translation
-  $query->addField('ct', 'title', 'criterion_translated');
-  $query->leftjoin('node', 'ct', 'c.nid = ct.tnid');
-  $query->where("ct.language = '" . $language->language . "' OR ct.language IS NULL");
-  $query->addField('pt', 'title', 'product_translated');
-  $query->leftjoin('node', 'pt', 'p.nid = pt.tnid');
-  $query->where("pt.language = '" . $language->language . "' OR pt.language IS NULL");
+  if (module_exists('wikicompare_translation')) {
+    //Update the request to get the translated title of criterion and product.
+    wikicompare_translation_suggest_request_db($query);
+  }
 
   $result = $query->execute();
 
   foreach($result as $record) {
     $res[$record->criterion_id]['title'] = $record->criterion_title;
 
-    //TODO move in translation
-    if ($record->criterion_translated != NULL) {
-      $res[$record->criterion_id]['title'] = $record->criterion_translated;
-    }
-    if ($record->product_translated != NULL) {
-      $record->product_title = $record->product_translated;
+    if (module_exists('wikicompare_translation')) {
+      //Update the result to replace with the translated title.
+      wikicompare_translation_suggest_request_db_after($res, $record);
     }
 
     $res[$record->criterion_id]['percents'][$record->percent][] = $record;
@@ -2092,19 +2089,9 @@ function wikicompare_get_dialog_response($method = 'ajax'){
     $settings['forbidden_nid'] = $settings['nid'];
   }
 
-//TODO profile
   if (module_exists('wikicompare_profiles')) {
-    if ($settings['action'] == 'select_criterions_profile') {
-      $node = node_load($settings['nid']);
-      if (isset($node->wikicompare_criterions['und'])) {
-        $selected_criterion_ids = array();
-        foreach ($node->wikicompare_criterions['und'] as $array) {
-          $fid = $array['target_id'];
-          $selected_criterion_ids[$fid] = $fid;
-        }
-        $settings['displayed_ids'] = $selected_criterion_ids;
-      }
-    }
+    //Get selected criterion for dialog.
+    wikicompare_profiles_dialog_get_selected_criterions($settings);
   }
 
   $settings['include_root_items'] = True;
@@ -2514,10 +2501,9 @@ function wikicompare_control_table($settings) {
       continue;
     }
 
-//TODO profile
-    //Initialize the translate flag for needed situation.
-    if ($type == 'profile') {
-      $settings['translate'] = True;
+    if (module_exists('wikicompare_profiles')) {
+      //Initialize the translate flag for profile.
+      wikicompare_profiles_table_clean_translate($settings, $type);
     }
 
     //Security for the TYPE_ids, it's an array but javascript return a string when empty.

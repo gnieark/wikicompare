@@ -531,17 +531,6 @@ function submit_settings($form, $form_state) {
  */
 function wikicompare_admin_infofield_table() {
 
-  global $language; //TODO move in translation
-  $translations = array();
-  $query = db_select('wikicompare_infofields_translations', 't');
-  $query->addField('t', 'infofield', 'infofield');
-  $query->addField('t', 'translation', 'translation');
-  $query->condition('t.language', $language->language);
-  $result = $query->execute();
-  foreach ($result as $record) {
-    $translations[$record->infofield] = $record->translation;
-  }
-
   $rows = array();
   //Get all infofields data.
   $query = db_select('wikicompare_infofields', 'f');
@@ -560,6 +549,12 @@ function wikicompare_admin_infofield_table() {
   $query->orderby('f.category');
   $query->orderby('f.sequence');
   $query->orderby('f.name');
+
+  if (module_exists('wikicompare_translation')) {
+    //Get translations for the infofield admin table.
+    wikicompare_translation_infofield_admin_table_request($query);
+  }
+
   $result = $query->execute();
   foreach ($result as $record) {
     //Generate the edit link.
@@ -588,13 +583,9 @@ function wikicompare_admin_infofield_table() {
     //Prepare the row data.
     $row = array($record->category, $record->category_sequence, $record->name, $record->title);
 
-    global $language; //TODO move in translation
-    if ($language->language != language_default('language')) {
-      $translation = '';
-      if (isset($translations[$record->name])) {
-        $translation = $translations[$record->name];
-      }
-      $row[] = $translation;
+    if (module_exists('wikicompare_translation')) {
+      //Insert translations in infofield admin table.
+      wikicompare_translation_infofield_admin_table_row($row, $record);
     }
 
     $row = $row + array($record->type, $record->sequence, $record->is_required, $record->is_active, $record->is_home, $record->is_filter, $record->filter_type, $img_link_edit, $img_link_remove);
@@ -604,9 +595,9 @@ function wikicompare_admin_infofield_table() {
 
   $header = array('Category', 'Category Sequence', 'Name', 'Title');
 
-  global $language; //TODO move in translation
-  if ($language->language != language_default('language')) {
-    $header[] = 'Translation';
+  if (module_exists('wikicompare_translation')) {
+    //Insert translations header in infofield admin table.
+    wikicompare_translation_infofield_admin_table_header($header);
   }
 
   $header = $header + array('Type', 'Sequence', 'Is required', 'Is active', 'Is on home', 'Is filter', 'Filter type', 'Edit', 'Remove');
@@ -695,23 +686,9 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
       $form['title_field']['#value'] = $old_record->title;
     }
 
-    global $language; //TODO move in translation
-    //We will display the field in the language of the user, so if he is in the main language we will not add another field.
-    if ($language->language != language_default('language')) {
-      //Display the translated title field.
-      $form['translated_title_field'] = array(
-        '#type' => 'textfield',
-        '#id' => 'form_infofield_translated_title',
-        '#title' => t('Translated title'),
-      );
-      $query = db_select('wikicompare_infofields_translations', 't');
-      $query->addField('t', 'translation', 'translation');
-      $query->condition('t.language', $language->language);
-      $query->condition('t.infofield', $_POST['field']);
-      $result = $query->execute();
-      foreach ($result as $record) {
-        $form['translated_title_field']['#value'] = $record->translation;
-      }
+    if (module_exists('wikicompare_translation')) {
+      //Insert translation title infofield form.
+      wikicompare_translation_infofield_admin_form($form, $_POST);
     }
 
     //Display the type field.
@@ -961,10 +938,11 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
       ->condition('name', $_POST['name'])
       ->execute();
 
-    global $language; //TODO move in translation
-    db_delete('wikicompare_infofields_translations')
-      ->condition('infofield', $POST['name'])
-      ->execute();
+    if (module_exists('wikicompare_translation')) {
+      //Remove translations of the field.
+      wikicompare_translation_infofield_admin_remove($POST);
+    }
+
 
   //If we are adding or editing.
   } else {
@@ -1062,7 +1040,7 @@ function wikicompare_admin_infofield_modify($POST) {
       $instance['bundle'] = 'product';
     }
 
-    $instance['label'] = $POST['title']; //TODO manage translation of the title
+    $instance['label'] = $POST['title'];
     $instance['required'] = $POST['is_required'];
 
     //Set the type specific settings.
@@ -1167,41 +1145,12 @@ function wikicompare_admin_infofield_modify($POST) {
       ->condition('category', $POST['category'])
       ->execute();
 
-    global $language;  //TODO move in translation
-    if (isset($POST['translated_title'])) {
-      $fields = array(
-        'language' => $language->language,
-        'infofield' => $POST['name'],
-        'translation' => $POST['translated_title'],
-      );
 
-      $exist = False;
-      $query = db_select('wikicompare_infofields_translations', 't');
-      $query->addField('t', 'infofield', 'title');
-      $query->condition('t.language', $language->language);
-      $query->condition('t.infofield', $POST['name']);
-      $result = $query->execute();
-      foreach ($result as $record) {
-        $exist = True;
-      }
-
-      if ($exist) {
-        db_update('wikicompare_infofields_translations')
-          ->fields($fields)
-          ->condition('language', $language->language)
-          ->condition('infofield', $POST['name'])
-          ->execute();
-      } else {
-        db_insert('wikicompare_infofields_translations')
-          ->fields($fields)
-          ->execute();
-      }
-    } else {
-      db_delete('wikicompare_infofields_translations')
-        ->condition('language', $language->language)
-        ->condition('infofield', $POST['name'])
-        ->execute();
+    if (module_exists('wikicompare_translation')) {
+      //Insert/Update translation of a field.
+      wikicompare_translation_infofield_admin_insert($POST);
     }
+
 }
 
 ?>
