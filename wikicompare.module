@@ -531,6 +531,17 @@ function submit_settings($form, $form_state) {
  */
 function wikicompare_admin_infofield_table() {
 
+  global $language; //TODO move in translation
+  $translations = array();
+  $query = db_select('wikicompare_infofields_translations', 't');
+  $query->addField('t', 'infofield', 'infofield');
+  $query->addField('t', 'translation', 'translation');
+  $query->condition('t.language', $language->language);
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $translations[$record->infofield] = $record->translation;
+  }
+
   $rows = array();
   //Get all infofields data.
   $query = db_select('wikicompare_infofields', 'f');
@@ -575,10 +586,30 @@ function wikicompare_admin_infofield_table() {
     }
 
     //Prepare the row data.
-    $rows[] = array($record->category, $record->category_sequence, $record->name, $record->title, $record->type, $record->sequence, $record->is_required, $record->is_active, $record->is_home, $record->is_filter, $record->filter_type, $img_link_edit, $img_link_remove);
+    $row = array($record->category, $record->category_sequence, $record->name, $record->title);
+
+    global $language; //TODO move in translation
+    if ($language->language != language_default('language')) {
+      $translation = '';
+      if (isset($translations[$record->name])) {
+        $translation = $translations[$record->name];
+      }
+      $row[] = $translation;
+    }
+
+    $row = $row + array($record->type, $record->sequence, $record->is_required, $record->is_active, $record->is_home, $record->is_filter, $record->filter_type, $img_link_edit, $img_link_remove);
+
+    $rows[] = $row;
   }
 
-  $header = array('Category', 'Category Sequence', 'Name', 'Title', 'Type', 'Sequence', 'Is required', 'Is active', 'Is on home', 'Is filter', 'Filter type', 'Edit', 'Remove');
+  $header = array('Category', 'Category Sequence', 'Name', 'Title');
+
+  global $language; //TODO move in translation
+  if ($language->language != language_default('language')) {
+    $header[] = 'Translation';
+  }
+
+  $header = $header + array('Type', 'Sequence', 'Is required', 'Is active', 'Is on home', 'Is filter', 'Filter type', 'Edit', 'Remove');
 
   //Render the table and return it.
   return theme_table(array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'infofields_table'), 'caption' => '', 'colgroups' => array(), 'sticky' => '', 'empty' => 'No fields for now'));
@@ -627,137 +658,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
   //If we are adding or editing the field.
   } else {
 
-    //Display the title field.
-    $form['title_field'] = array(
-      '#type' => 'textfield',
-      '#id' => 'form_infofield_title',
-      '#title' => t('Title'),
-      '#required' => TRUE,
-    );
-
-    //Display the type field.
-    $form['type_field'] = array(
-      '#type' => 'select',
-      '#id' => 'form_infofield_type',
-      '#title' => t('Type'),
-      '#options' => array(
-        'text' => t('Text'),
-        'number' => t('Number'),
-        'select' => t('Select'),
-      ),
-      '#default_value' => 'text',
-      '#required' => TRUE,
-    );
-
-    //Display the allowed value field.
-    $form['allowed_values_field'] = array(
-      '#type' => 'textarea',
-      '#id' => 'form_infofield_allowed_values',
-      '#title' => t('Values'),
-      '#prefix' => '<div id="allowed_values_field_div">',
-      '#suffix' => '</div>',
-    );
-
-    //Display the sequence field.
-    $form['sequence_field'] = array(
-      '#type' => 'textfield',
-      '#id' => 'form_infofield_sequence',
-      '#title' => t('Sequence'),
-      '#value' => 1,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'),
-    );
-
-    //Display the is_required field.
-    $form['is_required_field'] = array(
-      '#type' => 'select',
-      '#id' => 'form_infofield_is_required',
-      '#title' => t('Is required?'),
-      '#options' => array(
-        0 => t("No"),
-        1 => t("Yes"),
-      ),
-      '#value' => 0,
-      '#required' => TRUE,
-    );
-
-    //Display the is_active field.
-    $form['is_active_field'] = array(
-      '#type' => 'select',
-      '#id' => 'form_infofield_is_active',
-      '#title' => t('Is active?'),
-      '#options' => array(
-        0 => t("No"),
-        1 => t("Yes"),
-      ),
-      '#value' => 1,
-      '#required' => TRUE,
-    );
-
-    //Display the is_home field.
-    $form['is_home_field'] = array(
-      '#type' => 'select',
-      '#id' => 'form_infofield_is_home',
-      '#title' => t('Is on home?'),
-      '#options' => array(
-        0 => t("No"),
-        1 => t("Yes"),
-      ),
-      '#value' => 0,
-      '#required' => TRUE,
-    );
-
-    //Display the is_filter field.
-    $form['is_filter_field'] = array(
-      '#type' => 'select',
-      '#id' => 'form_infofield_is_filter',
-      '#title' => t('Is a filter?'),
-      '#options' => array(
-        0 => t("No"),
-        1 => t("Yes"),
-      ),
-      '#value' => 0,
-      '#required' => TRUE,
-    );
-
-    //Display the filter type field.
-    $form['filter_type_field'] = array(
-      '#type' => 'select',
-      '#id' => 'form_infofield_filter_type',
-      '#title' => t('Filter Type'),
-      '#options' => array(
-        'select' => t('Select'),
-        'checkboxes' => t('Checkboxes'),
-      ),
-      '#default_value' => 'select',
-      '#required' => TRUE,
-      '#prefix' => '<div id="filter_type_field_div">',
-      '#suffix' => '</div>',
-    );
-
-    //Display the category field.
-    $form['category_field'] = array(
-      '#type' => 'textfield',
-      '#id' => 'form_infofield_category',
-      '#title' => t('Category'),
-      '#required' => TRUE,
-    );
-
-    //Display the category sequence field.
-    $form['category_sequence_field'] = array(
-      '#type' => 'textfield',
-      '#id' => 'form_infofield_category_sequence',
-      '#title' => t('Sequence category'),
-      '#value' => 1,
-      '#size' => 3,
-      '#maxlength' => 3,
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive_or_null'),
-    );
-
-    $test_allowed_values = False;
+    $old_record = NULL;
     //If we are editing, we get the current value from database.
     if ($_POST['context'] == 'edit') {
       $query = db_select('wikicompare_infofields', 'f');
@@ -776,19 +677,197 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
       $query->condition('f.name', $_POST['field']);
       $result = $query->execute();
       foreach ($result as $record) {
+        $old_record = $record;
         //Assign current value to the form.
-        $form['title_field']['#value'] = $record->title;
-        $form['type_field']['#value'] = $record->type;
-        $form['allowed_values_field']['#value'] = $record->allowed_values;
-        $form['sequence_field']['#value'] = $record->sequence;
-        $form['is_required_field']['#value'] = $record->is_required;
-        $form['is_active_field']['#value'] = $record->is_active;
-        $form['is_home_field']['#value'] = $record->is_home;
-        $form['is_filter_field']['#value'] = $record->is_filter;
-        $form['filter_type_field']['#value'] = $record->filter_type;
-        $form['category_field']['#value'] = $record->category;
-        $form['category_sequence_field']['#value'] = $record->category_sequence;
+
       }
+    }
+
+
+    //Display the title field.
+    $form['title_field'] = array(
+      '#type' => 'textfield',
+      '#id' => 'form_infofield_title',
+      '#title' => t('Title'),
+      '#required' => TRUE,
+    );
+    if ($old_record) {
+      $form['title_field']['#value'] = $old_record->title;
+    }
+
+    global $language; //TODO move in translation
+    //We will display the field in the language of the user, so if he is in the main language we will not add another field.
+    if ($language->language != language_default('language')) {
+      //Display the translated title field.
+      $form['translated_title_field'] = array(
+        '#type' => 'textfield',
+        '#id' => 'form_infofield_translated_title',
+        '#title' => t('Translated title'),
+      );
+      $query = db_select('wikicompare_infofields_translations', 't');
+      $query->addField('t', 'translation', 'translation');
+      $query->condition('t.language', $language->language);
+      $query->condition('t.infofield', $_POST['field']);
+      $result = $query->execute();
+      foreach ($result as $record) {
+        $form['translated_title_field']['#value'] = $record->translation;
+      }
+    }
+
+    //Display the type field.
+    $form['type_field'] = array(
+      '#type' => 'select',
+      '#id' => 'form_infofield_type',
+      '#title' => t('Type'),
+      '#options' => array(
+        'text' => t('Text'),
+        'number' => t('Number'),
+        'select' => t('Select'),
+      ),
+      '#default_value' => 'text',
+      '#required' => TRUE,
+    );
+    if ($old_record) {
+      $form['type_field']['#value'] = $old_record->type;
+    }
+
+    //Display the allowed value field.
+    $form['allowed_values_field'] = array(
+      '#type' => 'textarea',
+      '#id' => 'form_infofield_allowed_values',
+      '#title' => t('Values'),
+      '#prefix' => '<div id="allowed_values_field_div">',
+      '#suffix' => '</div>',
+    );
+    if ($old_record) {
+      $form['allowed_values_field']['#value'] = $old_record->allowed_values;
+    }
+
+    //Display the sequence field.
+    $form['sequence_field'] = array(
+      '#type' => 'textfield',
+      '#id' => 'form_infofield_sequence',
+      '#title' => t('Sequence'),
+      '#value' => 1,
+      '#size' => 3,
+      '#maxlength' => 3,
+      '#required' => TRUE,
+      '#element_validate' => array('element_validate_integer_positive_or_null'),
+    );
+    if ($old_record) {
+      $form['sequence_field']['#value'] = $old_record->sequence;
+    }
+
+    //Display the is_required field.
+    $form['is_required_field'] = array(
+      '#type' => 'select',
+      '#id' => 'form_infofield_is_required',
+      '#title' => t('Is required?'),
+      '#options' => array(
+        0 => t("No"),
+        1 => t("Yes"),
+      ),
+      '#value' => 0,
+      '#required' => TRUE,
+    );
+    if ($old_record) {
+      $form['is_required_field']['#value'] = $old_record->is_required;
+    }
+
+    //Display the is_active field.
+    $form['is_active_field'] = array(
+      '#type' => 'select',
+      '#id' => 'form_infofield_is_active',
+      '#title' => t('Is active?'),
+      '#options' => array(
+        0 => t("No"),
+        1 => t("Yes"),
+      ),
+      '#value' => 1,
+      '#required' => TRUE,
+    );
+    if ($old_record) {
+      $form['is_active_field']['#value'] = $old_record->is_active;
+    }
+
+    //Display the is_home field.
+    $form['is_home_field'] = array(
+      '#type' => 'select',
+      '#id' => 'form_infofield_is_home',
+      '#title' => t('Is on home?'),
+      '#options' => array(
+        0 => t("No"),
+        1 => t("Yes"),
+      ),
+      '#value' => 0,
+      '#required' => TRUE,
+    );
+    if ($old_record) {
+      $form['is_home_field']['#value'] = $old_record->is_home;
+    }
+
+    //Display the is_filter field.
+    $form['is_filter_field'] = array(
+      '#type' => 'select',
+      '#id' => 'form_infofield_is_filter',
+      '#title' => t('Is a filter?'),
+      '#options' => array(
+        0 => t("No"),
+        1 => t("Yes"),
+      ),
+      '#value' => 0,
+      '#required' => TRUE,
+    );
+    if ($old_record) {
+      $form['is_filter_field']['#value'] = $old_record->is_filter;
+    }
+
+    //Display the filter type field.
+    $form['filter_type_field'] = array(
+      '#type' => 'select',
+      '#id' => 'form_infofield_filter_type',
+      '#title' => t('Filter Type'),
+      '#options' => array(
+        'select' => t('Select'),
+        'checkboxes' => t('Checkboxes'),
+      ),
+      '#default_value' => 'select',
+      '#required' => TRUE,
+      '#prefix' => '<div id="filter_type_field_div">',
+      '#suffix' => '</div>',
+    );
+    if ($old_record) {
+      $form['filter_type_field']['#value'] = $old_record->filter_type;
+    }
+
+    //Display the category field.
+    $form['category_field'] = array(
+      '#type' => 'textfield',
+      '#id' => 'form_infofield_category',
+      '#title' => t('Category'),
+      '#required' => TRUE,
+    );
+    if ($old_record) {
+      $form['category_field']['#value'] = $old_record->category;
+    }
+
+    //Display the category sequence field.
+    $form['category_sequence_field'] = array(
+      '#type' => 'textfield',
+      '#id' => 'form_infofield_category_sequence',
+      '#title' => t('Sequence category'),
+      '#value' => 1,
+      '#size' => 3,
+      '#maxlength' => 3,
+      '#required' => TRUE,
+      '#element_validate' => array('element_validate_integer_positive_or_null'),
+    );
+    if ($old_record) {
+      $form['category_sequence_field']['#value'] = $old_record->category_sequence;
+    }
+
+    $test_allowed_values = False;
+    if ($old_record != NULL) {
 
       //In editing mode, we can't modify type anymore.
       $form['type_field']['#attributes']['disabled'] = True;
@@ -880,6 +959,11 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
     //Delete in wikicompare table.
     db_delete('wikicompare_infofields')
       ->condition('name', $_POST['name'])
+      ->execute();
+
+    global $language; //TODO move in translation
+    db_delete('wikicompare_infofields_translations')
+      ->condition('infofield', $POST['name'])
       ->execute();
 
   //If we are adding or editing.
@@ -1082,6 +1166,42 @@ function wikicompare_admin_infofield_modify($POST) {
       ))
       ->condition('category', $POST['category'])
       ->execute();
+
+    global $language;  //TODO move in translation
+    if (isset($POST['translated_title'])) {
+      $fields = array(
+        'language' => $language->language,
+        'infofield' => $POST['name'],
+        'translation' => $POST['translated_title'],
+      );
+
+      $exist = False;
+      $query = db_select('wikicompare_infofields_translations', 't');
+      $query->addField('t', 'infofield', 'title');
+      $query->condition('t.language', $language->language);
+      $query->condition('t.infofield', $POST['name']);
+      $result = $query->execute();
+      foreach ($result as $record) {
+        $exist = True;
+      }
+
+      if ($exist) {
+        db_update('wikicompare_infofields_translations')
+          ->fields($fields)
+          ->condition('language', $language->language)
+          ->condition('infofield', $POST['name'])
+          ->execute();
+      } else {
+        db_insert('wikicompare_infofields_translations')
+          ->fields($fields)
+          ->execute();
+      }
+    } else {
+      db_delete('wikicompare_infofields_translations')
+        ->condition('language', $language->language)
+        ->condition('infofield', $POST['name'])
+        ->execute();
+    }
 }
 
 ?>

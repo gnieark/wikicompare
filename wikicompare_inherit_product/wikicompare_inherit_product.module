@@ -1017,8 +1017,10 @@ function wikicompare_inherit_product_demo_export(&$output) {
     $output .= "<p>\$node = node_load(\$products['new-" . $record->nid . "']);<br/>";
     $output .= "\$node->wikicompare_inherit_product_id['und'][0]['target_id'] = \$products['new-" . $record->inherit_product_id . "'];<br/>";
     $output .= "\$node->wikicompare_inherit_product_id['und'][0]['target_type'] = 'node';<br/>";
+    $output .= "\$node->status = 1;<br/>";
     $output .= "\$node->promote = 0;<br/>";
     $output .= "\$node->sticky = 0;<br/>";
+    $output .= "\$node->comment = 2;<br/>";
     $output .= "\$node->revision = TRUE;<br/>";
     $output .= "\$node->revision_moderation = TRUE;<br/>";
     $output .= "node_save(\$node);<br/>";

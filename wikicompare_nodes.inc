@@ -687,6 +687,11 @@ function wikicompare_create_evaluations($node, $type) {
       wikicompare_inherit_product_insert_evaluation($node_evaluation);
     }
 
+    $node_evaluation->status = 1;
+    $node_evaluation->promote = 0;
+    $node_evaluation->sticky = 0;
+    $node_evaluation->comment = 2;
+
     //Save the evaluation node in database.
     node_save($node_evaluation);
 

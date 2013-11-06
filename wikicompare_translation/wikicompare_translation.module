@@ -847,6 +847,7 @@ function wikicompare_translation_demo_export_translations(&$output, $node, $type
     $output .= "\$tnode->language = '" . $record->language . "';<br/>";
     $output .= "\$tnode->tnid = \$node->nid;<br/>";
     $output .= '$tnode->title = "' . $record->title . '";<br/>';
+    $output .= "\$tnode->status = 1;<br/>";
     $output .= "\$tnode->promote = 0;<br/>";
     $output .= "\$tnode->sticky = 0;<br/>";
     $output .= "\$tnode->comment = 2;<br/>";
@@ -932,6 +933,7 @@ function wikicompare_translation_demo_submit_generate($node, $settings, $i) {
       $tnode->language = $key;
       $tnode->tnid = $node->nid;
       $tnode->title = $settings['prefix'] . '.' . $i . ' ' . $key;
+      $tnode->status = 1;
       $tnode->promote = 0;
       $tnode->sticky = 0;
       $tnode->comment = 2;

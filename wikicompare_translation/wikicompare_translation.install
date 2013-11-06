@@ -5,7 +5,40 @@
  * Install, update, and uninstall functions for the wikicompare inherit product module.
  */
 
+/**
+ * Implements hook_schema()
+ * This hook allow us to create some table in database.
+ */
+function wikicompare_translation_schema() {
 
+  $schema = array();
+
+  $translation_infofields = array();
+  $translation_infofields['description'] = 'Table which store the translations of the infofields';
+  $translation_infofields['fields']['language'] = array(
+    'description' => 'The language code of the translation',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
+  $translation_infofields['indexes']['language'] = array('language');
+  $translation_infofields['fields']['infofield'] = array(
+    'description' => 'The machine name of the infofield translated',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
+  $translation_infofields['indexes']['infofield'] = array('infofield');
+  $translation_infofields['fields']['translation'] = array(
+    'description' => 'The translation of the infofield title',
+    'type' => 'varchar',
+    'length' => 256,
+    'not null' => TRUE,
+  );
+  $schema['wikicompare_infofields_translations'] = $translation_infofields;
+
+  return $schema;
+}
 
 /**
  * Implements hook_install().

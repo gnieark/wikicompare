@@ -50,6 +50,17 @@ function wikicompare_export_page() {
 
   $settings = wikicompare_initialize_settings(array('states' => array('draft', 'closed')));
 
+  global $language; //TODO move in translation
+  $translations = array();
+  $query = db_select('wikicompare_infofields_translations', 't');
+  $query->addField('t', 'language', 'language');
+  $query->addField('t', 'infofield', 'infofield');
+  $query->addField('t', 'translation', 'translation');
+  $result = $query->execute();
+  foreach ($result as $record) {
+    $translations[$record->infofield][$record->language] = $record->translation;
+  }
+
   //Get the infofields definition.
   $settings['infofields'] = array();
   $query = db_select('wikicompare_infofields', 'f');
@@ -82,6 +93,18 @@ function wikicompare_export_page() {
     $output .= "\$settings['category'] = '" . $record->category . "';<br/>";
     $output .= "\$settings['category_sequence'] = '" . $record->category_sequence . "';<br/>";
     $output .= "wikicompare_admin_infofield_modify(\$settings);</p>";
+
+    if (isset($translations[$record->name])) {
+      $output .= "<p>if (module_exists('wikicompare_translation')) {</p>"; //TODO move in translate
+      foreach($translations[$record->name] as $infofield_language => $translation) {
+        $output .= "<p>if (in_array('" . $infofield_language . "', \$language_list)) {<br/>";
+        $output .= "db_insert('wikicompare_infofields_translations')<br/>";
+        $output .= '->fields(array("language" => "' . $infofield_language . '", "infofield" => "' . $record->name . '", "translation" => "' . $translation . '"))<br/>';
+        $output .= "->execute();<br/>";
+        $output .= "}</p>";
+      }
+      $output .= "<p>}</p>";
+    }
 
     //Get the infofields in settings, to prepare the product request.
     $settings['infofields'][] = array(
@@ -144,8 +167,6 @@ function wikicompare_export_page() {
       //Add inherit product specific fields.
       wikicompare_inherit_product_demo_export_evaluation_render($output, $record);
     }
-    $output .= "\$node->promote = 0;<br/>";
-    $output .= "\$node->sticky = 0;<br/>";
     $output .= "\$node->revision = TRUE;<br/>";
     $output .= "\$node->revision_moderation = TRUE;<br/>";
     $output .= "node_save(\$node);<br/>";
@@ -196,7 +217,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type, $s
     foreach ($settings['infofields'] as $infofield) {
       $field = 'wikicf_' . $infofield['name'];
       if ($node['data']->$field) {
-        $output .= "\$node->wikicompare_wikicf_" . $infofield['name'] . "['und'][0]['value'] = '" . $node['data']->$field . "';<br/>";
+        $output .= "\$node->wikicf_" . $infofield['name'] . "['und'][0]['value'] = '" . $node['data']->$field . "';<br/>";
       }
     }
   }
@@ -211,6 +232,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type, $s
     wikicompare_profiles_demo_export_specific_fields($output, $type, $node);
   }
 
+  $output .= "\$node->status = 1;<br/>";
   $output .= "\$node->promote = 0;<br/>";
   $output .= "\$node->sticky = 0;<br/>";
   $output .= "\$node->comment = 2;<br/>";
@@ -539,6 +561,7 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
       }
 
       if ($modified == True) {
+        $node->status = 1;
         $node->promote = 0;
         $node->sticky = 0;
         $node->revision = TRUE;
@@ -671,6 +694,10 @@ function wikicompare_drop_nodes() {
 
   //Delete in wikicompare table.
   db_delete('wikicompare_infofields')
+    ->execute();
+
+  //Delete in wikicompare table. //TODO move in translation
+  db_delete('wikicompare_infofields_translations')
     ->execute();
 
   wikicompare_start_computation();

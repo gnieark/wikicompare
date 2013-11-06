@@ -72,8 +72,16 @@ function wikicompare_home_page() {
   $query->condition('f.is_filter', 1);
   $query->condition('f.is_active', 1);
   $query->orderby('f.sequence');
+
+  global $language; //TODO move in translation
+  $query->addField('ft', 'translation', 'title_translated');
+  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+
   $result = $query->execute();
   foreach ($result as $record) {
+    if ($record->title_translated) { //TODO move in translation
+      $record->title = $record->title_translated;
+    }
     $filters[] = $record;
   }
 
@@ -212,8 +220,16 @@ function wikicompare_home_page() {
   $query->orderby('f.sequence');
   $query->orderby('f.title');
   $query->range(0, 4);
+
+  global $language; //TODO move in translation
+  $query->addField('ft', 'translation', 'title_translated');
+  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+
   $result = $query->execute();
   foreach ($result as $record) {
+    if ($record->title_translated) { //TODO move in translation
+      $record->title = $record->title_translated;
+    }
     $settings['infofields'][] = array(
       'name' => $record->name,
       'title' => $record->title
@@ -359,8 +375,16 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   $query->orderby('f.category');
   $query->orderby('f.sequence');
   $query->orderby('f.title');
+
+  global $language; //TODO move in translation
+  $query->addField('ft', 'translation', 'title_translated');
+  $query->leftjoin('wikicompare_infofields_translations', 'ft', "f.name = ft.infofield AND ft.language = '" . $language->language . "'");
+
   $result = $query->execute();
   foreach ($result as $record) {
+    if ($record->title_translated) { //TODO move in translation
+      $record->title = $record->title_translated;
+    }
     $settings['infofields'][] = array(
       'name' => $record->name,
       'title' => $record->title,
@@ -762,11 +786,30 @@ function wikicompare_table_render_home_suggest() {
   $query->leftjoin('cache_product', 'p', 'n.product_id = p.nid');
   $query->orderby('n.sequence, n.criterion_id');
   $query->orderby('n.percent', 'DESC');
+
+  global $language; //TODO move in translation
+  $query->addField('ct', 'title', 'criterion_translated');
+  $query->leftjoin('node', 'ct', 'c.nid = ct.tnid');
+  $query->where("ct.language = '" . $language->language . "' OR ct.language IS NULL");
+  $query->addField('pt', 'title', 'product_translated');
+  $query->leftjoin('node', 'pt', 'p.nid = pt.tnid');
+  $query->where("pt.language = '" . $language->language . "' OR pt.language IS NULL");
+
   $result = $query->execute();
-//TODO Translate title
+
   foreach($result as $record) {
     $res[$record->criterion_id]['title'] = $record->criterion_title;
+
+    //TODO move in translation
+    if ($record->criterion_translated != NULL) {
+      $res[$record->criterion_id]['title'] = $record->criterion_translated;
+    }
+    if ($record->product_translated != NULL) {
+      $record->product_title = $record->product_translated;
+    }
+
     $res[$record->criterion_id]['percents'][$record->percent][] = $record;
+
   }
 
   $output = '<div id="suggest-slideshow-wrapper" style="height:' . 2 * SUGGEST_LIST_HEIGHT . 'em;">';
@@ -948,7 +991,7 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
     }
   }
 
-  $output .= '<div id="comparative_tables_container" style="overflow:hidden;">'; //TODO not sure we still need this container.
+  $output .= '<div id="comparative_tables_container" style="overflow:hidden;">';
   //The container which contain the tables, and will slide to display them.
   $output .= '<div id="criterion_tables" style="height: ' . ($root_row['count'] + 2) * ROW_HEIGHT . 'px; position:relative; -webkit-transition:all 1.0s ease-in-out; -moz-transition:all 1.0s ease-in-out; -o-transition:all 1.0s ease-in-out;   transition:all 1.0s ease-in-out;">';
   //Display the root rows.

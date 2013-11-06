@@ -863,6 +863,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.context = context;
           options.data.name = $('#form_infofield_name').val();
           options.data.title = $('#form_infofield_title').val();
+          options.data.translated_title = $('#form_infofield_translated_title').val();
           options.data.type = $('#form_infofield_type').val();
           options.data.allowed_values = $('#form_infofield_allowed_values').val();
           options.data.sequence = $('#form_infofield_sequence').val();
