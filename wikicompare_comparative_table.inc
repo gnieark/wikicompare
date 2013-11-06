@@ -346,7 +346,7 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   }
 
   //Initialize settings with the variable from javascript.
-  $settings = wikicompare_initialize_settings(array('product_column_ids' => $product_ids, 'selected_criterion_ids' => $selected_criterion_ids, 'selected_profile_ids' => $selected_profile_ids, 'computed' => $computed));
+  $settings = wikicompare_initialize_settings(array('root_criterion' => $root_criterion, 'product_column_ids' => $product_ids, 'selected_criterion_ids' => $selected_criterion_ids, 'selected_profile_ids' => $selected_profile_ids, 'computed' => $computed));
 
   //Get all active infofields.
   $settings['infofields'] = array();
@@ -605,17 +605,13 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
   $output = wikicompare_table_render_product_item($products, $products_sort, $parent_id, True, $settings);
 
   //Generate the best products url.
-  $prefix = 'compare/';
-  $url = $prefix . '0';
-  $suffix = '';
-  $is_products = True;
   $best_product_ids = array();
   $i = 0;
   $stop = 0;
   foreach ($products_sort as $percent => $product_ids) {
     shuffle($product_ids);
     foreach ($product_ids as $product_id) {
-      $best_product_ids[$product_id] = $product_id;
+      $best_product_ids[] = $product_id;
       $i++;
       if ($i == 3) {
         $stop = 1;
@@ -626,28 +622,7 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
       break;
     }
   }
-  //Generate the three argument products/criterions/profiles.
-  foreach (array($best_product_ids, $settings['selected_criterion_ids'], $settings['selected_profile_ids']) as $array) { //TODO move profile_ids in module
-    $i = 0;
-    $first = True;
-    $ids_url = 0;
-    //Add each id, separated by a -.
-    foreach ($array as $id => $node) {
-      if (!$first) {
-        $ids_url .= '-' . $id;
-      } else {
-        $ids_url = $id;
-      }
-      $first = false;
-      $i++;
-    }
-    $url .= '/' . $ids_url;
-    if (!$is_products) {
-      $suffix .= '/' . $ids_url;
-    }
-    //The products are first and the only ones to be limited to three, so we use this variable as flag to recognize them.
-    $is_products = False;
-  }
+  $compare_url = wikicompare_build_compare_url(array('root_criterion' => 0, 'product_ids' => $best_product_ids, 'selected_criterion_ids' => $settings['selected_criterion_ids'], 'selected_profile_ids' => $settings['selected_profile_ids']));
 
   //Get the total number of products, only at the list reload to avoid unnecessary db request when we append.
   $products = array();
@@ -656,7 +631,7 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
     $products = request_db('product', $db_settings, $settings);
   }
 
-  return array('count' => count($products), 'url' => array('prefix' => $prefix, 'best-url' => $url, 'suffix' => $suffix), 'output' => $output);
+  return array('count' => count($products), 'url' => array('prefix' => $compare_url['prefix'], 'best-url' => $compare_url['url'], 'suffix' => $compare_url['suffix']), 'output' => $output);
 
 }
 
@@ -796,15 +771,17 @@ function wikicompare_table_render_home_suggest() {
 
   $output = '<div id="suggest-slideshow-wrapper" style="height:' . 2 * SUGGEST_LIST_HEIGHT . 'em;">';
   $output .= '<ul id="suggest-slideshow">';
-  foreach ($res as $criterion) {
+  foreach ($res as $cid => $criterion) {
     $i = 0;
     $output .= '<li style="height:' . SUGGEST_LIST_HEIGHT . 'em;">';
     $output .= '<dl><dt class="suggest-criterion">' . $criterion['title'] . '</dt><dd>';
+    $product_ids = array();
     foreach ($criterion['percents'] as $percent) {
       //Randomize the order
       shuffle($percent);
       foreach ($percent as $product) {
         $output .= $product->product_title . ' : ' . $product->percent . '%<br/>';
+        $product_ids[] = $product->product_id;
         $i++;
         if ($i >= 3) {
           break;
@@ -814,6 +791,9 @@ function wikicompare_table_render_home_suggest() {
         break;
       }
     }
+    $compare_url = wikicompare_build_compare_url(array('root_criterion' => $cid, 'product_ids' => $product_ids, 'selected_criterion_ids' => array(), 'selected_profile_ids' => array()));
+    $output .= '<div><a href="' . $compare_url['url'] . '">Compare</a></div>';
+
     $output .= '</dd></dl>';
     $output .= '</li>';
   }
@@ -891,9 +871,14 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
   $criterions = wikicompare_compute_get_criterions($settings);
   $product_ids = $settings['product_column_ids'];
 
+  $parent_id = NULL;
+  if ($settings['root_criterion']) {
+    $parent_id = $settings['root_criterion'];
+  }
+
   if (empty($criterions)) {
     //Find all the criterions on the first level of the tree.
-    $criterions['tree'] = request_db('criterion', array('parent_id' => NULL), $settings);
+    $criterions['tree'] = request_db('criterion', array('parent_id' => $parent_id), $settings);
     //Get the criterion ids.
     foreach ($criterions['tree'] as $fid => $criterion) {
       $criterions['ids'][$fid] = $fid;
@@ -944,7 +929,12 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
   //Get rows.
   $rows = wikicompare_table_render_rows($criterions_row_data, $settings);
 
-  $root_row = $rows[0];
+  $key = 0;
+  if ($parent_id) {
+    $key = $parent_id;
+  }
+
+  $root_row = $rows[$key];
   $storage_zone_content = '';
   //Get all the needed tables.
   if ($settings['computed']) {
@@ -2274,9 +2264,6 @@ function wikicompare_compute_table_response($method = 'ajax') {
   //Reset the product part of the table.
   $commands[] = ajax_command_replace('#comparative_table_main_product', wikicompare_table_render_main_itemlist('product', 'Products', $settings));
 
-  //Replace the old table.
-  $commands[] = ajax_command_replace('#comparative_table', wikicompare_table_render_comparative_table($settings));
-
   //Regenerate the product list.
   $criterions = wikicompare_compute_get_criterions($settings);
 
@@ -2404,6 +2391,45 @@ function wikicompare_generate_add_link($type, $settings, $nid=0) {
   $output .= '</span>';
 
   return $output;
+
+}
+
+
+
+/*
+ * Build compare url which send to the comparative table.
+ */
+function wikicompare_build_compare_url($args) {
+
+  $prefix = 'compare/';
+  $url = $prefix . $args['root_criterion'];
+  $suffix = '';
+  $is_products = True;
+
+  //Generate the three argument products/criterions/profiles.
+  foreach (array($args['product_ids'], $args['selected_criterion_ids'], $args['selected_profile_ids']) as $array) { //TODO move profile_ids in module
+    $i = 0;
+    $first = True;
+    $ids_url = 0;
+    //Add each id, separated by a -.
+    foreach ($array as $id) {
+      if (!$first) {
+        $ids_url .= '-' . $id;
+      } else {
+        $ids_url = $id;
+      }
+      $first = false;
+      $i++;
+    }
+    $url .= '/' . $ids_url;
+    if (!$is_products) {
+      $suffix .= '/' . $ids_url;
+    }
+    //The products are first and the only ones to be limited to three, so we use this variable as flag to recognize them.
+    $is_products = False;
+  }
+
+  return array('prefix' => $prefix, 'url' => $url, 'suffix' => $suffix);
 
 }
 
