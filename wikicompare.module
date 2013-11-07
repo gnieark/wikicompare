@@ -240,7 +240,7 @@ function wikicompare_menu() {
   );
 
   //Define ajax callback used in adminstration to manage informative fields.
-  $items['wikicompare_get_admin_infofield_form_callback'] = array(
+  $items['wikicompare-get-admin-infofield-form-callback'] = array(
     'page callback' => 'wikicompare_get_admin_infofield_form_response',
     'access callback' => 'user_access',
     'access arguments' => array('administer wikicompare'),
@@ -250,7 +250,7 @@ function wikicompare_menu() {
   );
 
   //Define ajax callback used in adminstration to submit informative fields.
-  $items['wikicompare_admin_infofield_submit_callback'] = array(
+  $items['wikicompare-admin-infofield-submit-callback'] = array(
     'page callback' => 'wikicompare_admin_infofield_submit_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'), //TODO administer wikicompare'),
@@ -260,7 +260,7 @@ function wikicompare_menu() {
   );
 
   //Define ajax callback used in comparative table and in form.
-  $items['wikicompare_get_itemlist_children_callback'] = array(
+  $items['wikicompare-get-itemlist-children-callback'] = array(
     'page callback' => 'wikicompare_get_itemlist_children_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -270,7 +270,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_get_criterion_children_callback'] = array(
+  $items['wikicompare-get-criterion-children-callback'] = array(
     'page callback' => 'wikicompare_get_criterion_children_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -280,7 +280,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_get_append_product_list_callback'] = array(
+  $items['wikicompare-get-append-product-list-callback'] = array(
     'page callback' => 'wikicompare_get_append_product_list_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -290,7 +290,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_toogle_product_checkbox_callback'] = array(
+  $items['wikicompare-toogle-product-checkbox-callback'] = array(
     'page callback' => 'wikicompare_toggle_product_checkbox_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -300,7 +300,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_get_dialog_callback'] = array(
+  $items['wikicompare-get-dialog-callback'] = array(
     'page callback' => 'wikicompare_get_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -310,7 +310,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_select_dialog_callback'] = array(
+  $items['wikicompare-select-dialog-callback'] = array(
     'page callback' => 'wikicompare_select_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -320,7 +320,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_submit_dialog_callback'] = array(
+  $items['wikicompare-submit-dialog-callback'] = array(
     'page callback' => 'wikicompare_submit_dialog_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -330,7 +330,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_compute_table_callback'] = array(
+  $items['wikicompare-compute-table-callback'] = array(
     'page callback' => 'wikicompare_compute_table_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -340,7 +340,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_make_cleaning_callback'] = array(
+  $items['wikicompare-make-cleaning-callback'] = array(
     'page callback' => 'wikicompare_make_cleaning_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -350,7 +350,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_table_fastaction_form_callback'] = array(
+  $items['wikicompare-table-fastaction-form-callback'] = array(
     'page callback' => 'wikicompare_table_fastaction_form_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -360,7 +360,7 @@ function wikicompare_menu() {
     'delivery callback' => 'ajax_deliver',
   );
 
-  $items['wikicompare_table_fastaction_submit_callback'] = array(
+  $items['wikicompare-table-fastaction-submit-callback'] = array(
     'page callback' => 'wikicompare_table_fastaction_submit_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -540,11 +540,11 @@ function wikicompare_admin() {
     '#type' => 'link',
     '#title' => 'Add',
     '#href' => 'wikicompare_get_admin_infofield_form_callback/nojs',
-    '#id' => 'admin_add_infofield',
+    '#id' => 'admin-add-infofield',
     '#attributes' => array(
       'class' => array('ajaxlink'),
-      'action' => 'open_dialog',
-      'dialog_action' => 'infofields',
+      'action' => 'open-dialog',
+      'dialog-action' => 'infofields',
       'context' => 'add',
       'side' => 'right',
     ),
@@ -675,7 +675,7 @@ function wikicompare_admin_infofield_table() {
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_edit = l($img, 'wikicompare_get_admin_infofield_form_callback/nojs', array('attributes' => array('id' => 'admin_edit_infofield_' . $record->name, 'class' => array('ajaxlink'), 'side' => 'right', 'action' => 'open_dialog', 'dialog_action' => 'infofields', 'context' => 'edit', 'field' => $record->name), 'html' => True));
+    $img_link_edit = l($img, 'wikicompare-get-admin-infofield-form-callback/nojs', array('attributes' => array('id' => 'admin-edit-infofield-' . $record->name, 'class' => array('ajaxlink'), 'side' => 'right', 'action' => 'open-dialog', 'dialog-action' => 'infofields', 'context' => 'edit', 'field' => $record->name), 'html' => True));
 
     //Generate the remove link.
     $img = theme('image', array(
@@ -684,7 +684,7 @@ function wikicompare_admin_infofield_table() {
       'height' => '100%',
     ));
     //Create the link. The html = True indicate that the title of the link contain html.
-    $img_link_remove = l($img, 'wikicompare_get_admin_infofield_form_callback/nojs', array('attributes' => array('id' => 'admin_remove_infofield_' . $record->name, 'class' => array('ajaxlink'), 'side' => 'right', 'action' => 'open_dialog', 'dialog_action' => 'infofields', 'context' => 'remove', 'field' => $record->name), 'html' => True));
+    $img_link_remove = l($img, 'wikicompare-get-admin-infofield-form-callback/nojs', array('attributes' => array('id' => 'admin-remove-infofield-' . $record->name, 'class' => array('ajaxlink'), 'side' => 'right', 'action' => 'open-dialog', 'dialog-action' => 'infofields', 'context' => 'remove', 'field' => $record->name), 'html' => True));
 
     //If we are not in select type, filter_type is irrelevent.
     if ($record->type != 'select') {
@@ -714,7 +714,7 @@ function wikicompare_admin_infofield_table() {
   $header = $header + array('Type', 'Sequence', 'Is required', 'Is active', 'Is on home', 'Is filter', 'Filter type', 'Edit', 'Remove');
 
   //Render the table and return it.
-  return theme_table(array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'infofields_table'), 'caption' => '', 'colgroups' => array(), 'sticky' => '', 'empty' => 'No fields for now'));
+  return theme_table(array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'infofields-table'), 'caption' => '', 'colgroups' => array(), 'sticky' => '', 'empty' => 'No fields for now'));
 
 }
 
@@ -745,7 +745,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
   //Display the name field.
   $form['name_field'] = array(
     '#type' => 'textfield',
-    '#id' => 'form_infofield_name',
+    '#id' => 'form-infofield-name',
     '#title' => t('Name'),
     '#required' => TRUE,
   );
@@ -789,7 +789,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the title field.
     $form['title_field'] = array(
       '#type' => 'textfield',
-      '#id' => 'form_infofield_title',
+      '#id' => 'form-infofield-title',
       '#title' => t('Title'),
       '#required' => TRUE,
     );
@@ -805,7 +805,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the type field.
     $form['type_field'] = array(
       '#type' => 'select',
-      '#id' => 'form_infofield_type',
+      '#id' => 'form-infofield-type',
       '#title' => t('Type'),
       '#options' => array(
         'text' => t('Text'),
@@ -822,9 +822,9 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the allowed value field.
     $form['allowed_values_field'] = array(
       '#type' => 'textarea',
-      '#id' => 'form_infofield_allowed_values',
+      '#id' => 'form-infofield-allowed-values',
       '#title' => t('Values'),
-      '#prefix' => '<div id="allowed_values_field_div">',
+      '#prefix' => '<div id="allowed-values-field-div">',
       '#suffix' => '</div>',
     );
     if ($old_record) {
@@ -834,7 +834,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the sequence field.
     $form['sequence_field'] = array(
       '#type' => 'textfield',
-      '#id' => 'form_infofield_sequence',
+      '#id' => 'form-infofield-sequence',
       '#title' => t('Sequence'),
       '#value' => 1,
       '#size' => 3,
@@ -849,7 +849,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the is_required field.
     $form['is_required_field'] = array(
       '#type' => 'select',
-      '#id' => 'form_infofield_is_required',
+      '#id' => 'form-infofield-is-required',
       '#title' => t('Is required?'),
       '#options' => array(
         0 => t("No"),
@@ -865,7 +865,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the is_active field.
     $form['is_active_field'] = array(
       '#type' => 'select',
-      '#id' => 'form_infofield_is_active',
+      '#id' => 'form-infofield-is-active',
       '#title' => t('Is active?'),
       '#options' => array(
         0 => t("No"),
@@ -881,7 +881,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the is_home field.
     $form['is_home_field'] = array(
       '#type' => 'select',
-      '#id' => 'form_infofield_is_home',
+      '#id' => 'form-infofield-is-home',
       '#title' => t('Is on home?'),
       '#options' => array(
         0 => t("No"),
@@ -897,7 +897,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the is_filter field.
     $form['is_filter_field'] = array(
       '#type' => 'select',
-      '#id' => 'form_infofield_is_filter',
+      '#id' => 'form-infofield-is-filter',
       '#title' => t('Is a filter?'),
       '#options' => array(
         0 => t("No"),
@@ -913,7 +913,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the filter type field.
     $form['filter_type_field'] = array(
       '#type' => 'select',
-      '#id' => 'form_infofield_filter_type',
+      '#id' => 'form-infofield-filter-type',
       '#title' => t('Filter Type'),
       '#options' => array(
         'select' => t('Select'),
@@ -921,7 +921,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
       ),
       '#default_value' => 'select',
       '#required' => TRUE,
-      '#prefix' => '<div id="filter_type_field_div">',
+      '#prefix' => '<div id="filter-type-field-div">',
       '#suffix' => '</div>',
     );
     if ($old_record) {
@@ -931,7 +931,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the category field.
     $form['category_field'] = array(
       '#type' => 'textfield',
-      '#id' => 'form_infofield_category',
+      '#id' => 'form-infofield-category',
       '#title' => t('Category'),
       '#required' => TRUE,
     );
@@ -942,7 +942,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
     //Display the category sequence field.
     $form['category_sequence_field'] = array(
       '#type' => 'textfield',
-      '#id' => 'form_infofield_category_sequence',
+      '#id' => 'form-infofield-category-sequence',
       '#title' => t('Sequence category'),
       '#value' => 1,
       '#size' => 3,
@@ -969,8 +969,8 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
 
     //Unless exception, we hide the allowed values field on loading.
     if (!$test_allowed_values) {
-      $form['allowed_values_field']['#prefix'] = '<div id="allowed_values_field_div" style="display:none;">';
-      $form['filter_type_field']['#prefix'] = '<div id="filter_type_field_div" style="display:none;">';
+      $form['allowed_values_field']['#prefix'] = '<div id="allowed-values-field-div" style="display:none;">';
+      $form['filter_type_field']['#prefix'] = '<div id="filter-type-field-div" style="display:none;">';
     }
 
   }
@@ -984,12 +984,12 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
   $form['submit'] = array(
     '#type' => 'link',
     '#title' => 'submit',
-    '#href' => 'wikicompare_admin_infofield_submit_callback/nojs/',
-    '#id' => 'submit_infofield',
-    '#prefix' => '<input id="submit_infofield_button" type="submit" link="submit_infofield" value="Submit" class="button wikicompare_button"/>',
+    '#href' => 'wikicompare-admin-infofield-submit-callback/nojs/',
+    '#id' => 'submit-infofield',
+    '#prefix' => '<input id="submit-infofield-button" type="submit" link="submit-infofield" value="Submit" class="button wikicompare-button"/>',
     '#attributes' => array(
       'class' => array('ajaxlink'),
-      'action' => 'submit_infofield',
+      'action' => 'submit-infofield',
       'context' => $_POST['context'],
       'style' => 'display:none',
     )
@@ -1003,7 +1003,7 @@ function wikicompare_get_admin_infofield_form_response($method = 'ajax') {
 
   $commands = array();
   //Add the form to the dialog.
-  $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog', render($form));
+  $commands[] = ajax_command_append('#' . $_POST['side'] . '-dialog', render($form));
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);
@@ -1061,7 +1061,7 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
     //Verify that all required field are filled.
     if (!$_POST['name'] || !$_POST['title'] || !$_POST['sequence'] || !$_POST['category'] || !$_POST['category_sequence']) {
       $commands = array();
-      $commands[] = ajax_command_html('#error_zone', 'Some fields are missing');
+      $commands[] = ajax_command_html('#error-zone', 'Some fields are missing');
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
     }
@@ -1083,7 +1083,7 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
 
       if ($flag) {
         $commands = array();
-        $commands[] = ajax_command_html('#error_zone', $_POST['name'] . ' already exist.');
+        $commands[] = ajax_command_html('#error-zone', $_POST['name'] . ' already exist.');
         $page = array('#type' => 'ajax', '#commands' => $commands);
         return $page;
       }
@@ -1093,7 +1093,7 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
     //Validate the name.
     if (!preg_match('#^[a-z_]+$#', $_POST['name'])) {
       $commands = array();
-      $commands[] = ajax_command_html('#error_zone', 'Only small letter an _ are accepted in the name.');
+      $commands[] = ajax_command_html('#error-zone', 'Only small letter an _ are accepted in the name.');
       $page = array('#type' => 'ajax', '#commands' => $commands);
       return $page;
     }
@@ -1102,7 +1102,7 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
     foreach (array($_POST['sequence'], $_POST['category_sequence']) as $value) {
       if (!is_numeric($value) || intval($value) != $value || $value < 0) {
         $commands = array();
-        $commands[] = ajax_command_html('#error_zone', 'The sequence must be positive integer only.');
+        $commands[] = ajax_command_html('#error-zone', 'The sequence must be positive integer only.');
         $page = array('#type' => 'ajax', '#commands' => $commands);
         return $page;
       }
@@ -1115,9 +1115,9 @@ function wikicompare_admin_infofield_submit_response($method = 'ajax'){
 
   $commands = array();
   //Close the dialog.
-  $commands[] = ajax_command_invoke('#right_dialog_close', 'click');
+  $commands[] = ajax_command_invoke('#right-dialog-close', 'click');
   //Update the table.
-  $commands[] = ajax_command_html('#infofields_table', wikicompare_admin_infofield_table());
+  $commands[] = ajax_command_html('#infofields-table', wikicompare_admin_infofield_table());
 
   //Return the javascript commands.
   $page = array('#type' => 'ajax', '#commands' => $commands);

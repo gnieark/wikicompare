@@ -430,7 +430,7 @@ function wikicompare_profiles_dialog_get_selected_criterions(&$settings) {
 function wikicompare_profiles_table_send_compute(&$commands, $settings) {
 
   //Command to reset table.
-  $commands[] = ajax_command_replace('#comparative_table_main_profile', wikicompare_table_render_main_itemlist('profile', 'Profiles', $settings));
+  $commands[] = ajax_command_replace('#comparative-table-main-profile', wikicompare_table_render_main_itemlist('profile', 'Profiles', $settings));
 
 }
 
@@ -475,7 +475,7 @@ function wikicompare_profiles_table_clean_reset(&$commands, $type, $reset, $sett
 
   if ($type == 'profile' && $reset == True) {
     $settings['displayed_ids'] = $settings['selected_profile_ids'];
-    $commands[] = ajax_command_replace('#comparative_table_main_profile', wikicompare_table_render_main_itemlist('profile', 'Profiles', $settings));
+    $commands[] = ajax_command_replace('#comparative-table-main-profile', wikicompare_table_render_main_itemlist('profile', 'Profiles', $settings));
   }
 
 }
@@ -621,11 +621,11 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
     $select_criterion_link = array(
       '#type' => 'link',
       '#title' => 'Select criterions',
-      '#href' => 'wikicompare_get_dialog_callback/nojs',
-      '#id' => 'select_criterion_link_' . $nid,
+      '#href' => 'wikicompare-get-dialog-callback/nojs',
+      '#id' => 'select-criterion-link-' . $nid,
       '#attributes' => array(
         'class' => array('dialog'),
-        'action' => 'select_criterions_profile',
+        'action' => 'select-criterions-profile',
         'side' => 'left',
         'nid' => $nid,
         'ntype' => 'criterion',
@@ -645,7 +645,7 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
 
       //The link is visible only in the main language node.
       if ($node->language == language_default('language')) {
-        $form['container_selected_criterion']['#suffix'] = '<div id="initialize_profile_criterions"/><p>' . render($select_criterion_link) . '</p>';
+        $form['container_selected_criterion']['#suffix'] = '<div id="initialize-profile-criterions"/><p>' . render($select_criterion_link) . '</p>';
       }
 
       //Hide the field from drupal. We can't use the hide() function because it'll block the javascript to update the parent.

@@ -46,7 +46,7 @@ function wikicompare_inherit_product_menu() {
 
   $items = array();
 
-  $items['compute_inherit_callback'] = array(
+  $items['compute-inherit-callback'] = array(
     'page callback' => 'compute_inherit_response',
     'access callback' => 'user_access',
     'access arguments' => array('access content'),
@@ -718,12 +718,12 @@ function wikicompare_inherit_product_modify_form_evaluation(&$form, &$output, &$
         $reset_link = array(
           '#type' => 'link',
           '#title' => 'compute inherit',
-          '#href' => 'compute_inherit_callback/nojs',
-          '#id' => 'compute_inherit_link_' . $node-> nid,
+          '#href' => 'compute-inherit-callback/nojs',
+          '#id' => 'compute-inherit-link-' . $node-> nid,
           '#attributes' => array(
             'class' => array('ajaxlink'),
             'style' => 'display:none',
-            'action' => 'compute_inherit',
+            'action' => 'compute-inherit',
           ),
         );
         //Add the link after the Drupal field.
@@ -744,7 +744,7 @@ function wikicompare_inherit_product_modify_form_evaluation(&$form, &$output, &$
 
       if ($res->inherit_id != NULL) {
         //I wasn't able to use the renderable array, so I coded directly in html.
-        $output .= '<input class="form_evaluation_fastaction_inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
+        $output .= '<input class="form-evaluation-fastaction-inherit form-checkbox" type="checkbox" id="edit-wikicompare-use-from-inherit-und"';
 
         //Recover value from database.
         if ($fastaction == 'edit') {
@@ -763,16 +763,16 @@ function wikicompare_inherit_product_modify_form_evaluation(&$form, &$output, &$
         $reset_link = array(
           '#type' => 'link',
           '#title' => 'compute inherit',
-          '#href' => 'compute_inherit_callback/nojs',
-          '#id' => 'compute_inherit_link_' . $node-> nid,
+          '#href' => 'compute-inherit-callback/nojs',
+          '#id' => 'compute-inherit-link-' . $node-> nid,
           '#attributes' => array(
             'class' => array('ajaxlink'),
             'style' => 'display:none',
-            'action' => 'compute_inherit'
+            'action' => 'compute-inherit'
           ),
         );
 
-        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form_evaluation_fastaction_usefrominherit_' . $node->nid . '">Use from inherit? </label>';
+        $output .= ' value="1" />' . render($reset_link) . '<label class="option" for="form-evaluation-fastaction-usefrominherit-' . $node->nid . '">Use from inherit? </label>';
 
         //Disable the support field located after this one
         if ($node->wikicompare_use_from_inherit['und'][0]['value'] == 1) {

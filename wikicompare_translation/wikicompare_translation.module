@@ -247,7 +247,7 @@ function wikicompare_translation_infofield_admin_form(&$form, $POST) {
     //Display the translated title field.
     $form['translated_title_field'] = array(
       '#type' => 'textfield',
-      '#id' => 'form_infofield_translated_title',
+      '#id' => 'form-infofield-translated-title',
       '#title' => t('Translated title'),
     );
     $query = db_select('wikicompare_infofields_translations', 't');
@@ -592,7 +592,7 @@ function wikicompare_translation_fastaction_add_element(&$output, $tnode, $field
     if ($fastaction == 'edit') {
       //Add a suffix to recognize the translation field.
       $field['#title'] .= ' translated';
-      $field['#id'] .= '_translation';
+      $field['#id'] .= '-translation';
       $field['#attributes']['class'][] = 'translation';
 
       //Get the value from db. Title is directly in the object but for the other fields we need to search in ['und'][0]['value'].
@@ -748,7 +748,7 @@ function wikicompare_translation_fastaction_specific_after(&$output, $type, $nod
           1 => 'Update translation node',
         ),
         '#value' => 0,
-        '#id' => 'form_' . $type . '_fast' . $fastaction . '_selectnode_' . $nid,
+        '#id' => 'form-' . $type . '-fast' . $fastaction . '-selectnode-' . $nid,
       );
       //If one of the node is readonly, then the other will be selected and the field will be disabled. If both were readonly, then we wouldn't have access to the fastedit link.
       //Translation only.
