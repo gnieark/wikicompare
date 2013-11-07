@@ -271,9 +271,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
       //Get background color.
       var color = '#fafafa';
-      if ($(this).closest(".odd").length) { //TODO not work
-        color = '#f1f1f1';
-      }
 
       //Build data
       var data = [
@@ -478,7 +475,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           }
 
           //Stored itemlist in the stored zone.
-          if ($(object).hasClass('translate') && $('#itemlist_stored_' + nid).length) {
+          if ($(object).hasClass('translate') && $('#' + type + '_table_stored_' + nid).length) {
             skip_ajax = true;
           }
 
@@ -497,7 +494,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //Hide the children.
             } else {
               //By using this recursive function, the children will be recursively hidded.
-              remove_children_tree2(nid, '#' + type + '_' + context + '_link_', '.' + type + '_' + context + '_item', true);
+              remove_children_tree(nid, '#' + type + '_' + context + '_link_', '.' + type + '_' + context + '_item', true);
             }
             //Refresh oddeven.
             odd_even_product_list('.product_list_item');
@@ -721,6 +718,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Clean the table after the computation.
           make_cleaning = true;
 
+          //Disable the home filters while the list is computed, so there is no risk that another computation is launched.
+          $('.home_filter').attr('disabled', 'disabled');
+
           var mode = $(object).attr('mode');
           if (mode == 'compute') {
             //Change the computed status.
@@ -903,7 +903,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           send_states = true;
           send_fastaction = true;
 
-//TODO centralize with send_criterions
           var criterion_ids = {};
           $('.criterion_item').each(function (key, value) {
             var fid = $(this).attr('nid');
@@ -1258,7 +1257,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
                   //Get the div from the storage zone.
                   var div = '<div id="' + type + '_table_' + depth + '" nid="' + nid + '" class="itemlist_translate" style="left:' + depth * 100 + '%;">';
-                  div += $('#itemlist_stored_' + nid).html();
+                  div += $('#' + type + '_table_stored_' + nid).html();
                   div += '</div>';
                   //Attach the table after the displayed table.
                   $('#' + type + '_tables').append(div);
@@ -1289,7 +1288,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
               } else {
                 $(object).addClass('stored');
                 $('.product_list_item[parent_id=' + nid + ']').show();
-//TODO collapse other displayed item, like we did in itemlist
+                $('.product_list_item[parent_id=' + nid + ']').removeClass('hidden');
+
+                //Search for all displayed items. If not a parent of this node, we close it.
+                var parent_ids = get_parent_ids(nid, type, context);
+                $('.item_link:.displayed[ntype=' + type + '][context=' + context + '][nid!=' + nid + ']').each(function(index) {
+                  if (!($(this).attr('nid') in parent_ids)) {
+                    $(this).click();
+                  }
+                });
+
                 //Refresh oddeven.
                 odd_even_product_list('.product_list_item');
               }
@@ -1347,7 +1355,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
                 }
 
               } else {
-                remove_children_tree2(nid, '#product_list_link_', '.product_list_item', true);
+                remove_children_tree(nid, '#product_list_link_', '.product_list_item', true);
                 //Refresh oddeven.
                 odd_even_product_list('.product_list_item');
               }
@@ -1410,6 +1418,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'refresh_list') {
+          //Reactive the home filters.
+          $('.home_filter').removeAttr('disabled');
           //Refresh oddeven.
           odd_even_product_list('.product_list_item');
         }
@@ -1492,44 +1502,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
      */
     function remove_children_tree(nid, link_prefix, children_prefix, computed) {
       //For all children.
-      $(children_prefix + nid).each(function(index) {
-        //Get nid of the child.
-        var child_nid = $(this).attr('nid');
-        //Recursively launch the function to hide the children of the child.
-        remove_children_tree(child_nid, link_prefix, children_prefix, computed);
-      });
-      //Hide the children. Later replace the hide by an animation, slideUp for exemple.
-      $(children_prefix + nid).hide();
-      //Remove the display flag in the parent link.
-      $(link_prefix + nid).removeClass('displayed');
-      //Remove the children from the page, only if it was not computed.
-      if (!computed == true) {
-        $(children_prefix + nid).addClass('to_remove');
-      }
-    }
-
-    /*
-     * Function to recursively hide the children of itemlist / row item.
-     *
-     * @param nid
-     *   The nid of the parent node.
-     *
-     * @param link_prefix
-     *   The prefix of the parent link.
-     *
-     * @param children_prefix
-     *   The prefix of the class of the children.
-     *
-     * @param computed
-     *   Boolean indicated if the children are computed or not.
-     */
-    function remove_children_tree2(nid, link_prefix, children_prefix, computed) {
-      //For all children.
       $(children_prefix + '[parent_id=' + nid + ']').each(function(index) {
         //Get nid of the child.
         var child_nid = $(this).attr('nid');
         //Recursively launch the function to hide the children of the child.
-        remove_children_tree2(child_nid, link_prefix, children_prefix, computed);
+        remove_children_tree(child_nid, link_prefix, children_prefix, computed);
       });
       //Hide the children. Later replace the hide by an animation, slideUp for exemple.
       $(children_prefix + '[parent_id=' + nid + ']').hide();
@@ -1542,7 +1519,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         $(children_prefix + '[parent_id=' + nid + ']').addClass('hidden');
       }
     }
-//TODO Replace all link to parent by a parent_id attribute. Best if we do this after the browser debug, I suspect that this custom attribute may be the problem.
 
     function get_table_depth(dom) {
       var max_depth = 0;
@@ -1610,7 +1586,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var parent_ids = {};
       var parent_id = $('.' + type + '_item[context=' + context + '][nid=' + current_nid + ']').attr('parent_id');
       parent_ids[parent_id] = parent_id;
-      if (parent_id != 0) {
+      if (typeof parent_id != 'undefined') {
         parent_ids = $.extend(parent_ids, get_parent_ids(parent_id, type, context));
       }
 

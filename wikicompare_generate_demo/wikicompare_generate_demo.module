@@ -191,16 +191,30 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type, $s
   $output .= "\$node = new stdClass();<br/>";
   $output .= "\$node->type = '" . $type . "';<br/>";
   $output .= "\$node->language = 'en';<br/>";
-  $output .= '$node->title = "' . $node['data']->title . '";<br/>';
-  if ($node['data']->parent_id != NULL) {
-    $output .= "\$node->wikicompare_parent_id['und'][0]['target_id'] = \$". $type . "s['new-" . $node['data']->parent_id . "'];<br/>";
-    $output .= "\$node->wikicompare_parent_id['und'][0]['target_type'] = 'node';<br/>";
+  foreach (unserialize(WIKICOMPARE_FIELDS)[$type] as $field) {
+    if (!in_array($field['name'], array('nid', 'vid', 'has_children')) && ($node['data']->$field['name'] != NULL)) {
+      $output .= '$node->';
+      if ($field['db_key']) {
+        $output .= 'wikicompare_';
+      }
+      $output .= $field['name'];
+      if ($field['db_key']) {
+        $output .= "['und'][0]['" . $field['type'] . "']";
+      }
+      $output .= ' = ';
+      if ($field['type'] == 'target_id') {
+        $output .= "\$". $type . "s['new-" . $node['data']->$field['name'] . "']";
+      } else {
+        $output .= '"' . $node['data']->$field['name'] . '"';
+      }
+      $output .= ';<br/>';
+      if ($field['type'] == 'target_id') {
+        $output .= "\$node->wikicompare_" . $field['name'] . "['und'][0]['target_type'] = 'node';<br/>";
+      }
+    }
   }
-  $output .= "\$node->wikicompare_sequence['und'][0]['value'] = " . $node['data']->sequence . ";<br/>";
-  $output .= "\$node->wikicompare_state['und'][0]['value'] = '" . $node['data']->state . "';<br/>";
+
   if ($type == 'product') {
-    $output .= "\$node->wikicompare_short_description['und'][0]['value'] = '" . $node['data']->short_description . "';<br/>";
-    $output .= "\$node->wikicompare_comparable['und'][0]['value'] = '" . $node['data']->comparable . "';<br/>";
     //Export infofield value for the product.
     foreach ($settings['infofields'] as $infofield) {
       $field = 'wikicf_' . $infofield['name'];
@@ -208,11 +222,6 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type, $s
         $output .= "\$node->wikicf_" . $infofield['name'] . "['und'][0]['value'] = '" . $node['data']->$field . "';<br/>";
       }
     }
-  }
-  if ($type == 'criterion') {
-    $output .= "\$node->wikicompare_type['und'][0]['value'] = '" . $node['data']->type . "';<br/>";
-    $output .= "\$node->wikicompare_weight['und'][0]['value'] = '" . $node['data']->weight . "';<br/>";
-    $output .= "\$node->wikicompare_suggest['und'][0]['value'] = '" . $node['data']->suggest . "';<br/>";
   }
 
   if (module_exists('wikicompare_profiles')) {

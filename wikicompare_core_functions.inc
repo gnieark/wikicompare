@@ -396,15 +396,6 @@ function wikicompare_refresh_caches() {
 
   global $language;
 
-  //We put the site in maintenance, and check if it was already in maintenance to know if we shall reactive the website after the operation.
-  $was_in_maintenance = FALSE;
-  if (variable_get('maintenance_mode', 0) == 1) {
-    $was_in_maintenance = TRUE;
-  } else {
-    //Activate maintenance mode.
-    variable_set('maintenance_mode', 1);
-  }
-
   $types = array('product', 'criterion', 'evaluation');
   if (module_exists('wikicompare_profiles')) {
     //Add profile type.
@@ -425,41 +416,16 @@ function wikicompare_refresh_caches() {
     $query->addField('n', 'vid', 'vid');
     if ($type != 'evaluation') {
       $query->addField('n', 'title', 'title');
-      $query->addField('npf', 'wikicompare_parent_id_target_id', 'parent_id');
-      $query->addField('nse', 'wikicompare_sequence_value', 'sequence');
-      $query->addField('ns', 'wikicompare_state_value', 'state');
-      $query->leftjoin('field_revision_wikicompare_parent_id', 'npf', 'n.vid = npf.revision_id');
-      $query->leftjoin('field_revision_wikicompare_sequence', 'nse', 'n.vid = nse.revision_id');
-      $query->leftjoin('field_revision_wikicompare_state', 'ns', 'n.vid = ns.revision_id');
-    } else {
-      $query->addField('nf', 'wikicompare_criterion_id_target_id', 'criterion_id');
-      $query->addField('nc', 'wikicompare_product_id_target_id', 'product_id');
-      $query->addField('ns', 'wikicompare_support_value', 'support');
-      $query->leftjoin('field_revision_wikicompare_criterion_id', 'nf', 'n.vid = nf.revision_id');
-      $query->leftjoin('field_revision_wikicompare_product_id', 'nc', 'n.vid = nc.revision_id');
-      $query->leftjoin('field_revision_wikicompare_support', 'ns', 'n.vid = ns.revision_id');
     }
-    if ($type == 'product') {
-      $query->addField('nsd', 'wikicompare_short_description_value', 'short_description');
-      $query->leftjoin('field_revision_wikicompare_short_description', 'nsd', 'n.vid = nsd.revision_id');
-      $query->addField('nc', 'wikicompare_comparable_value', 'comparable');
-      $query->leftjoin('field_revision_wikicompare_comparable', 'nc', 'n.vid = nc.revision_id');
-    }
-    if ($type == 'criterion') {
-      $query->addField('nt', 'wikicompare_type_value', 'type');
-      $query->addField('nw', 'wikicompare_weight_value', 'weight');
-      $query->addField('nsu', 'wikicompare_suggest_value', 'suggest');
-      $query->leftjoin('field_revision_wikicompare_type', 'nt', 'n.vid = nt.revision_id');
-      $query->leftjoin('field_revision_wikicompare_weight', 'nw', 'n.vid = nw.revision_id');
-      $query->leftjoin('field_revision_wikicompare_suggest', 'nsu', 'n.vid = nsu.revision_id');
+    foreach (unserialize(WIKICOMPARE_FIELDS)[$type] as $field) {
+      if ($field['db_key'] != NULL) {
+        $query->addField($field['db_key'], 'wikicompare_' . $field['name'] . '_' . $field['type'], $field['name']);
+        $query->leftjoin('field_revision_wikicompare_' . $field['name'], $field['db_key'], 'n.vid = ' . $field['db_key'] . '.revision_id');
+      }
     }
     $query->condition('n.type', $type);
     //Only the main language nodes are concerned.
     $query->condition('n.language', language_default('language'));
-    if (module_exists('wikicompare_inherit_product')) {
-      //Search for the inhehrit product specific fields in the flush tables function.
-      wikicompare_inherit_product_flush_select($query, $type);
-    }
     $result = $query->execute();
 
     $parent_array = array();
@@ -467,39 +433,18 @@ function wikicompare_refresh_caches() {
     $header = array();
     foreach($result as $record) {
       //Insert all record in an array to insert them later.
-      $to_insert[$record->nid]['nid'] = $record->nid;
-      $to_insert[$record->nid]['vid'] = $record->vid;
+      foreach (unserialize(WIKICOMPARE_FIELDS)[$type] as $field) {
+        if ($field['name'] != 'has_children') {
+          $to_insert[$record->nid][$field['name']] = $record->$field['name'];
+        }
+      }
       if ($type != 'evaluation') {
-        $to_insert[$record->nid]['title'] = $record->title;
-        $to_insert[$record->nid]['parent_id'] = $record->parent_id;
-        $to_insert[$record->nid]['sequence'] = $record->sequence;
-        $to_insert[$record->nid]['state'] = $record->state;
-        $to_insert[$record->nid]['has_children'] = 0;
         if ($record->parent_id) {
           $parent_array[$record->parent_id][$record->nid] = $record->nid;
         }
-      } else {
-        $support = 0;
-        if ($record->support == 1) {
-          $support = 1;
-        }
-        $to_insert[$record->nid]['support'] = $support;
-        $to_insert[$record->nid]['product_id'] = $record->product_id;
-        $to_insert[$record->nid]['criterion_id'] = $record->criterion_id;
+        $to_insert[$record->nid]['has_children'] = 0;
       }
-      if ($type == 'product') {
-        $to_insert[$record->nid]['short_description'] = $record->short_description;
-        $to_insert[$record->nid]['comparable'] = $record->comparable;
-      }
-      if ($type == 'criterion') {
-        $to_insert[$record->nid]['type'] = $record->type;
-        $to_insert[$record->nid]['weight'] = $record->weight;
-        $to_insert[$record->nid]['suggest'] = $record->suggest;
-      }
-      if (module_exists('wikicompare_inherit_product')) {
-        //Prepare the inherit product specific fields in the flush tables function.
-        wikicompare_inherit_product_flush_cache($to_insert, $record, $type);
-      }
+
     }
 
     if ($type != 'evaluation') {
@@ -520,30 +465,15 @@ function wikicompare_refresh_caches() {
     }
 
     //Build header for the insert.
-    $header = array('nid', 'vid');
+    $header = array();
+    foreach (unserialize(WIKICOMPARE_FIELDS)[$type] as $field) {
+      if ($field['name'] != 'has_children') {
+        $header[] = $field['name'];
+      }
+    }
+    //We need to insert the header in same order than field.
     if ($type != 'evaluation') {
-      $header[] = 'title';
-      $header[] = 'parent_id';
-      $header[] = 'sequence';
-      $header[] = 'state';
       $header[] = 'has_children';
-    } else {
-      $header[] = 'product_id';
-      $header[] = 'criterion_id';
-      $header[] = 'support';
-    }
-    if ($type == 'product') {
-      $header[] = 'short_description';
-      $header[] = 'comparable';
-    }
-    if ($type == 'criterion') {
-      $header[] = 'type';
-      $header[] = 'weight';
-      $header[] = 'suggest';
-    }
-    if (module_exists('wikicompare_inherit_product')) {
-      //Add inherit product specific headers.
-      wikicompare_inherit_product_cache_fields_header($header, $type);
     }
 
     //Insert the data into the wikicompare cache table.
@@ -585,11 +515,6 @@ function wikicompare_refresh_caches() {
 
   //Refresh the suggestions in home page.
   wikicompare_refresh_cache_suggest();
-
-  //We only reactive the website if it wasn't in maintenance at the beginning.
-  if ($was_in_maintenance == FALSE) {
-    variable_set('maintenance_mode', 0);
-  }
 
 }
 

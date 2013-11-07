@@ -82,34 +82,25 @@ function wikicompare_insert_node($type, $node) {
   }
 
   //Prepare the data to insert the new record in wikicompare cache table.
-  $fields = array(
-      'nid' => $node->nid,
-      'vid' => $node->vid,
-      'title' => $node->title,
-      'parent_id' => $parent_id,
-      'sequence' => $node->wikicompare_sequence['und'][0]['value'],
-      'state' => $node->wikicompare_state['und'][0]['value'],
-      'has_children' => 0,
-  );
-
-  //Product specific fields.
-  if ($type == 'product') {
-    $fields['short_description'] = $node->wikicompare_short_description['und'][0]['value'];
-    $fields['comparable'] = $node->wikicompare_comparable['und'][0]['value'];
+  $fields = array();
+  foreach (unserialize(WIKICOMPARE_FIELDS)[$type] as $field) {
+    if (!in_array($field['name'], array('parent_id', 'has_children'))) {
+      if ($field['db_key'] == NULL) {
+        $fields[$field['name']] = $node->$field['name'];
+      } else {
+        $field_name = 'wikicompare_' . $field['name'];
+        $fields[$field['name']] = NULL;
+        if (isset($node->$field_name)) {
+          $value = $node->$field_name;
+          if (isset($value['und'][0])) {
+            $fields[$field['name']] = $value['und'][0][$field['type']];
+          }
+        }
+      }
+    }
   }
-
-  //Criterion specific fields.
-  if ($type == 'criterion') {
-    $fields['type'] = $node->wikicompare_type['und'][0]['value'];
-    $fields['weight'] = $node->wikicompare_weight['und'][0]['value'];
-    $fields['suggest'] = $node->wikicompare_suggest['und'][0]['value'];
-  }
-
-
-  if (module_exists('wikicompare_inherit_product')) {
-    //Inherit product specific field.
-    wikicompare_inherit_product_cache_insert_fields($fields, $type, $node);
-  }
+  $fields['parent_id'] = $parent_id;
+  $fields['has_children'] = 0;
 
   //Insert in wikicompare cache table.
   db_insert('cache_' . $type)
@@ -462,46 +453,35 @@ function wikicompare_revisionapi($op, $node_revision) {
     //Verify that the node must be checked, based on his type.
     if (in_array($node_revision->type, $types)) {
 
+      $fields = array();
       //Prepare the data to update the wikicompare cache of the updated node.
-      $fields = array(
-        'vid' => $node_revision->vid,
-      );
+      foreach (unserialize(WIKICOMPARE_FIELDS)[$node_revision->type] as $field) {
+        if (!in_array($field['name'], array('parent_id', 'has_children', 'criterion_id', 'product_id'))) {
+          if ($field['db_key'] == NULL) {
+            $fields[$field['name']] = $node_revision->$field['name'];
+          } else {
+            $field_name = 'wikicompare_' . $field['name'];
+            $fields[$field['name']] = NULL;
+            if (isset($node_revision->$field_name)) {
+              $value = $node_revision->$field_name;
+              if (isset($value['und'][0])) {
+                $fields[$field['name']] = $value['und'][0][$field['type']];
+              }
+            }
+          }
+        }
+      }
 
       //Common field to all nodes, except evaluation.
       if ($node_revision->type != 'evaluation') {
-
-        $fields['title'] = $node_revision->title;
         $parent_id = NULL;
         if (isset($node_revision->wikicompare_parent_id['und'][0])) {
           $parent_id = $node_revision->wikicompare_parent_id['und'][0]['target_id'];
         }
         $fields['parent_id'] = $parent_id;
-        $fields['sequence'] = $node_revision->wikicompare_sequence['und'][0]['value'];
-        $fields['state'] = $node_revision->wikicompare_state['und'][0]['value'];
+
         //Update the power users on the node and his children.
         wikicompare_update_cache_users(array(array('nid' => $node_revision->nid)));
-
-      //evaluation specific fields.
-      } else {
-        $fields['support']= $node_revision->wikicompare_support['und'][0]['value'];
-      }
-
-      //Product specific fields.
-      if ($node_revision->type == 'product') {
-        $fields['short_description'] = $node_revision->wikicompare_short_description['und'][0]['value'];
-        $fields['comparable'] = $node_revision->wikicompare_comparable['und'][0]['value'];
-      }
-
-      //Criterion specific fields.
-      if ($node_revision->type == 'criterion') {
-        $fields['type'] = $node_revision->wikicompare_type['und'][0]['value'];
-        $fields['weight'] = $node_revision->wikicompare_weight['und'][0]['value'];
-        $fields['suggest'] = $node_revision->wikicompare_suggest['und'][0]['value'];
-      }
-
-      if (module_exists('wikicompare_inherit_product')) {
-        //Inherit product module specific fields.
-        wikicompare_inherit_product_cache_update_fields($fields, $node_revision);
       }
 
       //Update the wikicompare cache with the new data.

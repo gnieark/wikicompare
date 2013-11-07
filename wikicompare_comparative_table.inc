@@ -12,7 +12,7 @@ define('NB_PRODUCT_AT_PAGE_LOAD', 15);
 define('NB_PRODUCT_PER_APPEND', 5);
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.module';
 
-//TODO disable filter when the list is computed
+
 
 /**
  * Build the home page.
@@ -351,22 +351,18 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
     }
   }
 
-//TODO move in profile module
-  $selected_profile_ids = array();
-  if ($selected_profiles != 0) {
-    $selected_profiles = explode('-', $selected_profiles);
-    foreach ($selected_profiles as $profile_id) {
-      $selected_profile_ids[$profile_id] = $profile_id;
-    }
-  }
-
   $computed = 0;
   if (!empty($selected_criterion_ids) || !empty($selected_profile_ids)) {
     $computed = 1;
   }
 
   //Initialize settings with the variable from javascript.
-  $settings = wikicompare_initialize_settings(array('root_criterion' => $root_criterion, 'product_column_ids' => $product_ids, 'selected_criterion_ids' => $selected_criterion_ids, 'selected_profile_ids' => $selected_profile_ids, 'computed' => $computed));
+  $settings = wikicompare_initialize_settings(array('root_criterion' => $root_criterion, 'product_column_ids' => $product_ids, 'selected_criterion_ids' => $selected_criterion_ids, 'computed' => $computed));
+
+  if (module_exists('wikicompare_profiles')) {
+    //Extract profile ids from arguments.
+    wikicompare_profiles_comparative_table_extract_arguments($settings, $selected_profiles);
+  }
 
   //Get all active infofields.
   $settings['infofields'] = array();
@@ -855,7 +851,7 @@ function wikicompare_table_render_home_suggest() {
  *   The rendered table.
  */
 function wikicompare_compute_get_criterions($settings) {
-//TODO Maybe we can merge this function directly with render comparative table
+
   //Get the criterions we will use to compute the table.
   $selected_criterion_ids = array();
   if ($settings['computed']) {
@@ -868,11 +864,6 @@ function wikicompare_compute_get_criterions($settings) {
     }
 
   }
-/*
-  if (module_exists('wikicompare_profiles')) { TODO no need anymore
-    //Add commmand to reset the profile part of the table.
-    wikicompare_profiles_table_send_compute($commands, $settings);
-  }*/
 
   $criterions = array();
   //Compute the table, unless no criterions was selected. In this case, we just reset it.
@@ -1038,8 +1029,7 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
     if ($criterion['data']->has_children){
       $output .= ' has_children';
     }
-    $output .= '" nid="' . $fid . '" parent_id="' . $criterion['data']->parent_id . '"  height="100px">';
-//TODO set all height et width attribute in style, because it's better for the transition.
+    $output .= '" nid="' . $fid . '" parent_id="' . $criterion['data']->parent_id . '"  style="height:' . ROW_HEIGHT . 'px;">';
 
     //Generate the main details of the criterion in the first cell.
     $output .= '<td class="first" style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . wikicompare_table_get_supertitle_item('criterion', $criterion, $settings) . '</td>';
@@ -1260,7 +1250,7 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
               ),
             ));
             //We check it immediately if it was check before (a product which already has his column in table, a criterion present in the global array in javascript etc...
-            if (isset($settings['displayed_ids']) && in_array($node['data']->nid, $settings['displayed_ids'])) { //TODO replace everywhere isset($node['data']->displayed)) {
+            if (isset($settings['displayed_ids']) && in_array($node['data']->nid, $settings['displayed_ids'])) {
               $checkbox_settings['element']['#checked'] = True;
             }
 
@@ -1431,14 +1421,10 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
     if (!empty($node['children']) || in_array($nid, $settings['displayed_ids'])) {
       $output .= ' has_checked_children';
     }
-    $output .= '" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $nid . '" parent_id="' . $parent_node .'"';
-/*TODO still used?    if ($parent_node != 0) {
-      //If the itemlist is computed, all children are hidden.
-      if ($settings['computed']) {
-        $output .= ' style="display:none"';
-      }
-    }*/
-    $output .= '>';
+    $output .= '" ntype="' . $type . '" context="' . $settings['context'] . '" nid="' . $nid . '"';
+    if ($parent_node) {
+      $output .= ' parent_id="' . $parent_node . '"';
+    }
 
     //Name of the item.
     $settings['parent_id'] = $parent_node;
@@ -1786,7 +1772,7 @@ function wikicompare_get_itemlist_children_response($method = 'ajax') {
       $output = '';
       if (isset($settings['translate'])) {
         $settings['depth'] = $settings['depth'] + 1;
-        $output .= '<div id="itemlist_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
+        $output .= '<div id="' . $_POST['type'] . '_table_stored_' . $_POST['nid'] . '"  style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%; width:100%;">';
       }
 
       //Rendering the itemlist.
@@ -2057,15 +2043,12 @@ function wikicompare_toggle_product_checkbox_response($method = 'ajax'){
  *   Array containing the instructions for the javascript.
  */
 function wikicompare_get_dialog_response($method = 'ajax'){
-//function wikicompare_get_dialog_response($context, $type, $container, $nid){ TODO
+
   //If javascript isn't activated on the browser, the first argument will not be transformed in ajax value. In such case, we just redirect to an error message.
   if ($method != 'ajax') {
     $output = NOJS_MESSAGE;
     return $output;
   }
-
-  //In the option of the simple dialog, we need to provide an anchor which indicate the content to display in the popin.
-//  $output = t("<div id='dialog-content'>");
 
   //Initialize settings with the context. We also display all states to ensure we have access to all nodes in the popin.
   $settings = wikicompare_initialize_settings($_POST);
@@ -2121,7 +2104,6 @@ function wikicompare_get_dialog_response($method = 'ajax'){
     $output .= '<p><div class="button-wrapper"><div  id="submitbutton_dialog" link="submitlink_dialog" class="button wikicompare_button"><input type="submit" value="Confirm" class="button"/></div></div>' . render($submit_link) . '</p>';
   }
 
-//  $output .= t("</div>");
   $commands = array();
   $commands[] = ajax_command_append('#' . $_POST['side'] . '_dialog_content', $output);
 
@@ -2267,7 +2249,7 @@ function wikicompare_submit_dialog_response($method = 'ajax'){
 }
 
 
-//TODO rename into refresh list
+
 /**
  * Ajax callback function called by javascript when we launch a compute or a reset table.
  *
@@ -2360,9 +2342,16 @@ function wikicompare_make_cleaning_response($method = 'ajax') {
  *   Array containing the initialized settings.
  */
 function wikicompare_initialize_settings($args = array()) {
-//TODO move selected_profile_ids in module.
+
+  $keys = array('fastaction', 'context', 'product_column_ids', 'selected_criterion_ids', 'selected_profile_ids', 'forbidden_nid', 'depth', 'computed', 'products_tree_mode', 'states', 'colspan');
+
+  if (module_exists('wikicompare_profiles')) {
+    //Initialize selected_profile_ids settings.
+    wikicompare_profiles_table_initialize_settings($keys);
+  }
+
   $settings = $args;
-  foreach (array('fastaction', 'context', 'product_column_ids', 'selected_criterion_ids', 'selected_profile_ids', 'forbidden_nid', 'depth', 'computed', 'products_tree_mode', 'states', 'colspan') as $key) {
+  foreach ($keys as $key) {
 
     //If the key is already set in the argument of the function, we directly use it.
     if (isset($args[$key])) {
@@ -2376,9 +2365,14 @@ function wikicompare_initialize_settings($args = array()) {
     //Else we set 0 as default value, except for some specific key.
     } else {
       $result = 0;
+      $array_keys = array('product_column_ids', 'selected_criterion_ids', 'states');
+      if (module_exists('wikicompare_profiles')) {
+        //Initialize selected_profile_ids settings.
+        wikicompare_profiles_table_initialize_settings($array_keys);
+      }
       if ($key == 'context') {
         $result = 'table';
-      } elseif (in_array($key, array('product_column_ids', 'selected_criterion_ids', 'selected_profile_ids', 'states'))) {
+      } elseif (in_array($key, $array_keys)) {
         $result = array();
       }
       $settings[$key] = $result;
@@ -2437,7 +2431,7 @@ function wikicompare_build_compare_url($args) {
   $is_products = True;
 
   //Generate the three argument products/criterions/profiles.
-  foreach (array($args['product_ids'], $args['selected_criterion_ids'], $args['selected_profile_ids']) as $array) { //TODO move profile_ids in module
+  foreach (array($args['product_ids'], $args['selected_criterion_ids'], $args['selected_profile_ids']) as $array) {
     $i = 0;
     $first = True;
     $ids_url = 0;
@@ -2578,7 +2572,7 @@ function wikicompare_control_table($settings) {
           if (!$nodes[$nid]['data']->has_children) {
             //We remove his has_children flag.
             $commands[] = ajax_command_invoke('.' . $type . '_table_item_' . $nid, 'removeClass', array('has_children'));
-            //TODO I don't remember why I do that.
+            //Make sure that itemlist children are closed.
             $commands[] = ajax_command_invoke('#' . $type . '_table_children_checked_' . $nid, 'show', array());
             $commands[] = ajax_command_invoke('#' . $type . '_table_children_' . $nid, 'hide', array());
           //If the node won a children.
@@ -2624,18 +2618,10 @@ function wikicompare_control_table($settings) {
         if ($type != 'product') {
           if ($first) {
             //We close the node in error which is at the hightest level of the displayed node.
-            if ($type == 'criterion') {
-              $commands[] = ajax_command_invoke('.breadcrumb_item_link[nid="' . $pid . '"]', 'click', array());
-            } else { //TODO centralize breadcrumb and itemlist_return_link
-              $commands[] = ajax_command_invoke('.itemlist_return_link[nid="' . $pid . '"]', 'click', array());
-            }
+            $commands[] = ajax_command_invoke('.return_link[nid="' . $pid . '"]', 'click', array());
           }
           //We clean the cache datas.
-          if ($type == 'criterion') {
-            $commands[] = ajax_command_invoke('#comparative_table_stored_' . $pid, 'addClass', array('to_remove'));
-          } else { //TODO centralize stored table
-            $commands[] = ajax_command_invoke('#itemlist_stored_' . $pid, 'addClass', array('to_remove'));
-          }
+          $commands[] = ajax_command_invoke('#' . $type . '_table_stored_' . $pid, 'addClass', array('to_remove'));
           //We reopen the opened nodes.
           $commands[] = ajax_command_invoke('#' . $type . '_table_link_' . $pid, 'click', array());
         } else {

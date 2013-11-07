@@ -14,6 +14,117 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_comparativ
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare_interface.inc';
 require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.views_default.inc';
 
+
+
+//Define constant with all wikicompare fields.
+$wikicompare_fields = array();
+$types = array('product', 'criterion', 'evaluation');
+if (module_exists('wikicompare_profiles')) {
+  require_once drupal_get_path('module', 'wikicompare_profiles') . '/wikicompare_profiles.module';
+  //Add profile type.
+  wikicompare_profiles_node_types($types);
+}
+foreach($types as $type) {
+  $fields = array();
+  $fields['nid'] = array(
+    'name' => 'nid',
+    'type' => 'value',
+    'db_key' => NULL
+  );
+  $fields['vid'] = array(
+    'name' => 'vid',
+    'type' => 'value',
+    'db_key' => NULL
+  );
+
+  if ($type != 'evaluation') {
+    $fields['title'] = array(
+      'name' => 'title',
+      'type' => 'value',
+      'db_key' => NULL
+    );
+    $fields['parent_id'] = array(
+      'name' => 'parent_id',
+      'type' => 'target_id',
+      'db_key' => 'fpa',
+    );
+    $fields['sequence'] = array(
+      'name' => 'sequence',
+      'type' => 'value',
+      'db_key' => 'fse',
+    );
+    $fields['state'] = array(
+      'name' => 'state',
+      'type' => 'value',
+      'db_key' => 'fst'
+    );
+    $fields['has_children'] = array(
+      'name' => 'has_children',
+      'type' => 'value',
+      'db_key' => NULL
+    );
+
+    if ($type == 'product') {
+      $fields['short_description'] = array(
+        'name' => 'short_description',
+        'type' => 'value',
+        'db_key' => 'fsd'
+      );
+      $fields['comparable'] = array(
+        'name' => 'comparable',
+        'type' => 'value',
+        'db_key' => 'fco'
+      );
+    }
+
+    if ($type == 'criterion') {
+      $fields['type'] = array(
+        'name' => 'type',
+        'type' => 'value',
+        'db_key' => 'ft'
+      );
+      $fields['weight'] = array(
+        'name' => 'weight',
+        'type' => 'value',
+        'db_key' => 'fw'
+      );
+      $fields['suggest'] = array(
+        'name' => 'suggest',
+        'type' => 'value',
+        'db_key' => 'fsg'
+      );
+    }
+  } else {
+    $fields['criterion_id'] = array(
+      'name' => 'criterion_id',
+      'type' => 'target_id',
+      'db_key' => 'fcr'
+    );
+    $fields['product_id'] = array(
+      'name' => 'product_id',
+      'type' => 'target_id',
+      'db_key' => 'fpr'
+    );
+    $fields['support'] = array(
+      'name' => 'support',
+      'type' => 'value',
+      'db_key' => 'fsu'
+    );
+  }
+
+  if (module_exists('wikicompare_inherit_product')) {
+    require_once drupal_get_path('module', 'wikicompare_inherit_product') . '/wikicompare_inherit_product.module';
+    //Add specific inherit product fields in wikicompare fields.
+    wikicompare_inherit_product_wikicompare_fields($fields, $type);
+  }
+
+  $wikicompare_fields[$type] = $fields;
+
+}
+define('WIKICOMPARE_FIELDS', serialize($wikicompare_fields));
+
+
+
 //Constant containing all state values.
 define('WIKICOMPARE_STATE_OPTIONS', serialize(array(
         'new' => 'New',

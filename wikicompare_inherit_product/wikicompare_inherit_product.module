@@ -14,6 +14,31 @@
 *****************************************************************/
 
 /**
+ * Add specific inherit product fields in wikicompare fields.
+ */
+function wikicompare_inherit_product_wikicompare_fields(&$fields, $type) {
+
+  if ($type == 'product') {
+    $fields['inherit_product_id'] = array(
+      'name' => 'inherit_product_id',
+      'type' => 'target_id',
+      'db_key' => 'fip'
+    );
+  }
+
+  if ($type == 'evaluation') {
+    $fields['use_from_inherit'] = array(
+      'name' => 'use_from_inherit',
+      'type' => 'value',
+      'db_key' => 'fui'
+    );
+  }
+
+}
+
+
+
+/**
  * Implements hook_menu().
  * Add an ajax callback.
  */
@@ -254,60 +279,6 @@ function wikicompare_inherit_product_update_comparative_table_post(&$to_update, 
 
 
 /**
- * Search for the inhehrit product specific fields in the flush tables function.
- *
- * @param $query
- *   The query to update. Passed by reference.
- *
- * @param $type
- *   The type of the nodes we are searching for.
- */
-function wikicompare_inherit_product_flush_select(&$query, $type) {
-
-  if ($type == 'product') {
-    $query->addField('nic', 'wikicompare_inherit_product_id_target_id', 'inherit_product_id');
-    $query->leftjoin('field_revision_wikicompare_inherit_product_id', 'nic', 'n.vid = nic.revision_id');
-  }
-
-  if ($type == 'evaluation') {
-    $query->addField('nu', 'wikicompare_use_from_inherit_value', 'use_from_inherit');
-    $query->leftjoin('field_revision_wikicompare_use_from_inherit', 'nu', 'n.vid = nu.revision_id');
-  }
-
-}
-
-
-
-/**
- * Prepare the inherit product specific fields in the flush tables function.
- *
- * @param $to_insert
- *   Array containing the data of the record which will be inserted. Passed by reference.
- *
- * @param $record
- *   The record we are currently checking
- *
- * @param $type
- *   The type of the node
- */
-function wikicompare_inherit_product_flush_cache(&$to_insert, $record, $type) {
-
-  if ($type == 'product') {
-    $to_insert[$record->nid]['inherit_product_id'] = $record->inherit_product_id;
-  }
-
-  if ($type == 'evaluation') {
-    $use_from_inherit = 1;
-    if ($record->use_from_inherit != NULL) {
-      $use_from_inherit = $record->use_from_inherit;
-    }
-    $to_insert[$record->nid]['use_from_inherit'] = $use_from_inherit;
-  }
-}
-
-
-
-/**
  * Add inherit product specific fields in db request.
  *
  * @param $query
@@ -337,34 +308,6 @@ function  wikicompare_inherit_product_request_db(&$query, $type) {
 *    NODES
 *
 *****************************************************************/
-
-/**
- * Prepare the inherit product specific field to insert in wikicompare cache tables.
- *
- * @param $fields
- *   The fields prepared in generic function. Passed by reference.
- *
- * @param $type
- *   The type of the created node.
- *
- * @param $node
- *   The created node.
- */
-function wikicompare_inherit_product_cache_insert_fields(&$fields, $type, $node) {
-
-  //Product specific field.
-  if ($type == 'product') {
-
-    //Insert the inherit product field in the prepared data.
-    $inherit_product_id = NULL;
-    if (isset($node->wikicompare_inherit_product_id['und'][0])) {
-      $inherit_product_id = $node->wikicompare_inherit_product_id['und'][0]['target_id'];
-    }
-    $fields['inherit_product_id'] = $inherit_product_id;
-
-  }
-
-}
 
 
 
@@ -543,34 +486,6 @@ function wikicompare_inherit_product_preupdate_evaluation(&$to_update, $node_rev
 
   if ($node_revision->wikicompare_use_from_inherit['und'][0]['value'] != $current_node->wikicompare_use_from_inherit['und'][0]['value']) {
     $to_update[$node_revision->nid] = $node_revision->nid;
-  }
-
-}
-
-
-
-/**
- * Add the inherit product module specific field in the data which will update the wikicompare cache.
- *
- * @param $fields
- *   The array containing the fields which will update the cache. Passed by reference.
- *
- * @param $node_revision
- *   The object containing the new data of the node.
- */
-function wikicompare_inherit_product_cache_update_fields(&$fields, $node_revision) {
-
-  //Product specific field.
-  if ($node_revision->type == 'product') {
-    $inherit_id = NULL;
-    if (isset($node_revision->wikicompare_inherit_product_id['und'][0])) {
-      $inherit_id = $node_revision->wikicompare_inherit_product_id['und'][0]['target_id'];
-    }
-    $fields['inherit_product_id'] = $inherit_id;
-  }
-  //evaluation specific field.
-  if ($node_revision->type == 'evaluation') {
-    $fields['use_from_inherit'] = $node_revision->wikicompare_use_from_inherit['und'][0]['value'];
   }
 
 }
