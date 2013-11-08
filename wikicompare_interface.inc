@@ -288,14 +288,14 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
   } else {
 
     //Get information from cache, like guidelines and has_children flag of product and criterion.
-    $query = db_select('cache_evaluation', 'n');
+    $query = db_select('wikicompare_cache_evaluation', 'n');
     $query->addField('f', 'title', 'criterion');
     $query->addField('c', 'title', 'product');
     $query->addField('f', 'has_children', 'criterion_has_children');
     $query->addField('c', 'has_children', 'product_has_children');
     $query->addField('ngf', 'wikicompare_guidelines_value', 'guidelines');
-    $query->leftjoin('cache_criterion', 'f', 'n.criterion_id = f.nid');
-    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
+    $query->leftjoin('wikicompare_cache_criterion', 'f', 'n.criterion_id = f.nid');
+    $query->leftjoin('wikicompare_cache_product', 'c', 'n.product_id = c.nid');
     $query->leftjoin('field_revision_wikicompare_guidelines', 'ngf', 'f.vid = ngf.revision_id');
     $query->condition('n.nid', $nid);
     $result = $query->execute();
@@ -507,7 +507,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       $weight_default = 1;
       //If the parent if of type highest-percentage, then the default weight must be 100 and not 1.
       if ($parent_id != 0 && $fastaction != 'edit') {
-        $query = db_select('cache_criterion', 'n');
+        $query = db_select('wikicompare_cache_criterion', 'n');
         $query->addField('n', 'nid', 'nid');
         $query->addField('n', 'type', 'type');
         $query->condition('n.nid', $parent_id);

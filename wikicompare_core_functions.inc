@@ -36,7 +36,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
   if (!empty($nids)) {
 
     //Recover the details of the targeted evaluations.
-    $query = db_select('cache_evaluation', 'n');
+    $query = db_select('wikicompare_cache_evaluation', 'n');
     $query->addField('n', 'nid', 'nid');
     $query->addField('n', 'criterion_id', 'fid');
     $query->addField('n', 'product_id', 'cid');
@@ -80,7 +80,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
     //We don't need the children through criterion axis in case of type = 'product'.
     if ($type != 'product') {
       //Get children evaluation through criterion axis
-      $query = db_select('cache_evaluation', 'n');
+      $query = db_select('wikicompare_cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'criterion_id', 'fid');
       $query->addField('n', 'product_id', 'cid');
@@ -113,7 +113,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
     //We don't need the children through product child in case of type = 'criterion'.
     if ($type != 'criterion') {
       //Get children evaluation through criterion axis.
-      $query = db_select('cache_evaluation', 'n');
+      $query = db_select('wikicompare_cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'criterion_id', 'fid');
       $query->addField('n', 'product_id', 'cid');
@@ -237,7 +237,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
   //Update the percentages. Data are regrouped by css and percent to try to make as few query as possible.
   foreach($cache_to_update as $key_css_class => $css_class) {
     foreach($cache_to_update[$key_css_class] as $key_percent => $percent) {
-        db_update('cache_evaluation')
+        db_update('wikicompare_cache_evaluation')
           ->fields(array(
             'percent' => $key_percent,
             'css_class' => $key_css_class,
@@ -258,7 +258,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
   if ($first) {
 
     if (!empty($res['products_to_update'])) {
-      $query = db_select('cache_evaluation', 'n');
+      $query = db_select('wikicompare_cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'criterion_id', 'criterion_id');
       $query->addField('n', 'product_id', 'product_id');
@@ -281,7 +281,7 @@ function wikicompare_update_compare_tree($type, $nids, $first=True) {
         $node->type = 'parent-weighted-average';
         $node = wikicompare_compute_percent($node, $evaluations);
 
-        db_update('cache_product')
+        db_update('wikicompare_cache_product')
           ->fields(array(
             'total' => $node->new_percent,
           ))
@@ -404,7 +404,7 @@ function wikicompare_refresh_caches() {
 
   foreach ($types as $type) {
     //Delete all data in the type cache.
-    db_delete('cache_' . $type)
+    db_delete('wikicompare_cache_' . $type)
       ->execute();
   }
 
@@ -477,7 +477,7 @@ function wikicompare_refresh_caches() {
     }
 
     //Insert the data into the wikicompare cache table.
-    $query = db_insert('cache_' . $type)->fields($header);
+    $query = db_insert('wikicompare_cache_' . $type)->fields($header);
     foreach ($to_insert as $values) {
       $query->values($values);
     }
@@ -485,28 +485,28 @@ function wikicompare_refresh_caches() {
 
   }
 
-  //Update parent_through_product_id and parent_through_criterion_id field in cache_evaluation.
+  //Update parent_through_product_id and parent_through_criterion_id field in wikicompare_cache_evaluation.
   wikicompare_update_parent_link();
 
   //Update the structural fields from product and criterion in evaluation.
   if (Database::getConnection()->databaseType() == 'mysql') {
-    db_query('UPDATE cache_evaluation n
-           INNER JOIN cache_product nc ON n.product_id = nc.nid
-           INNER JOIN cache_criterion nf ON n.criterion_id = nf.nid
+    db_query('UPDATE wikicompare_cache_evaluation n
+           INNER JOIN wikicompare_cache_product nc ON n.product_id = nc.nid
+           INNER JOIN wikicompare_cache_criterion nf ON n.criterion_id = nf.nid
            SET n.product_parent_id = nc.parent_id, n.product_state = nc.state, n.product_has_children = nc.has_children,
            n.criterion_parent_id = nf.parent_id, n.criterion_state = nf.state, n.criterion_has_children = nf.has_children, n.criterion_type = nf.type, n.criterion_weight = nf.weight');
   } else {
-    db_query('UPDATE cache_evaluation
+    db_query('UPDATE wikicompare_cache_evaluation
            SET product_parent_id = nc.parent_id, product_state = nc.state, product_has_children = nc.has_children,
            criterion_parent_id = nf.parent_id, criterion_state = nf.state, criterion_has_children = nf.has_children, criterion_type = nf.type, criterion_weight = nf.weight
-           FROM cache_evaluation n
-           INNER JOIN cache_product nc ON n.product_id = nc.nid
-           INNER JOIN cache_criterion nf ON n.criterion_id = nf.nid
-           WHERE cache_evaluation.nid = n.nid');
+           FROM wikicompare_cache_evaluation n
+           INNER JOIN wikicompare_cache_product nc ON n.product_id = nc.nid
+           INNER JOIN wikicompare_cache_criterion nf ON n.criterion_id = nf.nid
+           WHERE wikicompare_cache_evaluation.nid = n.nid');
   }
 
   if (module_exists('wikicompare_inherit_product')) {
-    //Update parent_through_inherit_id in cache_evaluation.
+    //Update parent_through_inherit_id in wikicompare_cache_evaluation.
     wikicompare_inherit_product_update_parent_link();
   }
 
@@ -525,19 +525,19 @@ function wikicompare_refresh_caches() {
  */
 function wikicompare_refresh_cache_suggest() {
 
-  $query = db_delete('cache_wikicompare_suggest');
+  $query = db_delete('wikicompare_cache_suggest');
   $query->execute();
 
   $criterions = array();
   $percents = array();
-  $query = db_select('cache_criterion', 'n');
+  $query = db_select('wikicompare_cache_criterion', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'suggest', 'suggest');
   $query->addField('e', 'product_id', 'product_id');
   $query->addField('e', 'percent', 'percent');
-  $query->leftjoin('cache_evaluation', 'e', 'n.nid = e.criterion_id');
-  //TODO Remove this leftjoin by adding comparable in cache_evaluation.
-  $query->leftjoin('cache_product', 'p', 'e.product_id = p.nid');
+  $query->leftjoin('wikicompare_cache_evaluation', 'e', 'n.nid = e.criterion_id');
+  //TODO Remove this leftjoin by adding comparable in wikicompare_cache_evaluation.
+  $query->leftjoin('wikicompare_cache_product', 'p', 'e.product_id = p.nid');
   $query->condition('n.suggest', 0, '!=');
   $or = db_or();
   $or->condition('p.has_children', 0);
@@ -572,7 +572,7 @@ function wikicompare_refresh_cache_suggest() {
     }
   }
 
-  $query = db_insert('cache_wikicompare_suggest')->fields(array('criterion_id', 'sequence', 'product_id', 'percent'));
+  $query = db_insert('wikicompare_cache_suggest')->fields(array('criterion_id', 'sequence', 'product_id', 'percent'));
   foreach ($to_insert as $fields) {
     $query->values($fields);
   }
@@ -596,7 +596,7 @@ function wikicompare_refresh_cache_suggest() {
  */
 function wikicompare_get_evaluation_id($product_id, $criterion_id) {
 
-  $query = db_select('cache_evaluation', 'n');
+  $query = db_select('wikicompare_cache_evaluation', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->condition('product_id', $product_id);
   $query->condition('criterion_id', $criterion_id);
@@ -616,7 +616,7 @@ function wikicompare_get_evaluation_id($product_id, $criterion_id) {
  */
 function wikicompare_stop_computation() {
 
-  db_update('cache_evaluation')
+  db_update('wikicompare_cache_evaluation')
     ->fields(array(
       'percent' => NULL,
       'css_class' => '',
@@ -673,7 +673,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
   $orderbysequence = False;
 
   //Start build the request.
-  $query = db_select('cache_' . $type, 'n');
+  $query = db_select('wikicompare_cache_' . $type, 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'nid', 'tnid');
 

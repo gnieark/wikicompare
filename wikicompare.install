@@ -21,7 +21,7 @@ function wikicompare_schema() {
    * This will allow us to make far less join in sql query on comparative table computation.
    */
   foreach (array('product', 'criterion', 'evaluation') as $type) {
-    $schema['cache_' . $type] = wikicompare_node_schema($type);
+    $schema['wikicompare_cache_' . $type] = wikicompare_node_schema($type);
   }
 
   $infofields = array();
@@ -144,7 +144,7 @@ function wikicompare_schema() {
     'default' => NULL,
   );
 
-  $schema['cache_wikicompare_suggest'] = $suggest;
+  $schema['wikicompare_cache_suggest'] = $suggest;
 
   return $schema;
 //TODO replace cache_ by wikicompare_

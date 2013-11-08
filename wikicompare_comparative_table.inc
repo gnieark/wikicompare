@@ -602,7 +602,7 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
       $products_sort[(string) $percent][] = $product_id;
 
     }
-  //Assign percentage from cache_compared total field.
+  //Assign percentage from wikicompare_cache_compared total field.
   } else {
     foreach ($products as $product_id => $product) {
       $percent = $product['data']->total;
@@ -773,15 +773,15 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
 function wikicompare_table_render_home_suggest() {
 
   $res = array();
-  $query = db_select('cache_wikicompare_suggest', 'n');
+  $query = db_select('wikicompare_cache_suggest', 'n');
   $query->addField('n', 'criterion_id', 'criterion_id');
   $query->addField('n', 'sequence', 'sequence');
   $query->addField('n', 'product_id', 'product_id');
   $query->addField('n', 'percent', 'percent');
   $query->addField('c', 'title', 'criterion_title');
   $query->addField('p', 'title', 'product_title');
-  $query->leftjoin('cache_criterion', 'c', 'n.criterion_id = c.nid');
-  $query->leftjoin('cache_product', 'p', 'n.product_id = p.nid');
+  $query->leftjoin('wikicompare_cache_criterion', 'c', 'n.criterion_id = c.nid');
+  $query->leftjoin('wikicompare_cache_product', 'p', 'n.product_id = p.nid');
   $query->orderby('n.sequence, n.criterion_id');
   $query->orderby('n.percent', 'DESC');
 
@@ -1674,7 +1674,7 @@ function wikicompare_build_rows_data($criterions_tree, $product_ids, $evaluation
         $evaluation = array('data' => new stdClass);
       }
 
-      //If the table is computed, then we will not use the percent in cache_evaluation but compute it with the specified criterions.
+      //If the table is computed, then we will not use the percent in wikicompare_cache_evaluation but compute it with the specified criterions.
       if ($settings['computed']) {
 
         //The type of the criterion which will be used in the wikicompare_compute_percent function
