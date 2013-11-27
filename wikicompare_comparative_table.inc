@@ -247,7 +247,10 @@ function wikicompare_home_page() {
   $output .= '<table id="products-list-header"><thead>';
   $output .= '<th class="list-column-product">Products</th>';
   $output .= '<th class="list-column-rank">Rank</th>';
-  $settings['width'] = (100 - LIST_COLUMN_PRODUCT_WIDTH - LIST_COLUMN_RANK_WIDTH) / count($settings['infofields']);
+  $settings['width'] = 0;
+  if (count($settings['infofields'])) {
+    $settings['width'] = (100 - LIST_COLUMN_PRODUCT_WIDTH - LIST_COLUMN_RANK_WIDTH) / count($settings['infofields']);
+  }
   //Infofields header.
   foreach ($settings['infofields'] as $infofield) {
     $output .= '<th class="infofield-title" field="' . $infofield['name'] . '" style="width:' . $settings['width'] . '%">' . $infofield['title'] . '</th>';
@@ -416,7 +419,10 @@ function wikicompare_comparative_table($root_criterion, $compared_products, $sel
   //Render the fieldset with the infofield, collapsed at the loading page.
   $fieldset = '<table><tbody>';
   $category = '';
-  $settings['width'] = (100 - FIRST_COLUMN_WIDTH) / count($product_ids);
+  $settings['width'] = 0;
+  if (count($product_ids)) {
+    $settings['width'] = (100 - FIRST_COLUMN_WIDTH) / count($product_ids);
+  }
   foreach ($settings['infofields'] as $infofield) {
     //Render the row with the category.
     if ($infofield['category'] != $category) {
@@ -557,7 +563,7 @@ function wikicompare_table_render_product_list($settings, $criterions=array()) {
   //If we are in tree mode, we need to get the product in tree mode. Unless we are getting the children of a node.
   if ($settings['products_tree_mode'] && !isset($settings['nid']) && $settings['computed']) {
     //Get product tree. We can use comparable products as base because it always contain at least all products without children.
-    $products_recursive_data = wikicompare_build_recursive_tree('product', $product_ids, array(), $settings);
+    $products_recursive_data = wikicompare_build_recursive_tree('product', $product_ids, $settings);
     $product_ids = $products_recursive_data['ids'];
     $products = $products_recursive_data['data'];
   }
@@ -937,7 +943,10 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
   $output .= '<tr id="comparative-table-header">';
   $output .= '<th class="first" style="width: ' . FIRST_COLUMN_WIDTH . '%;">' . t('Criterions') . '</th>';
   //Get the columns width.
-  $settings['width'] = (100 - FIRST_COLUMN_WIDTH) / count($products);
+  $settings['width'] = 0;
+  if (count($products)) {
+    $settings['width'] = (100 - FIRST_COLUMN_WIDTH) / count($products);
+  }
   $settings['colspan'] = 1 + count($products);
   $first = True;
   foreach ($products as $cid => $product) {
@@ -1012,7 +1021,8 @@ function wikicompare_table_render_comparative_table($settings, $products=array()
  */
 function wikicompare_table_render_rows($criterions_row_data, $settings) {
 
-  $res = array();
+  //Initiate the return variable. The 0 key, which is the root of the table, will always exist so we initiate it immediately.
+  $res = array(0 => array('output' => '', 'count' => 0));
 
   //Add a row for each criterions.
   foreach ($criterions_row_data as $fid => $criterion) {
@@ -1022,7 +1032,7 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
 
     //If the criterion has parent, we add it in the class to find them later. Thanks to this class, we can for exemple easily remove the children of a node.
     if ($criterion['data']->parent_id) {
-        $output .= ' criterion-table-child-' . $criterion['data']->parent_id;
+      $output .= ' criterion-table-child-' . $criterion['data']->parent_id;
     }
     //If the criterion has children, we add this class to easily know that this criterion can display children.
     if ($criterion['data']->has_children){
@@ -1049,15 +1059,10 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
 
     //Initiate the table for each key, if not already done.
     if (!isset($res[$key])) {
-      $res[$key]['output'] = '<table id="criterion-table-';
-      //Except for root, each tables will be insert in the storage zone.
-      if ($key != 'root') {
-        $res[$key]['output'] .= 'stored-' . $key;
-      } else {
-        $res[$key]['output'] .= 0;
-      }
-      $res[$key]['output'] .= '" style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%;"><tbody>';
-      $res[$key]['count'] = 0;
+      $res[$key] = array(
+        'output' => '',
+        'count' => 0
+      );
     }
 
     //Append the row in the table.
@@ -1067,8 +1072,22 @@ function wikicompare_table_render_rows($criterions_row_data, $settings) {
 
   }
 
-  //Close each tables.
-  foreach ($res as $key => $output) {
+  //Generate the table for each keys.
+  foreach ($res as $key => $res_table) {
+
+    //Header of the table, we reset the content of $res[$key]['output'] at this moment.
+    $res[$key]['output'] = '<table id="criterion-table-';
+    //Except for root, each tables will be insert in the storage zone.
+    if ($key != 'root') {
+      $res[$key]['output'] .= 'stored-' . $key;
+    } else {
+      $res[$key]['output'] .= 0;
+    }
+    $res[$key]['output'] .= '" style="float:left; position:absolute; top: 0; left:' . $settings['depth'] * ROW_HEIGHT . '%;"><tbody>';
+
+    //Content of the table.
+    $res[$key]['output'] .= $res_table['output'];
+
     //Add the add button at the end of the table.
     $res[$key]['output'] .= '<tr id="criterion-table-add-' . $key . '"><td class="row-auto-colspan" ';
     if (isset($settings['colspan'])) {
@@ -1449,7 +1468,7 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
   $output .= '</ul>';
 
   //Render the link to add a new node if we are at the first level of the itemlist or if we are in translate mode.
-  if ($settings['context'] == 'table' && !empty($nodes) && (!$parent_node || isset($settings['translate']))) {
+  if ($settings['context'] == 'table' && (!$parent_node || isset($settings['translate']))) {
     $output .= '<p>';
     //If we are in a children table of a translate itemlist, we add a return link.
     if (isset($settings['translate']) && $settings['depth']) {
@@ -1487,7 +1506,7 @@ function wikicompare_build_itemlist($type, $nodes, $parent_node, $settings){
 function wikicompare_build_recursive_data($type, $node_ids, $settings){
 
   //Build the recursive tree.
-  $res = wikicompare_build_recursive_tree($type, $node_ids, array(), $settings);
+  $res = wikicompare_build_recursive_tree($type, $node_ids, $settings);
   //From the resurcive tree, build the full title of the nodes.
   $res = wikicompare_build_fulltitle($res, $res['tree'], '');
 
@@ -1515,7 +1534,7 @@ function wikicompare_build_recursive_data($type, $node_ids, $settings){
  * @return $res
  *   An array containing the tree we are building.
  */
-function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
+function wikicompare_build_recursive_tree($type, $node_ids, $settings, $res = array('ids' => array(), 'data' => array(), 'tree' => array())){
 
   //Get the details of the specified nodes. No other way here but to put this query in recursive function. Some improvement for later may be to use the WITH RECURSIVE function of postgresql.
   $db_settings = array('nids' => $node_ids);
@@ -1561,7 +1580,7 @@ function wikicompare_build_recursive_tree($type, $node_ids, $res, $settings){
   //If there is others parents to add in the array, relaunch the recursive function until all parents are found.
   if (!empty($parent_ids)){
     $settings['not_first'] = True;
-    $res = wikicompare_build_recursive_tree($type, $parent_ids, $res, $settings);
+    $res = wikicompare_build_recursive_tree($type, $parent_ids, $settings, $res);
   } else {
     unset($res['parent_ressource']);
   }
