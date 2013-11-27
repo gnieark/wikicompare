@@ -147,7 +147,7 @@ function wikicompare_schema() {
   $schema['wikicompare_cache_suggest'] = $suggest;
 
   return $schema;
-//TODO replace cache_ by wikicompare_
+
 }
 
 /** 

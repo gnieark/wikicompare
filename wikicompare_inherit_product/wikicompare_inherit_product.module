@@ -88,11 +88,11 @@ function compute_inherit_response($method = 'ajax') {
 
     $inherit_id = NULL;
 
-    $query = db_select('cache_evaluation', 'n');
+    $query = db_select('wikicompare_cache_evaluation', 'n');
     $query->addField('c', 'inherit_product_id', 'inherit_id');
     $query->addField('ci', 'support', 'support');
-    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
-    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND ci.criterion_id = n.criterion_id');
+    $query->leftjoin('wikicompare_cache_product', 'c', 'n.product_id = c.nid');
+    $query->leftjoin('wikicompare_cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND ci.criterion_id = n.criterion_id');
     $query->condition('n.nid', $_POST['nid']);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -110,7 +110,7 @@ function compute_inherit_response($method = 'ajax') {
     }
 
   } else {
-    $query = db_select('cache_evaluation', 'n');
+    $query = db_select('wikicompare_cache_evaluation', 'n');
     $query->addField('n', 'support', 'support');
     $query->condition('n.nid', $_POST['nid']);
     $result = $query->execute();
@@ -156,7 +156,7 @@ function wikicompare_inherit_product_update_main_query(&$query) {
   $query->addField('ni', 'nid', 'inheriting_evaluation_nid');
   $query->addField('ni', 'percent', 'inheriting_evaluation_cache_percent');
   $query->addField('ni', 'css_class', 'inheriting_evaluation_cache_css_class');
-  $query->leftjoin('cache_evaluation', 'ni', 'n.parent_through_inherit_id = ni.nid');
+  $query->leftjoin('wikicompare_cache_evaluation', 'ni', 'n.parent_through_inherit_id = ni.nid');
 
 }
 
@@ -201,11 +201,11 @@ function wikicompare_inherit_product_update_comparative_table_preparation(&$node
 
     $through_inherit_childs = array();
     if (in_array($type, array('product', 'evaluation')) && !empty($nids))  {
-      $query = db_select('cache_evaluation', 'n');
+      $query = db_select('wikicompare_cache_evaluation', 'n');
       $query->addField('n', 'nid', 'nid');
       $query->addField('n', 'criterion_id', 'fid');
       $query->addField('nc', 'inherit_product_id', 'inherit_product_id');
-      $query->join('cache_product', 'nc', 'n.product_id = nc.nid');
+      $query->join('wikicompare_cache_product', 'nc', 'n.product_id = nc.nid');
       //Only the evaluation which has no children on both axis will be updated because only them can have their percent updated by inheritance
       $query->condition('n.product_has_children', 0);
       $query->condition('n.criterion_has_children', 0);
@@ -399,7 +399,7 @@ function wikicompare_inherit_product_cache_product_delete($node) {
 
     //Get the product which was inheriting the deleted node.
     $to_update = array();
-    $query = db_select('cache_product', 'c');
+    $query = db_select('wikicompare_cache_product', 'c');
     $query->addField('c', 'nid', 'nid');
     $query->condition('c.inherit_product_id', $node->nid);
     $result = $query->execute();
@@ -409,7 +409,7 @@ function wikicompare_inherit_product_cache_product_delete($node) {
 
     if (!empty($to_update)) {
       //Update the children so they no more inherit any node.
-      db_update('cache_product')
+      db_update('wikicompare_cache_product')
         ->fields(array(
           'inherit_product_id' => NULL,
         ))
@@ -456,7 +456,7 @@ function wikicompare_inherit_product_preupdate_product(&$to_update, $node_revisi
       $to_update[$node_revision->nid] = $node_revision->nid;
 
       //Mark the modified node so his evaluations will be updated with his new evaluations parents through inherit.
-      db_update('cache_product')
+      db_update('wikicompare_cache_product')
         ->fields(array(
           'inherit_changed' => 1,
         ))
@@ -525,7 +525,7 @@ function wikicompare_inherit_product_update_parent_evaluations($node, $type) {
   if ($type == 'product') {
     if ($node->inherit_changed) {
       wikicompare_inherit_product_update_parent_link($node->nid);
-      db_update('cache_product')
+      db_update('wikicompare_cache_product')
         ->fields(array(
           'inherit_changed' => 0
         ))
@@ -547,20 +547,20 @@ function wikicompare_inherit_product_update_parent_evaluations($node, $type) {
 function wikicompare_inherit_product_update_parent_link($nid=NULL) {
 
   if (Database::getConnection()->databaseType() == 'mysql') {
-    $query = 'UPDATE cache_evaluation n
-           INNER JOIN cache_product nc ON n.product_id = nc.nid
-           LEFT JOIN cache_evaluation nci ON (nc.inherit_product_id = nci.product_id AND n.criterion_id = nci.criterion_id)
+    $query = 'UPDATE wikicompare_cache_evaluation n
+           INNER JOIN wikicompare_cache_product nc ON n.product_id = nc.nid
+           LEFT JOIN wikicompare_cache_evaluation nci ON (nc.inherit_product_id = nci.product_id AND n.criterion_id = nci.criterion_id)
            SET n.parent_through_inherit_id = nci.nid';
     if ($nid != NULL) {
       $query = $query . ' WHERE nc.nid = ' . $nid;
     }
   } else {
-    $query = 'UPDATE cache_evaluation
+    $query = 'UPDATE wikicompare_cache_evaluation
            SET parent_through_inherit_id = nci.nid
-           FROM cache_evaluation n
-           INNER JOIN cache_product nc ON n.product_id = nc.nid
-           LEFT JOIN cache_evaluation nci ON (nc.inherit_product_id = nci.product_id AND n.criterion_id = nci.criterion_id)
-           WHERE cache_evaluation.nid = n.nid';
+           FROM wikicompare_cache_evaluation n
+           INNER JOIN wikicompare_cache_product nc ON n.product_id = nc.nid
+           LEFT JOIN wikicompare_cache_evaluation nci ON (nc.inherit_product_id = nci.product_id AND n.criterion_id = nci.criterion_id)
+           WHERE wikicompare_cache_evaluation.nid = n.nid';
     if ($nid != NULL) {
       $query = $query . ' AND nc.nid = ' . $nid;
     }
@@ -693,14 +693,14 @@ function wikicompare_inherit_product_modify_form_evaluation(&$form, &$output, &$
   if ($type == 'evaluation') {
 
     //Get details of the inherited evaluation.
-    $query = db_select('cache_evaluation', 'n');
+    $query = db_select('wikicompare_cache_evaluation', 'n');
     $query->addField('c', 'inherit_product_id', 'inherit_id');
     $query->addField('c', 'has_children', 'product_has_children');
     $query->addField('f', 'has_children', 'criterion_has_children');
     $query->addField('ci', 'support', 'inherit_support');
-    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
-    $query->leftjoin('cache_criterion', 'f', 'n.criterion_id = f.nid');
-    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND n.criterion_id = ci.criterion_id');
+    $query->leftjoin('wikicompare_cache_product', 'c', 'n.product_id = c.nid');
+    $query->leftjoin('wikicompare_cache_criterion', 'f', 'n.criterion_id = f.nid');
+    $query->leftjoin('wikicompare_cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND n.criterion_id = ci.criterion_id');
     $query->condition('n.nid', $node->nid);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -806,14 +806,14 @@ function wikicompare_inherit_product_test_form_evaluation(&$test_support, $test,
   if ($test == True) {
 
     //Get inherited evaluation details .
-    $query = db_select('cache_evaluation', 'n');
+    $query = db_select('wikicompare_cache_evaluation', 'n');
     $query->addField('c', 'inherit_product_id', 'inherit_id');
     $query->addField('c', 'has_children', 'product_has_children');
     $query->addField('f', 'has_children', 'criterion_has_children');
     $query->addField('ci', 'support', 'inherit_support');
-    $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
-    $query->leftjoin('cache_criterion', 'f', 'n.criterion_id = f.nid');
-    $query->leftjoin('cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND n.criterion_id = ci.criterion_id');
+    $query->leftjoin('wikicompare_cache_product', 'c', 'n.product_id = c.nid');
+    $query->leftjoin('wikicompare_cache_criterion', 'f', 'n.criterion_id = f.nid');
+    $query->leftjoin('wikicompare_cache_evaluation', 'ci', 'c.inherit_product_id = ci.product_id AND n.criterion_id = ci.criterion_id');
     $query->condition('n.nid', $node->nid);
     $result = $query->execute();
     foreach ($result as $record) {
@@ -919,7 +919,7 @@ function wikicompare_inherit_product_fastaction_submit_element(&$node, &$donotup
  */
 function wikicompare_inherit_product_demo_export(&$output) {
 
-  $query = db_select('cache_product', 'n');
+  $query = db_select('wikicompare_cache_product', 'n');
   $query->addField('n', 'nid', 'nid');
   $query->addField('n', 'inherit_product_id', 'inherit_product_id');
   $query->where("n.inherit_product_id IS NOT NULL");
@@ -1026,7 +1026,7 @@ function wikicompare_inherit_product_demo_submit_generate($form_state, $products
   if (!empty($products_created) && $form_state['input']['product_inherit_chance'] != 0) {
 
     $product_without_children = array();
-    $query = db_select('cache_product', 'c');
+    $query = db_select('wikicompare_cache_product', 'c');
     $query->addField('c', 'nid', 'nid');
     $query->condition("c.has_children", 0);
     $result = $query->execute();

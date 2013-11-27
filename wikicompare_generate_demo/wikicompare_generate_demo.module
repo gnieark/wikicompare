@@ -129,12 +129,12 @@ function wikicompare_export_page() {
   }
 
   //Get all evaluations.
-  $query = db_select('cache_evaluation', 'n');
+  $query = db_select('wikicompare_cache_evaluation', 'n');
   $query->addField('c', 'nid', 'cid');
   $query->addField('f', 'nid', 'fid');
   $query->addField('n', 'support', 'support');
-  $query->leftjoin('cache_product', 'c', 'n.product_id = c.nid');
-  $query->leftjoin('cache_criterion', 'f', 'n.criterion_id = f.nid');
+  $query->leftjoin('wikicompare_cache_product', 'c', 'n.product_id = c.nid');
+  $query->leftjoin('wikicompare_cache_criterion', 'f', 'n.criterion_id = f.nid');
   $query->condition("c.has_children", 0);
   $query->condition("f.has_children", 0);
   $query->condition("n.support", 1);
@@ -531,10 +531,10 @@ function wikicompare_generate_demo_submit_settings_page($form, $form_state) {
   if (!empty($products_created) && !empty($criterions_created) && $form_state['input']['evaluation_support_chance'] != 0) {
 
     //Get all evaluation node.
-    $query = db_select('cache_evaluation', 'i');
+    $query = db_select('wikicompare_cache_evaluation', 'i');
     $query->addField('i', 'nid', 'nid');
-    $query->leftjoin('cache_product', 'c', 'i.product_id = c.nid');
-    $query->leftjoin('cache_criterion', 'f', 'i.criterion_id = f.nid');
+    $query->leftjoin('wikicompare_cache_product', 'c', 'i.product_id = c.nid');
+    $query->leftjoin('wikicompare_cache_criterion', 'f', 'i.criterion_id = f.nid');
     $query->condition("c.has_children", 0);
     $query->condition("f.has_children", 0);
     $query->condition('i.criterion_id', $criterions_created, 'in');

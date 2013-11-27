@@ -13,39 +13,39 @@
  */
 function wikicompare_inherit_product_schema_alter(&$schema) {
 
-  $schema['cache_product']['fields']['inherit_product_id'] = array(
+  $schema['wikicompare_cache_product']['fields']['inherit_product_id'] = array(
       'description' => 'The inherited id of the product node',
       'type' => 'int',
       'unsigned' => TRUE,
   );
-  $schema['cache_product']['indexes']['inherit_product_id'] = array('inherit_product_id');
-  $schema['cache_product']['foreign keys']['inherit_product_id'] = array(
+  $schema['wikicompare_cache_product']['indexes']['inherit_product_id'] = array('inherit_product_id');
+  $schema['wikicompare_cache_product']['foreign keys']['inherit_product_id'] = array(
     'table' => 'node',
     'columns' => array('inherit_product_id' => 'nid'),
   );
-  $schema['cache_product']['fields']['inherit_changed'] = array(
+  $schema['wikicompare_cache_product']['fields']['inherit_changed'] = array(
     'description' => "Boolean indicated that the inherited product of this node has changed, and thus we need to update the parent through inherit of his evaluations",
     'type' => 'int',
     'size' => 'tiny',
     'not null' => TRUE,
     'default' => 0,
   );
-  $schema['cache_product']['indexes']['inherit_changed'] = array('inherit_changed');
+  $schema['wikicompare_cache_product']['indexes']['inherit_changed'] = array('inherit_changed');
 
-  $schema['cache_evaluation']['fields']['use_from_inherit'] = array(
+  $schema['wikicompare_cache_evaluation']['fields']['use_from_inherit'] = array(
       'description' => "Boolean indicated if we should use the data from the inherited product",
       'type' => 'int',
       'size' => 'tiny',
       'not null' => TRUE,
       'default' => 1,
   );
-  $schema['cache_evaluation']['fields']['parent_through_inherit_id'] = array(
+  $schema['wikicompare_cache_evaluation']['fields']['parent_through_inherit_id'] = array(
     'description' => 'The inherited evaluation id',
     'type' => 'int',
     'unsigned' => TRUE,
   );
-  $schema['cache_evaluation']['indexes']['parent_through_inherit_id'] = array('parent_through_inherit_id');
-  $schema['cache_evaluation']['foreign keys']['parent_through_inherit_id'] = array(
+  $schema['wikicompare_cache_evaluation']['indexes']['parent_through_inherit_id'] = array('parent_through_inherit_id');
+  $schema['wikicompare_cache_evaluation']['foreign keys']['parent_through_inherit_id'] = array(
     'table' => 'node',
     'columns' => array('parent_through_inherit_id' => 'nid'),
   );
@@ -67,9 +67,9 @@ function wikicompare_inherit_product_install() {
 
 
   //Add index in cache table.
-  $schema = drupal_get_schema('cache_product');
-  db_add_field('cache_product', 'inherit_product_id', $schema['fields']['inherit_product_id']);
-  db_add_index('cache_product', 'inherit_product_id', array('inherit_product_id'));
+  $schema = drupal_get_schema('wikicompare_cache_product');
+  db_add_field('wikicompare_cache_product', 'inherit_product_id', $schema['fields']['inherit_product_id']);
+  db_add_index('wikicompare_cache_product', 'inherit_product_id', array('inherit_product_id'));
 
   //Add field.
   $field = array(
@@ -98,12 +98,12 @@ function wikicompare_inherit_product_install() {
   );
   field_create_instance($instance);
 
-  db_add_field('cache_product', 'inherit_changed', $schema['fields']['inherit_changed']);
-  db_add_index('cache_product', 'inherit_changed', array('inherit_changed'));
+  db_add_field('wikicompare_cache_product', 'inherit_changed', $schema['fields']['inherit_changed']);
+  db_add_index('wikicompare_cache_product', 'inherit_changed', array('inherit_changed'));
 
   //Add index in the cache table.
-  $schema = drupal_get_schema('cache_evaluation');
-  db_add_field('cache_evaluation', 'use_from_inherit', $schema['fields']['use_from_inherit']);
+  $schema = drupal_get_schema('wikicompare_cache_evaluation');
+  db_add_field('wikicompare_cache_evaluation', 'use_from_inherit', $schema['fields']['use_from_inherit']);
 
   //Add field.
   $field = array(
@@ -136,8 +136,8 @@ function wikicompare_inherit_product_install() {
   );
   field_create_instance($instance);
 
-  db_add_field('cache_evaluation', 'parent_through_inherit_id', $schema['fields']['parent_through_inherit_id']);
-  db_add_index('cache_evaluation', 'parent_through_inherit_id', array('parent_through_inherit_id'));
+  db_add_field('wikicompare_cache_evaluation', 'parent_through_inherit_id', $schema['fields']['parent_through_inherit_id']);
+  db_add_index('wikicompare_cache_evaluation', 'parent_through_inherit_id', array('parent_through_inherit_id'));
 
   //Set use_from_inherit of old evaluations to 1.
   $evaluations = db_query("SELECT nid FROM node WHERE type = 'evaluation'");
@@ -148,7 +148,7 @@ function wikicompare_inherit_product_install() {
   }
 
   //Update cache
-  db_update('cache_evaluation')
+  db_update('wikicompare_cache_evaluation')
     ->fields(array(
       'use_from_inherit' => 1,
     ))
@@ -165,16 +165,16 @@ function wikicompare_inherit_product_install() {
 function wikicompare_inherit_product_uninstall() {
 
   //Remove field in cache.
-  db_drop_field('cache_product', 'inherit_product_id');
-  db_drop_index('cache_product', 'inherit_product_id');
+  db_drop_field('wikicompare_cache_product', 'inherit_product_id');
+  db_drop_index('wikicompare_cache_product', 'inherit_product_id');
   field_delete_field('wikicompare_inherit_product_id');
-  db_drop_field('cache_product', 'inherit_changed');
-  db_drop_index('cache_product', 'inherit_changed');
+  db_drop_field('wikicompare_cache_product', 'inherit_changed');
+  db_drop_index('wikicompare_cache_product', 'inherit_changed');
 
-  db_drop_field('cache_evaluation', 'use_from_inherit');
+  db_drop_field('wikicompare_cache_evaluation', 'use_from_inherit');
   field_delete_field('wikicompare_use_from_inherit');
-  db_drop_field('cache_evaluation', 'parent_through_inherit_id');
-  db_drop_index('cache_evaluation', 'parent_through_inherit_id');
+  db_drop_field('wikicompare_cache_evaluation', 'parent_through_inherit_id');
+  db_drop_index('wikicompare_cache_evaluation', 'parent_through_inherit_id');
 
   // Purge all field information
   // api.drupal.org/api/function/field_purge_batch/7

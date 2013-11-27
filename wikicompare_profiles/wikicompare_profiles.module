@@ -51,7 +51,7 @@ function wikicompare_profiles_node_info() {
 function wikicompare_profiles_request_db($query, $type) {
   if ($type == 'profile') {
     $query->addField('nf', 'criterion_nid', 'profile_criterion_id');
-    $query->leftjoin('cache_profile_criterion_rel', 'nf', 'n.nid = nf.profile_nid');
+    $query->leftjoin('wikicompare_cache_profile_criterion_rel', 'nf', 'n.nid = nf.profile_nid');
   }
 }
 
@@ -143,7 +143,7 @@ function profile_insert($node) {
   //Insert the data in the many2many table cache.
   $header = array('profile_nid', 'criterion_nid');
   if (!empty($criterion_m2m)) {
-    $query = db_insert('cache_profile_criterion_rel')->fields($header);
+    $query = db_insert('wikicompare_cache_profile_criterion_rel')->fields($header);
     foreach ($criterion_m2m as $record) {
       $query->values($record);
     }
@@ -167,7 +167,7 @@ function profile_delete($node) {
   wikicompare_delete_node('profile', $node);
 
   //Remove the many2many cache data related to the deleted profile.
-  db_delete('cache_profile_criterion_rel')
+  db_delete('wikicompare_cache_profile_criterion_rel')
     ->condition('profile_nid', $node->nid)
     ->execute();
 
@@ -212,7 +212,7 @@ function wikicompare_profiles_after_update_fields($node_revision) {
     //Get old criterions, and find the ones we profile to delete.
     $to_delete = array();
     $old_criterion_ids = array();
-    $query = db_select('cache_profile_criterion_rel', 'f');
+    $query = db_select('wikicompare_cache_profile_criterion_rel', 'f');
     $query->addField('f', 'criterion_nid', 'criterion_nid');
     $query->condition('f.profile_nid', $node_revision->nid);
     $result = $query->execute();
@@ -237,7 +237,7 @@ function wikicompare_profiles_after_update_fields($node_revision) {
     //Insert the new criterions in the cache many2many table.
     $header = array('profile_nid', 'criterion_nid');
     if (!empty($to_create)) {
-      $query = db_insert('cache_profile_criterion_rel')->fields($header);
+      $query = db_insert('wikicompare_cache_profile_criterion_rel')->fields($header);
       foreach ($to_create as $record) {
         $query->values($record);
       }
@@ -246,7 +246,7 @@ function wikicompare_profiles_after_update_fields($node_revision) {
 
     //Delete the old criterions in the cache many2many table.
     if (!empty($to_delete)) {
-      db_delete('cache_profile_criterion_rel')
+      db_delete('wikicompare_cache_profile_criterion_rel')
         ->condition('profile_nid', $node_revision->nid)
         ->condition('criterion_nid', $to_delete, 'in')
         ->execute();
@@ -846,7 +846,7 @@ function wikicompare_profiles_demo_submit_generate($form_state) {
 
     $criterions_without_children = array();
 
-    $query = db_select('cache_criterion', 'f');
+    $query = db_select('wikicompare_cache_criterion', 'f');
     $query->addField('f', 'nid', 'nid');
     $query->condition("f.has_children", 0);
     $result = $query->execute();

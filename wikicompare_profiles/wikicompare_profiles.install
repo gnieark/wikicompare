@@ -17,10 +17,10 @@ require_once drupal_get_path('module', 'wikicompare') . '/wikicompare.install';
 function wikicompare_profiles_schema() {
 
   //Call the generic function from wikicompare.install.
-  $schema['cache_profile'] = wikicompare_node_schema('profile');
+  $schema['wikicompare_cache_profile'] = wikicompare_node_schema('profile');
 
   //Add many2many table for the link between profile and criterion.
-  $schema['cache_profile_criterion_rel'] = array(
+  $schema['wikicompare_cache_profile_criterion_rel'] = array(
 
     'description' => 'Cache table storing the link between profile and criterion. Used so the percentage of comparative table are computed faster.',
     'fields' => array(
