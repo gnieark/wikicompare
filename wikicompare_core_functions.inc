@@ -443,12 +443,8 @@ function wikicompare_refresh_caches() {
           $parent_array[$record->parent_id][$record->nid] = $record->nid;
         }
         $to_insert[$record->nid]['has_children'] = 0;
-        if ($type == 'product') {
-          $to_insert[$record->nid]['total'] = 0;
-        }
-      } else {
-        $to_insert[$record->nid]['percent'] = 0;
       }
+
     }
 
     if ($type != 'evaluation') {
@@ -478,11 +474,6 @@ function wikicompare_refresh_caches() {
     //We need to insert the header in same order than field.
     if ($type != 'evaluation') {
       $header[] = 'has_children';
-    } else {
-      $header[] = 'percent';
-    }
-    if ($type == 'product') {
-      $header[] = 'total';
     }
 
     //Insert the data into the wikicompare cache table.
@@ -627,7 +618,7 @@ function wikicompare_stop_computation() {
 
   db_update('wikicompare_cache_evaluation')
     ->fields(array(
-      'percent' => 0,
+      'percent' => NULL,
       'css_class' => '',
     ))
     ->execute();
