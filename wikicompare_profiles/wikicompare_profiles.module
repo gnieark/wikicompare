@@ -400,25 +400,6 @@ function wikicompare_profiles_recover_criterions($profile_ids, $settings) {
 
 
 /*
- * Get selected criterion for dialog.
- */
-function wikicompare_profiles_dialog_get_selected_criterions(&$settings) {
-  if ($settings['action'] == 'select_criterions_profile') {
-    $node = node_load($settings['nid']);
-    if (isset($node->wikicompare_criterions['und'])) {
-      $selected_criterion_ids = array();
-      foreach ($node->wikicompare_criterions['und'] as $array) {
-        $fid = $array['target_id'];
-        $selected_criterion_ids[$fid] = $fid;
-      }
-      $settings['displayed_ids'] = $selected_criterion_ids;
-    }
-  }
-}
-
-
-
-/*
  * Add commmand to reset the profile part of the table.
  *
  * @param $commands
@@ -506,7 +487,7 @@ function profile_form($node, $form_state) {
  */
 function wikicompare_profiles_form_profile_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
-  wikicompare_build_form('form', $form, $form_state, 'profile');
+  wikicompare_build_form(array(),'form', $form, $form_state, 'profile');
 }
 
 
@@ -613,7 +594,7 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
       $criterions = wikicompare_build_recursive_data('criterion', $selected_criterion_ids, $settings);
       $selected_criterion_itemlist = wikicompare_build_itemlist('criterion', $criterions['tree'], 0, $settings);
       foreach ($selected_criterion_ids as $criterion_id) {
-        $selected_criterion_hidden .= '<div class="profile_criterion">' . $criterion_id . '</div>';
+        $selected_criterion_hidden .= '<div class="profile-criterion">' . $criterion_id . '</div>';
       }
     }
 
@@ -624,8 +605,9 @@ function wikicompare_profiles_build_form(&$form, &$form_state, &$output, $form_t
       '#href' => 'wikicompare-get-dialog-callback/nojs',
       '#id' => 'select-criterion-link-' . $nid,
       '#attributes' => array(
-        'class' => array('dialog'),
-        'action' => 'select-criterions-profile',
+        'class' => array('ajaxlink'),
+        'action' => 'open-dialog',
+        'dialog-action' => 'select-criterions-profile',
         'side' => 'left',
         'nid' => $nid,
         'ntype' => 'criterion',

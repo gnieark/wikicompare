@@ -432,7 +432,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
      * @param action
      *   The action callback which will be called.
      */
-    $('.ajaxlink:not(.listener-set)').addClass('listener-set').each(function () {
+    $('.ajaxlink:not(#storage-zone .ajaxlink):not(.listener-set)').addClass('listener-set').each(function () {
 
       var object = this;
       var action = $(object).attr('action');
@@ -552,10 +552,16 @@ Drupal.behaviors.WikicompareComparativeTable = {
         sendContainer = false;
         sendColspan = false;
         autoColspan = false;
-        sendFastaction = false;
         computed = 0;
         columnNumber = 0;
         depth = 0;
+
+        var fastaction = 0;
+        if ($('#fastaction-footer').hasClass('selected')) {
+          fastaction = 1;
+        }
+        //Send the fastaction flag, so drupal know if the fastaction mode is activated.
+        options.data.fastaction = fastaction;
 
         //When we want to display the children in an itemlist.
         if (action == 'expand-list-children') {
@@ -571,7 +577,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           sendStates = true;
           //In popin, we may have to block a forbidden nid.
           sendForbiddenNid = true;
-          sendFastaction = true;
           options.data.type = type;
           options.data.context = context;
 
@@ -608,10 +613,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           sendProductsColumns = true;
           //Send states if we want to also display the draft and closed items.
           sendStates = true;
-          sendFastaction = true;
 
           //Get the depth of the table.
-          depth = getTableDepth('.breadcrumb-item');
+          depth = getTableDepth('.return-link');
           options.data.depth = depth;
 
           //Get the height of the table, to know if we need to augment it because of the loaded content.
@@ -654,7 +658,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           sendCriterions = true;
           //Resize all lines to the new size of the table.
           autoColspan = true;
-          sendFastaction = true;
         }
 
         //If we are selected a node in popin.
@@ -757,6 +760,19 @@ Drupal.behaviors.WikicompareComparativeTable = {
             options.data.displayed_ids = manualSelectedCriterionIds;
           }
 
+          if ($(object).attr('dialog-action') == 'select-criterions-profile') {
+            var criterionIds = {};
+            $('.profile-criterion').each(function (key, value) {
+              var cid = $(this).text();
+              criterionIds[cid] = cid;
+            });
+            //Add them in the ajax call variables.
+            options.data.displayed_ids = criterionIds;
+
+            sendType = false;
+            options.data.type = 'criterion';
+          }
+
           if ($(object).attr('dialog-action') == 'selectdialog' || $(object).attr('dialog-action') == 'select-criterions-profile') {
             options.data.action = $(object).attr('dialog-action');
             options.data.nid = $(object).attr('nid');
@@ -770,6 +786,12 @@ Drupal.behaviors.WikicompareComparativeTable = {
             //Send the fastaction (add, edit, remove).
             options.data.fastaction = $(object).attr('fastaction');
             options.data.parent_id = $(object).attr('parent-id');
+
+            //Force the parent field even in fastadd in product on home page.
+            if ($(object).parents('#sidebar-second').length) {
+              options.data.force_parent_field = true;
+            }
+
           }
 
         }
@@ -873,7 +895,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'toogle-fastaction') {
-          options.data.control_mode = 'toogle-fastaction';
+          options.data.control_mode = 'toogle_fastaction';
         }
 
         //If we want to clean the table.
@@ -889,10 +911,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
           sendSelectedCriterions = true;
           //Send states.
           sendStates = true;
-          sendFastaction = true;
 
           var criterionIds = {};
-          $('.criterion_item').each(function (key, value) {
+          $('.criterion-item').each(function (key, value) {
             var fid = $(this).attr('nid');
             criterionIds[fid] = fid;
           });
@@ -972,11 +993,9 @@ Drupal.behaviors.WikicompareComparativeTable = {
             $('.link-fastaction[ntype=' + ftype + ']').each(function (key, value) {
               fastactionAdds[$(this).attr('nid')] = $(this).attr('nid');
             });
-            options.data[ftype + '-fastaction-adds'] = fastactionAdds;
+            options.data[ftype + '_fastaction_adds'] = fastactionAdds;
 
           }
-
-
 
         }
 
@@ -1163,15 +1182,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //Get and send the size of the table.
         if (sendColspan == true) {
           options.data.colspan = $('.header-product').length + 1;
-        }
-
-        if (sendFastaction == true) {
-          var fastaction = 0;
-          if ($('#fastaction-footer').hasClass('selected')) {
-            fastaction = 1;
-          }
-          //Send the fastaction flag, so drupal know if the fastaction mode is activated.
-          options.data.fastaction = fastaction;
         }
 
         //Launch regular beforeSerialize function, only if we are not skipping the ajax call.
@@ -1412,6 +1422,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           oddEvenProductList('.product-list-item');
         }
 
+        if (action == 'submit-fastaction-form') {
+          //Refresh oddEven.
+          oddEvenProductList('.product-list-item');
+        }
+
         if (action == 'expand-row-children') {
           //We are adding a new depth level.
           depth = depth + 1;
@@ -1422,6 +1437,10 @@ Drupal.behaviors.WikicompareComparativeTable = {
           table += '</table>';
           //Attach the table after the displayed table.
           $('#criterion-tables').append(table);
+
+          $('#criterion-table-' + depth + ' .chart-percent').each(function(index) {
+            $(this).before('<canvas class="chart" height="100%" percent="' + $(this).text() + '"></canvas>');
+          });
 
           //Slide the tables to display the new one.
           $("#criterion-tables").css("transform","translateX(-" + (depth) * 100 + "%)");
@@ -1444,6 +1463,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'open-dialog') {
           //We add the scrollbar only now because before we didn't had the content and so the scrollbar size.
           $('#' + $(object).attr('side') + '-dialog').addClass('with-custom-scrollbar');
+
+          //We refresh all select field, because in dialog the value isn't automatically recovered.
+          $('.select select').each(function(index) {
+            var $this = $(this);
+
+            $this.siblings('span').text($this.find('[value=' + this.value + ']').text());
+          });
 
           //Depending of the side, we change the translate direction.
           var sign = '';
@@ -1511,7 +1537,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
     function getTableDepth(dom) {
       var maxDepth = 0;
       $(dom + ':not(#storage-zone ' + dom + ')').each(function (key, value) {
-        var depth = $(this).attr('nid');
+        var depth = $(this).attr('depth');
         depth = parseInt(depth);
         if (depth > maxDepth) {
           maxDepth = depth;

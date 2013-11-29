@@ -27,15 +27,15 @@ function product_form($node, $form_state) {
  */
 function wikicompare_form_product_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
-  wikicompare_build_form('form', $form, $form_state, 'product');
+  wikicompare_build_form(array(), 'form', $form, $form_state, 'product');
 }
 function wikicompare_form_criterion_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
-  wikicompare_build_form('form', $form, $form_state, 'criterion');
+  wikicompare_build_form(array(), 'form', $form, $form_state, 'criterion');
 }
 function wikicompare_form_evaluation_node_form_alter(&$form, &$form_state, $form_id) {
   //Call type-agnostic function.
-  wikicompare_build_form('form', $form, $form_state, 'evaluation');
+  wikicompare_build_form(array(), 'form', $form, $form_state, 'evaluation');
 }
 
 
@@ -76,7 +76,7 @@ function wikicompare_form_evaluation_node_form_alter(&$form, &$form_state, $form
  * @param $readonly_translation
  *   Flag defining if the user should be able to modify the translation node in fastaction.
  */
-function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $type=NULL, &$output=NULL, $nid=NULL, $fastaction=NULL, $node=NULL, $readonly=NULL, $tnode=NULL, $readonly_translation=NULL) {
+function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state=NULL, $type=NULL, &$output=NULL, $nid=NULL, $fastaction=NULL, $node=NULL, $readonly=NULL, $tnode=NULL, $readonly_translation=NULL) {
 
   if ($form_type == 'form') {
 
@@ -147,7 +147,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
     }
 
     //Code relative to the parent field. The field isn't displayed in fastadd mode because the parent is defined by the button fastadd itself.
-    if ($form_type == 'form' || $fastaction == 'edit') {
+    if ($form_type == 'form' || $fastaction == 'edit' || isset($settings['force_parent_field'])) {
 
       $parent_id = 0;
       //Default message.
@@ -164,7 +164,7 @@ function wikicompare_build_form($form_type, &$form=NULL, &$form_state=NULL, $typ
       $select_parent_link = array(
         '#type' => 'link',
         '#title' => 'Select parent',
-        '#href' => 'wikicompare_get_dialog_callback/nojs',
+        '#href' => 'wikicompare-get-dialog-callback/nojs',
         '#id' => 'select-parent-link-' . $nid,
         '#attributes' => array(
           'class' => array('ajaxlink'),
@@ -782,7 +782,7 @@ function wikicompare_table_fastaction_form_response($method = 'ajax'){
     $form = array();
     $form_state = array();
     //Call the generic function which will build the form. $output will be updated with the form.
-    wikicompare_build_form('fastaction', $form, $form_state, $type, $output, $nid, $fastaction, $node, $readonly, $tnode, $readonly_translation);
+    wikicompare_build_form($_POST, 'fastaction', $form, $form_state, $type, $output, $nid, $fastaction, $node, $readonly, $tnode, $readonly_translation);
 
   }
 
@@ -1064,6 +1064,11 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
       //Close the dialog
       $commands[] = ajax_command_invoke('#' . $_POST['side'] . '-dialog-close', 'click', array());
+
+      //Prepare the new nid for the control function, so it can detect the missing nid.
+      if ($fastaction == 'add') {
+        $settings['control_nid'] = $node->nid;
+      }
 
       //Update the table.
       $commands = array_merge($commands, wikicompare_control_table($settings));

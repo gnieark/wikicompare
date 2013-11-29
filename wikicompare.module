@@ -466,6 +466,7 @@ function wikicompare_block_info_alter(&$blocks, $theme, $code_blocks) {
 
   $blocks['system']['navigation']['region'] = -1;
   $blocks['system']['management']['region'] = -1;
+  $blocks['user']['login']['region'] = -1;
 
 }
 
