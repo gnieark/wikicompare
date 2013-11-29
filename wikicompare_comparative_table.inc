@@ -258,11 +258,15 @@ function wikicompare_home_page() {
   $output .= '</thead></table>';
   $output .= '<div id="products-list">';
   $output .= '<table>';
+  $output .= '<colgroup>';
   $output .= '<col class="list-column-product"/><col class="list-column-rank"/>';
   foreach ($settings['infofields'] as $infofield) {
     $output .= '<col style="width:' .   $settings['width'] . '%"/>';
   }
+  $output .= '</colgroup>';
+  $output .= '<tbody>';
   $output .= $res['output'];
+  $output .= '</tbody>';
   $output .= '</table>';
   $output .= '</div>';
 
@@ -2681,6 +2685,7 @@ function wikicompare_control_table($settings) {
 
       //If during the previous tests, we ask to reset the table. Only the part concerned by the node type will be reset.
       if ($reset == True) {
+
         switch ($type) {
           case 'product':
             $settings['displayed_ids'] = $settings['product_column_ids'];

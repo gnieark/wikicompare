@@ -273,6 +273,7 @@ function wikicompare_node_schema($type) {
       'description' => 'The percentage returned by the node',
       'type' => 'float',
       'default' => NULL,
+      'not null' => TRUE,
     );
     $schema['fields']['css_class'] = array(
       'description' => 'The css class returned by the node',
@@ -352,6 +353,7 @@ function wikicompare_node_schema($type) {
         'description' => 'The total percentage of the product',
         'type' => 'float',
         'default' => NULL,
+        'not null' => TRUE,
       );
       break;
     //Criterion specific fields.

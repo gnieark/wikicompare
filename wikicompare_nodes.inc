@@ -101,6 +101,9 @@ function wikicompare_insert_node($type, $node) {
   }
   $fields['parent_id'] = $parent_id;
   $fields['has_children'] = 0;
+  if ($type == 'product') {
+    $fields['total'] = 0;
+  }
 
   //Insert in wikicompare cache table.
   db_insert('wikicompare_cache_' . $type)
@@ -690,6 +693,7 @@ function wikicompare_create_evaluations($node, $type) {
       'criterion_id' => $node_evaluation->wikicompare_criterion_id['und'][0]['target_id'],
       'product_id' => $node_evaluation->wikicompare_product_id['und'][0]['target_id'],
       'support' => 0,
+      'percent' => 0,
       $type . '_parent_id' => $parent_id,
       $type . '_state' => $node->wikicompare_state['und'][0]['value'],
       $type . '_has_children' => 0,
@@ -714,7 +718,7 @@ function wikicompare_create_evaluations($node, $type) {
   if (!empty($cache_evaluation)) {
 
     //Prepare the header for the mass insert in evaluation cache table.
-    $header = array('nid', 'vid', 'criterion_id', 'product_id', 'support', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'criterion_type', 'criterion_weight');
+    $header = array('nid', 'vid', 'criterion_id', 'product_id', 'support', 'percent', $type . '_parent_id', $type . '_state', $type . '_has_children', $countertype . '_parent_id', $countertype . '_state', $countertype . '_has_children', 'criterion_type', 'criterion_weight');
 
     if (module_exists('wikicompare_inherit_product')) {
       //Inherit product specific field.
