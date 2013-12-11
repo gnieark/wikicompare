@@ -35,7 +35,7 @@ function wikicompare_home_page() {
    */
   $output .= '<div id="sidebar-first">';
 
-  $output .= '<h2 id="filter-title">My Filter</h2>';
+  $output .= '<div><h2 id="filter-title">My Filter</h2>';
 
   //Add the reset link.
   $reset_link = array(
@@ -49,9 +49,7 @@ function wikicompare_home_page() {
       'mode' => 'reset',
     ),
   );
-  $output .= ' ' . render($reset_link) . '</p>';
-
-  $output .= '<br/><br/><br/>';
+  $output .= ' ' . render($reset_link) . '</div>';
 
   $output .= '<div id="filters-zone">';
 
@@ -296,7 +294,7 @@ function wikicompare_home_page() {
    */
   $output .= '<div id="sidebar-second">';
 
-  $output .= '<h2>Top Criterions</h2>';
+  $output .= '<div><h2>Top Criterions</h2></div>';
 
   $output .= wikicompare_table_render_home_suggest();
 
@@ -743,10 +741,10 @@ function wikicompare_table_render_product_item($products, $products_sort, $paren
       }
       $output .= '>';
       //Render product name.
-      $output .= '<td class="list-column-product">' . wikicompare_table_get_supertitle_item('product', $product, $settings) . '<br/>';
-      $output .= '<span class="short-description">' . $product['data']->short_description . '</span>';
-      $output .= '<div class="button compare-button" nid="' . $product_id . '"><button>Compare</button></div>';
-      $output .= '<span class="compare-link" nid="' . $product_id . '"></span>';
+      $output .= '<td class="list-column-product"><div>' . wikicompare_table_get_supertitle_item('product', $product, $settings) . '<br/>';
+      $output .= '<span class="short-description">' . $product['data']->short_description . '</span></div>';
+      $output .= '<div><div class="button compare-button" nid="' . $product_id . '"><button>Compare</button></div>';
+      $output .= '<span class="compare-link" nid="' . $product_id . '"></span></div>';
       $output .= '</td>';
       //Render percentage.
       $output .= '<td class="list-column-rank"><div>';

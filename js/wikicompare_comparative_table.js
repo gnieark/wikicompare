@@ -275,11 +275,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var data = [
         {
           value: percent,
-          color: "#b7cf37"
+          color: "#bedd00"
         },
         {
           value : 100 - percent,
-          color : "#cb5f34"
+          color : "#e74e0f"
         }
       ];
 
