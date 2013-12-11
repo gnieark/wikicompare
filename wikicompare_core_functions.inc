@@ -618,7 +618,7 @@ function wikicompare_stop_computation() {
 
   db_update('wikicompare_cache_evaluation')
     ->fields(array(
-      'percent' => NULL,
+      'percent' => 0,
       'css_class' => '',
     ))
     ->execute();
