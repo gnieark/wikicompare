@@ -28,6 +28,8 @@ function wikicompare_home_page() {
   drupal_add_library('wikicompare', 'wikicompare_comparative_table');
   $_SESSION['current_path'] = current_path();
 
+  $settings = wikicompare_initialize_settings();
+
   $output = '<div id="home">';
 
   /*
@@ -85,11 +87,6 @@ function wikicompare_home_page() {
     $filters[] = $record;
   }
 
-  $img = theme('image', array(
-    'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/icon-filters.png',
-    'alt' => 'Filter',
-  ));
-
   //Render filter, depending of the type.
   foreach ($filters as $record) {
     switch ($record->type) {
@@ -97,7 +94,7 @@ function wikicompare_home_page() {
         $filter = array(
           '#type' => 'textfield',
           '#id' => 'filter-' . $record->name,
-          '#title' => $record->title . $img,
+          '#title' => $record->title,
           '#size' => 25,
           '#attributes' => array(
             'field' => $record->name,
@@ -108,7 +105,7 @@ function wikicompare_home_page() {
         break;
       case 'number':
         $output .= '<div class="form-item">';
-        $output .= '<label>' . $record->title . $img . '</label>';
+        $output .= '<label>' . $record->title . '</label>';
         $output .= '<input id="filter-min-' . $record->name . '" class="home-filter min number" type="text" size="5" field="' . $record->name . '">';
         $output .= ' - ';
         $output .= '<input id="filter-max-' . $record->name . '" class="home-filter max number" type="text" size="5" field="' . $record->name . '">';
@@ -119,7 +116,7 @@ function wikicompare_home_page() {
         switch ($record->filter_type) {
           case 'select':
             $output .= '<div class="form-item">';
-            $output .= '<label>' . $record->title . $img . '</label>';
+            $output .= '<label>' . $record->title . '</label>';
             $output .= '<div class="select">';
             $output .= '<span></span>';
             $output .= '<select id="filter-' . $record->name . '" class="home-filter" field="' . $record->name . '">';
@@ -132,7 +129,7 @@ function wikicompare_home_page() {
             break;
           case 'checkboxes':
             $output .= '<div class="form-item">';
-            $output .= '<label>' . $record->title . $img . '</label>';
+            $output .= '<label>' . $record->title . '</label>';
             foreach (explode("\n", $record->allowed_values) as $value) {
               $output .= '<input type="checkbox" id="filter-' . $record->name . '" class="home-filter" field="' . $record->name . '" value="' . $value . '"  />' . $value . '<br/>';
             }
@@ -205,10 +202,39 @@ function wikicompare_home_page() {
 
 
   /*
+   * Right column.
+   */
+  $output .= '<div id="sidebar-second">';
+
+  $output .= '<div><h2>Top Criterions</h2></div>';
+
+  $output .= wikicompare_table_render_home_suggest();
+
+  $toogle_product_mode_link = array(
+    '#type' => 'link',
+    '#title' => 'Toogle product mode',
+    '#href' => 'wikicompare-compute-table-callback/nojs',
+    '#id' => 'toogle-product-mode-link',
+    '#attributes' => array(
+      'class' => array('ajaxlink'),
+      'action' => 'refresh-list',
+      'mode' => 'toogle-product-mode',
+    ),
+  );
+  $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
+
+  $output .= '<p>' . wikicompare_generate_add_link('product', $settings) . '</p>';
+
+  $output .= '<div id="storage-zone" style="display:none;">';
+  $output .= '</div>';
+  $output .= '</div>';
+
+
+
+  /*
    * Central column.
    */
   $output .= '<div id="products-list-column">';
-  $settings = wikicompare_initialize_settings();
 
   //Get all infofields displayed on product list. The number of infofield here is limited.
   $settings['infofields'] = array();
@@ -285,36 +311,6 @@ function wikicompare_home_page() {
   $output .= '<span id="best-compare-url" style="display:none;">' . $res['url']['best-url'] . '</span>';
   $output .= '<span id="suffix-compare-url" style="display:none;">' . $res['url']['suffix'] . '</span>';
 
-  $output .= '</div>';
-
-
-
-  /*
-   * Right column.
-   */
-  $output .= '<div id="sidebar-second">';
-
-  $output .= '<div><h2>Top Criterions</h2></div>';
-
-  $output .= wikicompare_table_render_home_suggest();
-
-  $toogle_product_mode_link = array(
-    '#type' => 'link',
-    '#title' => 'Toogle product mode',
-    '#href' => 'wikicompare-compute-table-callback/nojs',
-    '#id' => 'toogle-product-mode-link',
-    '#attributes' => array(
-      'class' => array('ajaxlink'),
-      'action' => 'refresh-list',
-      'mode' => 'toogle-product-mode',
-    ),
-  );
-  $output .= '<p>' . render($toogle_product_mode_link) . '</p>';
-
-  $output .= '<p>' . wikicompare_generate_add_link('product', $settings) . '</p>';
-
-  $output .= '<div id="storage-zone" style="display:none;">';
-  $output .= '</div>';
   $output .= '</div>';
 
   $output .= '</div>';

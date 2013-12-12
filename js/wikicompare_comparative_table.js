@@ -279,7 +279,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         },
         {
           value : 100 - percent,
-          color : "#e74e0f"
+          color : "#FF4F12"
         }
       ];
 
@@ -308,7 +308,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         $('#suggest-slideshow').animate({marginTop:'-' + suggestHeight + 'em'},800,function(){  //
            $('#suggest-slideshow').css({marginTop:0}).find("li:last").after($('#suggest-slideshow').find("li:first"));  
         }) 
-      }, 10000);  
+      }, 15000);  
     });
 
 
