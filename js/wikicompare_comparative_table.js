@@ -308,7 +308,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         $('#suggest-slideshow').animate({marginTop:'-' + suggestHeight + 'em'},800,function(){  //
            $('#suggest-slideshow').css({marginTop:0}).find("li:last").after($('#suggest-slideshow').find("li:first"));  
         }) 
-      }, 15000);  
+      }, 15000);
     });
 
 
@@ -1241,6 +1241,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
                   $('.item-link:.displayed[ntype=' + type + '][context=' + context + '][nid!=' + nid + ']').each(function(index) {
                     if (!($(this).attr('nid') in parentIds)) {
                       $(this).click();
+                      //Make sure all displayed class of this node is removed (especially if the li was copied in the checked zone)
+                      $('.item-link:.displayed[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').removeClass('displayed');
                     }
                   });
 
@@ -1335,6 +1337,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
                   $('#' + type + '-' + context + '-children-checked-' + nid + ' ul').first().append($(this).clone());
                   //Then we remove all checked link in children zone, to prevent them to catch the selector of others functions.
                   $('#' + type + '-' + context + '-children-' + nid + ' #' + $(this).attr('id') + ' *').addClass('to-remove');
+
                   //In itemlist, we switch normal and simple title. Simple titles doesn't have link to display children.
                   $('#' + type + '-' + context + '-children-checked-' + nid + ' .normaltitle[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').hide();
                   $('#' + type + '-' + context + '-children-checked-' + nid + ' .simpletitle[ntype=' + type + '][context=' + context + '][nid=' + $(this).attr('nid') + ']').show();
@@ -1598,7 +1601,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
      */
     function getParentIds(currentNid, type, context) {
       var parentIds = {};
-      var parentId = $('.' + type + '_item[context=' + context + '][nid=' + currentNid + ']').attr('parent-id');
+      var parentId = $('.' + type + '-item[context=' + context + '][nid=' + currentNid + ']').attr('parent-id');
       parentIds[parentId] = parentId;
       if (typeof parentId != 'undefined') {
         parentIds = $.extend(parentIds, getParentIds(parentId, type, context));
