@@ -249,11 +249,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
           $(this).removeClass('displayed');
           //Change sign so the dialog will be hide
           sign = '-';
-          //Close all displayed product.
-          $('.product-table-link:.displayed').click();
         }
         //Translate the dialog to display or hide it.
         $('#comparative-table-main-product').css('transform','translateX(' + sign + '100%)');
+        //Close all displayed product. We launch this after the translate because it may stop the animation.
+        $('.product-table-link:.displayed').click();
       });
       //Initiate the number of product displayed in the table.
       $('#nb-products-footer').html($('.header-product').length);
@@ -379,7 +379,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
      */
     $('#edit-wikicompare-use-from-inherit-und:not(.listener-set)').addClass('listener-set').each(function () {
       $(this).click(function() {
-        $('.compute-inherit-link').click();
+        $('#compute-inherit-link').click();
       });
     });
 
@@ -711,6 +711,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
 
           //Disable the home filters while the list is computed, so there is no risk that another computation is launched.
           $('.home-filter').attr('disabled', 'disabled');
+          //Add a class to change the background of select fields, so they look disabled.
+          $('#filters-zone .select').addClass('disabled');
 
           var mode = $(object).attr('mode');
           if (mode == 'compute') {
@@ -830,6 +832,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.description = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-description-' + nid).val();
           options.data.description_translation = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-description-' + nid + '-translation').val();
           if (type == 'product') {
+            options.data.product_shortdescription = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-shortdescription-' + nid).val();
             options.data.product_comparable = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-comparable-' + nid).val();
             var fastactionInfofields = {};
             var i = 0;
@@ -837,7 +840,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
               infofield = {};
               infofield['name'] = $(this).attr('field');
               infofield['value'] = $(this).val();
-              infofield['required'] = $(this).attr('required');
+              infofield['required'] = $(this).attr('info-required');
               fastactionInfofields[i] = infofield;
               i = i + 1;
             });
@@ -1421,8 +1424,13 @@ Drupal.behaviors.WikicompareComparativeTable = {
         if (action == 'refresh-list') {
           //Reactive the home filters.
           $('.home-filter').removeAttr('disabled');
+          $('#filters-zone .select').removeClass('disabled');
           //Refresh oddEven.
           oddEvenProductList('.product-list-item');
+          //Refresh the selected products.
+          selectedProducts = {};
+          //Refresh compare url on footer.
+          refreshCompareUrl();
         }
 
         if (action == 'submit-fastaction-form') {
@@ -1464,8 +1472,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
         }
 
         if (action == 'open-dialog') {
-          //We add the scrollbar only now because before we didn't had the content and so the scrollbar size.
-          $('#' + $(object).attr('side') + '-dialog').addClass('with-custom-scrollbar');
+          //We add the scrollbar only now because before we didn't had the content and so the scrollbar size. This code is now disactivated here because it cause a conflict between select field and the styled scrollbar. Wait for firefox to allow styled scrollbar so we don't need it anymore, or use another jquery scrollbar.
+          //$('#' + $(object).attr('side') + '-dialog').addClass('with-custom-scrollbar');
 
           //We refresh all select field, because in dialog the value isn't automatically recovered.
           $('.select select').each(function(index) {
@@ -1483,7 +1491,6 @@ Drupal.behaviors.WikicompareComparativeTable = {
           //Translate the dialog to display it.
           $('#' + $(object).attr('side') + '-dialog').css('transform','translateX(' + sign + '100%)');
         }
-
 
         //Adjust the lines to the new size of the table, when we add a new column.
         if (autoColspan == true) {
@@ -1617,6 +1624,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
      * Refresh all the links which send to the comparative table.
      */
     function refreshCompareUrl() {
+
       //If we selected some products.
       if (!jQuery.isEmptyObject(selectedProducts)) {
         //Get prefix from drupal.

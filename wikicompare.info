@@ -18,7 +18,6 @@ dependencies[] = privatemsg
 dependencies[] = pm_block_user
 dependencies[] = pm_email_notify
 dependencies[] = revisioning
-dependencies[] = simple_dialog
 dependencies[] = views
 dependencies[] = userone
 

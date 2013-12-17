@@ -1307,12 +1307,11 @@ function wikicompare_table_get_supertitle_item($type, $node, $settings) {
         //In select dialog, we add a select link before each item.
         } elseif ($settings['context'] == 'selectdialog') {
           $img = theme('image', array(
-            'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/add.png',
+            'path' => drupal_get_path('theme',$GLOBALS['theme']) . '/images/link-icon.png',
             'alt' => t('Select ') . $type . ' ' . $node['data']->nid,
-            'height' => '100%',
           ));
           //Create the link. The html = True indicate that the title of the link contain html.
-          $prefix .= l($img, 'wikicompare-select-dialog-callback/nojs', array('attributes' => array('id' => 'select-dialog-' . $node['data']->nid, 'class' => array('ajaxlink'), 'action' => 'select-dialog', 'nid' => $node['data']->nid, 'ntype' => $type, 'side' => $settings['side']), 'html' => True)) . ' ';
+          $prefix .= l($img, 'wikicompare-select-dialog-callback/nojs', array('attributes' => array('id' => 'select-dialog-' . $node['data']->nid, 'class' => array('ajaxlink selectlink'), 'action' => 'select-dialog', 'nid' => $node['data']->nid, 'ntype' => $type, 'side' => 'left'), 'html' => True)) . ' ';
         }
 
       }

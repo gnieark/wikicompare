@@ -497,6 +497,19 @@ function wikicompare_admin() {
     $languages[$key] = $language->name;
   }
 
+  //Display the select button to add another language in the wikicompare.
+  $form['wikicompare_add_language'] = array(
+    '#type' => 'select',
+    '#title' => t('Activate Language'),
+    '#options' => array(
+      0 => 'Select a language to add',
+      'fr' => 'French'
+    ),
+    '#default_value' => 0,
+    '#description' => t("Change this field if you want to add a new language in the website."),
+    '#required' => TRUE,
+  );
+
   //Display the select button to manage the main language of the wikicompare.
   $form['wikicompare_main_language'] = array(
     '#type' => 'select',
@@ -564,6 +577,10 @@ function wikicompare_admin() {
 
 //This function handle the submit of the settings form.
 function submit_settings($form, $form_state) {
+
+  if ($form_state['input']['wikicompare_add_language']) {
+    locale_add_language($form_state['input']['wikicompare_add_language']);
+  }
 
   //If we change the main language of the wikicompare.
   if ($form_state['input']['wikicompare_main_language'] != language_default('language')) {

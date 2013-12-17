@@ -94,6 +94,7 @@ function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state
 
     //Add the wikicompare javascript file. Mainly used to display the popin.
     $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
+    $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/jquery.mCustomScrollbar.concat.min.js';
 
     $settings = array();
 
@@ -318,7 +319,7 @@ function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state
       //We can modify the value of the evaluation only it is at the root of the tree in both axis.
       if (!$res->criterion_has_children && !$res->product_has_children) {
         //If the user has not rights on the node, then he will not be able to change the protected status of the evaluation.
-        if (wikicompare_revisioning_access_node('', 'publish revisions', $node) == False) {
+        if (wikicompare_revisioning_access_node_revision('publish revisions', $node) == False) {
           //Hide the field in the form. We can't unset it, otherwise it display an error.
           hide($form['wikicompare_protected']);
           //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
@@ -334,20 +335,20 @@ function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state
           hide($form['wikicompare_protected']);
           //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
           unset($form_state['node']->wikicompare_protected);
-          //Hide the field in the form. We can't unset it, otherwise it display an error.
-          hide($form['wikicompare_proofs']);
+          //Hide the field in the form. We can't unset it, otherwise it display an error. Also we can't use hide function because it will crash the description wysiwyg.
+          $form['wikicompare_proofs']['#attributes']['style'] = 'display:none;';
           //We unset the field in form_state by security, so even if a user display the field with firebug and change value, the value will not be updated.
           unset($form_state['node']->wikicompare_proofs);
       }
 
       if (module_exists('wikicompare_inherit_product')) {
         $test = False;
+        $disable_support = False;
         //Add the fields relative to inherit product in evaluation node.
-        wikicompare_inherit_product_modify_form_evaluation($form, $output, $readonly, $test, 'form', $type, $node, $fastaction);
+        wikicompare_inherit_product_modify_form_evaluation($form, $output, $disable_support, $test, 'form', $type, $node, $readonly, $fastaction);
       }
 
     }
-
 
     if ($form_type == 'fastaction') {
 
@@ -393,6 +394,23 @@ function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state
 
     //Product specific fields.
     if ($type == 'product') {
+
+      $short_description_field = array(
+        '#type' => 'textfield',
+        '#title' => t('Short Description'),
+        '#id' => 'form-' . $type . '-fast' . $fastaction . '-shortdescription-' . $nid,
+
+      );
+      //We preset the field with the value in database.
+      if ($fastaction == 'edit') {
+        $short_description_field['#value'] = $node->wikicompare_short_description['und'][0]['value'];
+      }
+      //If the user do not have rights, then the field become read-only.
+      if ($readonly == True) {
+        $short_description_field['#attributes']['disabled'] = True;
+      }
+      //Render the HTML code.
+      $output .= render($short_description_field);
 
       $comparable_field = array(
         '#type' => 'select',
@@ -445,7 +463,7 @@ function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state
           '#required' => $record->is_required,
           '#options' => $allowed_values,
           '#id' => 'form-' . $type . '-fast' . $fastaction . '-wikicf-' . $record->name . '-' . $nid,
-          '#attributes' => array('class' => array('fastaction-infofield'), 'field' => $record->name, 'required' => $record->is_required),
+          '#attributes' => array('class' => array('fastaction-infofield'), 'field' => $record->name, 'info-required' => $record->is_required),
         );
         if ($fastaction == 'edit') {
           $infofield_value = $node->$infofield_name;
@@ -958,6 +976,12 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
 
     //Product specific fields.
     if ($type == 'product') {
+
+      //Assign comparable field.
+      if ($_POST['product_shortdescription'] != NULL) {
+        $node->wikicompare_short_description['und'][0]['value'] = $_POST['product_shortdescription'];
+      }
+
       //Assign comparable field.
       if ($_POST['product_comparable'] != NULL) {
         $node->wikicompare_comparable['und'][0]['value'] = $_POST['product_comparable'];
@@ -968,11 +992,11 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
       //Assign infofields.
       foreach ($_POST['fastaction_infofields'] as $infofield) {
         $infofield_name = 'wikicf_' . $infofield['name'];
-        if ($infofield['value'] != NULL || !$infofield['required']) {
+        if ($infofield['value'] != NULL) {
           $infofield_array = array();
           $infofield_array['und'][0]['value'] = $infofield['value'];
           $node->$infofield_name = $infofield_array;
-        } else {
+        } else if ($infofield['required']) {
           $missing_field = TRUE;
         }
       }
