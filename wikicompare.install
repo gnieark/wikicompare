@@ -784,6 +784,11 @@ function wikicompare_install() {
     )));
   variable_set('imce_settings_replace', 2);
 
+  //Use msdropdown for the language select.
+  $language_dropdown_settings = variable_get('lang_dropdown_language');
+  $language_dropdown_settings['widget'] = 1;
+  variable_set('lang_dropdown_language', $language_dropdown_settings);
+
   cache_clear_all();
 
 }

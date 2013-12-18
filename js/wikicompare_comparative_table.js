@@ -832,7 +832,8 @@ Drupal.behaviors.WikicompareComparativeTable = {
           options.data.description = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-description-' + nid).val();
           options.data.description_translation = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-description-' + nid + '-translation').val();
           if (type == 'product') {
-            options.data.product_shortdescription = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-shortdescription-' + nid).val();
+            options.data.product_short_description = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-shortdescription-' + nid).val();
+            options.data.product_short_description_translation = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-shortdescription-' + nid + '-translation').val();
             options.data.product_comparable = $('#form-' + type + '-fast' + $(object).attr('fastaction') + '-comparable-' + nid).val();
             var fastactionInfofields = {};
             var i = 0;

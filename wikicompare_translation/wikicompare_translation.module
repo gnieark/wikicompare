@@ -350,8 +350,11 @@ function wikicompare_translation_request_db(&$query, $type, $db_settings, $setti
     $query->addField('t', 'nid', 'nid_translated');
     $query->addField('t', 'title', 'title_translated');
     $query->addField('t', 'language', 'tlanguage');
-    $query->leftjoin('node', 't', 'n.nid = t.tnid');
-    $query->where("t.language = '" . $language->language . "' OR t.language IS NULL");
+    $query->leftjoin('node', 't', "n.nid = t.tnid AND t.language = '" . $language->language . "'");
+    if ($type == 'product') {
+      $query->addField('ts', 'wikicompare_short_description_value', 'short_description_translated');
+      $query->leftjoin('field_revision_wikicompare_short_description', 'ts', 't.vid = ts.revision_id');
+    }
 
     //If we are in fastaction mode, we want to also test is the translation node can be fastedited.
     if ($settings['fastaction']) {
@@ -404,7 +407,7 @@ function wikicompare_translation_request_db_fastaction(&$node_array, $record, $t
  * @param $record
  *   The record from the database.
  */
-function wikicompare_translation_request_db_build(&$node_array, $record) {
+function wikicompare_translation_request_db_build(&$node_array, $type, $record) {
 
   global $language;
 
@@ -413,6 +416,9 @@ function wikicompare_translation_request_db_build(&$node_array, $record) {
     if ($record->title_translated != NULL && $record->tlanguage == $language->language) {
       $node_array['data']->tnid = $record->nid_translated;
       $node_array['data']->title = $record->title_translated;
+      if ($type == 'product' && $record->short_description_translated != NULL) {
+        $node_array['data']->short_description = $record->short_description_translated;
+      }
     }
   }
 
@@ -489,11 +495,9 @@ function wikicompare_translation_infofield_request_db_after(&$record) {
 function wikicompare_translation_suggest_request_db(&$query) {
   global $language;
   $query->addField('ct', 'title', 'criterion_translated');
-  $query->leftjoin('node', 'ct', 'c.nid = ct.tnid');
-  $query->where("ct.language = '" . $language->language . "' OR ct.language IS NULL");
+  $query->leftjoin('node', 'ct', "c.nid = ct.tnid AND ct.language = '" . $language->language . "'");
   $query->addField('pt', 'title', 'product_translated');
-  $query->leftjoin('node', 'pt', 'p.nid = pt.tnid');
-  $query->where("pt.language = '" . $language->language . "' OR pt.language IS NULL");
+  $query->leftjoin('node', 'pt', "p.nid = pt.tnid AND pt.language = '" . $language->language . "'");
 }
 
 /**
@@ -654,6 +658,23 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
       unset($form_state['node']->wikicompare_sequence);
     }
 
+    if (isset($form['wikicompare_comparable'])) {
+      $form['wikicompare_comparable'] = array('#markup' => $node->wikicompare_comparable['und'][0]['value']);
+      unset($form_state['node']->wikicompare_comparable);
+    }
+
+    $query = db_select('wikicompare_infofields', 'f');
+    $query->addField('f', 'name', 'name');
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $infofield_name = 'wikicf_' . $record->name;
+      if (isset($form[$infofield_name])) {
+        $infofield = $node->$infofield_name;
+        $form[$infofield_name] = array('#markup' => $infofield['und'][0]['value']);
+        unset($form_state['node']->$infofield_name);
+      }
+    }
+
     if (isset($form['wikicompare_type'])) {
       $form['wikicompare_type'] = array('#markup' => $node->wikicompare_type['und'][0]['value']);
       unset($form_state['node']->wikicompare_type);
@@ -689,7 +710,8 @@ function wikicompare_translation_build_form_after(&$form, &$form_state, $node) {
     }
 
     if (isset($form['wikicompare_user_ids'])) {
-      hide($form['wikicompare_user_ids']);
+      //We can't use hide because for whatever reason it make the wysiwyg of description crash. This only happen with many2many fields.
+      $form['wikicompare_user_ids']['#attributes']['style'] = 'display:none;';
       unset($form_state['node']->wikicompare_user_ids);
     }
 
@@ -1034,6 +1056,10 @@ function wikicompare_translation_demo_export_translations(&$output, $node, $type
   $query->addField('n', 'language', 'language');
   $query->condition('n.tnid', $node['data']->nid);
   $query->condition('n.language', 'en', '!=');
+  if ($type == 'product') {
+    $query->addField('ts', 'wikicompare_short_description_value', 'short_description_translated');
+    $query->leftjoin('field_revision_wikicompare_short_description', 'ts', 'n.vid = ts.revision_id');
+  }
   $result = $query->execute();
 
   $first = True;
@@ -1053,11 +1079,15 @@ function wikicompare_translation_demo_export_translations(&$output, $node, $type
     $output .= "\$tnode->language = '" . $record->language . "';<br/>";
     $output .= "\$tnode->tnid = \$node->nid;<br/>";
     $output .= '$tnode->title = "' . $record->title . '";<br/>';
+    if ($type == 'product') {
+      $output .= '$tnode->wikicompare_short_description["und"][0]["value"] = "' . $record->short_description_translated . '";<br/>';
+    }
     $output .= "\$tnode->status = 1;<br/>";
     $output .= "\$tnode->promote = 0;<br/>";
     $output .= "\$tnode->sticky = 0;<br/>";
     $output .= "\$tnode->comment = 2;<br/>";
     $output .= "node_save(\$tnode);<br/>";
+    $output .= "_revisioning_publish_latest_revision(\$tnode);<br/>";
     $output .= "}</p>";
 
   }

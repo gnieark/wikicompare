@@ -405,12 +405,19 @@ function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state
       if ($fastaction == 'edit') {
         $short_description_field['#value'] = $node->wikicompare_short_description['und'][0]['value'];
       }
+      //The render() function destroy the variable, so we need a duplication for the translation.
+      $short_description_field_clone = $short_description_field;
       //If the user do not have rights, then the field become read-only.
       if ($readonly == True) {
         $short_description_field['#attributes']['disabled'] = True;
       }
       //Render the HTML code.
       $output .= render($short_description_field);
+
+      if (module_exists('wikicompare_translation')) {
+        //Add an item coming from the translated node in the form.
+        wikicompare_translation_fastaction_add_element($output, $tnode, $short_description_field_clone, 'short_description', $readonly_translation, $fastaction);
+      }
 
       $comparable_field = array(
         '#type' => 'select',
@@ -470,7 +477,7 @@ function wikicompare_build_form($settings, $form_type, &$form=NULL, &$form_state
           $infofield['#value'] = $infofield_value['und'][0]['value'];
         }
         if ($readonly == True) {
-          $comparable_field['#attributes']['disabled'] = True;
+          $infofield['#attributes']['disabled'] = True;
         }
         $output .= render($infofield);
       }
@@ -892,7 +899,7 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     $commands = array_merge($commands, wikicompare_control_table($settings));
 
   //If we are fastadding / fasteditting and the user has the right for it.
-  } elseif (!isset($from_db_record['no-edit'])) {
+  } elseif (!isset($from_db_record['no-edit']) || !isset($from_db_record['no-edit-translate'])) {
 
     $missing_field = FALSE;
 
@@ -978,8 +985,13 @@ function wikicompare_table_fastaction_submit_response($method = 'ajax'){
     if ($type == 'product') {
 
       //Assign comparable field.
-      if ($_POST['product_shortdescription'] != NULL) {
-        $node->wikicompare_short_description['und'][0]['value'] = $_POST['product_shortdescription'];
+      if ($_POST['product_short_description'] != NULL) {
+        $node->wikicompare_short_description['und'][0]['value'] = $_POST['product_short_description'];
+      }
+
+      if (module_exists('wikicompare_translation')) {
+        //Add the translated fields in the node which will be submited.
+        wikicompare_translation_fastaction_submit_element($tnode, $_POST, 'wikicompare_short_description', 'product_short_description', $fastaction);
       }
 
       //Assign comparable field.

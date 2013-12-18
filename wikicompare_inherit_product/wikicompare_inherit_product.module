@@ -443,7 +443,7 @@ function wikicompare_inherit_product_preupdate_product(&$to_update, $node_revisi
   if ($node_revision->type == 'product') {
     //Get inherit_id.
     $node_revision_inherit = NULL;
-    if ($node_revision->wikicompare_inherit_product_id) {
+    if (isset($node_revision->wikicompare_inherit_product_id) && $node_revision->wikicompare_inherit_product_id) {
       $node_revision_inherit = $node_revision->wikicompare_inherit_product_id['und'][0]['target_id'];
     }
     $current_node_inherit = NULL;

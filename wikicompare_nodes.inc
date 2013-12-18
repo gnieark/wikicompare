@@ -324,7 +324,7 @@ function wikicompare_revisionapi($op, $node_revision) {
         //Recover old and new parent_id value.
         $node_revision_parent = NULL;
         $current_node_parent = NULL;
-        if ($node_revision->wikicompare_parent_id) {
+        if (isset($node_revision->wikicompare_parent_id) && $node_revision->wikicompare_parent_id) {
           $node_revision_parent = $node_revision->wikicompare_parent_id['und'][0]['target_id'];
         }
         if ($current_node->wikicompare_parent_id) {

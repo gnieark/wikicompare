@@ -235,6 +235,7 @@ function wikicompare_generate_demo_export_output_node(&$output, $node, $type, $s
   $output .= "\$node->comment = 2;<br/>";
   //Save the node.
   $output .= "node_save(\$node);<br/>";
+  $output .= "_revisioning_publish_latest_revision(\$node);<br/>";
   //We keep the id in an array for later use.
   $output .= "\$". $type . "s['new-" . $node['data']->nid . "'] = \$node->nid;<br/>";
 

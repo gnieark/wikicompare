@@ -887,7 +887,7 @@ function request_db($type, $db_settings = array(), $settings=array()) {
 
     if (module_exists('wikicompare_translation')) {
       //Replace the title from db by the translated title
-      wikicompare_translation_request_db_build($node_array, $record);
+      wikicompare_translation_request_db_build($node_array, $type, $record);
     }
 
     //Assign the node_array to $res with the nid as key, except it's an evaluation we found thanks to the product and criterion ids.

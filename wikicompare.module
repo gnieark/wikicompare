@@ -480,8 +480,8 @@ function wikicompare_admin() {
 
   $form = array();
 
-  $form['#attached']['js'][] = '/misc/ajax.js';
-  $form['#attached']['js'][] = '/misc/progress.js';
+  $form['#attached']['js'][] = 'misc/ajax.js';
+  $form['#attached']['js'][] = 'misc/progress.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'wikicompare') . '/js/wikicompare_comparative_table.js';
 
   //Add an hyperlink to redirect the wikicompare administrator to the manage users page.
@@ -497,14 +497,21 @@ function wikicompare_admin() {
     $languages[$key] = $language->name;
   }
 
+  $languages_to_add = array(
+     0 => 'Select a language to add',
+    'fr' => 'French'
+  );
+  foreach ($languages_to_add as $key => $language) {
+    if (array_key_exists($key, $languages)) {
+      unset($languages_to_add[$key]);
+    }
+  }
+
   //Display the select button to add another language in the wikicompare.
   $form['wikicompare_add_language'] = array(
     '#type' => 'select',
     '#title' => t('Activate Language'),
-    '#options' => array(
-      0 => 'Select a language to add',
-      'fr' => 'French'
-    ),
+    '#options' => $languages_to_add,
     '#default_value' => 0,
     '#description' => t("Change this field if you want to add a new language in the website."),
     '#required' => TRUE,
@@ -516,8 +523,9 @@ function wikicompare_admin() {
     '#title' => t('Main language'),
     '#options' => $languages,
     '#default_value' => language_default('language'),
-    '#description' => t("Define the main language of the website."),
+    '#description' => t("Define the main language of the website.<br/>WARNING : Experimental function which can have grave consequences, we block it for now."),
     '#required' => TRUE,
+    '#attributes' => array('disabled' => 'disabled')
   );
 
   //Display the cache status.
@@ -553,7 +561,7 @@ function wikicompare_admin() {
   $form['add_infofield'] = array(
     '#type' => 'link',
     '#title' => 'Add',
-    '#href' => 'wikicompare_get_admin_infofield_form_callback/nojs',
+    '#href' => 'wikicompare-get-admin-infofield-form-callback/nojs',
     '#id' => 'admin-add-infofield',
     '#attributes' => array(
       'class' => array('ajaxlink'),
@@ -579,6 +587,7 @@ function wikicompare_admin() {
 function submit_settings($form, $form_state) {
 
   if ($form_state['input']['wikicompare_add_language']) {
+    module_load_include('inc', 'language', 'includes/language');
     locale_add_language($form_state['input']['wikicompare_add_language']);
     //Define the way the language is defined.
     $weighted_provider_list = array(
