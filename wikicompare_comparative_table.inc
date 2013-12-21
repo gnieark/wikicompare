@@ -1145,7 +1145,7 @@ function wikicompare_table_render_evaluation($evaluation, $criterion, $cid, $set
   if (in_array($criterion['data']->state, unserialize(WIKICOMPARE_STATE_PUBLISHED)) || $criterion == NULL) {
     //Render the chart with percent inside and link/fastaction after. We only initiate the canvas on the first table on page loading, it will be added by javascript on other cases.
     if (!isset($criterion['data']->parent_id) || ($criterion['data']->parent_id == $settings['root_criterion']) || isset($settings['force_chart'])) {
-      $output .= '<canvas class="chart" height="100%" percent="' . $evaluation['data']->percent . '"></canvas>';
+      $output .= '<canvas class="chart" height="100%" width="100" percent="' . $evaluation['data']->percent . '"></canvas>';
     }
     $output .= '<div class="chart-percent">' .$evaluation['data']->percent . '</div>';
     $output .= wikicompare_table_get_supertitle_item('evaluation', $evaluation, $settings);

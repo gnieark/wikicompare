@@ -275,11 +275,11 @@ Drupal.behaviors.WikicompareComparativeTable = {
       var data = [
         {
           value: percent,
-          color: "#bedd00"
+          color : "#00f3ff"
         },
         {
           value : 100 - percent,
-          color : "#FF4F12"
+          color: "#ff0000"
         }
       ];
 
@@ -459,6 +459,7 @@ Drupal.behaviors.WikicompareComparativeTable = {
         //Get type and context, which are standard variables, from attr.
         type = $(object).attr('ntype');
         context = $(object).attr('context');
+        skipAjax = false;
 
         //We can't remove directly at cleaning otherwise some content will be remove before the end of animation (slideUp, etc...)
         if (action != 'make-cleaning') {
